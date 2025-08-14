@@ -1,0 +1,48 @@
+# Enhanced Document Processing Libraries
+
+# HTML to Markdown (best in class)
+html2text==2020.1.16
+beautifulsoup4==4.12.3  # For HTML parsing
+markdownify==0.11.6  # Alternative, currently used
+
+# Markdown Processing
+mistune==3.0.2  # Fast markdown parser
+markdown-it-py==3.0.0  # Feature-rich markdown parser
+mdit-py-plugins==0.4.0  # Plugins for markdown-it
+
+# PDF Generation (multiple options - install what you need)
+
+# Option 1: Pandoc (best quality, requires pandoc binary)
+pypandoc==1.12  # Requires: brew install pandoc (macOS) or apt-get install pandoc (Linux)
+
+# Option 2: WeasyPrint (great CSS support)
+weasyprint==60.2  # Requires: brew install python-cairo pango (macOS)
+
+# Option 3: md2pdf (simple, works out of the box)
+md2pdf==1.0.1
+
+# Option 4: Markdown + wkhtmltopdf
+pdfkit==1.0.0  # Requires: brew install wkhtmltopdf (macOS)
+
+# Current (already in use)
+reportlab==4.0.7  # Current implementation
+markdown==3.5.1  # Basic markdown library
+Pillow==10.1.0  # Image processing
+
+# Additional useful libraries
+
+# Document validation
+markdown-link-validator==0.1.0
+markdown-lint==0.0.1
+
+# Better HTML cleaning
+bleach==6.1.0  # Sanitize HTML
+lxml==5.0.0  # Fast XML/HTML parser
+
+# Image handling
+python-magic==0.4.27  # Detect file types
+requests==2.31.0  # Download images
+
+# Testing document conversion
+pytest==7.4.3
+pytest-asyncio==0.21.1

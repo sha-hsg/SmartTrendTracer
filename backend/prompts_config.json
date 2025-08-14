@@ -1,0 +1,128 @@
+{
+  "tag_suggestion": {
+    "system": "You are an expert at analyzing social media content to identify key topics, trends, and themes. Your task is to suggest tags that help with categorization, searching, and trend detection.",
+    "user_template": "Suggest relevant tags for this tweet:\n\nTweet from @{author}:\n\"{text}\"\n\nRequirements:\n- 3-5 descriptive tags\n- Single words or short phrases (use hyphens for multi-word)\n- Relevant to the content and context\n- Help with categorization and searching\n- Help for topic and trend detection\n- Consider: main topic, technology/product mentioned, companies/people, action/announcement type, industry/field\n\nProvide tags as a JSON array of strings. Use lowercase.\n\nExample output: [\"product-launch\", \"ai-assistant\", \"openai\", \"gpt-4\", \"multimodal\"]",
+    "output_format": "json_array",
+    "examples": [
+      {
+        "tweet": "Just released our new vision-language model that achieves SOTA on multiple benchmarks!",
+        "tags": ["model-release", "vision-language", "sota-performance", "benchmark", "announcement"]
+      },
+      {
+        "tweet": "Interesting paper on constitutional AI and RLHF improvements",
+        "tags": ["research-paper", "constitutional-ai", "rlhf", "ai-safety", "technical-advance"]
+      },
+      {
+        "tweet": "We're seeing unprecedented demand for our API services this week",
+        "tags": ["api-usage", "growth-metric", "platform-update", "demand-surge", "business-update"]
+      },
+      {
+        "tweet": "Thread: Here's how we built our new reasoning system from scratch",
+        "tags": ["tutorial-thread", "reasoning-system", "technical-guide", "development-story", "how-to"]
+      }
+    ]
+  },
+  
+  "article_tag_suggestion": {
+    "system": "You are an expert content tagger for long-form articles and essays. Analyze the provided article and generate relevant, specific tags that capture:\n1. Main topics and themes\n2. Key concepts and technologies mentioned\n3. Author's arguments or positions\n4. Industry/field relevance\n5. Content type (tutorial, analysis, opinion, research, etc.)\n\nReturn tags as a JSON array of strings. Tags should be:\n- Specific and descriptive\n- Use hyphens for multi-word tags\n- Mix of broad topics and specific details\n- Between 2-4 words typically\n\nExample: [\"machine-learning\", \"neural-networks\", \"transformer-architecture\", \"gpt-4\", \"ai-safety\", \"technical-tutorial\", \"code-examples\", \"python-implementation\"]",
+    "user_template": "Article by {author}:\n\n{text}\n\nGenerate {max_tags} relevant tags for this article.",
+    "output_format": "json_array"
+  },
+  
+  "trend_classification": {
+    "system": "You are a trend analyst specializing in technology and innovation. You identify emerging trends, hot topics, and declining discussions across various fields.",
+    "user_template": "Classify this topic based on recent tweet activity:\n\nTopic: {topic}\nMention count (24h): {count_24h}\nMention count (7d): {count_7d}\nSample tweets: {sample_tweets}\n\nClassify as: emerging|hot|stable|declining\nConsider: momentum, relevance, potential impact, and discussion volume.\nProvide reasoning.",
+    "output_format": "structured"
+  },
+  
+  "topic_extraction": {
+    "system": "Extract main topics, themes, and trending discussions from social media content. Identify what people are talking about, key announcements, and emerging patterns.",
+    "user_template": "Extract key topics and themes from these tweets:\n{tweets_text}\n\nIdentify:\n- Main topics being discussed\n- Recurring themes\n- Notable announcements or events\n- Emerging trends or patterns\n\nReturn as JSON: {\"topics\": [...], \"themes\": [...], \"trends\": [...]}",
+    "output_format": "json"
+  },
+  
+  "sentiment_analysis": {
+    "system": "Analyze sentiment and emotional tone in social media content. Identify whether discussions are positive, negative, neutral, or mixed.",
+    "user_template": "Analyze sentiment of this tweet about {topic}:\n\"{text}\"\n\nConsider:\n- Overall tone and emotion\n- Enthusiasm vs criticism\n- Support vs skepticism\n- Factual vs opinion-based\n\nReturn: positive|neutral|negative|mixed with brief explanation.",
+    "output_format": "structured"
+  },
+  
+  "article_summarization": {
+    "system": "You are an expert at summarizing technical articles and extracting key insights from newsletters and blog posts. Focus on the main arguments, key takeaways, and practical implications.",
+    "summary_prompt": "Please provide a comprehensive summary of this article.\n\nArticle Title: {title}\nAuthor: {author}\n\nArticle Content:\n{content}\n\nPlease provide:\n1. A 2-3 sentence executive summary that captures the essence of the article\n2. 3-5 key points or insights presented in the article\n3. Main arguments or claims made by the author\n4. Any notable quotes, statistics, or examples\n5. Practical implications or takeaways for readers\n\nFormat your response as clear, structured text with sections clearly marked.",
+    "key_points_prompt": "Extract the key points from this article as a bulleted list.\n\nArticle: {content}\n\nProvide 5-7 key points, each as a concise bullet point. Focus on:\n- Main insights and arguments\n- Important findings or conclusions\n- Practical applications\n- Notable statistics or facts\n- Actionable takeaways\n\nFormat each point to be self-contained and meaningful."
+  },
+  
+  "ontology_system": {
+    "system": "You are an expert in knowledge organization and taxonomy design, specializing in AI and technology domains. Your task is to analyze tags and suggest semantic relationships for building a comprehensive ontology.",
+    "user_template": "Current ontology structure:\n{ontology_context}\n\nAnalyze these tags and suggest relationships:\n{tags}\n\nOutput your suggestions as JSON with the following structure:\n{{\n    \"synonyms\": [\n        {{\"concept\": \"existing_concept_tag\", \"synonym\": \"new_synonym\"}}\n    ],\n    \"hierarchies\": [\n        {{\"child\": \"child_tag\", \"parent\": \"parent_tag\"}}\n    ],\n    \"same_as\": [\n        {{\"canonical\": \"main_tag\", \"alternatives\": [\"alt1\", \"alt2\"]}}\n    ],\n    \"reasoning\": \"Brief explanation of your suggestions\"\n}}\n\nGuidelines:\n1. For synonyms: Identify different ways to express the same concept\n2. For hierarchies: Place specific concepts under more general ones\n3. For same_as: Group variations of the same term (abbreviations, full names, etc.)\n4. Consider the AI/tech domain context\n5. Maintain consistency with existing ontology",
+    "output_format": "json"
+  },
+  
+  "ontology_bulk_organization": {
+    "system": "You are an expert in knowledge organization. Analyze these uncategorized tags and suggest how to organize them into the existing ontology.",
+    "user_template": "Current ontology structure:\n{ontology_context}\n\nUncategorized tags:\n{tags}\n\nFor each uncategorized tag, suggest:\n1. The most appropriate parent concept\n2. Any synonyms that should be created\n3. Whether it should be merged with an existing concept\n\nOutput as JSON:\n{{\n    \"suggestions\": [\n        {{\n            \"tag\": \"tag_name\",\n            \"action\": \"categorize|merge|create_synonym\",\n            \"parent\": \"parent_tag_if_categorize\",\n            \"merge_with\": \"existing_tag_if_merge\",\n            \"create_synonym_for\": \"concept_tag_if_synonym\",\n            \"reasoning\": \"brief explanation\"\n        }}\n    ],\n    \"new_categories\": [\n        {{\n            \"tag\": \"new_category_tag\",\n            \"display_name\": \"Display Name\",\n            \"description\": \"Description\",\n            \"parent\": \"parent_tag_or_null\"\n        }}\n    ]\n}}",
+    "output_format": "json"
+  },
+  
+  "ontology_validation": {
+    "system": "You are an expert in knowledge organization and ontology validation, specializing in AI and technology domains.",
+    "user_template": "Evaluate if this ontology relationship makes sense:\n\nRelationship Type: {relationship_type}\nSource: {source}\nTarget: {target}\n\nCurrent context: AI and technology domain ontology\n\nIs this relationship valid? Consider:\n1. Semantic correctness\n2. Domain appropriateness\n3. Logical consistency\n\nRespond with JSON:\n{{\n    \"valid\": true/false,\n    \"confidence\": 0-1,\n    \"reasoning\": \"explanation\",\n    \"alternative\": \"suggested alternative if invalid\"\n}}",
+    "output_format": "json"
+  },
+  
+  "summarization_system": {
+    "system": "You are an AI assistant that creates concise, informative summaries of tweet collections. Focus on extracting key insights, main themes, and important developments while maintaining factual accuracy.",
+    "user_template": "Summarize these tweets:\n{tweets}\n\nGuidelines:\n1. Identify main themes across tweets\n2. Highlight important announcements or news\n3. Note consensus or conflicting viewpoints\n4. Keep summaries concise but comprehensive\n5. Use bullet points for clarity when appropriate",
+    "output_format": "text"
+  },
+  
+  "ai_expert_summary": {
+    "system": "You are an AI expert who creates concise summaries of AI/ML developments from tweets.",
+    "user_template": "Summarize these AI/ML related tweets:\n{tweets}\n\nFocus on:\n- Key developments and announcements\n- Technical breakthroughs\n- Industry trends\n- Community discussions\n\nProvide a structured summary with clear sections.",
+    "output_format": "text"
+  },
+  
+  "entity_extraction": {
+    "system": "You are an expert at extracting named entities and research concepts from text. You identify people, organizations, locations, events, research topics, datasets, benchmarks, metrics, methods, and models with high precision.",
+    "user_template": "Extract all entities from the following text. For each entity, provide:\n1. The exact text as it appears\n2. The entity type (person, organisation, location, event, research-topic, dataset, benchmark, metric, method, or model)\n3. A confidence score (0.0 to 1.0)\n4. Brief context about why this is that entity type\n\nText:\n{text}\n\nReturn as JSON:\n{{\n    \"entities\": [\n        {{\n            \"text\": \"entity text\",\n            \"type\": \"entity-type\",\n            \"confidence\": 0.95,\n            \"context\": \"brief explanation\",\n            \"normalized\": \"normalized-form\"\n        }}\n    ],\n    \"relationships\": [\n        {{\n            \"source\": \"entity1\",\n            \"target\": \"entity2\",\n            \"relation\": \"works-at|located-in|presented-at|etc\"\n        }}\n    ]\n}}",
+    "output_format": "json",
+    "examples": [
+      {
+        "text": "Siegfried Handschuh from the University of St. Gallen presented GPT-5 benchmarks at NeurIPS 2024",
+        "entities": [
+          {"text": "Siegfried Handschuh", "type": "person", "confidence": 0.95},
+          {"text": "University of St. Gallen", "type": "organisation", "confidence": 0.9},
+          {"text": "GPT-5", "type": "model", "confidence": 0.95},
+          {"text": "NeurIPS 2024", "type": "event", "confidence": 0.9}
+        ]
+      }
+    ]
+  },
+  
+  "entity_validation": {
+    "system": "You validate whether extracted entities are correctly classified and suggest corrections if needed.",
+    "user_template": "Validate this entity extraction:\nText: \"{text}\"\nProposed Type: {type}\nContext: {context}\n\nIs this correct? If not, what should it be? Consider:\n1. Is the entity type accurate?\n2. Should it be split into multiple entities?\n3. Is there a more specific or general classification?\n\nReturn JSON:\n{{\n    \"valid\": true/false,\n    \"confidence\": 0-1,\n    \"suggested_type\": \"corrected-type-if-needed\",\n    \"reasoning\": \"explanation\",\n    \"split_entities\": [] // if entity should be split\n}}",
+    "output_format": "json"
+  },
+  
+  "tag_reorganization": {
+    "system": "You are an expert taxonomist specializing in AI/ML research topics. Your task is to reorganize a flat list of tags into a hierarchical taxonomy. You must respond with valid JSON only, following the exact schema provided.",
+    "user_template": "Analyze these {total_tags} tags and create a hierarchical reorganization.\n\nCURRENT TAGS DATA:\n{tags_json}\n\nSTATISTICS:\n- Total tags: {total_tags}\n- Total tag applications: {total_taggings}\n- Average usage per tag: {average_usage}\n\nCreate a JSON response with this EXACT structure:\n{{\n  \"hierarchy\": {{\n    \"tag_name\": {{\n      \"display_name\": \"Display Name\",\n      \"description\": \"Description of this category\",\n      \"level\": 0,\n      \"parent\": null,\n      \"children\": [\"child1\", \"child2\"],\n      \"synonyms\": [\"synonym1\", \"synonym2\"],\n      \"icon\": \"📁\"\n    }}\n  }},\n  \"root_categories\": [\"category1\", \"category2\"],\n  \"deprecated_tags\": [\"old_tag1\", \"old_tag2\"],\n  \"merge_proposals\": [\n    {{\n      \"primary\": \"main_tag\",\n      \"merge_into\": [\"duplicate1\", \"duplicate2\"],\n      \"reason\": \"These tags represent the same concept\"\n    }}\n  ],\n  \"new_categories_suggested\": [\n    {{\n      \"name\": \"new_category\",\n      \"display_name\": \"New Category\",\n      \"description\": \"Why this category is needed\"\n    }}\n  ],\n  \"confidence_score\": 0.85,\n  \"reasoning\": \"Explanation of the reorganization logic...\"\n}}\n\nIMPORTANT:\n- Create 5-10 root categories\n- Group related tags logically\n- Identify and merge duplicates\n- Suggest new categories where needed\n- All tags must appear in the hierarchy",
+    "output_format": "json"
+  },
+  
+  "rag_query": {
+    "system": "You are a knowledgeable AI assistant that provides comprehensive and detailed answers based on the provided context. Be thorough in your explanations while maintaining accuracy. Include relevant details, examples, and insights from the context.",
+    "user_template": "Based on the following context, provide a detailed and comprehensive answer to the question.\nInclude relevant details, examples, and insights from the sources.\nIf the context doesn't contain sufficient information, acknowledge what's missing.\n\nContext:\n{context}\n\nQuestion: {question}\n\nProvide a thorough answer with:\n- Key information from the sources\n- Relevant examples or quotes\n- Multiple perspectives if available\n- Clear explanations\n\nAnswer:",
+    "output_format": "text"
+  },
+  
+  "settings": {
+    "max_retries": 3,
+    "cache_responses": true,
+    "cache_ttl_seconds": 3600,
+    "batch_size": 10,
+    "rate_limit_per_minute": 20
+  }
+}

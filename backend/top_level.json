@@ -1,0 +1,261 @@
+{
+  "version": "1.0.0",
+  "description": "Top-level ontology schema for SmartTrendTracer entity classification",
+  "last_updated": "2025-08-10",
+  "entity_types": {
+    "named-entities": {
+      "tag": "named-entities",
+      "display_name": "Named Entities",
+      "description": "Named entities extracted from content",
+      "level": 0,
+      "color": "#3B82F6",
+      "icon": "🏷️",
+      "children": {
+        "person": {
+          "tag": "person",
+          "display_name": "Person",
+          "description": "Individual people mentioned in content",
+          "level": 1,
+          "color": "#10B981",
+          "icon": "👤",
+          "extraction_hints": ["names", "authors", "researchers", "CEOs", "founders"],
+          "validation_rules": {
+            "min_confidence": 0.7,
+            "require_capitalization": true,
+            "min_length": 3
+          }
+        },
+        "organisation": {
+          "tag": "organisation",
+          "display_name": "Organisation",
+          "description": "Companies, institutions, and organizations",
+          "level": 1,
+          "color": "#8B5CF6",
+          "icon": "🏢",
+          "extraction_hints": ["companies", "universities", "labs", "institutes", "foundations"],
+          "validation_rules": {
+            "min_confidence": 0.75,
+            "require_capitalization": true
+          }
+        },
+        "location": {
+          "tag": "location",
+          "display_name": "Location",
+          "description": "Geographic locations and places",
+          "level": 1,
+          "color": "#EF4444",
+          "icon": "📍",
+          "extraction_hints": ["cities", "countries", "regions", "venues"],
+          "validation_rules": {
+            "min_confidence": 0.8,
+            "require_capitalization": true
+          }
+        },
+        "event": {
+          "tag": "event",
+          "display_name": "Event",
+          "description": "Conferences, releases, and significant events",
+          "level": 1,
+          "color": "#F59E0B",
+          "icon": "📅",
+          "extraction_hints": ["conferences", "summits", "releases", "announcements", "launches"],
+          "validation_rules": {
+            "min_confidence": 0.7,
+            "check_temporal_context": true
+          }
+        }
+      }
+    },
+    "research-entities": {
+      "tag": "research-entities",
+      "display_name": "Research Entities",
+      "description": "Research and technical entities",
+      "level": 0,
+      "color": "#6366F1",
+      "icon": "🔬",
+      "children": {
+        "research-topic": {
+          "tag": "research-topic",
+          "display_name": "Research Topic",
+          "description": "Research areas and topics",
+          "level": 1,
+          "color": "#06B6D4",
+          "icon": "🔬",
+          "extraction_hints": ["research areas", "fields of study", "domains", "topics"],
+          "validation_rules": {
+            "min_confidence": 0.65,
+            "check_academic_context": true
+          }
+        },
+        "dataset": {
+          "tag": "dataset",
+          "display_name": "Dataset",
+          "description": "Datasets used in research and development",
+          "level": 1,
+          "color": "#84CC16",
+          "icon": "📊",
+          "extraction_hints": ["dataset names", "corpora", "benchmarks", "data sources"],
+          "validation_rules": {
+            "min_confidence": 0.8,
+            "check_known_datasets": true
+          }
+        },
+        "benchmark": {
+          "tag": "benchmark",
+          "display_name": "Benchmark",
+          "description": "Performance benchmarks and evaluation metrics",
+          "level": 1,
+          "color": "#FBBF24",
+          "icon": "📈",
+          "extraction_hints": ["benchmark names", "evaluation metrics", "leaderboards"],
+          "validation_rules": {
+            "min_confidence": 0.75,
+            "check_numeric_context": true
+          }
+        },
+        "metric": {
+          "tag": "metric",
+          "display_name": "Metric",
+          "description": "Quantitative metrics and measurements",
+          "level": 1,
+          "color": "#A78BFA",
+          "icon": "📏",
+          "extraction_hints": ["accuracy", "precision", "recall", "F1", "BLEU", "perplexity"],
+          "validation_rules": {
+            "min_confidence": 0.7,
+            "check_numeric_values": true
+          }
+        },
+        "method": {
+          "tag": "method",
+          "display_name": "Method",
+          "description": "Algorithms, techniques, and methodologies",
+          "level": 1,
+          "color": "#FB923C",
+          "icon": "⚙️",
+          "extraction_hints": ["algorithms", "techniques", "approaches", "methods", "frameworks"],
+          "validation_rules": {
+            "min_confidence": 0.7,
+            "check_technical_context": true
+          }
+        },
+        "model": {
+          "tag": "model",
+          "display_name": "Model",
+          "description": "AI/ML models and architectures",
+          "level": 1,
+          "color": "#EC4899",
+          "icon": "🤖",
+          "extraction_hints": ["model names", "architectures", "neural networks", "LLMs"],
+          "validation_rules": {
+            "min_confidence": 0.75,
+            "check_model_patterns": true,
+            "known_prefixes": ["GPT", "BERT", "T5", "LLaMA", "Claude", "Gemini"]
+          }
+        }
+      }
+    },
+    "content-types": {
+      "tag": "content-types",
+      "display_name": "Content Types",
+      "description": "Types of content and documents",
+      "level": 0,
+      "color": "#64748B",
+      "icon": "📄",
+      "children": {
+        "paper": {
+          "tag": "paper",
+          "display_name": "Research Paper",
+          "description": "Academic papers and publications",
+          "level": 1,
+          "color": "#0EA5E9",
+          "icon": "📜",
+          "extraction_hints": ["paper titles", "arxiv", "publications"],
+          "validation_rules": {
+            "min_confidence": 0.7,
+            "check_citation_pattern": true
+          }
+        },
+        "tool": {
+          "tag": "tool",
+          "display_name": "Tool/Software",
+          "description": "Software tools and applications",
+          "level": 1,
+          "color": "#22C55E",
+          "icon": "🔧",
+          "extraction_hints": ["software names", "libraries", "frameworks", "APIs"],
+          "validation_rules": {
+            "min_confidence": 0.75
+          }
+        },
+        "concept": {
+          "tag": "concept",
+          "display_name": "Concept",
+          "description": "Abstract concepts and ideas",
+          "level": 1,
+          "color": "#D946EF",
+          "icon": "💭",
+          "extraction_hints": ["concepts", "theories", "principles", "ideas"],
+          "validation_rules": {
+            "min_confidence": 0.6,
+            "allow_abstract": true
+          }
+        }
+      }
+    }
+  },
+  "extraction_config": {
+    "batch_size": 50,
+    "max_entities_per_type": 20,
+    "min_entity_length": 2,
+    "max_entity_length": 100,
+    "confidence_threshold": 0.6,
+    "enable_coreference_resolution": true,
+    "enable_entity_linking": true,
+    "merge_similar_threshold": 0.85
+  },
+  "display_config": {
+    "show_confidence_scores": true,
+    "show_entity_icons": true,
+    "highlight_new_entities": true,
+    "group_by_type": true,
+    "sort_by": "confidence_desc"
+  },
+  "metadata_fields": {
+    "created_by": {
+      "type": "string",
+      "description": "User or system that created the entity",
+      "required": true
+    },
+    "created_at": {
+      "type": "datetime",
+      "description": "Timestamp of creation",
+      "required": true
+    },
+    "source": {
+      "type": "enum",
+      "values": ["manual", "llm", "import", "migration"],
+      "description": "Source of the entity",
+      "required": true
+    },
+    "confidence": {
+      "type": "float",
+      "min": 0.0,
+      "max": 1.0,
+      "description": "Confidence score for automated extractions"
+    },
+    "llm_model": {
+      "type": "string",
+      "description": "Model used for extraction"
+    },
+    "context": {
+      "type": "string",
+      "description": "Original context where entity was found"
+    },
+    "validated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the entity has been manually validated"
+    }
+  }
+}
