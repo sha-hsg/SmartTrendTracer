@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import datetime
 import json
 import logging
 
-from app.models import get_db, Tweet, TweetMedia, Tag, TagOntologyService
 from app.schemas.tweet import TweetResponse, TweetWithMedia
 from app.services.unified_tag_service import UnifiedTagService
+from app.services.tag_display_service import TagDisplayService
+from app.services.slug_normalizer import to_snake_case, to_display_name
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -19,7 +19,6 @@ def get_tweets(
     with_media_only: bool = False,
     tag: Optional[str] = Query(None, description="Filter by tag"),
     use_ontology: bool = Query(True, description="Use tag ontology for hierarchical filtering"),
-    db: Session = Depends(get_db)
 ):
     """Get recent tweets with optional filtering"""
     query = db.query(Tweet).options(
@@ -82,7 +81,12 @@ def get_tweets(
                 for m in tweet.media
             ],
             "tags": [
-                {"tag": t.tag, "type": t.tag_type}
+                {
+                    "tag": t.tag,
+                    "display_name": to_display_name(t.tag),
+                    "slug": to_snake_case(t.tag),
+                    "type": t.tag_type
+                }
                 for t in tweet.tags
             ]
         }
@@ -91,7 +95,6 @@ def get_tweets(
     return result
 
 @router.get("/{tweet_id}")
-def get_tweet(tweet_id: str, db: Session = Depends(get_db)):
     """Get a specific tweet by ID"""
     tweet = db.query(Tweet).options(
         joinedload(Tweet.media),
@@ -104,7 +107,6 @@ def get_tweet(tweet_id: str, db: Session = Depends(get_db)):
     return tweet
 
 @router.get("/stats/summary")
-def get_stats(db: Session = Depends(get_db)):
     """Get tweet statistics"""
     total_tweets = db.query(Tweet).count()
     tweets_with_media = db.query(Tweet).join(TweetMedia).distinct().count()

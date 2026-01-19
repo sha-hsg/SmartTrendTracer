@@ -5,14 +5,10 @@ from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Tuple
 from collections import Counter
 import re
-from sqlalchemy.orm import Session
-
-from app.models import Tweet, Tag, Topic, TweetTopic, get_db
 
 class TrendAnalyzer:
     def __init__(self, db_session: Session = None):
         """Initialize the trend analyzer"""
-        self.db = db_session or next(get_db())
         
     def analyze_trends(self, hours: int = 24) -> Dict:
         """
@@ -189,7 +185,6 @@ class TrendAnalyzer:
         self.db.commit()
         return new_topics_count
 
-
 def main():
     """Run trend analysis"""
     analyzer = TrendAnalyzer()
@@ -215,7 +210,6 @@ def main():
     print(f"\n🏷️ TOP HASHTAGS:")
     for hashtag, count in results['top_hashtags'][:5]:
         print(f"  {hashtag}: {count}")
-
 
 if __name__ == "__main__":
     main()

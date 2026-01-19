@@ -1,0 +1,1916 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">PreAdapter: Pre-training Language Models on Knowledge Graphs</title>
+				<funder ref="#_E6mMs9j">
+					<orgName type="full">Deutsche Forschungsgemeinschaft (DFG, German Research Foundation)</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Janna</forename><surname>Omeliyanenko</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> CAIDAS Center for Artificial Intelligence and Data Science , Würzburg , Germany</note>
+								<orgName type="department">CAIDAS Center for Artificial Intelligence and Data Science</orgName>
+								<address>
+									<settlement>Würzburg</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Julius-Maximilians-University of Würzburg , Würzburg , Germany</note>
+								<orgName type="institution">Julius-Maximilians-University of Würzburg</orgName>
+								<address>
+									<settlement>Würzburg</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Andreas</forename><surname>Hotho</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> CAIDAS Center for Artificial Intelligence and Data Science , Würzburg , Germany</note>
+								<orgName type="department">CAIDAS Center for Artificial Intelligence and Data Science</orgName>
+								<address>
+									<settlement>Würzburg</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Julius-Maximilians-University of Würzburg , Würzburg , Germany</note>
+								<orgName type="institution">Julius-Maximilians-University of Würzburg</orgName>
+								<address>
+									<settlement>Würzburg</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Daniel</forename><surname>Schlör</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> CAIDAS Center for Artificial Intelligence and Data Science , Würzburg , Germany</note>
+								<orgName type="department">CAIDAS Center for Artificial Intelligence and Data Science</orgName>
+								<address>
+									<settlement>Würzburg</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Julius-Maximilians-University of Würzburg , Würzburg , Germany</note>
+								<orgName type="institution">Julius-Maximilians-University of Würzburg</orgName>
+								<address>
+									<settlement>Würzburg</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">PreAdapter: Pre-training Language Models on Knowledge Graphs</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">EFC3CF009DC15463064B414C0C8C0C10</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:45+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>knowledge graph</term>
+					<term>language model</term>
+					<term>knowledge integration</term>
+					<term>question answering</term>
+					<term>adapters</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Pre-trained language models have demonstrated state-of-theart performance in various downstream tasks such as summarization, sentiment classification, and question answering. Leveraging vast amounts of textual data during training, these models inherently hold a certain amount of factual knowledge, which is particularly beneficial for knowledge-driven tasks such as question answering. However, the knowledge implicitly contained within the language models is not complete. Consequently, many studies incorporate additional knowledge from Semantic Web resources such as knowledge graphs, which provide an explicit representation of knowledge in the form of triples. Seamless integration of this knowledge into language models remains an active research area. Direct pre-training of language models on knowledge graphs followed by fine-tuning on downstream tasks has proven ineffective, primarily due to the catastrophic forgetting effect. Many approaches suggest fusing language models with graph embedding models to enrich language models with information from knowledge graphs, showing improvement over solutions that lack knowledge graph integration in downstream tasks. However, these methods often require additional computational overhead, for instance, by training graph embedding models. In our work, we propose a novel adapter-based method for integrating knowledge graphs into language models through pre-training. This approach effectively mitigates catastrophic forgetting that can otherwise affect both the original language modeling capabilities and the access to pre-trained knowledge. Through this scheme, our approach ensures access to both the original capabilities of the language model and the integrated Semantic Web knowledge during fine-tuning on downstream tasks. Experimental results on multiple choice question answering tasks demonstrate performance improvements compared to baseline models without knowledge graph integration and other pre-training-based knowledge integration methods.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Pre-trained language models (LMs) excel in various downstream tasks such as text summarization <ref type="bibr" target="#b0">[1]</ref>, sentiment classification <ref type="bibr" target="#b45">[47]</ref>, and question answering <ref type="bibr" target="#b20">[21]</ref> by capturing linguistic and content-related information from natural language texts during self-supervised pre-training on large datasets and subsequent finetuning to the respective downstream task.</p><p>Besides the explicit knowledge integrated during fine-tuning, it has been observed that pre-training also embeds a broad base of implicit general knowledge into the models <ref type="bibr">[26]</ref>. This general knowledge can be directly leveraged for tasks such as knowledge extraction <ref type="bibr" target="#b21">[22,</ref><ref type="bibr" target="#b28">30,</ref><ref type="bibr" target="#b31">33]</ref>, downstream tasks such as commonsense reasoning <ref type="bibr" target="#b25">[27]</ref> or question answering <ref type="bibr" target="#b6">[7]</ref>.</p><p>Although this general knowledge has proven useful for improving these downstream tasks <ref type="bibr">[26]</ref>, exploring its limitations <ref type="bibr" target="#b8">[9,</ref><ref type="bibr" target="#b26">28]</ref> and expanding it by introducing specific unstructured <ref type="bibr" target="#b24">[25,</ref><ref type="bibr" target="#b40">42]</ref> or structured <ref type="bibr" target="#b35">[37,</ref><ref type="bibr" target="#b37">39]</ref> knowledge has recently gained attention. Particularly noteworthy is the integration of structured knowledge through Semantic Web resources such as knowledge graphs (KGs) <ref type="bibr" target="#b42">[44]</ref>. This approach harnesses the structured nature of KGs to enrich the understanding of LMs of complex relationships between entities, providing a more robust semantic framework. As a result, models equipped with this integrated knowledge demonstrate significant improvements in accuracy and contextual understanding for downstream tasks compared to methods that do not utilize KGs <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b36">38,</ref><ref type="bibr" target="#b43">45,</ref><ref type="bibr" target="#b44">46]</ref>.</p><p>However, these approaches often introduce a large computational overhead by training additional graph-based models <ref type="bibr" target="#b43">[45,</ref><ref type="bibr" target="#b44">46]</ref> and require the fusion of different representations, e.g. tokens and graph representations, that are required to integrate the knowledge. While methods have been proposed that introduce knowledge by pre-training LMs through masking tasks <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b27">29]</ref>, additional pretraining of already pre-trained models suffers from catastrophic forgetting, where the model loses previously introduced knowledge and its ability to solve previous tasks <ref type="bibr" target="#b12">[13]</ref>. This hinders the seamless integration of knowledge into the actual LM required to easily adapt to complex downstream tasks related to natural language processing (NLP) <ref type="bibr" target="#b34">[36]</ref>.</p><p>To prevent the model from losing its high-quality language representation learned through its initial pre-training, existing work on KG pre-training leverages large text corpora to jointly reintroduce language modeling tasks parallel to KG pre-training <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b36">38]</ref>. This requires large additional datasets to be created and processed during training that do not benefit the actual goal of introducing specific knowledge. This again introduces a large computational overhead.</p><p>In this work, we provide an alternative path for knowledge pre-training based on strategies from continual learning, an emerging research field that develops strategies to continuously train models while avoiding catastrophic forgetting <ref type="bibr" target="#b3">[4]</ref> that does not suffer from additional computational overhead. Inspired by Capsule networks <ref type="bibr" target="#b10">[11]</ref> that have been successfully adopted for continual knowledge integration in a multi-task scenario for automatic KG completion <ref type="bibr" target="#b22">[23]</ref>, we introduce PreAdapter, an adapted method to integrating knowledge from KGs during pre-training. This method prevents the deterioration of the original language understanding (catastrophic forgetting) but also ensures that integrated KG knowledge is not forgotten during fine-tuning on natural language-specific downstream tasks. Thus, our approach allows for integrating structural knowledge from KGs Fig. <ref type="figure">1</ref>. The two training phases of PreAdapter. The KG pre-training phase uses adapter layers to integrate knowledge from KGs into the LM through masked language modeling on KG triples that are converted to natural language. Additionally, a knowledgeintegration binary mask for all adapter parameters is learned during KG pre-training. This mask serves as update gate for important neurons that should not be updated during fine-tuned to prevent catastrophic forgetting on newly integrated KG knowledge while still allowing to access the knowledge through the forward pass. created by Semantic Web research across pre-training and downstream tasks using a shared adapter, which employs a novel knowledge-integration masking strategy.</p><p>We illustrate our approach for the KG pre-training phase and the subsequent fine-tuning phase in Figure <ref type="figure">1</ref>. In the KG pre-training phase, additional knowledge from KGs is integrated into a pre-trained LM through converting KG triples to natural sentences and training a masked language modeling objective. Here, adapters are leveraged to retain the language modeling abilities of the initial pretrained model. To further ensure that the resulting knowledge-enriched model does not suffer from catastrophic forgetting during the subsequent fine-tuning phase on downstream tasks such as question answering, additional knowledgeintegration masks are learned during the KG pre-training phase. These binary masks encourage the model to focus on a subset of neurons within the adapter layers during KG pre-training. To maintain the knowledge integrated into the model, the fine-tuning phase then uses these binary masks to prevent updates to neurons used in the KG pre-training phase while still retaining access to their outputs in the forward pass. Experimental results on two multiple choice question answering tasks demonstrate performance improvements compared to baseline models without KG integration and other pre-training-based knowledge integration methods<ref type="foot" target="#foot_0">foot_0</ref> .</p><p>The remainder of this work is structured as follows: Section 2 covers work related to the integration of knowledge from KGs into LMs. Section 3 introduces our proposed PreAdapter for KG pre-training and subsequent fine-tuning while avoiding catastrophic forgetting. Section 4 includes experiments on two question answering tasks while integrating knowledge from the ConceptNet KG. Section 5 concludes the paper.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>Research on integrating KGs into LMs has developed into an active field of research. This field can be broadly categorized into three groups <ref type="bibr" target="#b23">[24]</ref>: KG-enhanced LM pre-training, which focuses on incorporating KGs during the model training phase; KG-enhanced LM inference, which utilizes KGs during the inference stage; and KG-enhanced LM interpretability, that use KGs to understand the knowledge learned by an LM. While improving interpretability and inference presents an interesting and highly relevant problem, it typically requires fundamental changes in the overall architecture, diverging from solutions that utilize a standard LM directly.</p><p>Since our goal is to integrate factual knowledge directly into LM for subsequent language-based downstream tasks and to ensure these models remain interchangeable in a plug-and-play manner, we specifically focus on KG-enhanced pretraining solutions. KGs can be integrated into LMs during pre-training through various methods: as a dedicated training objective, as additional input to the LM, or via instruction tuning.</p><p>Integrating KGs into LM inputs involves incorporating relevant sub-graphs from the KG <ref type="bibr" target="#b15">[16,</ref><ref type="bibr" target="#b30">32,</ref><ref type="bibr" target="#b44">46]</ref>. These methods require alignment of entity mentions within textual input sequences with relevant parts of the KG. Moreover, most of these solutions require the training of graph embeddings as initialization of graph inputs, involving computational and storage overhead <ref type="bibr" target="#b44">[46]</ref>.</p><p>Different from the goal of seamless knowledge integration directly into LMs, instruction tuning does not integrate KGs into language models. Instead, these approaches focus on enriching the prompts or instructions with relevant factual context and tuning the model to better understand the factual knowledge included in these instructions to improve downstream tasks <ref type="bibr" target="#b17">[18,</ref><ref type="bibr" target="#b18">19,</ref><ref type="bibr" target="#b33">35,</ref><ref type="bibr" target="#b39">41]</ref>.</p><p>The idea of knowledge integration through training objectives focuses on designing and incorporating novel knowledge-aware training objectives or leveraging connections of knowledge and input text <ref type="bibr" target="#b23">[24]</ref>. Several works <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b27">29,</ref><ref type="bibr" target="#b41">43]</ref> pre-train an LM on masking tasks, utilizing KGs to specify most informative words within sentence and mask it. Thus, the LM can better learn the representation of entities from the KG. Wang et al. <ref type="bibr" target="#b36">[38]</ref> integrate additional knowledge embeddings following TransE <ref type="bibr" target="#b1">[2]</ref>, to force LMs to better represent entity description. Moiseev et al. <ref type="bibr" target="#b20">[21]</ref> represent KG triples as textual sequences, where the object or subject entity is masked and the model is required to predict the mask. To avoid the catastrophic forgetting effect that leads to degradation of the language representation, both works <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b36">38]</ref> further introduce a masking task on textual corpora, introducing additional computational overhead, and requiring textual training data.</p><p>Another approach to avoid catastrophic forgetting while integrating KG into LM are adapters <ref type="bibr" target="#b34">[36]</ref>. The adapter is trained with knowledge from the KG, while the base language model remains frozen to prevent updates that could deteriorate its language modeling capabilities. Subsequently, for fine-tuning the knowledgeenriched model to the downstream task, the adapter weights are frozen and the base model's weights are updated. Thus, for each downstream task, the entire LM must be trained and saved, making this approach inefficient in terms of parameters and storage. Alternatively, the same adapter-based pre-training approach has also been used by Lauscher et al. <ref type="bibr" target="#b13">[14]</ref> who update the adapter instead of the base LM during fine-tuning on downstream tasks. This approach is more efficient since it reduces the trainable parameters during fine-tuning to the adapter weights instead of using the entire LM. However, the model is not prevented from overwriting the knowledge obtained during KG pre-training in the fine-tuning phase. Another recent approach <ref type="bibr" target="#b22">[23]</ref> employs the capsule architecture <ref type="bibr" target="#b10">[11]</ref> to integrate information from KGs into language models within a continual learning framework, effectively avoiding the catastrophic forgetting effect. The capsule architecture features a routing mechanism that enables similar KG-related tasks to benefit from shared feature knowledge. In contrast to these works, we propose PreAdapter, a solution where different tasks, such as KG integration and question answering, can benefit from each other while remaining parameter efficient and avoiding catastrophic forgetting.</p><p>In addition to the methods discussed, there are also approaches that do not inject KG information into LMs but instead focus on fusing both representations <ref type="bibr" target="#b4">[5,</ref><ref type="bibr" target="#b43">45]</ref>. However, these methods necessitate the alignment of textual representations with relevant sub-graphs and the training of fusion mechanisms. Since both LM and KG models must be trained and fused, these approaches involve additional computational and storage overhead and are -different from our PreAdapter method -not directly interchangeable with vanilla LMs in downstream tasks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Methodology</head><p>This section outlines the architectural framework used to integrate knowledge from KGs into LMs and details the experimental procedures for both pre-training and fine-tuning phases.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Graph to Natural Language Representation</head><p>One goal of our approach is to avoid the architectural changes typically required for knowledge integration into the language model while ensuring that the linguistic capabilities of the LM are maintained. However, introducing knowledge from KGs in its canonical subject-relation-object (sro) format introduces an input format that significantly differs from the typical natural language texts used in downstream tasks. This leads to several challenges, including tokenization problems (e.g., atlocation → at lo cation), distortion of linguistic structures (since sro does not form valid sentences) and alignment difficulties (where atlocation can be expressed using various words and phrases). Therefore, we adopt the strategy from prior studies <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b5">6,</ref><ref type="bibr" target="#b22">23,</ref><ref type="bibr" target="#b43">45]</ref> and employ templates to transform triples into valid natural language sentences for input. This approach allows us to pre-train the language model without the language understanding shifts associated with non-standard inputs, although it remains susceptible to catastrophic forgetting.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Vanilla Adapter</head><p>When knowledge is injected into language models during a second phase of pretraining, catastrophic forgetting can occur, leading to a loss of information acquired in the initial pre-training phase. As the language modeling capabilities and implicit knowledge acquired during the first pre-training phase are considered vital for solving downstream tasks, several studies have incorporated additional adapters <ref type="bibr" target="#b7">[8]</ref> into the architecture of a pre-trained LM to maintain the initial knowledge <ref type="bibr" target="#b34">[36]</ref>. These additional model parameters can be utilized during the second pre-training phase on the KG triples, while the original parameters of the model are frozen to preserve all weights from the initial pre-training.</p><p>To achieve this, adapter modules a are added into each Transformer block of the LM, each Adapter module consisting of two fully connected neural layers. First, the input of the adapter module is obtained by taking the output of an intermediate layer h ∈ R ds×d h within the transformer block for an LM with sequence length d s and hidden dimensionality d h . The adapter module applies an up or down projection through the first fully connected layer f (1) : R ds×d h → R ds×da with latent adapter dimensionality d a chosen depending on the desired number of trainable parameters for the second pre-training phase. This layer is followed by a non-linearity σ and the opposite projection through fully connected layer f (2) : R ds×da → R ds×d h that maps back to the adapter's original input dimensionality. The output of each adapter module maintains the same dimensionality as its input, allowing it to seamlessly reintegrate into the LM. Concurrently, a skip connection reintroduces the original output of the LM into the network, ensuring that the LM can consistently access its initial hidden representations. Formally, the intermediate layer output h is replaced by</p><formula xml:id="formula_0">h ′ = f (2) (σ(f (1) ((h)))) + h.</formula><p>(1)</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3">PreAdapter</head><p>While the vanilla adapter prevents catastrophic forgetting of information from the initial pre-training phase during second pre-training with KG triples, previously learned knowledge is not protected in subsequent fine-tuning of a knowledgeenriched model to downstream tasks such as question answering, which we show in the experiments in Section 4 to noticeably hinder predictive performance. To enable fine-tuning on downstream tasks without any loss of knowledge, we propose PreAdapter that uses a masking procedure to also protect the knowledge obtained in the second pre-training phase on KG triples.</p><p>The knowledge pre-training phase. PreAdapter adopts vanilla Adapters to prevent the loss of the original language representation during the second pretraining phase. Additionally, during the pre-training phase, a knowledge-integration masking mechanism allows the reservation of neurons within the adapter layers, which remain frozen during the fine-tuning phase to preserve the knowledge embedded in these neurons. This gating mechanism is implemented by a trainable mask m for each fully connected layer within the adapter modules. This mask, which matches the dimensionality of the corresponding layer, is transformed by a sigmoid nonlinearity as activation function producing a pseudo-gate with values in [0, 1] for each neuron of the adapter modules. To ensure that neurons are fully selected or left unused by the gating mechanism, a positive scalar s is multiplied to the masks. The value of s is progressively increased during training, which gradually drives the gating function toward producing binary decisions as knowledge pretraining advances. This yields the gating vector</p><formula xml:id="formula_1">g = σ(s • m).<label>(2)</label></formula><p>Obtaining gating vectors g (1) and g (2) for the up-or down-projection layer f (1)  and the reverse projection layer f (2) within a vanilla adapter, the output of the PreAdapter is produced by combining these vectors through the Hadamard product (⊗). This process effectively removes connections to the respective reserved neurons, thereby preserving them for the subsequent fine-tuning step.</p><formula xml:id="formula_2">h ′ = f (2) ((f (1) (h) ⊗ g (1) ) ⊗ g (2) )<label>(3)</label></formula><p>Once knowledge pre-training is completed, we follow Ke et al. <ref type="bibr" target="#b9">[10]</ref> and binarize the final gating vectors by</p><formula xml:id="formula_3">g ′ i = 1 if g i &gt; 0.5 0 otherwise.<label>(4)</label></formula><p>Lastly, we ensure that the knowledge pre-training phase does not occupy all neurons within the adapter layers, preserving sufficient trainable parameters for the final fine-tuning phase.</p><p>To ensure that the trainable gating vectors g ′ yield sufficient unoccupied neurons corresponding to 0 entries in the gating vector, we incorporate an additional L1-regularization term into the loss function L during the knowledge pre-training phase scaled by a scalar hyperparameter λ, resulting in</p><formula xml:id="formula_4">L ′ = L + λ • ∥g∥.</formula><p>(</p><formula xml:id="formula_5">)<label>5</label></formula><p>The fine-tuning phase. When fine-tuning the LM on downstream tasks such as question answering, it is crucial to avoid overriding the neurons already used by the knowledge pre-training to prevent catastrophic forgetting effects. To achieve this, during the fine-tuning phase, we prevent updates to the neurons that obtained a 1 in the gating vectors g by gating the gradients ∇ of the respective layer through</p><formula xml:id="formula_6">∇ ′ = (1 -g ′ ) ⊗ ∇.<label>(6)</label></formula><p>This allows the neurons used during the pre-training to be accessed during finetuning in the forward pass of the network but prevents any updates that may cause catastrophic forgetting, while the previously unoccupied neurons can be fully updated.</p><p>As the regularization (cf. Equation ( <ref type="formula" target="#formula_5">5</ref>)) is removed from the loss term during fine-tuning, the training process will make use of any previously unused neurons to learn the downstream task. Both, the skip connection in the adapters outputs, and the access to neurons utilized during the KG pre-training, facilitate the integration of pre-training knowledge into the learning process of the downstream task, while simultaneously, catastrophic forgetting is effectively mitigated by the gradient gates.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Experiments</head><p>In this section, we first cover the task definition and datasets, introduce baselines, hyperparameters, and the pre-training and fine-tuning phases before discussing the results of our experiments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">MCQA Task Definition</head><p>Multiple choice question answering is a knowledge-intensive task where a question is presented along with a set of potential answer candidates. The language model is trained to select the correct answer from these choices based on the information provided in the question and the available candidate answers.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Datasets</head><p>For our experiments we use well-established knowledge driven datasets on multiple choice question answering (QA): CommonsenseQA <ref type="bibr" target="#b32">[34]</ref> is a 5-way multiple choice QA dataset that needs commonsense reasoning abilities to answer. As the original test set is not publicly available and the performance of the trained model can only be evaluated once every two weeks on the official leaderboard, we use the well-established CSQA in-house split in our experiments <ref type="bibr" target="#b14">[15]</ref>. Open-BookQA <ref type="bibr" target="#b19">[20]</ref> is a 4-way multiple choice QA dataset. For our experiments, we use the official data split <ref type="bibr" target="#b19">[20]</ref>. The statistics of both QA datasets are summarized in Table <ref type="table" target="#tab_0">1</ref>. As a source of factual knowledge, we incorporate the ConceptNet KG <ref type="bibr" target="#b29">[31]</ref>, which contains general knowledge facts. For our experiments, we utilize  <ref type="table" target="#tab_0">1</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">Baselines</head><p>As previously discussed in Section 2, multiple strategies exist for integrating knowledge from KGs into LMs through additional pre-training. In our experiments, we implement these strategies to provide a direct comparison and identify the best-performing strategy for integrating KG knowledge into LMs by pretraining. All methods use the model architecture and pre-trained weights of the RoBERTa-large LM <ref type="bibr" target="#b16">[17]</ref> for initialization to facilitate direct comparability.</p><p>As an initial baseline, we compare to the fine-tuned RoBERTa-large LM on all QA tasks without integrating any KG information, referred to as RoBERTa in the following.</p><p>To measure the performance of training the model on both the KG and the QA tasks without taking measures to prevent the catastrophic forgetting effect, we first train the pre-trained LM on information from the KG and afterwards fine-tune the resulting model on the QA task, referred to as RoBERTa+KG.</p><p>To prevent catastrophic forgetting of the original pre-trained LM weights, we follow <ref type="bibr" target="#b7">[8]</ref> and employ vanilla adapter layers while keeping the original LM weights frozen during training. In this setup, we provide a pure Adapter baseline by fine-tuning a RoBERTa-large model with adapters directly on the QA task without any KG knowledge integration. Further, we follow <ref type="bibr" target="#b13">[14]</ref> and first train the adapter on KG triples and afterwards fine-tune the adapter on the QA task, leading to the Adapter+KG model.</p><p>As an alternative to training the QA task into the adapters themselves, Wang et al. <ref type="bibr" target="#b34">[36]</ref> propose to train knowledge into the adapter but invert the freezing process for downstream tasks, freezing all adapter parameters and unfreezing the original model weights, which we implement as K-Adapter baseline.</p><p>Lastly, we implement the CapsKG model <ref type="bibr" target="#b22">[23]</ref> that enables the training of multiple similar tasks while avoiding catastrophic forgetting for comparison. As with Adapters, Capsule layers are added between the frozen RoBERTa-large network. We then train the model on KG triples as a first task and "fine-tune" on QA afterwards as a second task.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.4">Hyperparameters</head><p>All models used within our experiments use the RoBERTa-large LM with maximum sequence length 64. For knowledge pre-training, we train all models for five epochs on the template-transformed triples of the ConcepNet KG subset with batch size 100 and learning rate 1e-4 using the Adam optimizer <ref type="bibr" target="#b11">[12]</ref>. Fine-tuning for question answering is carried out with batch size of 32 and learning rate 1e-5 using Adam and training for 100 epochs with early stopping after 4 epochs on the official development sets as established in prior work <ref type="bibr" target="#b4">[5,</ref><ref type="bibr" target="#b43">45]</ref>. For K-Adapter, we use the original architecture with its recommended default parameters by Wang et al. <ref type="bibr" target="#b34">[36]</ref>. For all other adapter-based models, adapter modules are integrated into the LM before each layer normalization within the transformer blocks following <ref type="bibr" target="#b7">[8]</ref>, resulting in two Adapter modules per Transformer block and 48 adapter modules in the entire LM. The intermediate dimensionality of the adapter modules d a is set to 256 neurons. Lastly, for the PreAdapter the weight for gating vector regularization λ is set to 1e-3 during knowledge pre-training.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.5">Knowledge Graph Pre-training</head><p>To seamlessly integrate the KG information into the LM and to avoid the challenges discussed in Section 3.1, we use a prompting-based pre-training approach. This method facilitates an effective adaptation of the model to the KG domain, as shown in previous works <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b22">23]</ref>. The conversion of triples of the ConceptNet KG subset into textual representations was accomplished using the established sentence templates from Zhang et al. <ref type="bibr" target="#b43">[45]</ref>. ConceptNet relation types and their respective templates are listed in Table <ref type="table" target="#tab_1">2</ref>. Applying these templates to a triple fact with structure (subject, relation, object) such as (greenwood, isa, forest) results in the converted input sequence greenwood is a forest. After obtaining the converted sentence, we randomly mask the subject or object with equal probability, creating an input sentence, e.g. (greenwood is a &lt;mask&gt;). In the case where the object or subject consists of multiple tokens, we randomly mask one token. In this setting, we train the models on the entire KG to integrate all available knowledge of the KG into the LM through template-based input sequences.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.6">Multiple Choice Question Fine-tuning</head><p>Each QA training sample S = (Q, (a 1 , a 2 , . . . , a n )) consists of the question Q = (w 1 , . . . , w nq ) and a set of potential answer options a 1 , . . . , a n . Following <ref type="bibr" target="#b32">[34]</ref> for each possible answer option a i we concatenate the question sequence Q with the answer option a i separated by special RoBERTa &lt;sep&gt; token resulting in n sequences Q &lt;sep&gt; a 1 , Q &lt;sep&gt; a 2 , ..., Q &lt;sep&gt; a n . Each resulting question-answer pair sequence is forwarded through the LM and the final sequence pooling layer to yield a question-answer representation. Each pooled representation is forwarded through a linear layer for dimension reduction to one logit l i : R d h → R 1 . The n individual logits l 1 , . . . , l n for each question-answer pair are then concatenated and trained via cross-entropy to predict the correct question-answer pair.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.7">Results</head><p>We evaluate our knowledge-enriched LM using the two established multiple choice question answering datasets CSQA and OBQA (see Section 4.2). We compare our proposed solution to multiple baselines, examining scenarios both with and without knowledge integration.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Quantitative Results</head><p>The resulting QA prediction accuracies of the models are summarized in Table <ref type="table" target="#tab_2">3</ref>. Note that models with +KG, as well as K-Adapter, CapsKG, and our PreAdapter, are models that have been pre-trained on the ConceptNet KG, while RoBERTa and Adapter are directly fine-tuned on the question answering task without KG pre-training. RoBERTa provides the direct baseline of fine-tuning a RoBERTa-large LM directly on the question answering task without knowledge integration. Adding the KG pre-training directly in RoBERTa+KG causes significant drops in performance, indicating that initial language modeling capabilities are impeded due to catastrophic forgetting. Using adapters for fine-tuning instead of tuning the whole LM in Adapter only provides improvement over fine-tuning the base LM on the CSQA data, while suffering strong performance degradation on OBQA. The addition of KG pre-training to adapters in Adapter+KG is also not able to improve adapter performance, with CSQA results being similar to using Adapters without KG pre-training and OBQA results still not outperforming simple fine-tuning of the entire LM. This shows that the existing adapter solution is not able to handle catastrophic forgetting across both the KG pre-training and subsequent fine-tuning stage. K-Adapter's approach of pre-training knowledge into the adapters and subsequently fine-tuning the original LM parameters instead of the Adapter performs poorly on both datasets, indicating that this approach looses the LM's initial language modeling capabilities due to catastrophic forgetting. While the Cap-sKG model theoretically provides means to prevent catastrophic forgetting for both KG pre-training and fine-tuning phases, we observe lower performance than the direct fine-tuning model when applying it to the OBQA dataset in spite of its substantially longer training time compared to all other evaluated methods.</p><p>Here, low performance could be attributed to CapsKG's complex capsule-based routing process, designed for sequentially training similar tasks in a continual learning setting. It heavily relies on feature sharing that may not be well-suited to the significantly distinct tasks of knowledge injection through masked language modeling and multiple choice QA. Consequently, the CapsKG architecture also only achieves minor improvements compared to direct model fine-tuning on the CSQA dataset.</p><p>In contrast to these methods, our proposed PreAdapter is capable of KG pretraining while maintaining predictive accuracies above the directly fine-tuned LM. It outperforms all baselines while not suffering from catastrophic forgetting during both training phases. This shows that it is possible to integrate structural knowledge into LMs through masked language modeling-based KG pre-training which does not require any graph access during downstream tasks.</p><p>Parameter Efficiency As previously discussed in Section 2, the evaluated approaches have varying efficiency with respect to the model parameters. Although the initial RoBERTa model and the pre-trained RoBERTa+KG variant require no addition of further model parameters, all existing model parameters of the LM need to be updated during pre-training and fine-tuning. In contrast, Adapter and Adapter+KG add a single set of additional parameters into the model for pre-training and fine-tuning while keeping the original model frozen. Based on the hyperparameters within our experiments, the adapter-size was ≈ 30% of the original RoBERTa model, allowing this approach to remain parameter efficient during the training process. K-Adapter first creates new adapter layers for KG pre-training and afterwards freezes the adapters to update the entire LM in fine-tuning. This leads to both an increase of parameters through the addition of adapters and a longer fine-tuning process through updating the entire LM parameters. CapsKG, like other adapter-based approaches, keeps the original LM frozen and adds new parameters for KG pre-training and fine-tuning. Additionally, CapsKG adds small feature extractor capsules and a convolution-based routing mechanism to the model. As these modules use very few parameters by design, the resulting CapsKG model also adds ≈ 30% further parameters to the original RoBERTa model as other adapter methods. Finally, our PreAdapter also uses a frozen LM with additional parameters added through the adapter. Additionally, our proposed gating mechanism adds further parameters through the trainable masks in the gating mechanism in Equation (2). However, as these masks are directly applied to individual neurons in the adapter layers, their addition only results in minor increases in model parameters. In total, PreAdapter adds ≈ 30% further parameters to the underlying LM in our experiments like the other adapter-based solutions. The similar number of additional parameters over most architectures additionally allows for a fair comparison of the actual performance gain with respect to the model capacity. Overall, our PreAdapter approach is able to maintain the parameter efficiency of other adapter-based approaches while effectively preventing catastrophic forgetting during KG pretraining and subsequent fine-tuning on downstream tasks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Conclusion</head><p>In this work, we introduced PreAdapter, a novel adapter-based method to seamlessly integrate knowledge from KGs into an LM. This is accomplished by pretraining through masked language modeling while preventing catastrophic forgetting effects. During the KG pre-training phase, PreAdapter aims to preserve the inherent knowledge already encoded within the LM by leveraging adapters. In contrast to existing pre-training-based KG integration methods, PreAdapter learns a knowledge-integration gating mechanism that identifies important neurons within the adapter layers during KG pre-training. In the fine-tuning phase on the downstream task, these learned gates are leveraged to retain the values of relevant neurons, thereby preserving the knowledge integrated from the KG pre-training phase. This two-phase approach avoids the effect of catastrophic forgetting, while ensuring access to both the original language modeling capabilities and integrated knowledge during the KG pre-training phase.</p><p>We evaluated PreAdapter on the knowledge-intensive task of multiple choice question answering, conducting experiments on two established datasets, CSQA and OBQA, utilizing commonsense knowledge from the ConceptNet KG for KG pre-training. Our experimental results confirm that without additional mea-sures, this task suffers significantly from catastrophic forgetting. Even established adapter-based strategies fail to prevent catastrophic forgetting effects during the KG pre-training phase and the subsequent fine-tuning phase. In contrast, our PreAdapter maintains both language modeling and knowledge integration capabilities, consistently outperforming all baselines on both datasets. Overall, our results suggest that PreAdpater is effective for pre-training-based knowledge integration from KGs into LMs while ensuring access to this knowledge for the downstream task. This capability underscores its significance and applicability to the semantic web community.</p><p>In this study, evaluations of PreAdapter are limited to masked language modeling using RoBERTa as encoder-based LM to ensure comparability with previous research. As our method is dependent on the specific LM used, identifying the best suitable LM is a promising area of future research. Consequently we also aim to extend our research to assess the effectiveness of PreAdapter for integrating knowledge into generative LMs. In addition, we note that the integration of knowledge through KG pre-training depends on the templates used to convert triples into natural language. While this study does not evaluate these templates but instead relies on established choices, we plan to comprehensively analyze the impact of KG triple conversion templates in future work. Further, automatic construction of triple conversion templates is another promising area of future research.</p><p>Supplemental Material Statement: Source code for our PreAdapter and the evaluated baselines is publicly available at: <ref type="url" target="https://professor-x.de/code-preadapter">https://professor-x.de/code-preadapter</ref>. The used datasets CSQA and OBQA constitute established datasets that are openly available: <ref type="url" target="https://www.tau-nlp.sites.tau.ac.il/commonsenseqa">https://www.tau-nlp.sites.tau.ac.il/commonsenseqa</ref>, <ref type="url" target="https://allenai.org/data/open-book-qa">https:// allenai.org/data/open-book-qa</ref>. The CSQA in-house split <ref type="bibr" target="#b14">[15]</ref> is openly available: <ref type="url" target="https://github.com/INK-USC/MHGRN">https://github.com/INK-USC/MHGRN</ref>. The used subset of the Concept-Net KG follows existing work <ref type="bibr" target="#b38">[40]</ref> and is openly available: <ref type="url" target="https://github.com/michiyasunaga/qagnn">https://github.com/ michiyasunaga/qagnn</ref>.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 .</head><label>1</label><figDesc>Dataset statistics after preprocessing for QA datasets and the respective ConceptNet subsets, which provide the relevant knowledge for the tasks. ConceptNet facts ConceptNet CSQA and ConceptNet OBQA used in<ref type="bibr" target="#b4">[5,</ref><ref type="bibr" target="#b38">40,</ref><ref type="bibr" target="#b43">45]</ref>, consisting of 17 relation types that are known to provide relevant knowledge for the QA task. We have removed the relation relatedto for computation efficiency, as this relation type merely provides an abstract connection between two concepts that can be substituted by more concrete relations. The statistics of the KG dataset can be seen in Table</figDesc><table><row><cell>Dataset/Split</cell><cell>Train</cell><cell>Dev</cell><cell>Test</cell><cell>Total</cell></row><row><cell>CSQA</cell><cell>8 500</cell><cell>1 221</cell><cell>1 241</cell><cell>12 102</cell></row><row><cell>OBQA</cell><cell>4 957</cell><cell>500</cell><cell>500</cell><cell>5 957</cell></row><row><cell>ConceptNetCSQA</cell><cell>116 273</cell><cell>71 660</cell><cell>69 575</cell><cell>257 508</cell></row><row><cell>ConceptNetOBQA</cell><cell>74 214</cell><cell>43 901</cell><cell>42 670</cell><cell>160 785</cell></row><row><cell>the subsets of</cell><cell></cell><cell></cell><cell></cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2 .</head><label>2</label><figDesc>Relation types contained in the ConceptNet KG, alongside the templates from<ref type="bibr" target="#b43">[45]</ref> used for converting triples into sentences.</figDesc><table><row><cell>CN relation type</cell><cell>Template</cell></row><row><cell>antonym</cell><cell>is the antonym of</cell></row><row><cell>atlocation</cell><cell>is at location of</cell></row><row><cell>capableof</cell><cell>is capable of</cell></row><row><cell>causes</cell><cell>causes</cell></row><row><cell>createdby</cell><cell>is created by</cell></row><row><cell>isa</cell><cell>is a kind of</cell></row><row><cell>desires</cell><cell>desires</cell></row><row><cell>hassubevent</cell><cell>has subevent</cell></row><row><cell>partof</cell><cell>is part of</cell></row><row><cell>hascontext</cell><cell>has context</cell></row><row><cell>hasproperty</cell><cell>has property</cell></row><row><cell>madeof</cell><cell>is made of</cell></row><row><cell>notcapableof</cell><cell>is not capable of</cell></row><row><cell>notdesires</cell><cell>does not desires</cell></row><row><cell>receivesaction</cell><cell>is</cell></row><row><cell>usedfor</cell><cell>is used for</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 3 .</head><label>3</label><figDesc>Multiple choice QA on CSQA and OBQA datasets, repeated with 15 seeds and reporting mean and standard deviation of accuracy. † indicates results taken from<ref type="bibr" target="#b4">[5]</ref>.</figDesc><table><row><cell>Model/Dataset</cell><cell>CSQA</cell><cell>OBQA</cell></row><row><cell>RoBERTa</cell><cell>0.687 ± 0.006  †</cell><cell>0.648 ± 0.024  †</cell></row><row><cell>RoBERTa + KG</cell><cell>0.615 ± 0.013</cell><cell>0.571 ± 0.022</cell></row><row><cell>Adapter</cell><cell>0.692 ± 0.010</cell><cell>0.510 ± 0.100</cell></row><row><cell>Adapter + KG</cell><cell>0.692 ± 0.008</cell><cell>0.637 ± 0.019</cell></row><row><cell>K-Adapter</cell><cell>0.625 ± 0.076</cell><cell>0.591 ± 0.059</cell></row><row><cell>CapsKG</cell><cell>0.689 ± 0.010</cell><cell>0.641 ± 0.018</cell></row><row><cell>PreAdapter</cell><cell>0.696 ± 0.007</cell><cell>0.654 ± 0.017</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_0"><p>Our code is publicly available at: https://professor-x.de/code-preadapter.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_1"><p>https://gepris.dfg.de/gepris/projekt/529659926.</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgements</head><p>This work was partially funded by the <rs type="funder">Deutsche Forschungsgemeinschaft (DFG, German Research Foundation)</rs> under the project <rs type="projectName">LitBERT</rs>, project no. 529659926. <ref type="bibr" target="#b3">4</ref> </p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funded-project" xml:id="_E6mMs9j">
+					<idno type="grant-number">529659926. 4</idno>
+					<orgName type="project" subtype="full">LitBERT</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Abstractive Text Summarization based on Language Model Conditioning and Locality Modeling</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Aksenov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Moreno-Schneider</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Bourgonje</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Schwarzenberg</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Hennig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Rehm</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Twelfth Language Resources and Evaluation Conference</title>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Calzolari</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><surname>Béchet</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Blache</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Choukri</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Cieri</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Declerck</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Goggi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Isahara</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Maegaard</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Mariani</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Mazo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Moreno</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Odijk</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Piperidis</surname></persName>
+		</editor>
+		<meeting>the Twelfth Language Resources and Evaluation Conference</meeting>
+		<imprint>
+			<date type="published" when="2020-05">May 2020</date>
+			<biblScope unit="page" from="6680" to="6689" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Aksenov, D., Moreno-Schneider, J., Bourgonje, P., Schwarzenberg, R., Hennig, L., Rehm, G.: Abstractive Text Summarization based on Language Model Condition- ing and Locality Modeling. In: Calzolari, N., Béchet, F., Blache, P., Choukri, K., Cieri, C., Declerck, T., Goggi, S., Isahara, H., Maegaard, B., Mariani, J., Mazo, H., Moreno, A., Odijk, J., Piperidis, S. (eds.) Proceedings of the Twelfth Language Resources and Evaluation Conference. pp. 6680-6689 (May 2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Translating Embeddings for Modeling Multi-relational Data</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Bordes</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Usunier</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Garcia-Duran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Weston</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Yakhnenko</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">26</biblScope>
+			<date type="published" when="2013">2013</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bordes, A., Usunier, N., Garcia-Duran, A., Weston, J., Yakhnenko, O.: Translating Embeddings for Modeling Multi-relational Data. In: Advances in Neural Informa- tion Processing Systems. vol. 26 (2013)</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">COMET: Commonsense Transformers for Automatic Knowledge Graph Construction</title>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannah</forename><surname>Rashkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Sap</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chaitanya</forename><surname>Malaviya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Asli</forename><surname>Celikyilmaz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p19-1470</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Korhonen</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Traum</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Màrquez</surname></persName>
+		</editor>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019-07">Jul 2019</date>
+			<biblScope unit="page" from="4762" to="4779" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bosselut, A., Rashkin, H., Sap, M., Malaviya, C., Celikyilmaz, A., Choi, Y.: COMET: Commonsense Transformers for Automatic Knowledge Graph Construc- tion. In: Korhonen, A., Traum, D., Màrquez, L. (eds.) Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics. pp. 4762-4779 (Jul 2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">A continual learning survey: Defying forgetting in classification tasks</title>
+		<author>
+			<persName><forename type="first">Matthias</forename><surname>Delange</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rahaf</forename><surname>Aljundi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marc</forename><surname>Masana</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sarah</forename><surname>Parisot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xu</forename><surname>Jia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ales</forename><surname>Leonardis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Slabaugh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tinne</forename><surname>Tuytelaars</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/tpami.2021.3057446</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Pattern Analysis and Machine Intelligence</title>
+		<title level="j" type="abbrev">IEEE Trans. Pattern Anal. Mach. Intell.</title>
+		<idno type="ISSN">0162-8828</idno>
+		<idno type="ISSNe">1939-3539</idno>
+		<imprint>
+			<biblScope unit="page" from="1" to="1" />
+			<date type="published" when="2021">2021</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Delange, M., Aljundi, R., Masana, M., Parisot, S., Jia, X., Leonardis, A., Slabaugh, G., Tuytelaars, T.: A continual learning survey: Defying forgetting in classification tasks. IEEE Transactions on Pattern Analysis and Machine Intelligence pp. 1-1 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<monogr>
+		<title level="m" type="main">Scalable Multi-Hop Relational Reasoning for Knowledge-Aware Question Answering</title>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">Y</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Ren</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2020-09">Sep 2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Feng, Y., Chen, X., Lin, B.Y., Wang, P., Yan, J., Ren, X.: Scalable Multi-Hop Relational Reasoning for Knowledge-Aware Question Answering (Sep 2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Prompt tuning or fine-tuning-investigating relational knowledge in pre-trained language models</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Fichtel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">C</forename><surname>Kalo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">T</forename><surname>Balke</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">3rd Conference on Automated Knowledge Base Construction</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fichtel, L., Kalo, J.C., Balke, W.T.: Prompt tuning or fine-tuning-investigating relational knowledge in pre-trained language models. In: 3rd Conference on Auto- mated Knowledge Base Construction (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">You Don’t Need Labeled Data for Open-Book Question Answering</title>
+		<author>
+			<persName><forename type="first">Sia</forename><surname>Gholami</surname></persName>
+			<idno type="ORCID">0000-0001-9619-5153</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Mehdi</forename><surname>Noori</surname></persName>
+			<idno type="ORCID">0000-0003-1825-7560</idno>
+		</author>
+		<idno type="DOI">10.3390/app12010111</idno>
+		<idno type="arXiv">arXiv:2111.11520</idno>
+		<ptr target="http://arxiv.org/abs/2111.11520" />
+	</analytic>
+	<monogr>
+		<title level="j">Applied Sciences</title>
+		<title level="j" type="abbrev">Applied Sciences</title>
+		<idno type="ISSNe">2076-3417</idno>
+		<imprint>
+			<biblScope unit="volume">12</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page">111</biblScope>
+			<date type="published" when="2021-11">Nov 2021</date>
+			<publisher>MDPI AG</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gholami, S., Noori, M.: Zero-Shot Open-Book Question Answering (Nov 2021), http://arxiv.org/abs/2111.11520, arXiv:2111.11520 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Parameter-efficient transfer learning for nlp</title>
+		<author>
+			<persName><forename type="first">N</forename><surname>Houlsby</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Giurgiu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Jastrzebski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Morrone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>De Laroussilhe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gesmundo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Attariyan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gelly</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International conference on machine learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="2790" to="2799" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Houlsby, N., Giurgiu, A., Jastrzebski, S., Morrone, B., De Laroussilhe, Q., Ges- mundo, A., Attariyan, M., Gelly, S.: Parameter-efficient transfer learning for nlp. In: International conference on machine learning. pp. 2790-2799. PMLR (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">How Can We Know What Language Models Know</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><forename type="middle">F</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Araki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Neubig</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00324</idno>
+		<ptr target="https://direct.mit.edu/tacl/article/96460" />
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="page" from="423" to="438" />
+			<date type="published" when="2020-12">Dec 2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jiang, Z., Xu, F.F., Araki, J., Neubig, G.: How Can We Know What Language Models Know? Transactions of the Association for Computational Linguistics 8, 423-438 (Dec 2020). https://doi.org/10.1162/tacl_a_00324, https://direct.mit. edu/tacl/article/96460</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Continual training of language models for few-shot learning</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Ke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Shao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Shu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2210.05549</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ke, Z., Lin, H., Shao, Y., Xu, H., Shu, L., Liu, B.: Continual training of language models for few-shot learning. arXiv preprint arXiv:2210.05549 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Continual lifelong learning in neural systems</title>
+		<author>
+			<persName><forename type="first">Owen</forename><surname>He</surname></persName>
+		</author>
+		<idno type="DOI">10.33612/diss.625549871</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="page" from="22443" to="22456" />
+			<date type="published" when="2021">2021</date>
+			<publisher>University of Groningen Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ke, Z., Liu, B., Ma, N., Xu, H., Shu, L.: Achieving forgetting prevention and knowledge transfer in continual learning. Advances in Neural Information Process- ing Systems 34, 22443-22456 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">Preprint repository arXiv achieves milestone million uploads</title>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">P</forename><surname>Kingma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ba</surname></persName>
+		</author>
+		<idno type="DOI">10.1063/pt.5.028530</idno>
+		<idno type="arXiv">arXiv:1412.6980</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Physics Today</title>
+		<title level="j" type="abbrev">Phys. Today</title>
+		<idno type="ISSNe">1945-0699</idno>
+		<imprint>
+			<biblScope unit="volume">2014</biblScope>
+			<biblScope unit="issue">12</biblScope>
+			<date type="published" when="2014-12-30">2014</date>
+			<publisher>AIP Publishing</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Kingma, D.P., Ba, J.: Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 (2014)</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Overcoming catastrophic forgetting in neural networks</title>
+		<author>
+			<persName><forename type="first">James</forename><surname>Kirkpatrick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Razvan</forename><surname>Pascanu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Neil</forename><surname>Rabinowitz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joel</forename><surname>Veness</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guillaume</forename><surname>Desjardins</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrei</forename><forename type="middle">A</forename><surname>Rusu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kieran</forename><surname>Milan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Quan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tiago</forename><surname>Ramalho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Agnieszka</forename><surname>Grabska-Barwinska</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Demis</forename><surname>Hassabis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Claudia</forename><surname>Clopath</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dharshan</forename><surname>Kumaran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Raia</forename><surname>Hadsell</surname></persName>
+		</author>
+		<idno type="DOI">10.1073/pnas.1611835114</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the National Academy of Sciences</title>
+		<title level="j" type="abbrev">Proc. Natl. Acad. Sci. U.S.A.</title>
+		<idno type="ISSN">0027-8424</idno>
+		<idno type="ISSNe">1091-6490</idno>
+		<imprint>
+			<biblScope unit="volume">114</biblScope>
+			<biblScope unit="issue">13</biblScope>
+			<biblScope unit="page" from="3521" to="3526" />
+			<date type="published" when="2017-03-14">Mar 2017</date>
+			<publisher>Proceedings of the National Academy of Sciences</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kirkpatrick, J., Pascanu, R., Rabinowitz, N., Veness, J., Desjardins, G., Rusu, A.A., Milan, K., Quan, J., Ramalho, T., Grabska-Barwinska, A., Hassabis, D., Clopath, C., Kumaran, D., Hadsell, R.: Overcoming catastrophic forgetting in neu- ral networks. Proceedings of the National Academy of Sciences 114(13), 3521-3526 (Mar 2017)</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Common Sense or World Knowledge? Investigating Adapter-Based Knowledge Injection into Pretrained Transformers</title>
+		<author>
+			<persName><forename type="first">Anne</forename><surname>Lauscher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Olga</forename><surname>Majewska</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Leonardo</forename><forename type="middle">F R</forename><surname>Ribeiro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iryna</forename><surname>Gurevych</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nikolai</forename><surname>Rozanov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Goran</forename><surname>Glavaš</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.deelio-1.5</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of Deep Learning Inside Out (DeeLIO): The First Workshop on Knowledge Extraction and Integration for Deep Learning Architectures</title>
+		<meeting>Deep Learning Inside Out (DeeLIO): The First Workshop on Knowledge Extraction and Integration for Deep Learning Architectures</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="43" to="49" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lauscher, A., Majewska, O., Ribeiro, L.F., Gurevych, I., Rozanov, N., Glavaš, G.: Common sense or world knowledge? investigating adapter-based knowledge injection into pretrained transformers. In: Proceedings of Deep Learning Inside Out (DeeLIO): The First Workshop on Knowledge Extraction and Integration for Deep Learning Architectures. pp. 43-49 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">KagNet: Knowledge-Aware Graph Networks for Commonsense Reasoning</title>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">Y</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Ren</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Inui</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Jiang</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Ng</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">X</forename><surname>Wan</surname></persName>
+		</editor>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</meeting>
+		<imprint>
+			<date type="published" when="2019-11">Nov 2019</date>
+			<biblScope unit="page" from="2829" to="2839" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lin, B.Y., Chen, X., Chen, J., Ren, X.: KagNet: Knowledge-Aware Graph Net- works for Commonsense Reasoning. In: Inui, K., Jiang, J., Ng, V., Wan, X. (eds.) Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Pro- cessing (EMNLP-IJCNLP). pp. 2829-2839 (Nov 2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">K-BERT: Enabling Language Representation with Knowledge Graph</title>
+		<author>
+			<persName><forename type="first">Weijie</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhe</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhiruo</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qi</forename><surname>Ju</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haotang</forename><surname>Deng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ping</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v34i03.5681</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="issue">03</biblScope>
+			<biblScope unit="page" from="2901" to="2908" />
+			<date type="published" when="2020-04-03">Apr 2020</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Liu, W., Zhou, P., Zhao, Z., Wang, Z., Ju, Q., Deng, H., Wang, P.: K-BERT: Enabling Language Representation with Knowledge Graph. Proceedings of the AAAI Conference on Artificial Intelligence 34(03), 2901-2908 (Apr 2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<monogr>
+		<title level="m" type="main">RoBERTa: A Robustly Optimized BERT Pretraining Approach</title>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ott</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Joshi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Stoyanov</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2019-09">Sep 2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., Stoyanov, V.: RoBERTa: A Robustly Optimized BERT Pretrain- ing Approach (Sep 2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">ChatKBQA: A Generate-then-Retrieve Framework for Knowledge Base Question Answering with Fine-tuned Large Language Models</title>
+		<author>
+			<persName><forename type="first">Haoran</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zichen</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiyao</forename><surname>Peng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yikai</forename><surname>Guo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wentai</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chenghao</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guanting</forename><surname>Dong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Meina</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yifan</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anh</forename><forename type="middle">Tuan</forename><surname>Luu</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.findings-acl.122</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics ACL 2024</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="2039" to="2056" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Luo, H., Haihong, E., Tang, Z., Peng, S., Guo, Y., Zhang, W., Ma, C., Dong, G., Song, M., Lin, W.: Chatkbqa: A generate-then-retrieve framework for knowledge base question answering with fine-tuned large language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><forename type="middle">F</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Haf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Pan</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Twelfth International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2023-10">Oct 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Luo, L., Li, Y.F., Haf, R., Pan, S.: Reasoning on Graphs: Faithful and Interpretable Large Language Model Reasoning. In: The Twelfth International Conference on Learning Representations (Oct 2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Mihaylov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Khot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Sabharwal</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing</title>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Riloff</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Chiang</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Hockenmaier</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Tsujii</surname></persName>
+		</editor>
+		<meeting>the 2018 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<date type="published" when="2018-10">Oct 2018</date>
+			<biblScope unit="page" from="2381" to="2391" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mihaylov, T., Clark, P., Khot, T., Sabharwal, A.: Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering. In: Riloff, E., Chiang, D., Hockenmaier, J., Tsujii, J. (eds.) Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing. pp. 2381-2391 (Oct 2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">SKILL: Structured Knowledge Infusion for Large Language Models</title>
+		<author>
+			<persName><forename type="first">F</forename><surname>Moiseev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Dong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Alfonseca</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Jaggi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Carpuat</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">C</forename><surname>De Marneffe</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">I</forename><forename type="middle">V</forename><surname>Meza Ruiz</surname></persName>
+		</editor>
+		<meeting>the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</meeting>
+		<imprint>
+			<date type="published" when="2022-07">Jul 2022</date>
+			<biblScope unit="page" from="1581" to="1588" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Moiseev, F., Dong, Z., Alfonseca, E., Jaggi, M.: SKILL: Structured Knowledge In- fusion for Large Language Models. In: Carpuat, M., de Marneffe, M.C., Meza Ruiz, I.V. (eds.) Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. pp. 1581-1588 (Jul 2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">LM4KG: Improving Common Sense Knowledge Graphs with Language Models</title>
+		<author>
+			<persName><forename type="first">Janna</forename><surname>Omeliyanenko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Albin</forename><surname>Zehe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lena</forename><surname>Hettinger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andreas</forename><surname>Hotho</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-030-62419-4_26</idno>
+		<ptr target="https://doi.org/10.1007/978-3-030-62419-4_26" />
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">Z</forename><surname>Pan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Tamma</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Amato</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Fu</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Polleres</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><surname>Seneviratne</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Kagal</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="456" to="473" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Omeliyanenko, J., Zehe, A., Hettinger, L., Hotho, A.: LM4KG: Improving Com- mon Sense Knowledge Graphs with Language Models. In: Pan, J.Z., Tamma, V., d&apos;Amato, C., Janowicz, K., Fu, B., Polleres, A., Seneviratne, O., Kagal, L. (eds.) The Semantic Web -ISWC 2020. pp. 456-473. Springer International Publishing, Cham (2020). https://doi.org/10.1007/978-3-030-62419-4_26</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">CapsKG: Enabling Continual Knowledge Integration in Language Models for Automatic Knowledge Graph Completion</title>
+		<author>
+			<persName><forename type="first">Janna</forename><surname>Omeliyanenko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Albin</forename><surname>Zehe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andreas</forename><surname>Hotho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Schlör</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-47240-4_33</idno>
+		<ptr target="https://doi.org/10.1007/978-3-031-47240-4_33" />
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">T</forename><forename type="middle">R</forename><surname>Payne</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Qi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Poveda-Villalón</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Stoilos</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Hollink</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Z</forename><surname>Kaoudi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Cheng</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Li</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Switzerland, Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="618" to="636" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Omeliyanenko, J., Zehe, A., Hotho, A., Schlör, D.: CapsKG: Enabling Contin- ual Knowledge Integration in Language Models for Automatic Knowledge Graph Completion. In: Payne, T.R., Presutti, V., Qi, G., Poveda-Villalón, M., Stoi- los, G., Hollink, L., Kaoudi, Z., Cheng, G., Li, J. (eds.) The Semantic Web -ISWC 2023. pp. 618-636. Springer Nature Switzerland, Cham (2023). https: //doi.org/10.1007/978-3-031-47240-4_33</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Unifying Large Language Models and Knowledge Graphs: A Roadmap</title>
+		<author>
+			<persName><forename type="first">Shirui</forename><surname>Pan</surname></persName>
+			<idno type="ORCID">0000-0003-0794-527X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Linhao</forename><surname>Luo</surname></persName>
+			<idno type="ORCID">0000-0003-0027-942X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Yufei</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chen</forename><surname>Chen</surname></persName>
+			<idno type="ORCID">0000-0002-4637-9250</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jiapu</forename><surname>Wang</surname></persName>
+			<idno type="ORCID">0000-0001-7639-5289</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Xindong</forename><surname>Wu</surname></persName>
+			<idno type="ORCID">0000-0003-2396-1704</idno>
+		</author>
+		<idno type="DOI">10.1109/tkde.2024.3352100</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Knowledge and Data Engineering</title>
+		<title level="j" type="abbrev">IEEE Trans. Knowl. Data Eng.</title>
+		<idno type="ISSN">1041-4347</idno>
+		<idno type="ISSNe">2326-3865</idno>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="3580" to="3599" />
+			<date type="published" when="2024-07">2024</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Pan, S., Luo, L., Wang, Y., Chen, C., Wang, J., Wu, X.: Unifying Large Language Models and Knowledge Graphs: A Roadmap. IEEE Transactions on Knowledge and Data Engineering pp. 1-20 (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Improving Question Answering with External Knowledge 26</title>
+		<author>
+			<persName><forename type="first">X</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Cardie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Bakhtin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">H</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1909.01066</idno>
+		<ptr target="http://arxiv.org/abs/1909.01066" />
+	</analytic>
+	<monogr>
+		<title level="m">Language Models as Knowledge Bases?</title>
+		<imprint>
+			<date type="published" when="2019-09">Sep 2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Pan, X., Sun, K., Yu, D., Chen, J., Ji, H., Cardie, C., Yu, D.: Improving Question Answering with External Knowledge 26. Petroni, F., Rocktäschel, T., Lewis, P., Bakhtin, A., Wu, Y., Miller, A.H., Riedel, S.: Language Models as Knowledge Bases? (Sep 2019), http://arxiv.org/abs/1909. 01066, arXiv:1909.01066 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Explain Yourself! Leveraging Language Models for Commonsense Reasoning</title>
+		<author>
+			<persName><forename type="first">Nazneen</forename><forename type="middle">Fatema</forename><surname>Rajani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bryan</forename><surname>Mccann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Caiming</forename><surname>Xiong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Socher</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p19-1487</idno>
+		<idno type="arXiv">arXiv:1906.02361</idno>
+		<ptr target="http://arxiv.org/abs/1906.02361" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019-06">Jun 2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rajani, N.F., McCann, B., Xiong, C., Socher, R.: Explain Yourself! Leveraging Language Models for Commonsense Reasoning (Jun 2019), http://arxiv.org/abs/ 1906.02361, arXiv:1906.02361 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">How Much Knowledge Can You Pack Into the Parameters of a Language Model?</title>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Colin</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noam</forename><surname>Shazeer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.437</idno>
+		<idno type="arXiv">arXiv:2002.08910</idno>
+		<ptr target="http://arxiv.org/abs/2002.08910" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-10">Oct 2020</date>
+		</imprint>
+	</monogr>
+	<note>cs, stat</note>
+	<note type="raw_reference">Roberts, A., Raffel, C., Shazeer, N.: How Much Knowledge Can You Pack Into the Parameters of a Language Model? (Oct 2020), http://arxiv.org/abs/2002.08910, arXiv:2002.08910 [cs, stat]</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Exploiting Structured Knowledge in Text via Graph-Guided Representation Learning</title>
+		<author>
+			<persName><forename type="first">Tao</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yi</forename><surname>Mao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pengcheng</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guodong</forename><surname>Long</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Trischler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weizhu</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.722</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Webber</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Cohn</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>He</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</editor>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-11">Nov 2020</date>
+			<biblScope unit="page" from="8980" to="8994" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shen, T., Mao, Y., He, P., Long, G., Trischler, A., Chen, W.: Exploiting Structured Knowledge in Text via Graph-Guided Representation Learning. In: Webber, B., Cohn, T., He, Y., Liu, Y. (eds.) Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP). pp. 8980-8994 (Nov 2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">AutoPrompt: Eliciting Knowledge from Language Models with Automatically Generated Prompts</title>
+		<author>
+			<persName><forename type="first">Taylor</forename><surname>Shin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yasaman</forename><surname>Razeghi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><forename type="middle">L</forename><surname>Logan Iv</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Wallace</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sameer</forename><surname>Singh</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.346</idno>
+		<idno type="arXiv">arXiv:2010.15980</idno>
+		<ptr target="http://arxiv.org/abs/2010.15980" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-11">Nov 2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shin, T., Razeghi, Y., Logan IV, R.L., Wallace, E., Singh, S.: AutoPrompt: Eliciting Knowledge from Language Models with Automatically Generated Prompts (Nov 2020), http://arxiv.org/abs/2010.15980, arXiv:2010.15980 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">ConceptNet 5.5: An Open Multilingual Graph of General Knowledge</title>
+		<author>
+			<persName><forename type="first">Robyn</forename><surname>Speer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joshua</forename><surname>Chin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Catherine</forename><surname>Havasi</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v31i1.11164</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">31</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2018-12">Dec 2018</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Speer, R., Chin, J., Havasi, C.: ConceptNet 5.5: An Open Multilingual Graph of General Knowledge (Dec 2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">CoLAKE: Contextualized Language and Knowledge Embedding</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Shao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Qiu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Guo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Zhang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 28th International Conference on Computational Linguistics</title>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Scott</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Bel</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Zong</surname></persName>
+		</editor>
+		<meeting>the 28th International Conference on Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2020-12">Dec 2020</date>
+			<biblScope unit="page" from="3660" to="3670" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sun, T., Shao, Y., Qiu, X., Guo, Q., Hu, Y., Huang, X., Zhang, Z.: CoLAKE: Contextualized Language and Knowledge Embedding. In: Scott, D., Bel, N., Zong, C. (eds.) Proceedings of the 28th International Conference on Computational Lin- guistics. pp. 3660-3670 (Dec 2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<monogr>
+		<title level="m" type="main">Review for &quot;Large language models for knowledge graph extraction from tables in materials science&quot;</title>
+		<author>
+			<persName><forename type="first">V</forename><surname>Swamy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Romanou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Jaggi</surname></persName>
+		</author>
+		<idno type="DOI">10.1039/d4dd00362d/v1/review2</idno>
+		<idno type="arXiv">arXiv:2111.08546</idno>
+		<ptr target="http://arxiv.org/abs/2111.08546" />
+		<imprint>
+			<date type="published" when="2021-11">Nov 2021</date>
+			<publisher>Royal Society of Chemistry (RSC)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Swamy, V., Romanou, A., Jaggi, M.: Interpreting Language Models Through Knowledge Graph Extraction (Nov 2021), http://arxiv.org/abs/2111.08546, arXiv:2111.08546 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">CommonsenseQA: A Question Answering Challenge Targeting Commonsense Knowledge</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Talmor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Herzig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Lourie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Berant</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Burstein</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Doran</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Solorio</surname></persName>
+		</editor>
+		<meeting>the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</meeting>
+		<imprint>
+			<date type="published" when="2019-06">Jun 2019</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="4149" to="4158" />
+		</imprint>
+	</monogr>
+	<note>Long and Short Papers</note>
+	<note type="raw_reference">Talmor, A., Herzig, J., Lourie, N., Berant, J.: CommonsenseQA: A Question An- swering Challenge Targeting Commonsense Knowledge. In: Burstein, J., Doran, C., Solorio, T. (eds.) Proceedings of the 2019 Conference of the North Ameri- can Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers). pp. 4149-4158 (Jun 2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Knowledge Prompting in Pre-trained Language Model for Natural Language Understanding</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Qiu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Shi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Gao</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing</title>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Goldberg</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Z</forename><surname>Kozareva</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</editor>
+		<meeting>the 2022 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<date type="published" when="2022-12">Dec 2022</date>
+			<biblScope unit="page" from="3164" to="3177" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wang, J., Huang, W., Qiu, M., Shi, Q., Wang, H., Li, X., Gao, M.: Knowledge Prompting in Pre-trained Language Model for Natural Language Understanding. In: Goldberg, Y., Kozareva, Z., Zhang, Y. (eds.) Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing. pp. 3164-3177 (Dec 2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">K-Adapter: Infusing Knowledge into Pre-Trained Models with Adapters</title>
+		<author>
+			<persName><forename type="first">Ruize</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Duyu</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nan</forename><surname>Duan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhongyu</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuanjing</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianshu</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guihong</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daxin</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming</forename><surname>Zhou</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.findings-acl.121</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021</title>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Zong</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><surname>Xia</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">W</forename><surname>Li</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">R</forename><surname>Navigli</surname></persName>
+		</editor>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021-08">Aug 2021</date>
+			<biblScope unit="page" from="1405" to="1418" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wang, R., Tang, D., Duan, N., Wei, Z., Huang, X., Ji, J., Cao, G., Jiang, D., Zhou, M.: K-Adapter: Infusing Knowledge into Pre-Trained Models with Adapters. In: Zong, C., Xia, F., Li, W., Navigli, R. (eds.) Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021. pp. 1405-1418 (Aug 2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">Improving Natural Language Inference Using External Knowledge in the Science Questions Domain</title>
+		<author>
+			<persName><forename type="first">Xiaoyan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pavan</forename><surname>Kapanipathi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Musa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mo</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kartik</forename><surname>Talamadupula</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ibrahim</forename><surname>Abdelaziz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maria</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Achille</forename><surname>Fokoue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bassem</forename><surname>Makni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicholas</forename><surname>Mattei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Witbrock</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v33i01.33017208</idno>
+		<idno type="arXiv">arXiv:1809.05724</idno>
+		<ptr target="http://arxiv.org/abs/1809.05724" />
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="issue">01</biblScope>
+			<biblScope unit="page" from="7208" to="7215" />
+			<date type="published" when="2018-11">Nov 2018</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wang, X., Kapanipathi, P., Musa, R., Yu, M., Talamadupula, K., Abdelaziz, I., Chang, M., Fokoue, A., Makni, B., Mattei, N., Witbrock, M.: Improving Natural Language Inference Using External Knowledge in the Science Questions Domain (Nov 2018), http://arxiv.org/abs/1809.05724, arXiv:1809.05724 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">KEPLER: A Unified Model for Knowledge Embedding and Pre-trained Language Representation</title>
+		<author>
+			<persName><forename type="first">Xiaozhi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianyu</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhaocheng</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhengyan</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhiyuan</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Juanzi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Tang</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00360</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<idno type="ISSNe">2307-387X</idno>
+		<imprint>
+			<biblScope unit="volume">9</biblScope>
+			<biblScope unit="page" from="176" to="194" />
+			<date type="published" when="2021-03">2021</date>
+			<publisher>MIT Press - Journals</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wang, X., Gao, T., Zhu, Z., Zhang, Z., Liu, Z., Li, J., Tang, J.: KEPLER: A Uni- fied Model for Knowledge Embedding and Pre-trained Language Representation. Transactions of the Association for Computational Linguistics 9, 176-194 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Enhancing Pre-Trained Language Representations with Rich Knowledge for Machine Reading Comprehension</title>
+		<author>
+			<persName><forename type="first">An</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jing</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yajuan</forename><surname>Lyu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hua</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qiaoqiao</forename><surname>She</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sujian</forename><surname>Li</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p19-1226</idno>
+		<ptr target="https://www.aclweb.org/anthology/P19-1226" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics<address><addrLine>Florence, Italy</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="2346" to="2357" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yang, A., Wang, Q., Liu, J., Liu, K., Lyu, Y., Wu, H., She, Q., Li, S.: Enhancing Pre-Trained Language Representations with Rich Knowledge for Machine Read- ing Comprehension. In: Proceedings of the 57th Annual Meeting of the Associ- ation for Computational Linguistics. pp. 2346-2357. Association for Computa- tional Linguistics, Florence, Italy (2019). https://doi.org/10.18653/v1/P19-1226, https://www.aclweb.org/anthology/P19-1226</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">QA-GNN: Reasoning with Language Models and Knowledge Graphs for Question Answering</title>
+		<author>
+			<persName><forename type="first">Michihiro</forename><surname>Yasunaga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyu</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jure</forename><surname>Leskovec</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.naacl-main.45</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-12">Dec 2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yasunaga, M., Ren, H., Bosselut, A., Liang, P., Leskovec, J.: QA-GNN: Reasoning with Language Models and Knowledge Graphs for Question Answering (Dec 2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">Ontology-enhanced Prompt-tuning for Few-shot Learning</title>
+		<author>
+			<persName><forename type="first">Hongbin</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ningyu</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shumin</forename><surname>Deng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hui</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Feiyu</forename><surname>Xiong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xi</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huajun</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3485447.3511921</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the ACM Web Conference 2022</title>
+		<meeting>the ACM Web Conference 2022</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2022-04-25">2022. Apr 2022</date>
+			<biblScope unit="volume">22</biblScope>
+			<biblScope unit="page" from="778" to="787" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ye, H., Zhang, N., Deng, S., Chen, X., Chen, H., Xiong, F., Chen, X., Chen, H.: Ontology-enhanced Prompt-tuning for Few-shot Learning. In: Proceedings of the ACM Web Conference 2022. pp. 778-787. WWW &apos;22 (Apr 2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<monogr>
+		<title level="m" type="main">Align, Mask and Select: A Simple Method for Incorporating Commonsense Knowledge into Language Representation Models</title>
+		<author>
+			<persName><forename type="first">Z</forename><forename type="middle">X</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><forename type="middle">H</forename><surname>Ling</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1908.06725</idno>
+		<ptr target="http://arxiv.org/abs/1908.06725" />
+		<imprint>
+			<date type="published" when="2020-05">May 2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ye, Z.X., Chen, Q., Wang, W., Ling, Z.H.: Align, Mask and Select: A Simple Method for Incorporating Commonsense Knowledge into Language Representation Models (May 2020), http://arxiv.org/abs/1908.06725, arXiv:1908.06725 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<monogr>
+		<title level="m" type="main">E-BERT: A Phrase and Product Knowledge Enhanced Language Model for E-commerce</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Yuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Xiong</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2021-12">Dec 2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhang, D., Yuan, Z., Liu, Y., Zhuang, F., Chen, H., Xiong, H.: E-BERT: A Phrase and Product Knowledge Enhanced Language Model for E-commerce (Dec 2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<monogr>
+		<title level="m" type="main">GreaseLM: Graph REASoning Enhanced Language Models for Question Answering</title>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Yasunaga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">D</forename><surname>Manning</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Leskovec</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2201.08860</idno>
+		<ptr target="http://arxiv.org/abs/2201.08860" />
+		<imprint>
+			<date type="published" when="2022-01">Jan 2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhang, X., Bosselut, A., Yasunaga, M., Ren, H., Liang, P., Manning, C.D., Leskovec, J.: GreaseLM: Graph REASoning Enhanced Language Models for Ques- tion Answering (Jan 2022), http://arxiv.org/abs/2201.08860, arXiv:2201.08860 [cs]</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<monogr>
+		<title level="m" type="main">GreaseLM: Graph REASoning Enhanced Language Models for Question Answering</title>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Yasunaga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">D</forename><surname>Manning</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Leskovec</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022-01">Jan 2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhang, X., Bosselut, A., Yasunaga, M., Ren, H., Liang, P., Manning, C.D., Leskovec, J.: GreaseLM: Graph REASoning Enhanced Language Models for Ques- tion Answering (Jan 2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">ERNIE: Enhanced Language Representation with Informative Entities</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Liu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Korhonen</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Traum</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Màrquez</surname></persName>
+		</editor>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2019-07">Jul 2019</date>
+			<biblScope unit="page" from="1441" to="1451" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhang, Z., Han, X., Liu, Z., Jiang, X., Sun, M., Liu, Q.: ERNIE: Enhanced Lan- guage Representation with Informative Entities. In: Korhonen, A., Traum, D., Màrquez, L. (eds.) Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics. pp. 1441-1451 (Jul 2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">Knowledge-enabled BERT for aspect-based sentiment analysis</title>
+		<author>
+			<persName><forename type="first">Anping</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Yu</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.knosys.2021.107220</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Knowledge-Based Systems</title>
+		<title level="j" type="abbrev">Knowledge-Based Systems</title>
+		<idno type="ISSN">0950-7051</idno>
+		<imprint>
+			<biblScope unit="volume">227</biblScope>
+			<biblScope unit="page">107220</biblScope>
+			<date type="published" when="2021-09">Sep 2021</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhao, A., Yu, Y.: Knowledge-enabled BERT for aspect-based sentiment analysis. Knowledge-Based Systems 227, 107220 (Sep 2021)</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

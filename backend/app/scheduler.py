@@ -12,7 +12,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.collectors.twitter_collector import TwitterCollector
-from app.models import get_db
 
 # Configure logging
 logging.basicConfig(

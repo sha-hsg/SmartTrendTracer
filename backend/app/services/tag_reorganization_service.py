@@ -11,41 +11,48 @@ from datetime import datetime
 from dataclasses import dataclass, asdict
 from collections import defaultdict
 
-from sqlalchemy.orm import Session
-from sqlalchemy import func, distinct
-
-from app.models import Tag, Tweet, get_db
-from app.models.tag_ontology import TagConcept, TagSynonym, TagOntologyService, TagMapping
 from app.services.langchain_llm_service import get_langchain_llm_service
 
 # Configure logger for detailed debugging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-
 @dataclass
 class TagNode:
-    """Represents a node in the tag taxonomy tree"""
-    name: str
-    display_name: str
+    """Represents a node in the tag taxonomy tree - new structure with ID and slug"""
+    id: str  # Unique ID like "c_0001"
+    slug: str  # Normalized name like "large_language_models"
+    display_name: str  # Human-readable name like "Large Language Models (LLMs)"
     description: Optional[str] = None
-    level: int = 0
-    parent: Optional[str] = None
-    children: List[str] = None
-    synonyms: List[str] = None
+    status: str = "active"  # active, deprecated, etc.
+    parents: List[str] = None  # Now plural, supports poly-hierarchy
+    children: List[str] = None  # Child concept IDs
     usage_count: int = 0
-    examples: List[str] = None
-    color: Optional[str] = None
-    icon: Optional[str] = None
+    icon: Optional[str] = None  # Emoji icon
+    color: Optional[str] = None  # Color code for UI
+    
+    # Legacy fields for backwards compatibility
+    name: Optional[str] = None  # Will be set to slug for compatibility
+    parent: Optional[str] = None  # Single parent for backwards compatibility
+    level: Optional[int] = 0  # Hierarchy level
+    synonyms: Optional[List[str]] = None  # Now handled via aliases
+    examples: Optional[List[str]] = None  # Sample usage contexts
     
     def __post_init__(self):
+        if self.parents is None:
+            self.parents = []
         if self.children is None:
             self.children = []
         if self.synonyms is None:
             self.synonyms = []
         if self.examples is None:
             self.examples = []
-
+        
+        # Set legacy fields for backwards compatibility
+        if not self.name:
+            self.name = self.slug
+        if not self.parent and self.parents:
+            self.parent = self.parents[0] if self.parents else None
 
 @dataclass
 class TaxonomyReorganization:
@@ -63,7 +70,6 @@ class TaxonomyReorganization:
     reasoning: str
     statistics: Dict[str, Any]
 
-
 class TagReorganizationService:
     """Service for comprehensive tag reorganization using Gemini via LangChain"""
     
@@ -72,42 +78,97 @@ class TagReorganizationService:
         self.llm_service = get_langchain_llm_service()
     
     def get_all_tags_with_context(self) -> Dict[str, Any]:
-        """Get all tags with their usage context and statistics"""
+        """Get all tags with their usage context and statistics from all sources"""
         
-        # Get all tags with usage counts
-        tag_stats = self.db.query(
+        # Import necessary models
+        from app.models.papers import PaperTag
+        from app.models.substack import ArticleTag
+        
+        # Get tags from all sources with usage counts
+        # 1. Tweet tags
+        tweet_tags = self.db.query(
             Tag.tag,
             func.count(Tag.id).label('usage_count')
         ).group_by(Tag.tag).all()
         
+        # 2. Paper tags
+        paper_tags = self.db.query(
+            PaperTag.tag,
+            func.count(PaperTag.id).label('usage_count')
+        ).group_by(PaperTag.tag).all()
+        
+        # 3. Article tags  
+        article_tags = self.db.query(
+            ArticleTag.tag,
+            func.count(ArticleTag.id).label('usage_count')
+        ).group_by(ArticleTag.tag).all()
+        
+        # Combine all tags into a single dictionary
+        combined_tags = defaultdict(lambda: {'usage_count': 0, 'sources': []})
+        
+        for tag_name, count in tweet_tags:
+            combined_tags[tag_name]['usage_count'] += count
+            combined_tags[tag_name]['sources'].append('tweets')
+            
+        for tag_name, count in paper_tags:
+            combined_tags[tag_name]['usage_count'] += count
+            combined_tags[tag_name]['sources'].append('papers')
+            
+        for tag_name, count in article_tags:
+            combined_tags[tag_name]['usage_count'] += count
+            combined_tags[tag_name]['sources'].append('articles')
+        
         tags_data = {}
         
-        for tag_name, usage_count in tag_stats:
-            # Get sample tweets for context
-            sample_tweets = self.db.query(Tweet.text).join(Tag).filter(
-                Tag.tag == tag_name
-            ).limit(3).all()
+        # Import necessary models for getting sample content
+        from app.models.papers import Paper, PaperTag
+        from app.models.substack import SubstackArticle, ArticleTag
+        
+        for tag_name, tag_info in combined_tags.items():
+            usage_count = tag_info['usage_count']
+            sources = tag_info['sources']
             
-            # Get co-occurring tags
-            co_tags = self.db.query(
-                Tag.tag,
-                func.count(Tag.tag).label('co_count')
-            ).join(Tweet, Tag.tweet_id == Tweet.id).filter(
-                Tweet.id.in_(
-                    self.db.query(Tweet.id).join(Tag).filter(Tag.tag == tag_name)
-                ),
-                Tag.tag != tag_name
-            ).group_by(Tag.tag).order_by(func.count(Tag.tag).desc()).limit(5).all()
+            sample_contexts = []
             
-            # Skip synonyms for now since we're building a new ontology
-            # TODO: Could check existing tag_concepts table if needed
+            # Get sample content from each source
+            if 'tweets' in sources:
+                sample_tweets = self.db.query(Tweet.text).join(Tag).filter(
+                    Tag.tag == tag_name
+                ).limit(2).all()
+                sample_contexts.extend([f"[Tweet] {tweet[0][:100]}" for tweet in sample_tweets])
+            
+            if 'papers' in sources:
+                sample_papers = self.db.query(Paper.title).join(PaperTag).filter(
+                    PaperTag.tag == tag_name
+                ).limit(1).all()
+                sample_contexts.extend([f"[Paper] {paper[0][:100]}" for paper in sample_papers])
+            
+            if 'articles' in sources:
+                sample_articles = self.db.query(SubstackArticle.title).join(ArticleTag).filter(
+                    ArticleTag.tag == tag_name
+                ).limit(1).all()
+                sample_contexts.extend([f"[Article] {article[0][:100]}" for article in sample_articles])
+            
+            # Get co-occurring tags from tweets (most common source)
+            co_tags = []
+            if 'tweets' in sources:
+                co_tags = self.db.query(
+                    Tag.tag,
+                    func.count(Tag.tag).label('co_count')
+                ).join(Tweet, Tag.tweet_id == Tweet.id).filter(
+                    Tweet.id.in_(
+                        self.db.query(Tweet.id).join(Tag).filter(Tag.tag == tag_name)
+                    ),
+                    Tag.tag != tag_name
+                ).group_by(Tag.tag).order_by(func.count(Tag.tag).desc()).limit(5).all()
             
             # Limit context data for large datasets
             tags_data[tag_name] = {
                 'name': tag_name,
                 'usage_count': usage_count,
+                'sources': sources,
                 # Only include sample contexts for frequently used tags
-                'sample_contexts': [tweet[0][:100] for tweet in sample_tweets[:2]] if usage_count > 5 else [],
+                'sample_contexts': sample_contexts[:3] if usage_count > 3 else [],
                 # Only top 3 co-occurring tags
                 'co_occurring_tags': [{'tag': tag, 'count': count} for tag, count in co_tags[:3]],
                 'existing_synonyms': []  # Will be populated from new ontology
@@ -123,6 +184,19 @@ class TagReorganizationService:
         low_usage_tags = [name for name, data in tags_data.items() 
                          if data['usage_count'] < low_usage_threshold]
         
+        # Get counts for each source
+        unique_tweets = self.db.query(distinct(Tag.tweet_id)).count()
+        unique_papers = self.db.query(distinct(PaperTag.paper_id)).count()
+        unique_articles = self.db.query(distinct(ArticleTag.article_id)).count()
+        
+        # Count tags by source
+        tags_by_source = {
+            'tweets_only': len([t for t, d in tags_data.items() if d['sources'] == ['tweets']]),
+            'papers_only': len([t for t, d in tags_data.items() if d['sources'] == ['papers']]),
+            'articles_only': len([t for t, d in tags_data.items() if d['sources'] == ['articles']]),
+            'multi_source': len([t for t, d in tags_data.items() if len(d['sources']) > 1])
+        }
+        
         return {
             'tags': tags_data,
             'statistics': {
@@ -130,7 +204,10 @@ class TagReorganizationService:
                 'total_taggings': total_taggings,
                 'average_usage': avg_usage,
                 'low_usage_tags': low_usage_tags,
-                'unique_tweets_tagged': self.db.query(distinct(Tag.tweet_id)).count()
+                'unique_tweets_tagged': unique_tweets,
+                'unique_papers_tagged': unique_papers,
+                'unique_articles_tagged': unique_articles,
+                'tags_by_source': tags_by_source
             }
         }
     
@@ -145,35 +222,38 @@ class TagReorganizationService:
         tags_context = self.get_all_tags_with_context()
         logger.info(f"Retrieved {tags_context['statistics']['total_tags']} tags for analysis")
         
-        # Filter to only include more frequently used tags for LLM processing
-        # to avoid overwhelming the model with too much data
-        min_usage_for_llm = 2  # Only include tags used at least twice
-        filtered_tags = {
-            name: data for name, data in tags_context['tags'].items() 
-            if data['usage_count'] >= min_usage_for_llm
-        }
+        # Get the model that will be used from config
+        model_config = self.llm_service.llm_config.get("models", {}).get("tag_reorganization_full", {})
+        model_name = model_config.get("model", "gpt-5-2025-08-07")
         
-        # Also include a sample of low-usage tags for deprecation analysis
-        low_usage_sample = [
-            name for name, data in tags_context['tags'].items() 
-            if data['usage_count'] < min_usage_for_llm
-        ][:20]  # Include up to 20 low-usage tags
+        # Send ALL tags to LLM for complete reorganization
+        logger.info(f"Sending ALL {tags_context['statistics']['total_tags']} tags to {model_name} for complete reorganization")
         
-        for tag_name in low_usage_sample:
-            filtered_tags[tag_name] = tags_context['tags'][tag_name]
+        # Use all tags, but simplify context for very low usage tags
+        llm_tags = {}
+        for name, data in tags_context['tags'].items():
+            if data['usage_count'] >= 3:
+                # Include full context for frequently used tags
+                llm_tags[name] = data
+            else:
+                # Simplify context for rarely used tags to save tokens
+                llm_tags[name] = {
+                    'name': name,
+                    'usage_count': data['usage_count'],
+                    'sources': data['sources'],
+                    'sample_contexts': [],  # Skip samples for low-usage tags
+                    'co_occurring_tags': []  # Skip co-occurrence for low-usage tags
+                }
         
-        logger.info(f"Filtered to {len(filtered_tags)} tags for LLM processing (from {tags_context['statistics']['total_tags']} total)")
-        
-        # Update the context with filtered tags for LLM
         llm_context = {
-            'tags': filtered_tags,
+            'tags': llm_tags,
             'statistics': tags_context['statistics']
         }
         logger.debug(f"Statistics: Total tags: {tags_context['statistics']['total_tags']}, "
                     f"Total taggings: {tags_context['statistics']['total_taggings']}, "
                     f"Average usage: {tags_context['statistics']['average_usage']:.2f}")
         
-        # Use LangChain service with Gemini for reorganization
+        # Use LangChain service for reorganization
         try:
             # Call the specialized tag reorganization method
             # Model will be selected from llm.json configuration
@@ -194,24 +274,67 @@ class TagReorganizationService:
             hierarchy = {}
             hierarchy_count = 0
             
-            for tag_name, tag_data in reorganization_data.get('hierarchy', {}).items():
-                hierarchy[tag_name] = TagNode(
-                    name=tag_name,
-                    display_name=tag_data.get('display_name', tag_name),
-                    description=tag_data.get('description'),
-                    level=tag_data.get('level', 0),
-                    parent=tag_data.get('parent'),
-                    children=tag_data.get('children', []),
-                    synonyms=tag_data.get('synonyms', []),
-                    usage_count=tags_context['tags'].get(tag_name, {}).get('usage_count', 0),
-                    color=tag_data.get('color'),
-                    icon=tag_data.get('icon')
-                )
-                hierarchy_count += 1
+            # Check if response uses new format (concepts) or old format (hierarchy)
+            if 'concepts' in reorganization_data:
+                # New format with concepts and aliases
+                logger.debug("Using new concept-based format")
+                for concept in reorganization_data.get('concepts', []):
+                    concept_id = concept.get('id')
+                    hierarchy[concept_id] = TagNode(
+                        id=concept_id,
+                        slug=concept.get('slug', concept_id),
+                        display_name=concept.get('display_name', concept.get('slug', '')),
+                        description=concept.get('description'),
+                        status=concept.get('status', 'active'),
+                        parents=concept.get('parents', []),
+                        children=concept.get('children', []),
+                        usage_count=concept.get('usage_count', 0),
+                        icon=concept.get('icon'),
+                        color=concept.get('color'),
+                        # Set legacy fields
+                        name=concept.get('slug', concept_id),
+                        parent=concept.get('parents', [None])[0] if concept.get('parents') else None,
+                        level=concept.get('level', 0),
+                        synonyms=[]  # Aliases are handled separately
+                    )
+                    hierarchy_count += 1
+                    
+                    # Log progress every 50 items
+                    if hierarchy_count % 50 == 0:
+                        logger.debug(f"Processed {hierarchy_count} concepts...")
                 
-                # Log progress every 50 items
-                if hierarchy_count % 50 == 0:
-                    logger.debug(f"Processed {hierarchy_count} hierarchy nodes...")
+                # Store aliases separately if needed
+                self.aliases = reorganization_data.get('aliases', [])
+                self.relations = reorganization_data.get('relations', [])
+                
+            else:
+                # Old format with hierarchy dictionary
+                logger.debug("Using legacy hierarchy format")
+                for tag_name, tag_data in reorganization_data.get('hierarchy', {}).items():
+                    # Generate a concept ID for legacy format
+                    concept_id = f"c_{tag_name.lower().replace('-', '_').replace(' ', '_')}"
+                    hierarchy[concept_id] = TagNode(
+                        id=concept_id,
+                        slug=tag_name.lower().replace('-', '_').replace(' ', '_'),
+                        display_name=tag_data.get('display_name', tag_name),
+                        description=tag_data.get('description'),
+                        status='active',
+                        parents=[tag_data.get('parent')] if tag_data.get('parent') else [],
+                        children=tag_data.get('children', []),
+                        usage_count=tags_context['tags'].get(tag_name, {}).get('usage_count', 0),
+                        icon=tag_data.get('icon'),
+                        color=tag_data.get('color'),
+                        # Set legacy fields
+                        name=tag_name,
+                        parent=tag_data.get('parent'),
+                        level=tag_data.get('level', 0),
+                        synonyms=tag_data.get('synonyms', [])
+                    )
+                    hierarchy_count += 1
+                    
+                    # Log progress every 50 items
+                    if hierarchy_count % 50 == 0:
+                        logger.debug(f"Processed {hierarchy_count} hierarchy nodes...")
             
             logger.info(f"Created hierarchy with {len(hierarchy)} nodes")
             
@@ -244,11 +367,21 @@ class TagReorganizationService:
                 merge_proposals=reorganization_data.get('merge_proposals', []),
                 new_tags_suggested=[
                     TagNode(
-                        name=cat['name'],
-                        display_name=cat['display_name'],
+                        id=f"c_new_{i:04d}",
+                        slug=cat.get('name', '').lower().replace('-', '_').replace(' ', '_'),
+                        display_name=cat.get('display_name', cat['name']),
                         description=cat.get('description'),
+                        status='suggested',
+                        parents=[],
+                        children=[],
+                        usage_count=0,
+                        icon=cat.get('icon', '📁'),
+                        color=cat.get('color'),
+                        # Legacy fields
+                        name=cat['name'],
+                        parent=None,
                         level=0
-                    ) for cat in reorganization_data.get('new_categories_suggested', [])
+                    ) for i, cat in enumerate(reorganization_data.get('new_categories_suggested', []), 1)
                 ],
                 confidence_score=reorganization_data.get('confidence_score', 0.8),
                 reasoning=reorganization_data.get('reasoning', ''),
@@ -418,6 +551,17 @@ class TagReorganizationService:
                         results['details'].append(f"Merged '{synonym}' into '{tag_name}'")
                     
                     # Create synonym relationship
+                    # First check if this synonym already exists for ANY concept
+                    existing_global_synonym = self.db.query(TagSynonym).filter(
+                        TagSynonym.synonym_tag == synonym
+                    ).first()
+                    
+                    if existing_global_synonym:
+                        # Synonym already exists for another concept, skip it
+                        logger.debug(f"Synonym '{synonym}' already exists for concept {existing_global_synonym.concept_id}, skipping")
+                        continue
+                    
+                    # Now check if it exists for this specific concept (redundant but safe)
                     existing_synonym = self.db.query(TagSynonym).filter(
                         TagSynonym.concept_id == concept.id,
                         TagSynonym.synonym_tag == synonym
@@ -541,7 +685,6 @@ class TagReorganizationService:
         
         else:
             raise ValueError(f"Unsupported format: {format}")
-
 
 class TagOntologyService:
     """Compatibility class for existing code"""

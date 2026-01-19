@@ -4,11 +4,9 @@ Startup collection - fills gaps since last run
 from datetime import datetime, timedelta, timezone
 import logging
 import time
-from app.models import get_db, CollectionState, Tweet
 from app.collectors.twitter_collector import TwitterCollector
 from app.rate_limiter import get_rate_limiter
 from app.config import ACCOUNTS_TO_FOLLOW
-from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +15,6 @@ def collect_tweets_since_last_run():
     Collect all tweets since the last program run
     Called automatically when the backend starts
     """
-    db = next(get_db())
     
     try:
         print("\n" + "="*60)

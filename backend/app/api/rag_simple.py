@@ -2,13 +2,12 @@
 Simple RAG API endpoints that actually work
 """
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 from typing import Dict, List, Optional
 from pydantic import BaseModel
 import datetime
 
-from app.models import get_db
 from app.services.rag_service_fast import get_rag_service
+from app.database.mongodb import get_database
 
 router = APIRouter()
 
@@ -20,12 +19,12 @@ class RAGQuery(BaseModel):
 
 
 @router.get("/stats")
-def get_index_stats(db: Session = Depends(get_db)):
+def get_index_stats(db=Depends(get_database)):
     """Get statistics about the RAG index"""
     try:
         rag_service = get_rag_service(db)
         status = rag_service.get_status()
-        
+
         return {
             "indexed_documents": status.get('total_documents', 0),
             "is_ready": status.get('is_ready', False),
@@ -37,7 +36,6 @@ def get_index_stats(db: Session = Depends(get_db)):
         }
     except Exception as e:
         print(f"Error in get_index_stats: {e}")
-        # Return a default response
         return {
             "indexed_documents": 0,
             "is_ready": False,
@@ -69,13 +67,13 @@ def get_sample_questions():
 
 
 @router.post("/ask")
-async def ask_question(query: RAGQuery, db: Session = Depends(get_db)):
+async def ask_question(query: RAGQuery, db=Depends(get_database)):
     """
     Ask a question and get an AI-generated answer with sources.
     """
     try:
         rag_service = get_rag_service(db)
-        
+
         # Check if index is ready
         if not rag_service.status.is_ready:
             # Try to build index
@@ -90,10 +88,10 @@ async def ask_question(query: RAGQuery, db: Session = Depends(get_db)):
                     "last_updated": None
                 }
             }
-        
+
         # Get answer with sources
         result = await rag_service.search_with_answer(query.question, query.k)
-        
+
         if "error" in result:
             # If there's an error, return a simple search instead
             search_results = rag_service.search(query.question, query.k)
@@ -107,7 +105,7 @@ async def ask_question(query: RAGQuery, db: Session = Depends(get_db)):
                     "last_updated": rag_service.status.last_updated.isoformat() if rag_service.status.last_updated else None
                 }
             }
-        
+
         return {
             "question": query.question,
             "answer": result.get('answer', 'No answer generated'),
@@ -118,12 +116,11 @@ async def ask_question(query: RAGQuery, db: Session = Depends(get_db)):
                 "last_updated": rag_service.status.last_updated.isoformat() if rag_service.status.last_updated else None
             }
         }
-        
+
     except Exception as e:
         import traceback
         print(f"Error in ask_question: {str(e)}")
         print(f"Traceback: {traceback.format_exc()}")
-        # Return a basic response
         return {
             "question": query.question,
             "answer": f"An error occurred while processing your question: {str(e)}",
@@ -137,26 +134,26 @@ async def ask_question(query: RAGQuery, db: Session = Depends(get_db)):
 
 
 @router.post("/rebuild")
-async def rebuild_index(db: Session = Depends(get_db)):
+def rebuild_index(db=Depends(get_database)):
     """Force rebuild the entire index from scratch"""
     try:
         rag_service = get_rag_service(db)
-        
+
         # Clear existing index
         rag_service.index = None
         rag_service.doc_map = {}
         rag_service.metadata = {}
         rag_service._update_status(is_ready=False)
-        
+
         # Start rebuild
         result = rag_service.build_index_async()
-        
+
         return {
             "status": "rebuilding",
             "message": "Index rebuild started successfully!",
             "total_documents": result.get('total_documents', 0)
         }
-        
+
     except Exception as e:
         print(f"Error in rebuild_index: {e}")
         return {

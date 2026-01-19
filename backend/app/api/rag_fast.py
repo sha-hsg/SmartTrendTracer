@@ -3,29 +3,23 @@ Fast RAG API with progress feedback
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 import json
 import asyncio
 import time
 
-from app.models import get_db
 from app.services.rag_service_fast import get_rag_service, FastRAGService
 
 router = APIRouter(prefix="/api/rag", tags=["rag"])
 
-
 @router.get("/status")
-async def get_index_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Get current RAG index status"""
     service = get_rag_service(db)
     return service.get_status()
 
-
 @router.post("/build")
 async def build_index(
     force: bool = Query(False, description="Force rebuild even if index exists"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Build or rebuild the RAG index"""
     service = get_rag_service(db)
@@ -42,9 +36,7 @@ async def build_index(
     result = service.build_index_async()
     return result
 
-
 @router.get("/build/progress")
-async def build_progress_stream(db: Session = Depends(get_db)):
     """Stream build progress updates via Server-Sent Events"""
     async def generate():
         service = get_rag_service(db)
@@ -77,12 +69,10 @@ async def build_progress_stream(db: Session = Depends(get_db)):
         }
     )
 
-
 @router.post("/search")
 async def search_documents(
     query: str,
     k: int = Query(10, description="Number of results to return"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Search documents using RAG"""
     service = get_rag_service(db)
@@ -115,12 +105,10 @@ async def search_documents(
         }
     }
 
-
 @router.post("/ask")
 async def ask_question(
     question: str,
     k: int = Query(10, description="Number of sources to consider"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Ask a question and get an AI-generated answer with sources"""
     service = get_rag_service(db)
@@ -186,9 +174,7 @@ async def ask_question(
         "total_sources": result.get('total_results', 0)
     }
 
-
 @router.post("/rebuild")
-async def force_rebuild_index(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Force rebuild the entire index from scratch"""
     service = get_rag_service(db)
     

@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">On the Relevant Set of Contexts for Evaluating Retrieval-Augmented Generation Systems</title>
+				<funder ref="#_R4RDmay">
+					<orgName type="full">Norwegian Research Council</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author role="corresp">
+							<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+							<email>@uib.no</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Bergen , Norway</note>
+								<orgName type="institution">University of Bergen</orgName>
+								<address>
+									<country key="NO">Norway</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">On the Relevant Set of Contexts for Evaluating Retrieval-Augmented Generation Systems</title>
+					</analytic>
+					<monogr>
+						<idno type="ISSN">1613-0073</idno>
+					</monogr>
+					<idno type="MD5">EB53C2D2A2B18B537FD197B57CE020E6</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:56+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>Retrieval-Augmented Generation enabled by</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>The recent interest in approaching more language and knowledge processing tasks via the Retrieval-Augmented Generation (RAG) framework allows for the consideration of evaluation criteria that can lead to a discrepancy in the way that the set of relevant results is determined for assessing retrieval-based performances. In this work, we describe and reflect on the consequences of such a discrepancy, and present basic results from experimentation over a RAG-based benchmark for Question Answering.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1.">Introduction</head><p>Retrieval-Augmented Generation (RAG) <ref type="bibr" target="#b0">[1]</ref> has been increasingly applied to a larger number of language processing tasks and domains, given its ability to combine explicit knowledge external to a Large Language Model (LLM) with the implicit knowledge that this LLM contains spreading across its billions of parameters <ref type="bibr" target="#b1">[2,</ref><ref type="bibr" target="#b2">3]</ref>. Throughout the three stages of its pipeline, a RAG-based system typically aims to address a problem of Question Answering (QA) nature, where some initial query or question is to be answered. For this question, RAG allows (i) to first retrieve a set of textual passages such that they become highly relevant contexts where the answer should be obtained from, and then (ii) to augment a well-engineered prompt by incorporating the contexts, so that (iii) to input this augmented prompt to a LLM generator. By the way that these stages work, and given the main involved items in a RAG pass -question, (retrieved and relevant) context(s), and (generated and correct) answer(s)-, several evaluation criteria are considered in related works <ref type="bibr" target="#b1">[2]</ref>. The most prominent criteria are the question-context relevance (the paradigmatic Information Retrieval scenario), the context-answer relevance (where the prompt engineering aspects enter into play, and the so-claimed abilities of the LLM as well as its drawbacks, prominently hallucinations <ref type="bibr" target="#b3">[4,</ref><ref type="bibr" target="#b4">5]</ref>), and the question-answer correctness <ref type="bibr" target="#b5">[6]</ref>. In the interplay of these criteria, an incompatibility arises when different relevant sets are used, specifically, by aiming to evaluate the end-to-end performance of a RAG-based method against items which, while correct, are never presented to the generator so they are irretrievable by it. The rest of this work discusses this incompatibility in detail and illustrates it with experimental results from a Question Answering benchmark.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.">The problem of determining the relevant set of contexts</head><p>Let 𝒟 denote the universe of all documents under consideration in a retrieval scenario. In our case, this is an indexed collection of uniquely identified textual passages with respect to which the first RAG stage, retrieval, obtains a ranking of contexts to use during its second stage, augmentation, to build the prompt that elicits the last stage, generation. Given a question 𝑞, a retrieval method 𝑚 is used to score documents from 𝒟 and return a ranking 𝑂𝑢𝑡(𝑞) of the top 𝑘 documents for 𝑞. The question 𝑞 can be, among the most typical cases, a (primitive) query in the traditional sense within Information Retrieval (IR), a wrapper of a primitive query that accompanies it in an augmented prompt asking to the generator for ranking with respect to the query, or a question within a Question Answering task for which the obtained answers are to be evaluated with some retrieval criteria (e.g. answer recall, or exact matching, in QA <ref type="bibr" target="#b6">[7]</ref>). The ranking 𝑂𝑢𝑡(𝑞) is evaluated with respect to a set of relevant documents for 𝑞, 𝑅𝑒𝑙(𝑞) ⊆ 𝒟. For short, let us refer to this sets by 𝑂𝑢𝑡 (the retrieved results) and 𝑅𝑒𝑙 (the relevant results), respectively. Two set-based metrics, precision (𝑃 ) and recall (𝑅), are typically used as fundamental criteria to evaluate a retrieval system. They are defined, in terms of 𝑂𝑢𝑡 and 𝑅𝑒𝑙, as 𝑃 = |𝑂𝑢𝑡 ∩ 𝑅𝑒𝑙|/|𝑂𝑢𝑡| and 𝑃 = |𝑂𝑢𝑡 ∩ 𝑅𝑒𝑙|/|𝑅𝑒𝑙|.</p><p>Given the way that the relevant set is usually obtained when building a test collection, a selection of 𝑀 methods ℳ = {𝑚 𝑖 } 𝑀 𝑖=1 are used to retrieve a ranking for 𝑞, specifically top 𝑘 𝑖 results with each method 𝑚 𝑖 . As typically the cut-off 𝑘 𝑖 = 𝐾 for all 𝑖, a maximum of 𝑀 * 𝐾 documents are pooled for 𝑞 and judged according to some relevance criteria. In the case of binary relevance, this leads to the set 𝑅𝑒𝑙 defined above,</p><formula xml:id="formula_0">𝑅𝑒𝑙(𝑞) = {𝑑 ∈ 𝒟 : 𝑑 is relevant to 𝑞} = ⋃︀ 𝑖 𝑅𝑒𝑙 𝑚 𝑖 ,𝑘 𝑖 (𝑞)</formula><p>, where 𝑅𝑒𝑙 𝑚 𝑖 ,𝑘 𝑖 (𝑞) is the subset of documents in 𝑂𝑢𝑡 𝑚 𝑖 ,𝑘 𝑖 (𝑞) such that they are relevant to 𝑞, and 𝑂𝑢𝑡 𝑚 𝑖 ,𝑘 𝑖 (𝑞) the top 𝑘 𝑖 documents for 𝑞 retrieved by 𝑚 𝑖 that were put in the pool to build 𝑅𝑒𝑙.</p><p>For simplicity, let us assume that (1) the method used during the retrieval phase of a RAG system 𝑆 is 𝑚 ′ ∈ ℳ, and let us also assume that (2) the top 𝐾 ′ results ranked by 𝑚 ′ is such that 𝐾 ′ &lt; 𝐾. This is a common situation since for test collections it is often the case that 𝐾 = 100 or 𝐾 = 1, 000 while 𝐾 ′ is way smaller, in the order of tens (e.g. a recently devised benchmark <ref type="bibr" target="#b7">[8]</ref> uses 𝐾 ′ = 3, 5, 10 and 20). From (1) and ( <ref type="formula">2</ref>), it follows that (3) 𝑅𝑒𝑙 ′ = 𝑅𝑒𝑙 𝑚 ′ ,𝐾 ′ (𝑞) ⊊ 𝑅𝑒𝑙. The 𝐾 ′ contexts in 𝑅𝑒𝑙 ′ are then used to augment the prompt in the second RAG stage.</p><p>When the prompt is finally input to the LLM in the third RAG stage, generation, the LLM, unlike any of the methods in ℳ such as 𝑚 ′ , does not consider 𝒟 as the universe to retrieve from, but 𝑅𝑒𝑙 ′ , the set of contexts that it has seen or is aware of for 𝑞. The rest of the documents in 𝑅𝑒𝑙 that are not seen during generation, this is, 𝑅𝑒𝑙 -𝑅𝑒𝑙 ′ , cannot be retrieved by LLM. <ref type="foot" target="#foot_0">1</ref>Hence, for any context 𝑑 ∈ 𝑅𝑒𝑙 -𝑅𝑒𝑙 ′ , 𝑑 / ∈ 𝑂𝑢𝑡 𝐿𝐿𝑀 (𝑞), with 𝑂𝑢𝑡 𝐿𝐿𝑀 (𝑞) -𝑂𝑢𝑡 𝐿𝐿𝑀 , for short-the set of results returned by the LLM in its generated answer. And because of (4) 𝑂𝑢𝑡 𝐿𝐿𝑀 ⊆ 𝑅𝑒𝑙 ′ , then from it and (3) it follows that (5) 𝑂𝑢𝑡 𝐿𝐿𝑀 ⊆ 𝑅𝑒𝑙, and from this, ( <ref type="formula">6</ref>) This discrepancy in the criterion over the relevant set of contexts has a direct effect in the entire evaluation, since the use of 𝑅𝑒𝑙 instead of 𝑅𝑒𝑙 ′ for recall-oriented measures involves to divide by a larger size of relevant set and hence leads to observing an underperforming system. Recent literature aimed to establish a benchmark <ref type="bibr" target="#b7">[8]</ref> for vanilla instances of the RAG framework, for example, in a paradigmatic task like QA, presents an evaluation within the 𝑅𝑒𝑙based criterion that we criticize in our work. In the next section, we describe its methodology and demonstrate the discrepancy by the means of experimental results with this benchmark.</p><formula xml:id="formula_1">𝑂𝑢𝑡 𝐿𝐿𝑀 ∩ 𝑅𝑒𝑙 ′ = 𝑂𝑢𝑡 𝐿𝐿𝑀 ∩ 𝑅𝑒𝑙.</formula></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.">Experimental results over ALCE benchmark</head><p>The ALCE benchmark <ref type="bibr" target="#b7">[8]</ref> studies RAG performance over three QA datasets. One of them, QAMPARI <ref type="bibr" target="#b8">[9]</ref>, requires to answer each question with one or more entities -in most cases, with multiple entities-from a knowledge graph (KG) of reference. When asked via the augmented prompt to answer the instance question, the surface form -with which each of the entities appear in one or more of the retrieved contexts provided during augmentation-is to be found in the generated answer as an exactly delimited substring. This evaluation metric is referred to as exact matching (EM) <ref type="bibr" target="#b6">[7]</ref>, and essentially corresponds to a recall-oriented measurement where all the known relevant entities are contrasted with those actually present, i.e. retrieved by the LLM as a re-ranker, in the generated answer.</p><p>Within the family of QA problems, ALCE assesses the instantiation of attributed QA or selfsupported QA <ref type="bibr" target="#b9">[10,</ref><ref type="bibr" target="#b4">5]</ref>, a task that seeks to answer a question and complement it with evidence cited from the contexts that augment the prompt, in order to support the correctness of said answer. This citation of the passages supporting the answer is evaluated with the basic setoriented metrics of 𝑃 and 𝑅. It often happens that when augmenting the prompt with only the top 𝐾 ′ = 5 or 10 of the retrieved contexts, the RAG-based system is not providing the generator with a set of available contexts among which all the relevant entities can be supported, but instead only a subset. As we analyze it in the previous section, evaluating the recall-based measurements with respect to 𝑅𝑒𝑙 (the set of relevant contexts for the first RAG stage) can be misguiding in reporting the true performance when taking into account only those contexts available at generation time. There are then two aspects of the performance that are evaluated by a recall-based metric: answer recall and citation recall, i.e., two criteria possibly affected by the discrepancy previously analyzed. For the latter metric, the phenomenon happens with 𝑅𝑒𝑙 𝐶 , the set of relevant contexts for the query at retrieval stage, and 𝑅𝑒𝑙 ′𝐶 , its subset when restricting it to only the contexts used during augmentation. For the former, answer recall, an analogous situation is led to by the set of known correct answers, 𝑅𝑒𝑙 𝐴 , and the subset 𝑅𝑒𝑙 ′𝐴 induced by said set of relevant contexts available during augmentation where correct answers appear. <ref type="foot" target="#foot_1">2</ref>We experiment with a setup for a naive RAG framework based on the setting used by ALCE <ref type="bibr" target="#b7">[8]</ref>. In a similar fashion as done previously for other tasks <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b10">11]</ref>, our experiments assess parameter</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Table 1</head><p>Experimental results for RAG configurations with GPT-3.5 and GPT-4 as the generators, over our set of 60 selected QAMPARI instances. In all these experiments, retrieval is dense, and the prompt includes two examples. In each block by LLM, the best performance on a metric is shown in bold.</p><p>QAMPARI instances: 60 questions. Relevance set: 𝑅𝑒𝑙. configurations in all the three stages, including, for example, the retrieval method and cut-off, the order of passages from retrieval into augmentation and the number of shot examples, and the generator model. The parameters, and the values experimented with for each of them, are all very similar to the ones used in ALCE -in some cases identical, as it is the case for retrieval and generation parameters-. A major distinction is in our prompt, that is longer than its ALCE counterpart and accounts for more instructions, to better and more politely specify the expected answer. The main request in the prompt for both the benchmark and our experiments is to answer the question and refer to the passages that support such a response. In this way, our work is an approximation to reproduce part of the experiments developed in the benchmark. We work with a selection of 60 questions from QAMPARI dataset, 20 from each of the three question groups (simple, intersection, and complex, all based on hopping criteria over the KG of reference), selected to make all the possible parameter configurations meaningful. In particular, we ensure that there is a relevant answer occurring in the top 3 (and so in the top 5 and 10) retrieved passages for each method for each question. Table <ref type="table">1</ref> reports our experimental results for configurations where the first RAG stage is performed by a dense retriever and the prompt does two-shot learning with provided examples. The LLMs used in these configurations are GPT-3.5 (gpt-3.5-turbo-0125) <ref type="bibr" target="#b11">[12]</ref> and GPT-4 <ref type="bibr" target="#b12">[13]</ref>. As we described in the previous section, the performance in terms of precision is not affected by the involved factors, except for a possible larger degree of non-determinism in an LLM that here is not required. Instead, for recall-based measurements of answer and citation, we can observe that our obtained results when considering, as in ALCE, 𝑅𝑒𝑙 as the denominator of 𝑅 are in the magnitude of the values reported in ALCE. In the alternative evaluation w.r.t. 𝑅𝑒𝑙 ′ -bottom half of Table <ref type="table">1</ref>-, where the performance of the LLM generation is assessed only with respect to the contexts that were available at prompting, the performances are substantially higher and, as we argue, report a more principled assessment of the respective RAG configuration.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>LLM</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.">Conclusion</head><p>This paper has reflected on the aspect of determining appropriately the set of relevant contexts with which to evaluate the performance of a RAG system. Our observations call for considering its determination in terms of the subset of retrieved contexts that is available during augmentation such that the evaluation does not arrive to claim an underperforming method, while also uses a more principled criterion.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head></head><label></label><figDesc>This means that the measurement of the performance of 𝑆 (the LLM performance as a re-ranker of the augmented contexts 𝑅𝑒𝑙 ′ ) in terms of precision does not change if measured with respect to the original relevant set 𝑅𝑒𝑙, 𝑃 (𝑆) = |𝑂𝑢𝑡 𝐿𝐿𝑀 ∩ 𝑅𝑒𝑙 ′ |/|𝑂𝑢𝑡 𝐿𝐿𝑀 | = |𝑂𝑢𝑡 𝐿𝐿𝑀 ∩𝑅𝑒𝑙|/|𝑂𝑢𝑡 𝐿𝐿𝑀 |. However, recall measurement does change since the denominator in its expression changes from 𝑅𝑒𝑙 to its proper subset 𝑅𝑒𝑙 ′ .</figDesc></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>Unless due to some hallucination that generates in the answer a (n identifier of a) context that has not seen in the prompt.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_1"><p>This is a simplification of the less likely, general case, where a context is deemed relevant by a first-pass retrieval method, i.e. retrieved in ranking 𝑂𝑢𝑡(𝑞), yet it does not support any relevant answer for 𝑞.</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgments</head><p>This work was funded by the <rs type="funder">Norwegian Research Council</rs> grant <rs type="grantNumber">329745</rs> <rs type="grantName">Machine Teaching for Explainable AI</rs>.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funding" xml:id="_R4RDmay">
+					<idno type="grant-number">329745</idno>
+					<orgName type="grant-name">Machine Teaching for Explainable AI</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledgeintensive nlp tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>-T. Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Kiela</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="9459" to="9474" />
+			<date type="published" when="2020">2020</date>
+			<publisher>Curran Associates, Inc</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W.-t. Yih, T. Rocktäschel, S. Riedel, D. Kiela, Retrieval-augmented generation for knowledge- intensive nlp tasks, in: Advances in Neural Information Processing Systems, volume 33, Curran Associates, Inc., 2020, pp. 9459-9474.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Leveraging Large Language Models: Enhancing Retrieval-Augmented Generation with ScaNN and Gemma for Superior AI Response</title>
+		<author>
+			<persName><forename type="first">Min</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peiqing</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zihao</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaowei</forename><surname>Bi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fa</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/icmlca63499.2024.10753879</idno>
+		<idno type="arXiv">arXiv:2312.10997</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2024 5th International Conference on Machine Learning and Computer Application (ICMLCA)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2024-10-18">2024</date>
+			<biblScope unit="page" from="619" to="622" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Y. Gao, Y. Xiong, X. Gao, K. Jia, J. Pan, Y. Bi, Y. Dai, J. Sun, M. Wang, H. Wang, Retrieval- Augmented Generation for Large Language Models: A Survey, 2024. arXiv:2312.10997.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">SDG target detection in environmental reports using Retrieval-augmented Generation with LLMs</title>
+		<author>
+			<persName><forename type="first">Dario</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.climatenlp-1.19</idno>
+		<ptr target="https://aclanthology.org/2024.climatenlp-1.19" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st Workshop on Natural Language Processing Meets Climate Change (ClimateNLP 2024)</title>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Stammbach</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Ni</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Schimanski</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Dutia</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Singh</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Bingler</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Christiaen</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Kushwaha</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Muccione</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><forename type="middle">A</forename><surname>Vaghefi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Leippold</surname></persName>
+		</editor>
+		<meeting>the 1st Workshop on Natural Language Processing Meets Climate Change (ClimateNLP 2024)<address><addrLine>Bangkok, Thailand</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="241" to="250" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, SDG target detection in environmental reports using retrieval-augmented generation with LLMs, in: D. Stammbach, J. Ni, T. Schimanski, K. Dutia, A. Singh, J. Bingler, C. Christiaen, N. Kushwaha, V. Muccione, S. A. Vaghefi, M. Leippold (Eds.), Proceedings of the 1st Workshop on Natural Language Processing Meets Climate Change (ClimateNLP 2024), Association for Computational Linguistics, Bangkok, Thailand, 2024, pp. 241-250. URL: https://aclanthology.org/2024.climatenlp-1.19.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Evaluating Verifiability in Generative Search Engines</title>
+		<author>
+			<persName><forename type="first">Nelson</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianyi</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Liang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.findings-emnlp.467</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2023</title>
+		<meeting><address><addrLine>Singapore</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="7001" to="7025" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">N. Liu, T. Zhang, P. Liang, Evaluating verifiability in generative search engines, in: Findings of the Association for Computational Linguistics: EMNLP 2023, Association for Computational Linguistics, Singapore, 2023, pp. 7001-7025.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<monogr>
+		<title level="m" type="main">Teaching language models to support answers with verified quotes</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Menick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Trebacz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Mikulik</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Aslanides</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Chadwick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Glaese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Young</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Campbell-Gillingham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Irving</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Mcaleese</surname></persName>
+		</author>
+		<idno>ArXiv abs/2203.11147</idno>
+		<ptr target="https://api.semanticscholar.org/CorpusID:247594830" />
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">J. Menick, M. Trebacz, V. Mikulik, J. Aslanides, F. Song, M. Chadwick, M. Glaese, S. Young, L. Campbell-Gillingham, G. Irving, N. McAleese, Teaching language mod- els to support answers with verified quotes, ArXiv abs/2203.11147 (2022). URL: https: //api.semanticscholar.org/CorpusID:247594830.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">RAGAs: Automated Evaluation of Retrieval Augmented Generation</title>
+		<author>
+			<persName><forename type="first">Shahul</forename><surname>Es</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jithin</forename><surname>James</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luis</forename><surname>Espinosa Anke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steven</forename><surname>Schockaert</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.eacl-demo.16</idno>
+		<ptr target="https://aclanthology.org/2024.eacl-demo.16" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations</title>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Aletras</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><forename type="middle">De</forename><surname>Clercq</surname></persName>
+		</editor>
+		<meeting>the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations<address><addrLine>St. Julians, Malta</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="150" to="158" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Es, J. James, L. Espinosa Anke, S. Schockaert, RAGAs: Automated evaluation of retrieval augmented generation, in: N. Aletras, O. De Clercq (Eds.), Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations, Association for Computational Linguistics, St. Julians, Malta, 2024, pp. 150-158. URL: https://aclanthology.org/2024.eacl-demo.16.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">ASQA: Factoid Questions Meet Long-Form Answers</title>
+		<author>
+			<persName><forename type="first">Ivan</forename><surname>Stelmakh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yi</forename><surname>Luan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bhuwan</forename><surname>Dhingra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming-Wei</forename><surname>Chang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.emnlp-main.566</idno>
+		<ptr target="https://aclanthology.org/2022.emnlp-main.566.doi:10.18653/v1/2022.emnlp-main.566" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing</title>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Goldberg</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Z</forename><surname>Kozareva</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</editor>
+		<meeting>the 2022 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Abu Dhabi, United Arab Emirates</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page" from="8273" to="8288" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">I. Stelmakh, Y. Luan, B. Dhingra, M.-W. Chang, ASQA: Factoid questions meet long- form answers, in: Y. Goldberg, Z. Kozareva, Y. Zhang (Eds.), Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing, Association for Com- putational Linguistics, Abu Dhabi, United Arab Emirates, 2022, pp. 8273-8288. URL: https: //aclanthology.org/2022.emnlp-main.566. doi:10.18653/v1/2022.emnlp-main.566.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Enabling Large Language Models to Generate Text with Citations</title>
+		<author>
+			<persName><forename type="first">Tianyu</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Howard</forename><surname>Yen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiatong</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Danqi</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.emnlp-main.398</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Bouamor</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Bali</surname></persName>
+		</editor>
+		<meeting>the 2023 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Singapore</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="6465" to="6488" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">T. Gao, H. Yen, J. Yu, D. Chen, Enabling large language models to generate text with citations, in: H. Bouamor, K. Bali (Eds.), Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics, Singapore, 2023, pp. 6465-6488.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">QAMPARI: A benchmark for open-domain questions with many answers</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Amouyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Wolfson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Rubin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Yoran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Herzig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Berant</surname></persName>
+		</author>
+		<ptr target="https://aclanthology.org/2023.gem-1.9" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Third Workshop on Natural Language Generation, Evaluation, and Metrics (GEM)</title>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Gehrmann</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Wang</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Sedoc</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Clark</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Dhole</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><forename type="middle">R</forename><surname>Chandu</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Santus</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Sedghamiz</surname></persName>
+		</editor>
+		<meeting>the Third Workshop on Natural Language Generation, Evaluation, and Metrics (GEM)<address><addrLine>Singapore</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="97" to="110" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Amouyal, T. Wolfson, O. Rubin, O. Yoran, J. Herzig, J. Berant, QAMPARI: A benchmark for open-domain questions with many answers, in: S. Gehrmann, A. Wang, J. Sedoc, E. Clark, K. Dhole, K. R. Chandu, E. Santus, H. Sedghamiz (Eds.), Proceedings of the Third Workshop on Natural Language Generation, Evaluation, and Metrics (GEM), Association for Computational Linguistics, Singapore, 2023, pp. 97-110. URL: https://aclanthology.org/ 2023.gem-1.9.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Attributed question answering: Evaluation and modeling for attributed large language models</title>
+		<author>
+			<persName><forename type="first">B</forename><surname>Bohnet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Tran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Verga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Aharoni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Andor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><forename type="middle">B</forename><surname>Soares</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ciaramita</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Eisenstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Ganchev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Herzig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Hui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Kwiatkowski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Schuster</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><forename type="middle">S</forename><surname>Saralegui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">W</forename><surname>Cohen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Collins</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Das</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Metzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Petrov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Webster</surname></persName>
+		</author>
+		<ptr target="https://arxiv.org/abs/2212.08037" />
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">B. Bohnet, V. Tran, P. Verga, R. Aharoni, D. Andor, L. B. Soares, M. Ciaramita, J. Eisenstein, K. Ganchev, J. Herzig, K. Hui, T. Kwiatkowski, J. Ma, J. Ni, T. Schuster, L. S. Saralegui, W. W. Cohen, M. Collins, D. Das, D. Metzler, S. Petrov, K. Webster, Attributed question answering: Evaluation and modeling for attributed large language models, 2022. URL: https://arxiv.org/abs/2212.08037.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">EquinorQA: Large Language Models for Question Answering Over Proprietary Data</title>
+		<author>
+			<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bjarte</forename><surname>Johansen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jakob</forename><surname>Vigerust Kallestad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Seong-Eun</forename><surname>Cho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cèsar</forename><surname>Ferri</surname></persName>
+		</author>
+		<idno type="DOI">10.3233/faia241049</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Frontiers in Artificial Intelligence and Applications</title>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2024-10-16">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, B. Johansen, J. V. Kallestad, S.-E. Cho, C. Ferri, EquinorQA: Large Language Models for Question Answering over proprietary data, in: ECAI 2024 -27th European Con- ference on Artificial Intelligence -Including 13th Conference on Prestigious Applications of Intelligent Systems (PAIS 2024), IOS Press, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<title level="m" type="main">Language models are unsupervised multitask learners</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Luan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Amodei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Sutskever</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever, Language models are unsupervised multitask learners, 2019.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<monogr>
+		<title/>
+		<author>
+			<persName><surname>Openai</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2303.08774</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">GPT-4 Technical Report</note>
+	<note type="raw_reference">OpenAI, GPT-4 Technical Report, 2024. arXiv:2303.08774.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

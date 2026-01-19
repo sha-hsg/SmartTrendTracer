@@ -13,16 +13,11 @@ from dotenv import load_dotenv
 
 import faiss
 import openai
-from sqlalchemy.orm import Session
-from sqlalchemy import text
 
-from app.models import Tweet, SubstackArticle, ArticleSnippet, Tag
-from app.models.papers import Paper, PaperTag, PaperSnippet
 from app.services.llm_service import LLMService
 
 # Load environment variables
 load_dotenv()
-
 
 @dataclass
 class Document:
@@ -34,7 +29,6 @@ class Document:
     metadata: Dict[str, Any]
     embedding: Optional[np.ndarray] = None
 
-
 @dataclass
 class SearchResult:
     """Represents a search result with source information"""
@@ -45,7 +39,6 @@ class SearchResult:
     metadata: Dict[str, Any]
     highlight: Optional[str] = None
 
-
 class RAGService:
     """Service for RAG-based question answering"""
     
@@ -53,6 +46,14 @@ class RAGService:
         """Initialize RAG service with database session"""
         self.db = db
         self.llm_service = LLMService()
+        
+        # Load prompts configuration
+        prompts_config_path = 'prompts_config.json'
+        if os.path.exists(prompts_config_path):
+            with open(prompts_config_path, 'r') as f:
+                self.prompts_config = json.load(f)
+        else:
+            self.prompts_config = {}
         
         # Initialize OpenAI client for embeddings
         self.openai_api_key = os.getenv('OPENAI_API_KEY')
@@ -99,7 +100,7 @@ class RAGService:
             print(f"Error saving embeddings cache: {e}")
     
     def _get_embedding(self, text: str) -> np.ndarray:
-        """Get embedding for text using OpenAI API with caching"""
+        """Get embedding for text using Gemini API with caching"""
         # Create a hash of the text for caching
         text_hash = hashlib.md5(text.encode()).hexdigest()
         
@@ -107,13 +108,27 @@ class RAGService:
         if text_hash in self.embeddings_cache:
             return np.array(self.embeddings_cache[text_hash])
         
-        # Get embedding from OpenAI
+        # Try Gemini first, fallback to OpenAI
         try:
-            response = self.openai_client.embeddings.create(
-                model="text-embedding-ada-002",
-                input=text[:8000]  # Limit text length
-            )
-            embedding = np.array(response.data[0].embedding)
+            # Check if we have Google API key
+            google_api_key = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+            if google_api_key:
+                # Use Gemini embeddings
+                import google.generativeai as genai
+                genai.configure(api_key=google_api_key)
+                result = genai.embed_content(
+                    model="models/text-embedding-004",
+                    content=text[:8000],
+                    task_type="retrieval_document"
+                )
+                embedding = np.array(result['embedding'])
+            else:
+                # Fallback to OpenAI
+                response = self.openai_client.embeddings.create(
+                    model="text-embedding-ada-002",
+                    input=text[:8000]
+                )
+                embedding = np.array(response.data[0].embedding)
             
             # Cache the embedding
             self.embeddings_cache[text_hash] = embedding.tolist()
@@ -121,8 +136,9 @@ class RAGService:
             return embedding
         except Exception as e:
             print(f"Error getting embedding: {e}")
-            # Return zero vector as fallback
-            return np.zeros(1536)  # OpenAI ada-002 dimension
+            # Return zero vector as fallback (768 for Gemini, 1536 for OpenAI)
+            google_api_key = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+            return np.zeros(768 if google_api_key else 1536)
     
     def _get_embeddings_batch(self, texts: List[str], batch_size: int = 20) -> np.ndarray:
         """Get embeddings for multiple texts with batching"""
@@ -241,7 +257,7 @@ class RAGService:
                 source_id=str(paper.id),
                 metadata={
                     'title': paper.title,
-                    'authors': [a.name for a in paper.authors] if paper.authors else [],
+                    'authors': paper.authors.split(', ') if paper.authors and isinstance(paper.authors, str) else [],
                     'tags': tag_list,
                     'conference': paper.conference,
                     'journal': paper.journal,
@@ -292,7 +308,9 @@ class RAGService:
         faiss.normalize_L2(embeddings)
         
         # Create FAISS index
-        dimension = 1536  # OpenAI ada-002 dimension
+        # Check which embedding model we're using
+        google_api_key = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+        dimension = 768 if google_api_key else 1536  # Gemini: 768, OpenAI: 1536
         self.index = faiss.IndexFlatIP(dimension)  # Inner product for cosine similarity
         self.index.add(embeddings)
         
@@ -362,16 +380,19 @@ class RAGService:
             if idx == -1:  # FAISS returns -1 for padding
                 continue
                 
-            doc = self.doc_map.get(idx)
-            if doc:
-                result = SearchResult(
-                    content=doc.content,
-                    source_type=doc.source_type,
-                    source_id=doc.source_id,
-                    score=float(score),
-                    metadata=doc.metadata
-                )
-                results.append(result)
+            doc_id = self.doc_map.get(idx)
+            if doc_id:
+                # Get metadata for this document
+                doc_metadata = self.metadata.get(doc_id, {})
+                if doc_metadata:
+                    result = SearchResult(
+                        content=doc_metadata.get('content', ''),
+                        source_type=doc_metadata.get('type', 'unknown'),
+                        source_id=doc_id.split('_', 1)[1] if '_' in doc_id else doc_id,
+                        score=float(score),
+                        metadata=doc_metadata.get('metadata', {})
+                    )
+                    results.append(result)
         
         return results
     
@@ -411,24 +432,27 @@ class RAGService:
         context = "\n\n".join(context_parts)
         
         # Get prompts from configuration
-        prompts_config = getattr(self.llm_service, 'prompts_config', {})
-        rag_config = prompts_config.get('rag_query', {})
+        rag_config = self.prompts_config.get('rag_query', {})
         
         if not rag_config:
-            raise ValueError("rag_query prompts not configured in prompts_config.json")
+            # Use default prompt if not configured
+            rag_config = {
+                'user_template': 'Based on the following context, provide a detailed answer to the question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer:'
+            }
         
         # Format prompt from template
-        user_template = rag_config.get('user_template')
-        if not user_template:
-            raise ValueError("rag_query.user_template not configured in prompts_config.json")
+        user_template = rag_config.get('user_template', 
+            'Based on the following context, provide a detailed answer to the question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer:')
         
         prompt = user_template.format(context=context, question=question)
         
         # Get answer from LLM
         try:
-            # Use the summarization model config for RAG
-            model_config = self.llm_service.llm_config['models'].get('summarization', 
-                                                                     self.llm_service.llm_config['models']['tag_suggestion'])
+            # Use the rag_answer model config, fallback to chat_general
+            models = self.llm_service.llm_config.get('models', {})
+            model_config = models.get('rag_answer') or models.get('chat_general') or models.get('summarization')
+            if not model_config:
+                raise ValueError("No suitable model configured for RAG")
             answer = self.llm_service._call_llm(prompt, model_config)
             model_used = model_config.get('model', 'unknown')
         except Exception as e:

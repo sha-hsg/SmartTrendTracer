@@ -1,26 +1,21 @@
 """
 AI-powered entity extraction service for automatic annotation
+Migrated to use LLM Manager with LiteLLM
 """
 import json
 import os
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timezone
-from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 import hashlib
 
-from langchain_anthropic import ChatAnthropic
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
-
-from app.models import TagConcept, TagSynonym, get_db
-from app.models.tag_ontology import TagMapping
+from app.services.llm_manager import get_llm_manager
 
 load_dotenv()
 
 class EntityExtraction:
     """Represents an extracted entity"""
-    def __init__(self, text: str, entity_type: str, confidence: float, 
+    def __init__(self, text: str, entity_type: str, confidence: float,
                  context: str = "", normalized: str = "", metadata: Dict = None):
         self.text = text
         self.entity_type = entity_type
@@ -29,17 +24,16 @@ class EntityExtraction:
         self.normalized = normalized or self._normalize_text(text)
         self.metadata = metadata or {}
         self.id = self._generate_id()
-    
+
     def _normalize_text(self, text: str) -> str:
         """Normalize entity text for matching - preserve capitalization for proper nouns"""
-        # Just replace spaces with hyphens, preserve capitalization
         return text.strip().replace(" ", "-").replace("_", "-")
-    
+
     def _generate_id(self) -> str:
         """Generate unique ID for the entity"""
         content = f"{self.text}:{self.entity_type}:{self.normalized}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
-    
+
     def to_dict(self) -> Dict:
         return {
             "id": self.id,
@@ -51,118 +45,255 @@ class EntityExtraction:
             "metadata": self.metadata
         }
 
-
 class EntityExtractionService:
-    """Service for extracting entities from text using LLMs"""
-    
-    def __init__(self, use_fast_model: bool = False):
-        """Initialize with LLM configuration"""
+    """Service for extracting entities from text using LLM Manager"""
+
+    def __init__(self, use_fast_model: bool = False, model_choice: str = None, custom_model: str = None, user_id: str = "default"):
+        """Initialize with LLM Manager
+
+        Args:
+            use_fast_model: Use fast model (deprecated, kept for backward compatibility)
+            model_choice: Specific model to use ('gpt5', 'gemini', 'claude', 'fast')
+            custom_model: Direct model name from UI (e.g., 'gemini-2.5-flash-lite', 'claude-opus-4-1-20250805')
+            user_id: User ID for preference lookup
+        """
+        self.use_fast_model = use_fast_model
+        self.model_choice = model_choice
+        self.custom_model = custom_model  # Store custom model selection
+        self.user_id = user_id
+
+        # Initialize LLM Manager
+        self.llm_manager = get_llm_manager()
+
         # Load configurations
         with open('llm.json', 'r') as f:
             self.llm_config = json.load(f)
-        
+
         with open('prompts_config.json', 'r') as f:
             self.prompts = json.load(f)
-        
+
         with open('top_level.json', 'r') as f:
             self.ontology_schema = json.load(f)
-        
-        # Select model configuration
-        model_key = 'entity_extraction_fast' if use_fast_model else 'entity_extraction'
-        model_config = self.llm_config['models'][model_key]
-        
-        # Initialize LLM based on provider
-        if model_config['provider'] == 'anthropic':
-            api_key = os.getenv('ANTHROPIC_API_KEY')
-            if not api_key:
-                raise ValueError("ANTHROPIC_API_KEY not found")
-            
-            self.llm = ChatAnthropic(
-                model=model_config['model'],
-                anthropic_api_key=api_key,
-                temperature=model_config.get('temperature', 0.1),
-                max_tokens=model_config.get('max_tokens', 2000)
-            )
-        elif model_config['provider'] == 'openai':
-            api_key = os.getenv('OPENAI_API_KEY')
-            if not api_key:
-                raise ValueError("OPENAI_API_KEY not found")
-            
-            self.llm = ChatOpenAI(
-                model=model_config['model'],
-                openai_api_key=api_key,
-                temperature=model_config.get('temperature', 0.1),
-                max_tokens=model_config.get('max_tokens', 1000)
-            )
+
+        # Determine task type based on model choice
+        if model_choice == 'gpt5':
+            self.task_type = 'entity_extraction_gpt5'
+        elif model_choice == 'gemini':
+            self.task_type = 'entity_extraction_gemini'
+        elif model_choice == 'claude':
+            self.task_type = 'entity_extraction'
+        elif model_choice == 'fast':
+            self.task_type = 'entity_extraction_fast'
+        elif use_fast_model:
+            self.task_type = 'entity_extraction_fast'
         else:
-            raise ValueError(f"Unsupported provider: {model_config['provider']}")
-        
-        self.model_name = model_config['model']
+            self.task_type = 'entity_extraction'
+
+        # Get model info for attribution (will be overridden if custom_model is set)
+        task_info = self.llm_manager.get_task_info(self.task_type)
+        self.model_name = custom_model if custom_model else (task_info['model'] if task_info else 'unknown')
+
         self.extraction_config = self.ontology_schema.get('extraction_config', {})
-    
+
+        # Cache valid entity types from MongoDB
+        self._cache_valid_entity_types()
+
+    def _cache_valid_entity_types(self):
+        """Cache valid entity types from MongoDB concept hierarchy"""
+        from app.database.mongodb import get_database
+
+        db = get_database()
+        concepts_col = db.tag_concepts_v2
+
+        self.valid_entity_types = {}
+        self.entity_parent_map = {}
+
+        # Get all distinct entity types
+        distinct_entity_types = concepts_col.distinct("entity_type", {
+            "entity_type": {
+                "$exists": True,
+                "$nin": ["concept", "category"]
+            }
+        })
+
+        # Determine parent category mapping
+        category_mapping = {
+            'person': 'named-entities',
+            'organisation': 'named-entities',
+            'organization': 'named-entities',
+            'location': 'named-entities',
+            'event': 'named-entities',
+            'product': 'named-entities',
+            'hardware': 'named-entities',
+            'method': 'research-entities',
+            'model': 'research-entities',
+            'technology': 'research-entities',
+            'technique': 'research-entities',
+            'algorithm': 'research-entities',
+            'framework': 'research-entities',
+            'tool': 'research-entities',
+            'dataset': 'research-entities',
+            'topic': 'research-entities',
+            'paper': 'content-types',
+            'article': 'content-types',
+            'book': 'content-types',
+            'document': 'content-types'
+        }
+
+        # Cache information for each entity type
+        for entity_type in distinct_entity_types:
+            if not entity_type:
+                continue
+
+            sample_concept = concepts_col.find_one({"entity_type": entity_type})
+            parent_category = category_mapping.get(entity_type, 'research-entities')
+
+            self.valid_entity_types[entity_type] = {
+                'entity_type': entity_type,
+                'parent_category': parent_category,
+                'icon': sample_concept.get('icon', '🏷️') if sample_concept else '🏷️',
+                'color': sample_concept.get('color', '#6B7280') if sample_concept else '#6B7280',
+                'sample_concept': sample_concept.get('display_name', '') if sample_concept else '',
+                'validation_rules': {},
+                'extraction_hints': []
+            }
+            self.entity_parent_map[entity_type] = entity_type
+
+        print(f"Cached {len(self.valid_entity_types)} valid entity types from MongoDB")
+
+    def get_entity_hierarchy_for_prompt(self) -> str:
+        """Get entity hierarchy as string for LLM prompt"""
+        hierarchy = []
+
+        # Group by parent category
+        categories = {}
+        for entity_type, info in self.valid_entity_types.items():
+            parent = info['parent_category']
+            if parent not in categories:
+                categories[parent] = []
+            sample_name = info.get('sample_concept', entity_type)
+            categories[parent].append(f"- {entity_type}: {sample_name}")
+
+        # Format for prompt
+        for category, types in categories.items():
+            hierarchy.append(f"\n{category.replace('-', ' ').title()}:")
+            hierarchy.extend(types)
+
+        return '\n'.join(hierarchy)
+
     def extract_entities(self, text: str, article_id: Optional[int] = None) -> List[EntityExtraction]:
         """
-        Extract entities from text using LLM
-        
+        Extract entities from text using LLM Manager
+
         Args:
             text: Text to extract entities from
             article_id: Optional article ID for context
-            
+
         Returns:
             List of EntityExtraction objects
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         if not text or len(text.strip()) < 10:
+            logger.warning(f"🚨 Entity extraction skipped: Text too short ({len(text)} chars)")
             return []
-        
+
+        logger.info(f"🔍 Starting entity extraction with:")
+        logger.info(f"  📄 Text length: {len(text)} characters")
+        logger.info(f"  🤖 Model: {self.model_name}")
+        logger.info(f"  ⚡ Task type: {self.task_type}")
+        logger.info(f"  🆔 Article ID: {article_id}")
+
         # Get extraction prompt
         prompt_config = self.prompts.get('entity_extraction', {})
         system_prompt = prompt_config.get('system', '')
         user_template = prompt_config.get('user_template', '')
-        
+
+        # Add dynamic entity hierarchy to system prompt
+        entity_hierarchy = self.get_entity_hierarchy_for_prompt()
+        enhanced_system_prompt = system_prompt.replace(
+            "The system has these EXISTING entity type parent concepts in MongoDB:",
+            f"The system has these EXISTING entity type parent concepts in MongoDB:\n{entity_hierarchy}\n\nEach extracted entity should use one of these types:"
+        )
+
         # Format user prompt
-        user_prompt = user_template.format(text=text[:5000])  # Limit text length
-        
+        text_to_send = text[:5000]  # Limit text length
+        user_prompt = user_template.format(text=text_to_send)
+
+        logger.info(f"📝 Prepared prompts (system: {len(enhanced_system_prompt)} chars, user: {len(user_prompt)} chars)")
+
+        # Convert to OpenAI message format
         messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
+            {"role": "system", "content": enhanced_system_prompt},
+            {"role": "user", "content": user_prompt}
         ]
-        
+
         try:
-            # Call LLM
-            response = self.llm.invoke(messages)
-            
-            # Parse response
-            if hasattr(response, 'content'):
-                content = response.content
+            logger.info(f"🚀 Calling LLM Manager for entity extraction...")
+
+            # Call LLM Manager with custom model if specified
+            if self.custom_model:
+                logger.info(f"🎯 Using custom model from UI: {self.custom_model}")
+                response = self.llm_manager.completion_sync(
+                    task_type=self.task_type,
+                    messages=messages,
+                    user_id=self.user_id,
+                    override_params={'model': self.custom_model}  # Override with UI-selected model
+                )
             else:
-                content = str(response)
-            
+                response = self.llm_manager.completion_sync(
+                    task_type=self.task_type,
+                    messages=messages,
+                    user_id=self.user_id
+                )
+
+            logger.info(f"✅ LLM response received")
+
+            # Extract content
+            content = response.choices[0].message.content
+            logger.info(f"📤 Response length: {len(content)} chars")
+
             # Clean JSON if needed
-            if isinstance(content, str):
-                if '```json' in content:
-                    content = content.split('```json')[1].split('```')[0]
-                elif '```' in content:
-                    content = content.split('```')[1].split('```')[0]
-                content = content.strip()
-            
+            if '```json' in content:
+                content = content.split('```json')[1].split('```')[0]
+                logger.info(f"🧹 Cleaned JSON from code blocks")
+            elif '```' in content:
+                content = content.split('```')[1].split('```')[0]
+                logger.info(f"🧹 Cleaned content from generic code blocks")
+            content = content.strip()
+
             # Parse JSON response
-            result = json.loads(content)
-            entities_data = result.get('entities', [])
-            
+            try:
+                result = json.loads(content)
+                logger.info(f"✅ JSON parsing successful")
+
+                entities_data = result.get('entities', [])
+                logger.info(f"📊 Found {len(entities_data)} raw entities in response")
+
+            except json.JSONDecodeError as json_error:
+                logger.error(f"🚨 JSON parsing failed: {json_error}")
+                logger.error(f"  Content that failed: {content[:1000]}...")
+                return []
+
             # Convert to EntityExtraction objects
             entities = []
-            for entity_data in entities_data:
+            skipped_entities = []
+
+            for i, entity_data in enumerate(entities_data):
                 # Validate entity type
                 entity_type = entity_data.get('type', '')
                 if not self._is_valid_entity_type(entity_type):
+                    skipped_entities.append(f"Invalid type '{entity_type}' for '{entity_data.get('text', '')}'")
                     continue
-                
+
                 # Check confidence threshold
                 confidence = entity_data.get('confidence', 0.5)
                 min_confidence = self.extraction_config.get('confidence_threshold', 0.6)
                 if confidence < min_confidence:
+                    skipped_entities.append(f"Low confidence {confidence} < {min_confidence} for '{entity_data.get('text', '')}'")
                     continue
-                
+
                 # Create entity
                 entity = EntityExtraction(
                     text=entity_data.get('text', ''),
@@ -178,29 +309,31 @@ class EntityExtractionService:
                     }
                 )
                 entities.append(entity)
-            
-            # Apply deduplication
+
+            logger.info(f"✅ Successfully processed {len(entities)} entities")
+            if skipped_entities:
+                logger.info(f"⏭️ Skipped {len(skipped_entities)} entities:")
+                for reason in skipped_entities[:5]:
+                    logger.info(f"    {reason}")
+
+            # Apply deduplication and limiting
             entities = self._deduplicate_entities(entities)
-            
-            # Limit number of entities per type
             entities = self._limit_entities_per_type(entities)
-            
+
+            logger.info(f"🎯 Final result: {len(entities)} entities extracted")
+            for entity in entities[:5]:
+                logger.info(f"    📌 {entity.text} ({entity.entity_type}, confidence: {entity.confidence:.2f})")
+
             return entities
-            
+
         except Exception as e:
-            print(f"Error extracting entities: {e}")
+            logger.error(f"🚨 ERROR in entity extraction: {e}", exc_info=True)
             return []
-    
+
     def _is_valid_entity_type(self, entity_type: str) -> bool:
-        """Check if entity type is valid according to schema"""
-        for category in self.ontology_schema['entity_types'].values():
-            if entity_type == category.get('tag'):
-                return True
-            for child in category.get('children', {}).values():
-                if entity_type == child.get('tag'):
-                    return True
-        return False
-    
+        """Check if entity type is valid"""
+        return entity_type in self.valid_entity_types
+
     def _deduplicate_entities(self, entities: List[EntityExtraction]) -> List[EntityExtraction]:
         """Remove duplicate entities, keeping highest confidence"""
         seen = {}
@@ -209,57 +342,69 @@ class EntityExtractionService:
             if key not in seen or seen[key].confidence < entity.confidence:
                 seen[key] = entity
         return list(seen.values())
-    
+
     def _limit_entities_per_type(self, entities: List[EntityExtraction]) -> List[EntityExtraction]:
         """Limit number of entities per type"""
         max_per_type = self.extraction_config.get('max_entities_per_type', 20)
-        
-        # Group by type
+
         by_type = {}
         for entity in entities:
             if entity.entity_type not in by_type:
                 by_type[entity.entity_type] = []
             by_type[entity.entity_type].append(entity)
-        
-        # Sort by confidence and limit
+
         limited = []
         for entity_type, type_entities in by_type.items():
             sorted_entities = sorted(type_entities, key=lambda e: e.confidence, reverse=True)
             limited.extend(sorted_entities[:max_per_type])
-        
+
         return limited
-    
+
     def validate_entity(self, entity: EntityExtraction, context: str = "") -> Tuple[bool, Optional[str], str]:
         """
-        Validate an extracted entity using LLM
-        
+        Validate an extracted entity using LLM Manager
+
         Returns:
             (is_valid, suggested_type, reasoning)
         """
         prompt_config = self.prompts.get('entity_validation', {})
         system_prompt = prompt_config.get('system', '')
         user_template = prompt_config.get('user_template', '')
-        
+
         user_prompt = user_template.format(
             text=entity.text,
             type=entity.entity_type,
             context=context or entity.context
         )
-        
+
         messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
         ]
-        
+
         try:
-            response = self.llm.invoke(messages)
-            content = response.content if hasattr(response, 'content') else str(response)
-            
+            # Use custom model if specified
+            if self.custom_model:
+                response = self.llm_manager.completion_sync(
+                    task_type=self.task_type,
+                    messages=messages,
+                    user_id=self.user_id,
+                    override_params={'model': self.custom_model}  # Override with UI-selected model
+                )
+            else:
+                response = self.llm_manager.completion_sync(
+                    task_type=self.task_type,
+                    messages=messages,
+                    user_id=self.user_id
+                )
+
+            content = response.choices[0].message.content
+
             # Parse JSON
             if '```json' in content:
                 content = content.split('```json')[1].split('```')[0]
             result = json.loads(content.strip())
-            
+
             return (
                 result.get('valid', True),
                 result.get('suggested_type'),
@@ -267,132 +412,124 @@ class EntityExtractionService:
             )
         except Exception as e:
             print(f"Error validating entity: {e}")
-            return True, None, ""  # Default to valid if validation fails
-    
-    def save_entity_to_ontology(self, db: Session, entity: EntityExtraction, 
-                               parent_type: str, user: str = "system") -> Optional[TagConcept]:
+            return True, None, ""
+
+    def save_entity_to_ontology(self, db: Any, entity: EntityExtraction,
+                               parent_type: str, user: str = "system") -> Optional[Dict]:
         """
-        Save an extracted entity to the tag ontology
-        
+        Save an extracted entity to the MongoDB tag ontology
+
         Args:
-            db: Database session
+            db: Database session (not used for MongoDB, kept for compatibility)
             entity: EntityExtraction object
-            parent_type: Parent entity type from schema (e.g., 'person', 'organisation')
+            parent_type: Parent entity type
             user: User who triggered the extraction
-            
+
         Returns:
-            Created or existing TagConcept
+            Created or existing concept as dict
         """
-        # Check if entity already exists (case-insensitive)
-        from sqlalchemy import func
-        existing = db.query(TagConcept).filter(
-            func.lower(TagConcept.tag) == func.lower(entity.normalized)
-        ).first()
-        
+        from datetime import datetime
+        import re
+        from app.database.mongodb import get_database
+
+        db_mongo = get_database()
+        concepts_col = db_mongo.tag_concepts_v2
+
+        # Generate slug
+        slug = entity.normalized.lower().replace(" ", "_").replace("-", "_")
+        slug = re.sub(r'[^a-z0-9_]', '', slug)
+
+        # Check if exists
+        existing = concepts_col.find_one({
+            "$or": [
+                {"slug": slug},
+                {"display_name": {"$regex": f"^{re.escape(entity.text)}$", "$options": "i"}}
+            ]
+        })
+
         if existing:
-            # Update metadata if needed
-            if not existing.description:
-                existing.description = f"{entity.entity_type}: {entity.context}"
+            if not existing.get("description"):
+                concepts_col.update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": {"description": f"{entity.entity_type}: {entity.context[:200] if entity.context else ''}"}}
+                )
             return existing
-        
-        # Find the appropriate parent concept based on entity type
-        # Entity types from top_level.json are organized under parent categories
-        parent = None
-        parent_category = None
-        
-        # Map entity types to their parent categories from top_level.json
-        for category_key, category_data in self.ontology_schema.get('entity_types', {}).items():
-            if parent_type == category_data.get('tag'):
-                # Direct parent category match
-                parent = db.query(TagConcept).filter(
-                    TagConcept.tag == parent_type
-                ).first()
-                parent_category = category_key
-                break
-            
-            # Check if parent_type is a child of this category
-            children = category_data.get('children', {})
-            for child_key, child_data in children.items():
-                if parent_type == child_data.get('tag'):
-                    # This is a child entity type, use it as parent
-                    parent = db.query(TagConcept).filter(
-                        TagConcept.tag == parent_type
-                    ).first()
-                    
-                    # If the specific entity type doesn't exist as a concept,
-                    # fall back to the parent category
-                    if not parent:
-                        parent = db.query(TagConcept).filter(
-                            TagConcept.tag == category_data.get('tag')
-                        ).first()
-                    parent_category = category_key
-                    break
-            
-            if parent:
-                break
-        
-        if not parent:
-            print(f"Parent type {parent_type} not found in ontology, checking for fallback...")
-            # Try to find any existing top-level category as fallback
-            # Prefer "named-entities" as a general fallback
-            parent = db.query(TagConcept).filter(
-                TagConcept.tag == 'named-entities'
-            ).first()
-            
+
+        # Get parent concept
+        parent_concept_id = self.entity_parent_map.get(parent_type)
+        if not parent_concept_id:
+            parent_concept_id = f"c_et_{parent_type}"
+            parent = concepts_col.find_one({"_id": parent_concept_id})
             if not parent:
-                # Last resort: create at root level (no parent)
-                print(f"No suitable parent found, creating at root level")
-                parent_id = None
-                level = 0
-            else:
-                parent_id = parent.id
-                level = parent.level + 1
-        else:
-            parent_id = parent.id
-            level = parent.level + 1
-        
-        # Create new concept
-        concept = TagConcept(
-            tag=entity.normalized,
-            display_name=entity.text,
-            description=f"{entity.entity_type}: {entity.context[:200] if entity.context else ''}",
-            parent_id=parent_id,
-            level=level,
-            path="/"  # Will be updated
-        )
-        
-        db.add(concept)
-        db.flush()
-        
-        # Update path
-        concept.update_path(db)
-        
-        # Add metadata as JSON in description (could be extended with proper metadata table)
-        metadata = {
-            "created_by": user,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "source": "llm",
-            "confidence": entity.confidence,
-            "llm_model": self.model_name,
-            "context": entity.context[:500] if entity.context else "",  # Limit context size
-            "validated": False,
-            "entity_type": entity.entity_type
+                parent = concepts_col.find_one({"slug": "named-entities"})
+                parent_concept_id = parent["_id"] if parent else None
+
+        parent = concepts_col.find_one({"_id": parent_concept_id}) if parent_concept_id else None
+
+        # Generate unique ID
+        concept_id = f"c_{parent_type}_{slug}"
+        counter = 1
+        while concepts_col.find_one({"id": concept_id}):
+            concept_id = f"c_{parent_type}_{slug}_{counter}"
+            counter += 1
+
+        # Get entity info
+        entity_info = {}
+        for category in self.ontology_schema.get('entity_types', {}).values():
+            for child_key, child_data in category.get('children', {}).items():
+                if parent_type == child_data.get('tag'):
+                    entity_info = child_data
+                    break
+            if entity_info:
+                break
+
+        # Create concept
+        concept = {
+            "id": concept_id,
+            "_id": concept_id,
+            "slug": slug,
+            "display_name": entity.text,
+            "description": f"{entity.entity_type}: {entity.context[:200] if entity.context else ''}",
+            "entity_type": parent_type,
+            "parents": [parent_concept_id] if parent_concept_id else [],
+            "children": [],
+            "level": parent["level"] + 1 if parent else 0,
+            "icon": entity_info.get("icon", "🏷️"),
+            "color": entity_info.get("color", "#6B7280"),
+            "usage_count": 0,
+            "status": "active",
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "metadata": {
+                "created_by": user,
+                "source": "entity_extraction",
+                "confidence": entity.confidence,
+                "llm_model": self.model_name,
+                "context": entity.context[:500] if entity.context else "",
+                "validated": False,
+                "original_text": entity.text
+            }
         }
-        
-        # Store metadata in a more structured way
-        concept.description = f"Auto-extracted {entity.entity_type}: {entity.text}"
-        
-        db.commit()
-        return concept
-    
-    def batch_save_entities(self, db: Session, entities: List[EntityExtraction], 
+
+        concepts_col.insert_one(concept)
+
+        # Update parent
+        if parent_concept_id:
+            concepts_col.update_one(
+                {"id": parent_concept_id},
+                {"$addToSet": {"children": concept_id}}
+            )
+
+        return {
+            "id": concept_id,
+            "tag": slug,
+            "display_name": entity.text,
+            "description": concept["description"]
+        }
+
+    def batch_save_entities(self, db: Any, entities: List[EntityExtraction],
                            user: str = "system") -> Dict[str, Any]:
-        """
-        Save multiple entities to the ontology
-        
-        Returns:
-            Statistics about the save operation
-        """
+        """Save multiple entities to the ontology"""
         stats = {
             "total": len(entities),
             "saved": 0,
@@ -400,23 +537,21 @@ class EntityExtractionService:
             "failed": 0,
             "by_type": {}
         }
-        
+
         for entity in entities:
-            # Determine parent type
             parent_type = self._get_parent_type_for_entity(entity.entity_type)
             if not parent_type:
                 stats["failed"] += 1
                 continue
-            
+
             try:
                 concept = self.save_entity_to_ontology(db, entity, parent_type, user)
                 if concept:
-                    if concept.id:
+                    if concept.get("id"):
                         stats["saved"] += 1
                     else:
                         stats["existing"] += 1
-                    
-                    # Track by type
+
                     if entity.entity_type not in stats["by_type"]:
                         stats["by_type"][entity.entity_type] = 0
                     stats["by_type"][entity.entity_type] += 1
@@ -425,13 +560,16 @@ class EntityExtractionService:
             except Exception as e:
                 print(f"Error saving entity {entity.text}: {e}")
                 stats["failed"] += 1
-        
+
         return stats
-    
+
     def _get_parent_type_for_entity(self, entity_type: str) -> Optional[str]:
-        """Get the parent type for an entity type from schema"""
-        for category in self.ontology_schema['entity_types'].values():
-            for child_key, child in category.get('children', {}).items():
-                if child.get('tag') == entity_type:
-                    return entity_type  # The entity type itself is the parent for instances
+        """Get the parent type for an entity type"""
+        if entity_type in self.valid_entity_types:
+            return entity_type
+
+        for valid_type in self.valid_entity_types:
+            if valid_type.lower() == entity_type.lower():
+                return valid_type
+
         return None

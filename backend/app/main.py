@@ -1,168 +1,248 @@
+"""
+Full MongoDB version of main.py
+All data operations use MongoDB - no SQLite dependencies
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 import logging
+from pymongo import ASCENDING
+from app.database.mongodb import get_client, get_database
 
-from app.api import tweets, tags, media, trends, collection, tag_ontology, ontology_ai, analytics, substack, background
-from app.api import enhanced_tweets, enhanced_substack, rag_simple, pdf_export, tag_reorganization, unified_trends, media_gallery, user_trends
-from app.api import entity_extraction, statistics, papers, paper_trends, paper_advanced
-from app.models import Base, engine
-from app.scheduler import start_scheduler, stop_scheduler
-from app.smart_startup_collector import smart_collect_on_startup
+# Configure logging to both file and console
+import sys
+from logging.handlers import RotatingFileHandler
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Create logs directory if it doesn't exist
+log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), '..', 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
+# Set up file handler with rotation
+file_handler = RotatingFileHandler(
+    os.path.join(log_dir, 'backend.log'),
+    maxBytes=10*1024*1024,  # 10MB
+    backupCount=5
+)
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+))
+
+# Set up console handler
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%H:%M:%S'
+))
+
+# Configure root logger
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[file_handler, console_handler]
+)
+
 logger = logging.getLogger(__name__)
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
+# MongoDB connection
+mongo_client = get_client()
+db = get_database()
+logger.info("Connected to MongoDB")
+
+# Import MongoDB-based API modules
+from app.api import tweets_mongodb as tweets  # Full MongoDB tweets API
+from app.api import papers_mongodb as papers  # Full MongoDB papers API
+from app.api import books_mongodb as books  # Full MongoDB books API
+from app.api import articles_mongodb as articles  # Full MongoDB articles API
+from app.api import substack_mongodb as substack  # Full MongoDB substack API
+from app.api import reddit_mongodb as reddit  # Full MongoDB reddit API
+from app.api import statistics_mongodb as statistics  # MongoDB statistics
+from app.api import tags_mongodb as tags  # MongoDB tags API
+from app.api import trends_mongodb as trends  # MongoDB trends API
+from app.api import user_trends_mongodb as user_trends  # MongoDB user trends
+from app.api import unified_trends_mongodb as unified_trends  # MongoDB unified trends
+from app.api import analytics_trends_mongodb as analytics_trends  # MongoDB analytics trends
+from app.api import trend_analysis_mongodb as trend_analysis  # Comprehensive trend analysis
+from app.api import topic_explorer  # Topic Explorer for frequency and correlation analysis
+from app.api import rag_concepts  # Concept-based RAG
+from app.api import tag_ontology_v2_mongodb as ontology  # MongoDB ontology
+# from app.api import orphan_tags  # Orphan tag management - DISABLED: needs MongoDB update
+from app.api import ontology_graph  # Ontology visualization
+# from app.api import tag_import_export  # Tag import/export - DISABLED: needs MongoDB update
+from app.api import concepts_suggestions_mongodb as concepts_suggestions  # MongoDB concept suggestions
+
+# Additional APIs that might need updating
+from app.api import media_gallery_mongodb as media_gallery  # MongoDB Media gallery
+from app.api import arxiv  # ArXiv import
+from app.api import acl_anthology  # ACL Anthology import
+from app.api import acm_import  # ACM Digital Library import
+from app.api import direct_url_import  # Direct URL import
+from app.api import openreview_import  # OpenReview paper import
+# from app.api import paper_repository  # Paper repository - DISABLED: SQLAlchemy
+from app.api import article_clustering_mongodb as article_clustering  # Article clustering (MongoDB)
+from app.api import concept_organization  # Concept organization for unorganized concepts
+from app.api import article_import_mongodb as article_import  # MongoDB Article URL import
+from app.api import article_preview  # Article preview regeneration
+from app.api import pdf_export  # PDF export for articles - MongoDB migrated
+# from app.api import paper_beautify  # Paper markdown beautification - DISABLED: SQLAlchemy
+from app.api import tag_reorganization_async  # Tag reorganization with async SSE
+from app.api import tag_reorganization_comprehensive  # Comprehensive tag reorganization
+from app.api import tag_reorganization_apply  # Apply reorganization changes
+# from app.api import paper_images  # Paper image serving - now handled in papers_mongodb
+from app.api import dblp_mongodb  # DBLP API - MongoDB version without SQLite dependencies
+# from app.api import concepts_management  # Concept management and organization - DISABLED: File not found
+from app.api import system_statistics  # Comprehensive system statistics
+from app.api import references  # Normalized references collection API
+from app.api import entity_extraction  # Entity extraction and annotation management - MongoDB version
+from app.api import llm_preferences  # LLM model preferences and management
+from app.api import authors_management  # Author management and analytics
+from app.api import twitter_accounts  # Twitter account management
 
 # Create FastAPI app
 app = FastAPI(
-    title="SmartTrendTracer API",
-    description="AI-powered Twitter/X topic and trend detection system",
+    title="SmartTrendTracer API - MongoDB Edition",
+    description="AI Content Monitoring System using MongoDB",
     version="2.0.0"
 )
 
-# Global scheduler instance
-scheduler = None
-
-# Configure CORS for React frontend
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    allow_origins=["http://localhost:3470", "http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount static files for media
-if os.path.exists("data/media"):
-    app.mount("/media", StaticFiles(directory="data/media"), name="media")
-
-# Include API routers
+# Include routers with MongoDB implementations
 app.include_router(tweets.router, prefix="/api/tweets", tags=["tweets"])
-app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
-app.include_router(media.router, prefix="/api/media", tags=["media"])
-app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
-app.include_router(collection.router, prefix="/api/collection", tags=["collection"])
-app.include_router(tag_ontology.router, prefix="/api/ontology", tags=["ontology"])
-app.include_router(ontology_ai.router, prefix="/api/ontology/ai", tags=["ontology-ai"])
-app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(papers.router, prefix="/api/papers", tags=["papers"])
+app.include_router(entity_extraction.router, prefix="/api/entities", tags=["entity_extraction"])  # MongoDB entity extraction
+app.include_router(llm_preferences.router, prefix="/api/llm", tags=["llm"])  # LLM preferences and model management
+app.include_router(books.router, prefix="/api/books", tags=["books"])
+app.include_router(articles.router, prefix="/api/articles", tags=["articles"])
+app.include_router(authors_management.router, prefix="/api/authors", tags=["authors"])  # Author management and analytics
+app.include_router(twitter_accounts.router, prefix="/api/twitter-accounts", tags=["twitter_accounts"])  # Twitter account management
 app.include_router(substack.router, prefix="/api/substack", tags=["substack"])
-app.include_router(background.router, prefix="/api/background", tags=["background"])
-
-# Enhanced APIs with faceted browsing
-app.include_router(enhanced_tweets.router, prefix="/api/v2/tweets", tags=["enhanced-tweets"])
-app.include_router(enhanced_substack.router, prefix="/api/v2/substack", tags=["enhanced-substack"])
-
-# RAG API for AI-powered search
-app.include_router(rag_simple.router, prefix="/api/rag", tags=["rag"])
-
-# PDF Export API
-app.include_router(pdf_export.router, prefix="/api/pdf", tags=["pdf-export"])
-
-# Tag Reorganization API (Gemini 2.5 Pro)
-app.include_router(tag_reorganization.router, prefix="/api/tags/reorganize", tags=["tag-reorganization"])
-
-# Unified Trends API
-app.include_router(unified_trends.router, prefix="/api/unified", tags=["unified-trends"])
-
-# Media Gallery API
-app.include_router(media_gallery.router, prefix="/api/media-gallery", tags=["media-gallery"])
-
-# User Trends API
-app.include_router(user_trends.router, prefix="/api/user-trends", tags=["user-trends"])
-
-# Entity Extraction API
-app.include_router(entity_extraction.router, prefix="/api/entities", tags=["entity-extraction"])
-
-# Statistics API
+app.include_router(reddit.router, prefix="/api/reddit", tags=["reddit"])
 app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
+app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
+app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
+app.include_router(user_trends.router, prefix="/api/user-trends", tags=["user_trends"])
+app.include_router(unified_trends.router, prefix="/api/unified", tags=["unified_trends"])
+app.include_router(analytics_trends.router, prefix="/api/analytics/trends", tags=["analytics_trends"])
+app.include_router(trend_analysis.router, prefix="/api/trends/analysis", tags=["trend_analysis"])
+app.include_router(topic_explorer.router, prefix="/api/topics", tags=["topic_explorer"])
+app.include_router(rag_concepts.router, prefix="/api/rag", tags=["rag"])
+app.include_router(ontology.router, prefix="/api/ontology", tags=["ontology"])
+# app.include_router(orphan_tags.router, prefix="/api/tags/orphans", tags=["orphan_tags"])  # DISABLED: needs MongoDB update
+app.include_router(ontology_graph.router, prefix="/api/ontology-graph", tags=["ontology_graph"])
+# app.include_router(tag_import_export.router, prefix="/api/tags/import-export", tags=["import_export"])  # DISABLED: needs MongoDB update
+app.include_router(concepts_suggestions.router, prefix="/api/concepts/suggestions", tags=["suggestions"])
+app.include_router(concept_organization.router, prefix="/api/concepts/organization", tags=["concept_organization"])
+# app.include_router(concepts_management.router, prefix="/api/concepts", tags=["concepts_management"])  # DISABLED: Module not found
+app.include_router(system_statistics.router)  # System statistics endpoints
+app.include_router(references.router)  # References API with normalized collection (has own prefix)
+app.include_router(media_gallery.router, prefix="/api/media-gallery", tags=["media"])  # MongoDB Media gallery
+app.include_router(arxiv.router, prefix="/api/arxiv", tags=["arxiv"])
+app.include_router(acl_anthology.router, prefix="/api/acl-anthology", tags=["acl-anthology"])
+app.include_router(acm_import.router, tags=["acm"])  # ACM Digital Library import
+app.include_router(direct_url_import.router, prefix="/api/papers", tags=["direct-url"])  # Direct URL import
+app.include_router(openreview_import.router, tags=["openreview"])  # OpenReview paper import
+# app.include_router(paper_repository.router, prefix="/api/paper-repository", tags=["repository"])  # DISABLED
+app.include_router(article_clustering.router, prefix="/api/article-clustering", tags=["clustering"])
+app.include_router(article_import.router, prefix="/api/v2/articles", tags=["article-import"])
+app.include_router(article_preview.router, prefix="/api/article-preview", tags=["article-preview"])
+app.include_router(pdf_export.router, prefix="/api/pdf", tags=["pdf-export"])  # MongoDB migrated
+# app.include_router(paper_beautify.router, prefix="/api/paper-beautify", tags=["paper-beautify"])  # DISABLED
+app.include_router(tag_reorganization_async.router, prefix="/api/tags/reorganize", tags=["tag-reorganization"])
+app.include_router(tag_reorganization_comprehensive.router, prefix="/api/tags/reorganize/comprehensive", tags=["tag-reorganization"])
+app.include_router(tag_reorganization_apply.router, prefix="/api/tags/reorganize/apply", tags=["tag-reorganization"])
+# app.include_router(paper_images.router, tags=["paper-images"])  # Now handled in papers_mongodb
+app.include_router(dblp_mongodb.router, tags=["dblp"])  # MongoDB-compatible DBLP API at /api/dblp
+app.include_router(dblp_mongodb.papers_router, tags=["dblp"])  # Also available at /api/papers/dblp
 
-# Papers API
-app.include_router(papers.router, tags=["papers"])
+# Static file serving for PDFs and other documents
+pdf_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "papers")
+if os.path.exists(pdf_dir):
+    app.mount("/papers", StaticFiles(directory=pdf_dir), name="papers")
+    logger.info(f"Serving PDFs from: {pdf_dir}")
 
-# Paper Trends API
-app.include_router(paper_trends.router, tags=["paper-trends"])
+books_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "book_repository")
+if os.path.exists(books_dir):
+    app.mount("/books", StaticFiles(directory=books_dir), name="books")
+    logger.info(f"Serving books from: {books_dir}")
 
-# Paper Advanced Features API
-app.include_router(paper_advanced.router, tags=["paper-advanced"])
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    """Check if the API and MongoDB are running"""
+    try:
+        # Check MongoDB connection
+        db.command('ping')
+        
+        # Get some stats
+        stats = {
+            "status": "healthy",
+            "database": "MongoDB",
+            "collections": {
+                "tweets": db.tweets.count_documents({}),
+                "papers": db.papers.count_documents({}),
+                "articles": db.articles.count_documents({}),
+                "concepts": db.tag_concepts_v2.count_documents({})
+            }
+        }
+        return stats
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
 
 @app.get("/")
-def read_root():
+async def root():
+    """Root endpoint with API information"""
     return {
-        "message": "SmartTrendTracer API", 
+        "name": "SmartTrendTracer API",
         "version": "2.0.0",
-        "docs": "/docs"
-    }
-
-@app.get("/health")
-def health_check():
-    """Health check endpoint with collection status"""
-    try:
-        from app.background_tasks import get_collection_status
-        collection_status = get_collection_status()
-    except:
-        collection_status = {"in_progress": False, "rate_limited": False}
-    
-    return {
-        "status": "healthy",
-        "collection": collection_status
+        "database": "MongoDB",
+        "message": "Fully migrated to MongoDB - no SQLite dependencies",
+        "endpoints": {
+            "tweets": "/api/tweets",
+            "papers": "/api/papers", 
+            "articles": "/api/articles",
+            "statistics": "/api/statistics",
+            "rag": "/api/rag",
+            "ontology": "/api/ontology",
+            "health": "/health"
+        }
     }
 
 @app.on_event("startup")
 async def startup_event():
-    """Start the scheduler and initiate background tweet collection"""
-    global scheduler
+    """Initialize MongoDB indexes on startup"""
+    logger.info("Initializing MongoDB indexes...")
     
-    # Start tweet collection in background (non-blocking)
     try:
-        from app.background_tasks import start_background_collection
-        await start_background_collection()
-        logger.info("Background tweet collection initiated")
+        # Ensure indexes exist (handle if they already exist)
+        db.tweets.create_index([("created_at", -1)])
+        db.tweets.create_index([("author_username", 1)])
+        db.papers.create_index([("title", "text")])
+        db.articles.create_index([("title", "text")])
+        # Don't create slug index since it already exists with unique constraint
+        db.tag_instances.create_index([("content_type", 1), ("content_id", 1)])
+        db.book_processing_jobs.create_index([("status", ASCENDING), ("created_at", ASCENDING)])
     except Exception as e:
-        logger.error(f"Failed to start background collection: {e}")
+        logger.warning(f"Some indexes may already exist: {e}")
     
-    # Start the regular scheduler immediately (non-blocking)
-    try:
-        scheduler = start_scheduler()
-        logger.info("Tweet collection scheduler started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start scheduler: {e}")
+    logger.info("MongoDB indexes initialized")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Stop the scheduler and background tasks"""
-    global scheduler
-    
-    logger.info("Initiating graceful shutdown...")
-    
-    # Shutdown background tasks
-    try:
-        from app.background_tasks import shutdown_background_tasks
-        shutdown_background_tasks()
-        logger.info("Background tasks shutdown complete")
-    except Exception as e:
-        logger.error(f"Failed to shutdown background tasks: {e}")
-    
-    # Stop the scheduler
-    if scheduler:
-        try:
-            stop_scheduler(scheduler)
-            logger.info("Tweet collection scheduler stopped")
-        except Exception as e:
-            logger.error(f"Failed to stop scheduler: {e}")
-    
-    # Record the shutdown time
-    try:
-        from app.models import CollectionState, get_db
-        db = next(get_db())
-        CollectionState.update_last_run(db, tweet_count=0)
-        db.close()
-        logger.info("Recorded shutdown time for next startup")
-    except Exception as e:
-        logger.error(f"Failed to record shutdown time: {e}")
-    
-    logger.info("Graceful shutdown complete")
+    """Clean up MongoDB connection on shutdown"""
+    mongo_client.close()
+    logger.info("MongoDB connection closed")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

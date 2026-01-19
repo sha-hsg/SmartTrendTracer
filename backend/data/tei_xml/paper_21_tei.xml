@@ -1,0 +1,915 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Closed-Source vs Open-Source RAGs: lessons learned from the SemTab challenge</title>
+				<funder ref="#_aP3nHw8">
+					<orgName type="full">Netherlands Organisation of Scientific Research (NWO)</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Margherita</forename><surname>Martorana</surname></persName>
+							<email>m.martorana@vu.nl</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Department of Computer Science , Vrije Universiteit Amsterdam , De Boelelaan 1105 , Amsterdam , The Netherlands</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Vrije Universiteit Amsterdam</orgName>
+								<address>
+									<addrLine>De Boelelaan 1105</addrLine>
+									<settlement>Amsterdam</settlement>
+									<country key="NL">The Netherlands</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Xueli</forename><surname>Pan</surname></persName>
+							<email>x.pan2@vu.nl</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Department of Computer Science , Vrije Universiteit Amsterdam , De Boelelaan 1105 , Amsterdam , The Netherlands</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Vrije Universiteit Amsterdam</orgName>
+								<address>
+									<addrLine>De Boelelaan 1105</addrLine>
+									<settlement>Amsterdam</settlement>
+									<country key="NL">The Netherlands</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Benno</forename><surname>Kruit</surname></persName>
+							<email>b.b.kruit@vu.nl</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Department of Computer Science , Vrije Universiteit Amsterdam , De Boelelaan 1105 , Amsterdam , The Netherlands</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Vrije Universiteit Amsterdam</orgName>
+								<address>
+									<addrLine>De Boelelaan 1105</addrLine>
+									<settlement>Amsterdam</settlement>
+									<country key="NL">The Netherlands</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Tobias</forename><surname>Kuhn</surname></persName>
+							<email>t.kuhn@vu.nl</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Department of Computer Science , Vrije Universiteit Amsterdam , De Boelelaan 1105 , Amsterdam , The Netherlands</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Vrije Universiteit Amsterdam</orgName>
+								<address>
+									<addrLine>De Boelelaan 1105</addrLine>
+									<settlement>Amsterdam</settlement>
+									<country key="NL">The Netherlands</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Jacco</forename><surname>Van Ossenbruggen</surname></persName>
+							<email>j.r.van.ossenbruggen@vu.nl</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Department of Computer Science , Vrije Universiteit Amsterdam , De Boelelaan 1105 , Amsterdam , The Netherlands</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Vrije Universiteit Amsterdam</orgName>
+								<address>
+									<addrLine>De Boelelaan 1105</addrLine>
+									<settlement>Amsterdam</settlement>
+									<country key="NL">The Netherlands</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Closed-Source vs Open-Source RAGs: lessons learned from the SemTab challenge</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">C6814CF02B65FFEBB4FCAC4B9AD51A3A</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:54+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Large Language Models</term>
+					<term>Retrieval Augmented Generation</term>
+					<term>Closed vs. Open-Source LLMs</term>
+					<term>Semantic Table Interpretation</term>
+					<term>Semantic Web</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>With the rise of advanced Large Language Models (LLMs), there has also been an increase in the use and application of Retrieval-Augmented Generation (RAG) systems. Such systems combine generative models with information retrieval, allowing access to external resources to enhance the quality and accuracy of responses. RAG systems are becoming integral across various fields, not only improving the capabilities of LLMs but also enabling more efficient and context-aware outputs. Some RAG systems are readily accessible through APIs, such as those provided by OpenAI, while others can be custom-built to meet specific research or application needs.</p><p>This work is an extension of the research conducted as part of the "Metadata to Knowledge Graph" track of the SemTab24 challenge, which involved classifying column headers of tabular data using controlled vocabularies. For the challenge, we employed seven different LLMs: three closed-source models (gpt-3.5-turbo-0.125, gpt-4, and gpt-4-turbo) and four open-source models (llama3-80b, llama3-7b, gemma-7b, and mixtral-8x7b). For the GPT models, we leveraged the RAG system provided by OpenAI, while for the open-source models, we employed LLamaIndex. Additionally, we evaluated the impact of different temperature settings (0.5, 0.75, 1.0, 1.25, and 1.5) on model performance.</p><p>In this paper we present a preliminary study that highlights the observations and findings from our participation in the SemTab challenge, offering valuable insights into the capabilities and performance of RAG systems. We also discuss specific challenges related to vectorizing data for RAG systems and the role of assistant instructions. Our findings suggest that the nature of the input data can significantly influence the effectiveness of RAG systems, and that tailored approaches may be required for optimal results.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1.">Introduction</head><p>Retrieval-Augmented Generation (RAG) systems represent a significant advancement in the field of natural language processing (NLP), enhancing the capabilities of large language models (LLMs) by combining the strength of retrieval and generation models <ref type="bibr" target="#b0">[1]</ref>. The integration of these two components enables RAG systems to generate responses that are more accurate, informative, and contextually relevant compared to standalone LLMs. While traditional LLMs rely solely on their inherent knowledge, RAG systems can access external information, making them particularly useful in situations where up-to-date or domain-specific knowledge is required. In fact, RAGs have been found to help reducing hallucinations <ref type="bibr" target="#b1">[2,</ref><ref type="bibr" target="#b2">3]</ref>, knowledge grounding <ref type="bibr" target="#b3">[4,</ref><ref type="bibr" target="#b4">5]</ref> and personalisation <ref type="bibr" target="#b5">[6,</ref><ref type="bibr" target="#b6">7]</ref>. Due to the popularity of RAG systems, numerous solutions are now available, both open-source and commercial. Recent studies have introduced benchmarks and best practices for evaluating RAG systems <ref type="bibr" target="#b7">[8,</ref><ref type="bibr" target="#b8">9,</ref><ref type="bibr" target="#b9">10,</ref><ref type="bibr" target="#b10">11]</ref> and comparing open-source and closed-source systems <ref type="bibr" target="#b11">[12,</ref><ref type="bibr" target="#b12">13,</ref><ref type="bibr" target="#b13">14,</ref><ref type="bibr" target="#b14">15]</ref>.</p><p>Recently, we -the authors of this paper -participated in the "Metadata to Knowledge Graph (KG)" track of the SemTab Challenge (detailed further in section 3). This track focused on mapping column metadata to relevant KG terms based on semantic relevance, even when direct data access was not available. To address this challenge, we suggested solutions that use both commercial and open-source LLMs and RAGs, and other traditional semantic similarity approach. In this paper, we revisit and build upon our approaches from the SemTab Challenge, contributing a comparison and discussion on the performance of commercial and open-source LLMs and RAGs, highlighting the observed differences. Full details of the approaches we used for the SemTab Challenge can be found at <ref type="bibr" target="#b15">[16]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.">Retrieval-Augmented Generation</head><p>Large Language Models (LLMs) have demonstrated promising abilities in natural language understanding tasks such as classification <ref type="bibr" target="#b16">[17]</ref>, entity linking <ref type="bibr" target="#b17">[18]</ref>, and question answering <ref type="bibr" target="#b18">[19]</ref>. However, they often struggle with issues such as hallucinations and limited capacity to access and interact with external resources <ref type="bibr" target="#b19">[20]</ref>. Retrieval-Augmented Generation (RAG) <ref type="bibr" target="#b4">[5]</ref> has been introduced as a solution to overcome these limitations, enabling LLMs to access domain-specific knowledge more effectively. In a RAG pipeline, external resources are embedded as vectors and stored in vector databases like Chroma, Weaviate, Pinecone, or OpenAI's built-in vector store within the Assistant API, enabling more precise and contextually accurate responses by linking relevant information during generation.</p><p>The landscape of RAGs and LLMs is divided into open-source and closed-source systems, each with distinct implications for accessibility, cost, flexibility, and performance. Open-source RAGs and LLMs are publicly available, allowing developers and researchers to access, modify, and improve the underlying models, fostering transparency and community-driven innovation. These models offer flexibility, allowing customization of their retrieval mechanisms, parameters setting, or integration of domain-specific knowledge. However, open-source systems may sometimes underperform compared to state-of-the-art closed-source counterparts due to more limited training resources and the absence of large-scale, proprietary datasets.</p><p>On the other hand, closed-source RAGs and LLMs are developed and maintained by organizations with access to vast computational resources and proprietary data. Models like OpenAI's GPT-4 and Google's Gemini benefit from advanced architectures, extensive pre-training, and ongoing performance enhancements. While these models generally outperform open-source alternatives, they lack transparency, making it difficult to inspect or customize their behavior, and their "black box" nature can be a limitation when adapting them to niche domains or specific use cases.</p><p>Recent studies have introduced various methods and benchmarks for evaluating the performance of RAG systems <ref type="bibr" target="#b7">[8,</ref><ref type="bibr" target="#b8">9]</ref>, as well as proposing best practices for optimising their efficiency and performance <ref type="bibr" target="#b9">[10,</ref><ref type="bibr" target="#b10">11]</ref>. Also, comparisons between open-source and closed-source LLMs have been explored in a variety of domains and tasks <ref type="bibr" target="#b11">[12,</ref><ref type="bibr" target="#b12">13,</ref><ref type="bibr" target="#b13">14,</ref><ref type="bibr" target="#b14">15]</ref>. However, to the best of our knowledge, no comprehensive study has yet examined how LLMs and RAG systems, particularly when combined with different temperature settings, perform in the specific context of Semantic Table <ref type="table">Interpretation</ref>, as outlined in the SemTab Challenge. In this work, we present insights gained from our participation in the SemTab Challenge, focusing on the practical differences between open-source and closed-source LLMs and RAGs, and highlighting key lessons learned in their application to this domain.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.">SemTab Challenge as Use Case</head><p>The SemTab challenge has been running since 2019, and it mainly focuses on tasks related to Semantic Table Interpretation (STI). It includes multiple tracks, where participants suggest solutions to tasks such as Column Type Annotation (CTA), Column Entity Annotation (CEA), and Column Property Annotation (CPA). In this year SemTab challenge, the "Metadata to KG" track was introduced, where participants are asked to submit solutions for mapping table metadata to Knowledge Graphs without having access to the underlying data. This track was divided into two rounds, each using different datasets and vocabularies. In Round 1, participants mapped 141 table metadata to DBpedia properties. In Round 2, instead, more complexity was added with 1181 table metadata to be mapped to custom vocabularies. In the following section, we explain in more details our experimental design in both rounds, and we provide a visual representation of the methodology in Figure <ref type="figure" target="#fig_0">1</ref>. Further details, can be found in our SemTab challenge paper <ref type="bibr" target="#b15">[16]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1.">Experimental Design</head><p>Our approach to the task set by the "Metada to KG" track treats both rounds as textual information retrieval challenges. The objective is to match table metadata-such as column labels, table names, and other descriptive elements, with the most semantically relevant KG entries. We employed two different methods: the first utilising LLMs, and the second utilising a more traditional semantic similarity approach with SentenceBERT <ref type="bibr" target="#b20">[21]</ref>. We experimented with a range of LLMs, both commercial (i.e. GPT-3.5-turbo-0125, GPT-4o, GPT-4-turbo from OpenAI <ref type="foot" target="#foot_0">1</ref> ) and open-source (i.e. LLama3-70b, LLama3-8b, Gemma-7b, Mixtral-8x7b) models. To investigate the influence of the models' creativity on performing the task, we also varied the temperature settings (0.5, 0.75, 1.0, 1.25, and 1.5). The temperature setting is an important parameter, as it controls the randomness of the LLM's responses. Lower temperatures (e.g. 0.5) produce more deterministic outputs, while higher temperatures (e.g. 1.5) encourage more creativty and variability. All evaluations were conducted in a zero-shot setting, with no pretraining done on the specific task or domain, aiming to create a more generalised approach that is not biased towards any particular domain or KG. Instead, we used a RAG approach to input relevant information necessary for the task. Specifically, the KGs containing the entries to which the metadata was mapped were provided as input data to the RAG systems. For the GPT models, we utilized the RAG system made available through the OpenAI API, while for the open-source models, we used LLamaIndex<ref type="foot" target="#foot_1">foot_1</ref> . The mappings we produced were then checked against a test groundtruth provided by the organisers of the track, and we evaluated the results using two metrics: hit@1 and hit@5. The hit@1 metric checks if the top-ranked match is correct, while hit@5 checks if the correct match is found within the top five results.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2.">Summary results from the SemTab Challenge</head><p>Overall, we found that the gpt-4o model outperformed other models in both Round 1 and Round 2, particularly at temperatures of 0.5, 0.75, and 1.0. This result is unsurprising given that gpt-4o is one of the latest iteration in the GPT model series, featuring enhanced reasoning capabilities and an advanced ability to handle complex prompts.</p><p>The out-of-the-box performance of both closed and open LLMs was poor and unstable in Round 2. This could be due to the fact that DBpedia, an open dataset used in Round 1, may have been included in the training corpus of many LLMs. As a result, the models likely already had inherent knowledge about DBpedia's structure and properties, which enhanced their ability to understand and respond effectively to the tasks and prompts in Round 1. However, in Round 2, where the tasks involved glossary files that were not part of the models' training data, the LLMs lacked the necessary knowledge to perform as effectively. In this round, we observed that the LLMs generally performed less effectively, and the approach using SentenceBERT had better results. Without prior exposure to the specific information in these glossary files, the models struggled to accurately interpret the prompts and execute the tasks, leading to the observed poor performance. This highlights the limitation of LLMs when faced with unfamiliar or domain-specific knowledge not covered in their training corpus.</p><p>We report below the results of the LLM and RAG approach in Table <ref type="table">1</ref>, and of the approach with SentenceBERT in Table <ref type="table" target="#tab_1">2</ref>, both taken from <ref type="bibr" target="#b15">[16]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Table 1</head><p>Results of different models for sample data in Round 1 and 2. The cells with the "X" refers to tries where the LLM could not compute the task, and either the API was not returning any results over a long period of time or, in the case of gemma-7b the model was returning "failure" message. In bold, instead, we show the best performing results. In the table h1 and h5 refers to Hit@1 and Hit@5 metrics from the evaluation script. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>LLM</head><formula xml:id="formula_0">X gpt-4-turbo 0 0 X X X X X X X X llama3-8b 0 0 0 0 0 0 0 0 0 0 llama3-70b 0 0 0 0 0 0 0 0 0 0 gemma-7b X X X X X X X X X X mixtral-8x7b 0 0 0 0 0 0 0 0 0 0</formula></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.">Observations</head><p>In this section, we present observations from our use of RAG systems to address the task of mapping metadata to KG of the SemTab challenge. We present a high-level comparison between the open-source RAG system (i.e. LlamaIndex) and the commercial RAG system (access through OpenAI API), in figure <ref type="figure">3</ref>. The aim of this comparison is to highlight key differences between these two types of systems. Firstly, it is important to note that the commercial RAG system, which integrates OpenAI Assistant with file search capabilities, supports only OpenAI's GPT models. In our case, we utilized gpt-3.5-turbo, gpt-4o, and gpt-4-turbo. LlamaIndex, instead, supports a variety of models from different providers -for the challenge we employed llama3-8b, llama3-70b, gemma-7b, and mixtral-8x7b. Further, OpenAI's default embedding model is text-embedding-3-large with 256 dimensions. While OpenAI offers additional embedding models, such as text-embedding-3small and text-embedding-ada-002, the options are limited (more details available at <ref type="foot" target="#foot_2">3</ref> . On the other hand, LlamaIndex utilizes the BAAI/bge-small-en embedding model with 384 dimensions. Open-source systems allow for the use of a broader range of embedding models, including those from OpenAI, though this may reduce some of the advantages of using open source solutions. Some of the most significant differences are the file handling capabilities and the handling of chunks. OpenAI's system supports up to 10,000 files, each up to 512 MB. It can manage up to 20 chunks simultaneously, each with a default size of 800 tokens and an overlap of 400 tokens. In contrast, LlamaIndex's file storage limitations are more flexible, determined by the vector database and the machine's capacity running the vector store. By default, LlamaIndex handles 2 chunks with each chunk being 1024 tokens and an overlap of 20 tokens. Larger chunks and greater overlap can include more information in the context window, which might be a key aspect depending on the task. For example, GPT models performed better in our SemTab task where understanding the semantics of long textual descriptions in the KG was important for accurate mappings. This result might be related to the larger chunk size and overlap of the OpenAI models and built-in RAG.</p><p>We also noticed that certain practices related to file upload and writing instructions has influenced the performance of our solutions for the SemTab challenge. For example, we noted that by repeating certain constraints in both the assistant's instructions and the user queries resulted to more accurate mappings and fewer hallucinations. Also, formatting data as separate files rather than one large file improved accuracy. In Round 2, where custom KGs were used, dividing the data into smaller files, each representing a specific domain, seemed to allow the system to track the fact that the files were in someway separate and about distinct knowledge.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.">Discussion and Future Work</head><p>In conclusion, while commercial RAG systems provide a streamlined and integrated approach that simplifies deployment and management, open-source RAGs offer greater flexibility and customization but require more technical expertise.</p><p>A direction for future work is to investigate how to optimize the handling of large datasets and chunk management across both systems. This could involve developing better strategies for file segmentation and chunk overlap to improve performance and context understanding. Additionally, it would be beneficial to explore the impact of different embedding models on performance in various tasks, potentially creating guidelines for selecting the most effective models based on task requirements.</p><p>Another research area is enhancing the robustness of query and instruction handling to reduce hallucinations. Experimenting with constraints repetition, instructions and user queries designs could lead to more accurate results. Further, investigating the benefits of data formatting, such as fragmenting large KGs into smaller, domain-specific files, could offer insights into improving accuracy and RAG systems.</p><p>Finally, while in this work we provide some insights on the differences between commercial and open-source RAG systems, there is a need for creating benchmark tools and performance metrics, which would help users make informed decisions about which solution, system and models is better suited for their needs.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Figure 1 :</head><label>1</label><figDesc>Figure 1: Experimental design and approaches employed in both Round 1 and 2 of the "Metadata to KG" track of the SemTab Challenge 2024.</figDesc><graphic coords="4,89.29,118.85,416.66,209.84" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2</head><label>2</label><figDesc>Results of various embedding combinations for sample data in Round 1 and 2 are presented, with best performing results in bold. The table includes Hit@1 (h1) and Hit@5 (h5) metrics from evaluation script.</figDesc><table><row><cell>Metadata</cell><cell>Glossary</cell><cell cols="2">Round 1</cell><cell cols="2">Round 2</cell></row><row><cell>Embeddings</cell><cell>Embeddings</cell><cell>h1</cell><cell>h5</cell><cell>h1</cell><cell>h5</cell></row><row><cell>encode(label)</cell><cell>encode(label)</cell><cell cols="4">0.56 0.56 0.36 0.55</cell></row><row><cell>encode(label)</cell><cell>encode(lable + desc)</cell><cell cols="4">0.22 0.56 0.45 0.82</cell></row><row><cell>encode(label + table_name)</cell><cell>encode(label)</cell><cell cols="4">0.56 0.56 0.09 0.27</cell></row><row><cell>encode(label + table_name)</cell><cell>encode(lable + desc)</cell><cell cols="4">0.33 0.44 0.64 0.73</cell></row><row><cell>encode(label)</cell><cell>encode(desc)</cell><cell cols="4">0.11 0.33 0.45 0.82</cell></row><row><cell>encode(label + table_name)</cell><cell>encode(desc)</cell><cell cols="4">0.22 0.44 0.64 0.73</cell></row><row><cell>encode(label) + encode(table_name)</cell><cell>encode(desc)</cell><cell>0</cell><cell cols="3">0.33 0.64 0.91</cell></row><row><cell cols="6">encode(label) + encode(table_name) encode(desc) + encode(label) 0.22 0.44 0.55 0.91</cell></row><row><cell>encode(label) + encode(table_name)</cell><cell>encode(label)</cell><cell cols="4">0.44 0.67 0.27 0.45</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 3</head><label>3</label><figDesc>Comparison between commercial and open-source RAG systems.</figDesc><table><row><cell></cell><cell>Commercial RAG</cell><cell>Open-source RAG</cell></row><row><cell>Implementation</cell><cell>OpenAI Assistant with file</cell><cell>LlamaIndex</cell></row><row><cell></cell><cell>search</cell><cell></cell></row><row><cell>LLM models used</cell><cell>gpt-3.5-turbo, gpt-4o, gpt-4-</cell><cell>llama3-8b, llama3-70b, gemma-</cell></row><row><cell></cell><cell>turbo</cell><cell>7b, mixtral-8x7b</cell></row><row><cell>Vector database</cell><cell>OpenAI built-in vector</cell><cell>ChromaDB</cell></row><row><cell>Embedding model</cell><cell>text-embedding-3-large (256 di-</cell><cell>BAAI/bge-small-en (384 dimen-</cell></row><row><cell></cell><cell>mensions), i.e. default</cell><cell>sions)</cell></row><row><cell>Files limitation in vector</cell><cell>10,000 files. Each file can be at</cell><cell>Depends on the chosen vector</cell></row><row><cell>DB</cell><cell>most 512 MB in size and have a</cell><cell>DB and the capacity of ma-</cell></row><row><cell></cell><cell>maximum of 5,000,000 tokens.</cell><cell>chine that runs the vector store.</cell></row><row><cell></cell><cell>By default, the size of all the</cell><cell></cell></row><row><cell></cell><cell>files uploaded in your project</cell><cell></cell></row><row><cell></cell><cell>cannot exceed 100 GB</cell><cell></cell></row><row><cell>Maximum number of</cell><cell>20 by default, can be cus-</cell><cell>2 by default, can be customized</cell></row><row><cell>chunks added to context</cell><cell>tomized</cell><cell></cell></row><row><cell>Chunk size</cell><cell>800 tokens by default, can be</cell><cell>1024 tokens by default, can be</cell></row><row><cell></cell><cell>customized</cell><cell>customized</cell></row><row><cell>Chunk overlap</cell><cell>400 tokens, by default, can be</cell><cell>20 tokens by default, can be</cell></row><row><cell></cell><cell>customized</cell><cell>customized</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>https://openai.com</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_1"><p>https://www.llamaindex.ai</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_2"><p>https://platform.openai.com/docs/models/embeddings</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgments</head><p>We acknowledge that ChatGPT was utilized to generate and debug part of the python and latex code utilised in this work. This work is funded by the <rs type="funder">Netherlands Organisation of Scientific Research (NWO)</rs>, <rs type="programName">ODISSEI Roadmap</rs> project: <rs type="grantNumber">184.035.014</rs>.</p><p>Author M.M. led the research, developing the main ideas, designing the study, contributing to programming, and drafting most of the manuscript. Author X.P. played a crucial role by providing the technical expertise, particularly in programming and API integration for the analysis, and contributed to drafting the manuscript. Authors B.K., T.K., and J.v.O. offered guidance in their supervisory roles and provided feedback to enhance the study.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funding" xml:id="_aP3nHw8">
+					<idno type="grant-number">184.035.014</idno>
+					<orgName type="program" subtype="full">ODISSEI Roadmap</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Retrieval-Enhanced Machine Learning</title>
+		<author>
+			<persName><forename type="first">Hamed</forename><surname>Zamani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fernando</forename><surname>Diaz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mostafa</forename><surname>Dehghani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Donald</forename><surname>Metzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Bendersky</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3477495.3531722</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 45th International ACM SIGIR Conference on Research and Development in Information Retrieval</title>
+		<meeting>the 45th International ACM SIGIR Conference on Research and Development in Information Retrieval</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2022-07-06">2022</date>
+			<biblScope unit="page" from="2875" to="2886" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">H. Zamani, F. Diaz, M. Dehghani, D. Metzler, M. Bendersky, Retrieval-enhanced machine learning, in: Proceedings of the 45th International ACM SIGIR Conference on Research and Development in Information Retrieval, 2022, pp. 2875-2886.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Can Knowledge Graphs Reduce Hallucinations in LLMs? : A Survey</title>
+		<author>
+			<persName><forename type="first">Garima</forename><surname>Agrawal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tharindu</forename><surname>Kumarage</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zeyad</forename><surname>Alghamdi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huan</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-long.219</idno>
+		<idno type="arXiv">arXiv:2311.07914</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">G. Agrawal, T. Kumarage, Z. Alghami, H. Liu, Can knowledge graphs reduce hallucinations in llms?: A survey, arXiv preprint arXiv:2311.07914 (2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Retrieval Augmentation Reduces Hallucination in Conversation</title>
+		<author>
+			<persName><forename type="first">Kurt</forename><surname>Shuster</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Spencer</forename><surname>Poff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Moya</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Douwe</forename><surname>Kiela</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Weston</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.findings-emnlp.320</idno>
+		<idno type="arXiv">arXiv:2104.07567</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2021</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">K. Shuster, S. Poff, M. Chen, D. Kiela, J. Weston, Retrieval augmentation reduces hallucina- tion in conversation, arXiv preprint arXiv:2104.07567 (2021).</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Leveraging Passage Retrieval with Generative Models for Open Domain Question Answering</title>
+		<author>
+			<persName><forename type="first">Gautier</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edouard</forename><surname>Grave</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.eacl-main.74</idno>
+		<idno type="arXiv">arXiv:2007.01282</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume</title>
+		<meeting>the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">G. Izacard, E. Grave, Leveraging passage retrieval with generative models for open domain question answering, arXiv preprint arXiv:2007.01282 (2020).</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledge-intensive nlp tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>-T. Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="9459" to="9474" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W.-t. Yih, T. Rocktäschel, et al., Retrieval-augmented generation for knowledge-intensive nlp tasks, Advances in Neural Information Processing Systems 33 (2020) 9459-9474.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">LaMP: When Large Language Models Meet Personalization</title>
+		<author>
+			<persName><forename type="first">Alireza</forename><surname>Salemi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sheshera</forename><surname>Mysore</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Bendersky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hamed</forename><surname>Zamani</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.399</idno>
+		<idno type="arXiv">arXiv:2304.11406</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="7370" to="7392" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">A. Salemi, S. Mysore, M. Bendersky, H. Zamani, Lamp: When large language models meet personalization, arXiv preprint arXiv:2304.11406 (2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Optimization Methods for Personalizing Large Language Models through Retrieval Augmentation</title>
+		<author>
+			<persName><forename type="first">Alireza</forename><surname>Salemi</surname></persName>
+			<idno type="ORCID">0009-0006-1937-2615</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Surya</forename><surname>Kallumadi</surname></persName>
+			<idno type="ORCID">0000-0002-5638-0482</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hamed</forename><surname>Zamani</surname></persName>
+			<idno type="ORCID">0000-0002-0800-3340</idno>
+		</author>
+		<idno type="DOI">10.1145/3626772.3657783</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval</title>
+		<meeting>the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2024-07-10">2024</date>
+			<biblScope unit="page" from="752" to="762" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Salemi, S. Kallumadi, H. Zamani, Optimization methods for personalizing large language models through retrieval augmentation, in: Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval, 2024, pp. 752- 762.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">RAGAs: Automated Evaluation of Retrieval Augmented Generation</title>
+		<author>
+			<persName><forename type="first">Shahul</forename><surname>Es</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jithin</forename><surname>James</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luis</forename><surname>Espinosa Anke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steven</forename><surname>Schockaert</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.eacl-demo.16</idno>
+		<idno type="arXiv">arXiv:2309.15217</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations</title>
+		<meeting>the 18th Conference of the European Chapter of the Association for Computational Linguistics: System Demonstrations</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="150" to="158" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">S. Es, J. James, L. Espinosa-Anke, S. Schockaert, Ragas: Automated evaluation of retrieval augmented generation, arXiv preprint arXiv:2309.15217 (2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Benchmarking Large Language Models in Retrieval-Augmented Generation</title>
+		<author>
+			<persName><forename type="first">Jiawei</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyu</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xianpei</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Sun</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v38i16.29728</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">38</biblScope>
+			<biblScope unit="issue">16</biblScope>
+			<biblScope unit="page" from="17754" to="17762" />
+			<date type="published" when="2024-03-24">2024</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">J. Chen, H. Lin, X. Han, L. Sun, Benchmarking large language models in retrieval- augmented generation, in: Proceedings of the AAAI Conference on Artificial Intelligence, volume 38, 2024, pp. 17754-17762.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">Searching for Best Practices in Retrieval-Augmented Generation</title>
+		<author>
+			<persName><forename type="first">Xiaohua</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenghua</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuan</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Feiran</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yixin</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhibo</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianyuan</forename><surname>Shi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhengyuan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shizheng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qi</forename><surname>Qian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruicheng</forename><surname>Yin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Changze</forename><surname>Lv</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaoqing</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuanjing</forename><surname>Huang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.emnlp-main.981</idno>
+		<idno type="arXiv">arXiv:2407.01219</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2024 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="17716" to="17736" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">X. Wang, Z. Wang, X. Gao, F. Zhang, Y. Wu, Z. Xu, T. Shi, Z. Wang, S. Li, Q. Qian, et al., Searching for best practices in retrieval-augmented generation, arXiv preprint arXiv:2407.01219 (2024).</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Evaluation of Retrieval-Augmented Generation: A Survey</title>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aoran</forename><surname>Gan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiwei</forename><surname>Tong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qi</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhaofeng</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-981-96-1024-2_8</idno>
+		<idno type="arXiv">arXiv:2405.07437</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Communications in Computer and Information Science</title>
+		<imprint>
+			<publisher>Springer Nature Singapore</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="102" to="120" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">H. Yu, A. Gan, K. Zhang, S. Tong, Q. Liu, Z. Liu, Evaluation of retrieval-augmented generation: A survey, arXiv preprint arXiv:2405.07437 (2024).</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">ONCE: Boosting Content-based Recommendation with Both Open- and Closed-source Large Language Models</title>
+		<author>
+			<persName><forename type="first">Qijiong</forename><surname>Liu</surname></persName>
+			<idno type="ORCID">0000-0001-6087-383X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nuo</forename><surname>Chen</surname></persName>
+			<idno type="ORCID">0000-0001-8600-8203</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tetsuya</forename><surname>Sakai</surname></persName>
+			<idno type="ORCID">0000-0002-6720-963X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Xiao-Ming</forename><surname>Wu</surname></persName>
+			<idno type="ORCID">0000-0002-3130-0554</idno>
+		</author>
+		<idno type="DOI">10.1145/3616855.3635845</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 17th ACM International Conference on Web Search and Data Mining</title>
+		<meeting>the 17th ACM International Conference on Web Search and Data Mining</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2024-03-04">2024</date>
+			<biblScope unit="page" from="452" to="461" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Q. Liu, N. Chen, T. Sakai, X.-M. Wu, Once: Boosting content-based recommendation with both open-and closed-source large language models, in: Proceedings of the 17th ACM International Conference on Web Search and Data Mining, 2024, pp. 452-461.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Comparing Commercial and Open-Source Large Language Models for Labeling Chest Radiograph Reports</title>
+		<author>
+			<persName><forename type="first">Felix</forename><forename type="middle">J</forename><surname>Dorfner</surname></persName>
+			<idno type="ORCID">0009-0003-5914-3233</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Liv</forename><surname>Jürgensen</surname></persName>
+			<idno type="ORCID">0009-0004-0710-6403</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Leonhard</forename><surname>Donle</surname></persName>
+			<idno type="ORCID">0000-0002-7931-4621</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Fares</forename><surname>Al Mohamad</surname></persName>
+			<idno type="ORCID">0009-0001-7616-3629</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tobias</forename><forename type="middle">R</forename><surname>Bodenmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mason</forename><forename type="middle">C</forename><surname>Cleveland</surname></persName>
+			<idno type="ORCID">0009-0003-4472-043X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Felix</forename><surname>Busch</surname></persName>
+			<idno type="ORCID">0000-0001-9770-8555</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Lisa</forename><forename type="middle">C</forename><surname>Adams</surname></persName>
+			<idno type="ORCID">0000-0001-5836-4542</idno>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Sato</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><surname>Schultz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Albert</forename><forename type="middle">E</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jameson</forename><surname>Merkow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keno</forename><forename type="middle">K</forename><surname>Bressem</surname></persName>
+			<idno type="ORCID">0000-0001-9249-8624</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">P</forename><surname>Bridge</surname></persName>
+			<idno type="ORCID">0000-0002-2242-351X</idno>
+		</author>
+		<idno type="DOI">10.1148/radiol.241139</idno>
+		<idno type="arXiv">arXiv:2402.12298</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Radiology</title>
+		<title level="j" type="abbrev">Radiology</title>
+		<idno type="ISSN">0033-8419</idno>
+		<idno type="ISSNe">1527-1315</idno>
+		<imprint>
+			<biblScope unit="volume">313</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2024-10-01">2024</date>
+			<publisher>Radiological Society of North America (RSNA)</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">F. J. Dorfner, L. Jürgensen, L. Donle, F. A. Mohamad, T. R. Bodenmann, M. C. Cleveland, F. Busch, L. C. Adams, J. Sato, T. Schultz, et al., Is open-source there yet? a comparative study on commercial and open-source llms in their ability to label chest x-ray reports, arXiv preprint arXiv:2402.12298 (2024).</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Exploring the Usefulness of Open and Proprietary LLMs in Argumentative Writing Support</title>
+		<author>
+			<persName><forename type="first">Reto</forename><surname>Gubelmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Burkhard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rositsa</forename><forename type="middle">V</forename><surname>Ivanova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christina</forename><surname>Niklaus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bernhard</forename><surname>Bermeitinger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siegfried</forename><surname>Handschuh</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-64312-5_21</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Communications in Computer and Information Science</title>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="175" to="182" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">R. Gubelmann, M. Burkhard, R. V. Ivanova, C. Niklaus, B. Bermeitinger, S. Handschuh, Exploring the usefulness of open and proprietary llms in argumentative writing support, in: International Conference on Artificial Intelligence in Education, Springer, 2024, pp. 175-182.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<monogr>
+		<author>
+			<persName><forename type="first">S</forename><surname>Ateia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">U</forename><surname>Kruschwitz</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2407.13511</idno>
+		<title level="m">Can open-source llms compete with commercial models? exploring the few-shot performance of current gpt models in biomedical tasks</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">S. Ateia, U. Kruschwitz, Can open-source llms compete with commercial models? exploring the few-shot performance of current gpt models in biomedical tasks, arXiv preprint arXiv:2407.13511 (2024).</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Zero-Shot Topic Classification of Column Headers: Leveraging LLMs for Metadata Enrichment</title>
+		<author>
+			<persName><forename type="first">Margherita</forename><surname>Martorana</surname></persName>
+			<idno type="ORCID">0000-0001-8004-0464</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tobias</forename><surname>Kuhn</surname></persName>
+			<idno type="ORCID">0000-0002-1267-0234</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Lise</forename><surname>Stork</surname></persName>
+			<idno type="ORCID">0000-0002-2146-4803</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jacco</forename><surname>Van Ossenbruggen</surname></persName>
+			<idno type="ORCID">0000-0002-7748-4715</idno>
+		</author>
+		<idno type="DOI">10.3233/ssw240006</idno>
+		<idno type="arXiv">arXiv:2409.13709</idno>
+		<ptr target="https://arxiv.org/abs/2409.13709" />
+	</analytic>
+	<monogr>
+		<title level="m">Studies on the Semantic Web</title>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2024-09-11">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Martorana, X. Pan, B. Kruit, T. Kuhn, J. van Ossenbruggen, Column vocabulary associa- tion (cva): semantic interpretation of dataless tables, 2024. URL: https://arxiv.org/abs/2409. 13709. arXiv:2409.13709.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Zero-Shot Topic Classification of Column Headers: Leveraging LLMs for Metadata Enrichment</title>
+		<author>
+			<persName><forename type="first">Margherita</forename><surname>Martorana</surname></persName>
+			<idno type="ORCID">0000-0001-8004-0464</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tobias</forename><surname>Kuhn</surname></persName>
+			<idno type="ORCID">0000-0002-1267-0234</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Lise</forename><surname>Stork</surname></persName>
+			<idno type="ORCID">0000-0002-2146-4803</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jacco</forename><surname>Van Ossenbruggen</surname></persName>
+			<idno type="ORCID">0000-0002-7748-4715</idno>
+		</author>
+		<idno type="DOI">10.3233/ssw240006</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Studies on the Semantic Web</title>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2024-09-11">2024</date>
+			<biblScope unit="page" from="52" to="66" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Martorana, T. Kuhn, L. Stork, J. van Ossenbruggen, Zero-shot topic classification of column headers: Leveraging llms for metadata enrichment, in: Knowledge Graphs in the Age of Language Models and Neuro-Symbolic AI, IOS Press, 2024, pp. 52-66.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Self-Improving for Zero-Shot Named Entity Recognition with Large Language Models</title>
+		<author>
+			<persName><forename type="first">Tingyu</forename><surname>Xie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zuozhu</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongwei</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-short.49</idno>
+		<ptr target="https://aclanthology.org/2024.naacl-short.49.doi:10.18653/v1/2024.naacl-short.49" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers)</title>
+		<title level="s">Association for Computational Linguistics</title>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Duh</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Gomez</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Bethard</surname></persName>
+		</editor>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers)<address><addrLine>Mexico City, Mexico</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="page" from="583" to="593" />
+		</imprint>
+	</monogr>
+	<note>Short Papers</note>
+	<note type="raw_reference">T. Xie, Q. Li, Y. Zhang, Z. Liu, H. Wang, Self-improving for zero-shot named entity recognition with large language models, in: K. Duh, H. Gomez, S. Bethard (Eds.), Pro- ceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers), Asso- ciation for Computational Linguistics, Mexico City, Mexico, 2024, pp. 583-593. URL: https: //aclanthology.org/2024.naacl-short.49. doi:10.18653/v1/2024.naacl-short.49.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Evaluating Open-Domain Question Answering in the Era of Large Language Models</title>
+		<author>
+			<persName><forename type="first">Ehsan</forename><surname>Kamalloo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nouha</forename><surname>Dziri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Charles</forename><surname>Clarke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Davood</forename><surname>Rafiei</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.307</idno>
+		<ptr target="https://aclanthology.org/2023.acl-long.307.doi:10.18653/v1/2023.acl-long.307" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Rogers</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Boyd-Graber</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Okazaki</surname></persName>
+		</editor>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="5591" to="5606" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">E. Kamalloo, N. Dziri, C. Clarke, D. Rafiei, Evaluating open-domain question answering in the era of large language models, in: A. Rogers, J. Boyd-Graber, N. Okazaki (Eds.), Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), Association for Computational Linguistics, Toronto, Canada, 2023, pp. 5591-5606. URL: https://aclanthology.org/2023.acl-long.307. doi:10.18653/v1/ 2023.acl-long.307.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Seven Failure Points When Engineering a Retrieval Augmented Generation System</title>
+		<author>
+			<persName><forename type="first">Scott</forename><surname>Barnett</surname></persName>
+			<idno type="ORCID">0000-0002-3187-4937</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Stefanus</forename><surname>Kurniawan</surname></persName>
+			<idno type="ORCID">0009-0001-4469-1056</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Srikanth</forename><surname>Thudumu</surname></persName>
+			<idno type="ORCID">0000-0002-7848-9008</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Zach</forename><surname>Brannelly</surname></persName>
+			<idno type="ORCID">0009-0008-1833-7839</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Mohamed</forename><surname>Abdelrazek</surname></persName>
+			<idno type="ORCID">0000-0003-3812-9785</idno>
+		</author>
+		<idno type="DOI">10.1145/3644815.3644945</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the IEEE/ACM 3rd International Conference on AI Engineering - Software Engineering for AI</title>
+		<meeting>the IEEE/ACM 3rd International Conference on AI Engineering - Software Engineering for AI</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2024-04-14">2024</date>
+			<biblScope unit="page" from="194" to="199" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Barnett, S. Kurniawan, S. Thudumu, Z. Brannelly, M. Abdelrazek, Seven failure points when engineering a retrieval augmented generation system, in: Proceedings of the IEEE/ACM 3rd International Conference on AI Engineering-Software Engineering for AI, 2024, pp. 194-199.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks</title>
+		<author>
+			<persName><forename type="first">Nils</forename><surname>Reimers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iryna</forename><surname>Gurevych</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d19-1410</idno>
+		<idno type="arXiv">arXiv:1908.10084</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">N. Reimers, I. Gurevych, Sentence-bert: Sentence embeddings using siamese bert-networks, arXiv preprint arXiv:1908.10084 (2019).</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

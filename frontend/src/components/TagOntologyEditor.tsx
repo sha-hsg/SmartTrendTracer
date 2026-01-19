@@ -231,7 +231,7 @@ function TagOntologyEditor() {
             onClick={() => setShowReorganizer(!showReorganizer)} 
             className={`reorganizer-button ${showReorganizer ? 'active' : ''}`}
           >
-            ✨ Gemini 2.5 Pro Reorganizer
+            ✨ GPT-5 Concept Reorganizer
           </button>
           <button 
             onClick={() => setShowAI(!showAI)} 

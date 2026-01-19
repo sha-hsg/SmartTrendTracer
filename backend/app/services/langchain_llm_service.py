@@ -83,11 +83,15 @@ class LangChainLLMService:
                 if model_config.get("provider") == "openai":
                     model_name = model_config.get("model")
                     if model_name and model_name not in self.models:
+                        # Set 1 hour timeout for GPT-5, 10 minutes for others
+                        timeout = 3600 if "gpt-5" in model_name else 600
                         self.models[model_name] = ChatOpenAI(
                             model=model_name,
                             openai_api_key=self.openai_api_key,
                             temperature=model_config.get("temperature", 0.3),
-                            max_tokens=model_config.get("max_tokens", 4000)
+                            max_tokens=model_config.get("max_tokens", 4000),
+                            request_timeout=timeout,  # 1 hour for GPT-5, 10 minutes for others
+                            max_retries=1  # Only 1 retry to avoid long waits
                         )
         
         # Set up Anthropic models from config if API key is available
@@ -217,6 +221,18 @@ class LangChainLLMService:
         if not system_prompt:
             raise ValueError("tag_reorganization.system prompt not configured in prompts_config.json")
         
+        # Load top_level.json schema for entity types
+        top_level_schema = {}
+        try:
+            config_dir = Path(__file__).parent.parent.parent  # backend directory
+            top_level_path = config_dir / "top_level.json"
+            if top_level_path.exists():
+                with open(top_level_path, 'r') as f:
+                    top_level_schema = json.load(f)
+                print("Loaded top_level.json schema for entity types")
+        except Exception as e:
+            print(f"Warning: Could not load top_level.json: {e}")
+        
         # Format the user prompt template
         user_template = tag_reorg_config.get("user_template", "")
         # Format average usage separately
@@ -225,24 +241,26 @@ class LangChainLLMService:
         
         prompt = user_template.format(
             total_tags=tags_context['statistics']['total_tags'],
+            top_level_json=json.dumps(top_level_schema, indent=2),
             tags_json=json.dumps(tags_context['tags'], indent=2),
             total_taggings=tags_context['statistics']['total_taggings'],
             average_usage=avg_usage_str
         )
 
-        # Get max_tokens from config
+        # Get max_tokens and temperature from config
         model_config = self.llm_config.get("models", {}).get("tag_reorganization_full", {})
         max_tokens = model_config.get("max_tokens", 50000)
+        temperature = model_config.get("temperature", 1.0)  # Get temperature from config, default to 1.0 for GPT-5
         
         try:
-            print(f"Starting tag reorganization with {use_model}, max_tokens={max_tokens}")
+            print(f"Starting tag reorganization with {use_model}, max_tokens={max_tokens}, temperature={temperature}")
             print(f"Processing {tags_context['statistics']['total_tags']} tags...")
             
             response = self.generate_completion(
                 prompt=prompt,
                 model=use_model,
                 system_prompt=system_prompt,
-                temperature=0.3,
+                temperature=temperature,  # Use configured temperature
                 max_tokens=max_tokens,  # Use configured max tokens
                 response_format="json"
             )

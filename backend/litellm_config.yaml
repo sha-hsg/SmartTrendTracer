@@ -1,0 +1,452 @@
+# LiteLLM Configuration for SmartTrendTracer
+# Unified LLM model routing and fallback configuration
+# Updated: December 24, 2025 - TESTED and WORKING model names
+
+model_list:
+  # Tag Suggestion - Claude Sonnet 4 with GPT-5.2 fallback
+  - model_name: tag_suggestion
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.3
+      max_tokens: 1000
+
+  - model_name: tag_suggestion
+    litellm_params:
+      model: openai/gpt-5.2
+      temperature: 0.3
+      max_tokens: 1000
+
+  # Tag Reorganization - Gemini 2.5 Pro for massive context
+  - model_name: tag_reorganization
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 100000
+
+  # Advanced Tag Generation
+  - model_name: tag_generation_advanced
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.4
+      max_tokens: 1000
+
+  # Trend Analysis - Claude Opus 4 with GPT-5.2 fallback
+  - model_name: trend_analysis
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.3
+      max_tokens: 10000
+
+  - model_name: trend_analysis
+    litellm_params:
+      model: openai/gpt-5.2
+      temperature: 0.5
+      max_tokens: 10000
+
+  # Deep Trend Analysis
+  - model_name: trend_analysis_deep
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.4
+      max_tokens: 30000
+
+  # Content Classification - Claude Haiku 3 (fastest)
+  - model_name: content_classification
+    litellm_params:
+      model: claude-3-haiku-20240307
+      temperature: 0.1
+      max_tokens: 500
+
+  # Summarization - Claude Sonnet 4
+  - model_name: summarization
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.3
+      max_tokens: 2000
+
+  # Comprehensive Summarization - Claude Opus 4.1
+  - model_name: summarization_comprehensive
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.3
+      max_tokens: 15000
+
+  # Ontology Suggestion
+  - model_name: ontology_suggestion
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.2
+      max_tokens: 8000
+
+  # Ontology Validation - Claude Haiku 3 (fast)
+  - model_name: ontology_validation
+    litellm_params:
+      model: claude-3-haiku-20240307
+      temperature: 0.1
+      max_tokens: 1000
+
+  # Bulk Ontology
+  - model_name: ontology_bulk
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.3
+      max_tokens: 20000
+
+  # Code Generation - Claude Sonnet 4 with GPT-5.1 fallback
+  - model_name: code_generation
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.2
+      max_tokens: 10000
+
+  - model_name: code_generation
+    litellm_params:
+      model: openai/gpt-5.1
+      temperature: 0.2
+      max_tokens: 10000
+
+  # Complex Reasoning - GPT-5.2
+  - model_name: reasoning_complex
+    litellm_params:
+      model: openai/gpt-5.2
+      temperature: 0.5
+      max_tokens: 10000
+
+  # General Chat - Gemini 2.5 Flash with GPT-5-nano fallback
+  - model_name: chat_general
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      temperature: 0.5
+      max_tokens: 8000
+
+  - model_name: chat_general
+    litellm_params:
+      model: openai/gpt-5-nano
+      temperature: 0.5
+      max_tokens: 8000
+
+  # Experimental Analysis - Gemini 2.5 Flash
+  - model_name: experimental_analysis
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      temperature: 0.4
+      max_tokens: 2000
+
+  # Multimodal Analysis - Gemini 2.5 Pro
+  - model_name: multimodal_analysis
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 1500
+
+  # Research Assistant - Gemini 2.5 Flash
+  - model_name: research_assistant
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      temperature: 0.2
+      max_tokens: 3000
+
+  # RAG Answer - Gemini 2.5 Pro with Claude fallback
+  - model_name: rag_answer
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 10000
+
+  - model_name: rag_answer
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.3
+      max_tokens: 8000
+
+  # Article Summarizer - Claude Sonnet 4
+  - model_name: article_summarizer
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.3
+      max_tokens: 3000
+
+  # Article Summarization (camelCase for frontend) - Claude Sonnet 4
+  - model_name: articleSummarization
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.3
+      max_tokens: 5000
+
+  # Entity Extraction - Claude Opus 4.1
+  - model_name: entity_extraction
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.1
+      max_tokens: 5000
+
+  - model_name: entity_extraction_fast
+    litellm_params:
+      model: claude-3-haiku-20240307
+      temperature: 0.1
+      max_tokens: 2000
+
+  - model_name: entity_extraction_gpt5
+    litellm_params:
+      model: openai/gpt-5.1
+      temperature: 0.3
+      max_tokens: 10000
+
+  - model_name: entity_extraction_gemini
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.1
+      max_tokens: 10000
+
+  # Tag Reorganization Full
+  - model_name: tag_reorganization_full
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 100000
+
+  # Tag Reorganization Analysis
+  - model_name: tag_reorganization_analysis
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      temperature: 0.3
+      max_tokens: 50000
+
+  # Tag Reorganization Comprehensive
+  - model_name: tag_reorganization_comprehensive
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 120000
+
+  # Orphan Tag Assignment
+  - model_name: orphan_tag_assignment
+    litellm_params:
+      model: openai/gpt-5.2
+      temperature: 0.5
+      max_tokens: 30000
+
+  # Concept Organization
+  - model_name: concept_organization
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.2
+      max_tokens: 5000
+
+  # Paper Author Extraction
+  - model_name: paper_author_extraction
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.1
+      max_tokens: 2000
+
+  # Paper Affiliation Extraction
+  - model_name: paper_affiliation_extraction
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.1
+      max_tokens: 2000
+
+  # Paper Analysis - Gemini 2.5 Pro with Claude fallback
+  - model_name: paper_analysis
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 32000
+
+  - model_name: paper_analysis
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.3
+      max_tokens: 8000
+
+  # Paper Section Extraction
+  - model_name: paper_section_extraction
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      temperature: 0.1
+      max_tokens: 20000
+
+  # Deep Paper Analysis
+  - model_name: paper_analysis_deep
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.4
+      max_tokens: 100000
+
+  # Paper Tag Suggestion
+  - model_name: paper_tag_suggestion_deep
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 5000
+
+  - model_name: paper_tag_suggestion_gpt5
+    litellm_params:
+      model: openai/gpt-5.2
+      temperature: 0.5
+      max_tokens: 5000
+
+  # ========================================
+  # Direct Model Access (User-Selectable Models)
+  # ========================================
+
+  # OpenAI GPT-5 Models (TESTED)
+  - model_name: gpt-5.2
+    litellm_params:
+      model: openai/gpt-5.2
+      temperature: 0.3
+      max_tokens: 10000
+
+  - model_name: gpt-5.1
+    litellm_params:
+      model: openai/gpt-5.1
+      temperature: 0.3
+      max_tokens: 10000
+
+  - model_name: gpt-5-nano
+    litellm_params:
+      model: openai/gpt-5-nano
+      temperature: 0.3
+      max_tokens: 5000
+
+  # Legacy GPT Models
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      temperature: 0.3
+      max_tokens: 8000
+
+  - model_name: gpt-4o-mini
+    litellm_params:
+      model: openai/gpt-4o-mini
+      temperature: 0.3
+      max_tokens: 5000
+
+  # Claude Models (TESTED)
+  - model_name: claude-opus-4-1-20250805
+    litellm_params:
+      model: claude-opus-4-1-20250805
+      temperature: 0.3
+      max_tokens: 16000
+
+  - model_name: claude-opus-4-20250514
+    litellm_params:
+      model: claude-opus-4-20250514
+      temperature: 0.3
+      max_tokens: 16000
+
+  - model_name: claude-sonnet-4-20250514
+    litellm_params:
+      model: claude-sonnet-4-20250514
+      temperature: 0.3
+      max_tokens: 8000
+
+  - model_name: claude-3-haiku-20240307
+    litellm_params:
+      model: claude-3-haiku-20240307
+      temperature: 0.3
+      max_tokens: 4000
+
+  - model_name: claude-3-opus-20240229
+    litellm_params:
+      model: claude-3-opus-20240229
+      temperature: 0.3
+      max_tokens: 4000
+
+  # Gemini Models (TESTED)
+  # NOTE: Gemini 3 models require temperature=1.0 to avoid infinite loops
+  - model_name: gemini-3-pro-preview
+    litellm_params:
+      model: gemini/gemini-3-pro-preview
+      temperature: 1.0
+      max_tokens: 100000
+
+  - model_name: gemini-3-flash-preview
+    litellm_params:
+      model: gemini/gemini-3-flash-preview
+      temperature: 1.0
+      max_tokens: 100000
+
+  - model_name: gemini-2.5-pro
+    litellm_params:
+      model: gemini/gemini-2.5-pro
+      temperature: 0.3
+      max_tokens: 100000
+
+  - model_name: gemini-2.5-flash
+    litellm_params:
+      model: gemini/gemini-2.5-flash
+      temperature: 0.3
+      max_tokens: 100000
+
+  # Grok Models (TESTED)
+  - model_name: grok-4-1-fast-reasoning
+    litellm_params:
+      model: xai/grok-4-1-fast-reasoning
+      temperature: 0.5
+      max_tokens: 8000
+
+  - model_name: grok-4-1-fast-non-reasoning
+    litellm_params:
+      model: xai/grok-4-1-fast-non-reasoning
+      temperature: 0.5
+      max_tokens: 8000
+
+  - model_name: grok-4-1-fast
+    litellm_params:
+      model: xai/grok-4-1-fast
+      temperature: 0.5
+      max_tokens: 8000
+
+  - model_name: grok-2-latest
+    litellm_params:
+      model: xai/grok-2-latest
+      temperature: 0.5
+      max_tokens: 8000
+
+# Router Settings
+router_settings:
+  # Automatic Fallback Chains
+  fallbacks:
+    - tag_suggestion: ["gpt-5.2", "claude-sonnet-4-20250514"]
+    - trend_analysis: ["gpt-5.2"]
+    - chat_general: ["gpt-5-nano", "claude-sonnet-4-20250514"]
+    - rag_answer: ["claude-opus-4-1-20250805", "gpt-5.1"]
+    - article_summarizer: ["gpt-5-nano"]
+    - entity_extraction_gpt5: ["entity_extraction_gemini", "entity_extraction_fast"]
+    - paper_analysis: ["claude-opus-4-1-20250805"]
+    - paper_tag_suggestion_deep: ["paper_tag_suggestion_gpt5"]
+
+  # Context Window Fallbacks
+  context_window_fallbacks:
+    - gemini-2.5-pro: ["claude-opus-4-1-20250805"]
+    - claude-opus-4-1-20250805: ["gemini-2.5-pro"]
+
+  # Retry & Timeout Settings
+  num_retries: 3
+  timeout: 60
+  retry_after: 5
+
+  # Caching Configuration
+  caching: true
+  cache_params:
+    type: "in-memory"
+
+  # Load Balancing Strategy
+  routing_strategy: "latency-based-routing"
+
+  # Logging
+  set_verbose: false
+
+# Success/Failure Callbacks
+litellm_settings:
+  success_callback: ["custom_mongodb"]
+  failure_callback: ["custom_mongodb"]
+
+  callbacks:
+    custom_mongodb:
+      type: "mongodb"
+      connection_string: "mongodb://localhost:27017/"
+      database: "smarttrendtracer"
+      collection: "llm_usage"

@@ -20,18 +20,23 @@ def build_rag_index():
     
     # Count documents
     from app.models import Tweet, SubstackArticle, ArticleSnippet
+    from app.models.papers import Paper, PaperSnippet
     tweet_count = db.query(Tweet).count()
     article_count = db.query(SubstackArticle).count()
-    snippet_count = db.query(ArticleSnippet).count()
+    article_snippet_count = db.query(ArticleSnippet).count()
+    paper_count = db.query(Paper).count()
+    paper_snippet_count = db.query(PaperSnippet).count()
     
     print(f"\nDocuments to index:")
     print(f"  Tweets: {tweet_count}")
     print(f"  Articles: {article_count}")
-    print(f"  Snippets: {snippet_count}")
-    print(f"  Total: {tweet_count + article_count + snippet_count}")
+    print(f"  Papers: {paper_count}")
+    print(f"  Article Snippets: {article_snippet_count}")
+    print(f"  Paper Snippets: {paper_snippet_count}")
+    print(f"  Total: {tweet_count + article_count + paper_count + article_snippet_count + paper_snippet_count}")
     
-    if tweet_count + article_count == 0:
-        print("\nNo documents to index! Please collect tweets and articles first.")
+    if tweet_count + article_count + paper_count == 0:
+        print("\nNo documents to index! Please collect tweets, articles, and papers first.")
         return
     
     print("\nBuilding index (this may take a few minutes)...")

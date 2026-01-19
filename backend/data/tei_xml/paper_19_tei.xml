@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Multilingual Word Sense Disambiguation for Semantic Annotations: Fusing Knowledge Graphs, Lexical Resources, and Large Language Models</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Robert</forename><surname>David</surname></persName>
+							<email>robert.david@semantic-web.com</email>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Semantic Web Company , Austria</note>
+								<orgName type="institution">Semantic Web Company</orgName>
+								<address>
+									<country key="AT">Austria</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> Vienna University of Economics and Business , Austria</note>
+								<orgName type="institution">Vienna University of Economics and Business</orgName>
+								<address>
+									<country key="AT">Austria</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Anna</forename><surname>Kernerman</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Lexicala by K Dictionaries , Israel</note>
+								<orgName type="institution">Lexicala by K Dictionaries</orgName>
+								<address>
+									<country key="IL">Israel</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff3">
+								<note type="raw_affiliation"><label>4</label> NOVA University Lisbon , Portugal</note>
+								<orgName type="institution">NOVA University Lisbon</orgName>
+								<address>
+									<country key="PT">Portugal</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Ilan</forename><surname>Kernerman</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">Nicolas</forename><surname>Ferranti</surname></persName>
+							<email>nicolas.ferranti@wu.ac.at</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Lexicala by K Dictionaries , Israel</note>
+								<orgName type="institution">Lexicala by K Dictionaries</orgName>
+								<address>
+									<country key="IL">Israel</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> Vienna University of Economics and Business , Austria</note>
+								<orgName type="institution">Vienna University of Economics and Business</orgName>
+								<address>
+									<country key="AT">Austria</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Assaf</forename><surname>Siani</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Lexicala by K Dictionaries , Israel</note>
+								<orgName type="institution">Lexicala by K Dictionaries</orgName>
+								<address>
+									<country key="IL">Israel</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Multilingual Word Sense Disambiguation for Semantic Annotations: Fusing Knowledge Graphs, Lexical Resources, and Large Language Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">A7EFD1B81BDD05E5F65015065FFB3B05</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:55+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>word sense disambiguation</term>
+					<term>Graph RAG</term>
+					<term>multilingual</term>
+					<term>knowledge graphs</term>
+					<term>semantic annotation</term>
+					<term>language resources</term>
+					<term>large language models Retrieval-Augmented Generation Enabled by Knowledge Graphs: Academic</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Knowledge models, constructed from vocabularies and ontologies, establish a formal basis to enable semantic annotations, which can support retrieval use cases in the context of Retrieval Augmented Generation (RAG) systems. In such a scenario, we face the challenges of word sense disambiguation (WSD), multiword expressions (MWE), and multilinguality (of models and content) in the retrieval process. For WSD and MWE, there is a need for contextual knowledge to differentiate word senses of expressions in the content. For multilinguality, we aim for systems which support content that comes in a mix of languages, as well as querying across languages. To support both goals, we propose a combination of knowledge models, multilingual linguistic data (including lexicographic resources) and large language models (LLMs). Via dictionaries with additional lexical information for multiple languages, we implement cross-language queries, and with the integration of LLMs we use these quality language resources to drive multilingual disambiguation for Graph RAG systems. In this paper, we present research carried out jointly by Semantic Web Company and Lexicala by K Dictionaries, including our approach and methodology along with preliminary results of our experiments on converging language resources, knowledge graphs, and large language models.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1.">Motivation</head><p>The combination of Large Language Models (LLMs) and Generative AI offers a powerful approach to generate text as an answer to a provided input (a prompt), which can be a request or question asked by a user. LLMs are well suited to understand context, even in a situation where there is no or little information which hints at a described situation. Even in the case of translation from a source language to a target language, LLMs, like ChatGPT-3.5, give good results when facing polysemous words as part of the translation process. However, this does not hold for all languages. Some rich-resource language pairs, like English-German, produce high-quality translations, whereas the results are not as good in the case of relatively low-resource pairs, like English-Hebrew. We assume that the data used to train the LLM has not been sufficient to cover ambiguities in translation. Generally, in RAG systems with mixed language content, we face the problem of ambiguities across low-resource language pairs, which can lead to low quality of generated answers because ambiguous terms are misinterpreted. In this paper, we describe our approach to enable WSD in the context of RAG <ref type="bibr" target="#b0">[1]</ref>, specifically Graph RAG systems, where the basis is the retrieval of documents annotated with entities from a knowledge graph (KG), specifically concepts from a taxonomy represented using the Simple Knowledge Organisation System (SKOS) <ref type="bibr" target="#b1">[2]</ref>. These concept annotations can be multilingual, however, there can also be ambiguities introduced in the translation when facing multilingual content in the retrieval process. In the following, we describe the retrieval architecture using components of the PoolParty Semantic Suite product <ref type="foot" target="#foot_0">1</ref> . In our scenario, the retrieval, based on concept annotations, can face the situation where a concept in English has translation equivalents to several concepts in Hebrew, and vice versa. In such a situation, the multilinguality of a SKOS concept is not sufficient to represent the different senses. Our approach is to use multilingual lexical data afor the representation of polysemous words and include such information in the process of the LLM-based WSD to disambiguate concept annotations. While there has been work on using LLMs for disambiguation tasks <ref type="bibr" target="#b2">[3]</ref>, the specific challenge for Graph RAG presented in this paper has not been addressed so far to the best of our knowledge.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.">Methodology</head><p>To implement our approach for multilingual WSD, we design the following workflow for data processing in our Graph RAG architecture. The workflow is based on the PoolParty approach for implementing a semantic retrieval system, here specifically a Graph RAG system, extended with a new step in the workflow for disambiguation of concept annotations based on linguistic data and an LLM. In the following, we first describe the workflow for creating semantic annotations and then explain the disambiguation step used in the retrieval.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Workflow for Semantic Annotations</head><p>1. Model a SKOS thesaurus representing the knowledge domain for which we want to implement the Graph RAG. The thesaurus contains SKOS concepts (entities + multilingual labels) to annotate the documents. Optionally, additional information from an ontology can be used to extend the thesaurus (Taxonomy &amp; Ontology Server). 2. The documents in a corpus are annotated with the concepts from the thesaurus (Entity Extractor). 3. The results of the annotation process are stored, potentially linked to further resources and are used for retrieval in the RAG process (Data Integration &amp; Linking).</p><p>The system can now be queried using a user input (question) and retrieves documents based on the semantic annotations. However, the concept annotations can be ambiguous and potentially misinterpreted, especially if the question and (some) documents don't share the same language.</p><p>Word sense disambiguation during retrieval Our approach combines 3 components: (i) concepts from the KG, (ii) language resources, and (iii) an LLM (specifically, ChatGPT-3.5 is used for our implementation).</p><p>• The KGs provide multilingual concepts as a basis for the semantic annotations. However, different concepts can match the same term because they use the (one) same label, and are therefore ambiguous. • Language resources provide detailed knowledge about concepts, including translation equivalents between different languages, a representation of the different word senses over these languages, and example sentences of their usage. • The LLM performs the WSD for the concept annotations, augmented by the language resources, which provide the disambiguation options and context information to improve the disambiguation result.</p><p>The WSD step in the workflow is shown below, starting from the user asking the system a question, to deciding on the correct word sense. The diagram represents only WSD step in the whole Graph RAG architecture.</p><p>1. An information request is formulated to the system by a user asking a question as an input to generate an answer based on retrieved documents via semantic annotations. 2. The question is annotated with concepts from the thesaurus. However, it might contain polysemous words. Even if this is not the case in the language used to formulate the question, this might still be true for the (target) language of a document. 3. In the case of such ambiguous concepts, the system asks the LLM to disambiguate the word sense. A prompt is constructed, which includes the specific information about the word senses from the language resources, including the usage examples, and which helps (to augment) the LLM to perform the disambiguation with higher precision. Because the language resources also contain multilingual representations across languages, the system can perform cross-lingual disambiguation. 4. Finally, the disambiguation step returns the correct word sense equivalent (only), to be further used in the retrieval process, thereby increasing precision.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.">Experiments</head><p>In our experiment, we tested ChatGPT's translation abilities between Hebrew and English. While it demonstrates near-perfect translation capabilities in high-resource language pairs, this is not always the case for language pairs involving a low-resource language, such as Hebrew. This challenge is particularly evident in out-of-context sentences containing polysemous words, where the correct interpretation may be apparent only to native speakers. The experiment aimed to determine whether ChatGPT's ability to correctly interpret ambiguous words could be improved by providing the relevant dictionary definitions. We found out that in several instances, ChatGPT successfully identified the correct meaning, showcasing the potential of lexicographic content to enhance the performance of LLMs. To illustrate this, we present three examples.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Example 1</head><p>The Hebrew word ‫דב‬ [bad] is polysemous in the meanings of 'fabric' (common use) and 'tree branch' (literary register, not widely common). The following prompt was given: "Translate into English ‫תוריפה‬ ‫וסימעה‬ ‫לע‬ ‫."םידבה‬ The correct translation would be "The fruits weighted down the branches. ", yet ChatGPT 3.5 provided the following result: "The fruits weighted down the fabric. "</p><p>In a new ChatGPT conversation, the LLM was provided with the dictionary definition of the word ‫"דב"‬ before being asked to translate the sentence again. It managed to correctly identify the intended meaning out of the eight possible meaning sand translate the sentence correctly despite having no further conversational context.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Example 2</head><p>The Hebrew word ‫רב‬ [baʁ] is polysemous in the meanings of 'bar' (i.e., a pub) and 'wild' (adjective) or 'wilderness' (noun); both are equally used. The following prompt was given: "Translate into English ‫הרימש‬ ‫לע‬ ‫רבה‬ ‫הדמע‬ ‫דקומב‬ ‫.ויקוסיע‬ ". The correct translation would be "Guarding the wilderness stood at the center of his activities. ", yet ChatGPT 3.5 had the following result: "Guarding the bar stood at the center of his activities. ". Once again, when including the full dictionary entry of ‫'רב'‬ in the prompt, and with no additional context, ChatGPT managed to translate the sentence correctly.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Example 3</head><p>The Hebrew word ‫גתמל‬ [le'ma.teg] is polysemous in the meanings of 'to brand' (commonly used) and 'to restrain' (rarely used). The following prompt was given: "Translate into English ‫אוה‬ ‫גתימ‬ ‫תא‬ ‫ףחדה‬ ‫תופצל‬ ‫.".תושדחב‬ The correct translation would be "He restrained the urge to watch the news. ", yet ChatGPT 3.5 had the following result: "He branded the urge to watch the news. ". Once again, we provided ChatGPT with the Hebrew dictionary entry for the word ‫"גתימ"‬ and it then managed to translate the sentence correctly.</p><p>In all three examples, providing ChatGPT with the dictionary entry containing the various meanings of the ambiguous word was sufficient to enhance its translation accuracy, allowing it to correctly interpret the polysemous word.</p><p>However, examples with failures were encountered, too. One failed attempt of ChatGPT to produce a good translation is the Hebrew word ‫רבג‬ [ge.veʁ]; this word is widely used in both spoken and written language, mostly with the meaning 'man'. However, it also has the meaning of 'rooster', which is scarcely used and is unknown to many native speakers, since it originated in the rabbinic literature of the Talmud (dated approximately in the 200-500 AD, many centuries before the revival of modern Israeli Hebrew). When given the prompt: "Translate into English ‫רבגה‬ ‫ארק‬ ‫לוקב‬ ‫םע‬ ‫.החירזה‬ " (The rooster called aloud at sunrise.), ChatGPT 3.5 had chosen the common meaning of 'man', which would require a very specific context to make sense and be understood by native speakers. Even with the full dictionary entry including the 'rooster' meaning, it failed to provide a good translation, preferring again the 'man' meaning.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.">Conclusions</head><p>The experiments showed that for low-resource languages, Graph RAG can be enhanced in cases of retrieval requiring WSD when provided with additional context from language resources. Our approach helps with cross-language retrieval by resolving ambiguities introduced by translation and thereby avoiding misinterpretations in the generated answers. Also, we can represent the word senses as structured data in the KG and thereby provide a basis to make the retrieval explainable. While our approach showed value in the experiments, it leaves several open questions to be explored in future work. First, the qualitative experiments presented in this paper do not show the value of our approach on a large scale. Future work needs to expand them to a quantitative study, where we can measure the impact on the quality of the retrieval.</p><p>Second, we will look into other low-resource language pairs besides English-Hebrew to determine if our approach is sufficiently generic. Closely associated with this question are experiments on content using more than two languages.</p><p>Third, we also face the problem of metaphorical terms, which are more challenging to translate because it is not only necessary to understand the context, but also background knowledge is required for a particular metaphor to be interpreted correctly. Metaphors are distinguished roughly into two types. The first is borrowing, expanding the original meaning of the term in a metaphoric use. For example, the term 'grasp', initially meaning a physical grasp (of an object), had gone through semantic expansion, meaning both a physical grasp and a mental grasp (of an idea or a concept). The second is figurative phrases and terms, which when interpreted literally have no reasonable meaning and can only be understood metaphorically. Metaphors of the first type are ambiguous and, when provided with no additional discursive context, can be interpreted by native speakers in both the literal and the metaphoric meanings. However, in cases of figurative 'fixed' phrases, native speakers would never assign a literal meaning. For example, the Hebrew phrase ‫הסרכ‬ ‫ןיב‬ ‫,היניש‬ literally meaning 'her belly between her teeth', describes a pregnant woman. Whereas native speakers do not need any additional context and would always interpret it in its metaphoric meaning, LLMs need further context and/or a lexical definition to decipher the metaphor. Besides experiments on low-resource language pairs, we can determine if metaphorical resolution also provides an advantage on high-resource language pairs. Fourth, we aim to investigate if our approach reduces hallucinations, because it basically prevents some kinds of misinterpretation.</p><p>With our work, we contribute to building high-quality Graph RAG systems by providing multilingual WSD based on language resources, KGs, and LLMs.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Figure 1 :</head><label>1</label><figDesc>Figure 1: Workflow for Semantic Annotations.</figDesc><graphic coords="2,72.00,65.60,456.40,216.00" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Figure 2 :</head><label>2</label><figDesc>Figure 2: WSD Architecture.</figDesc><graphic coords="3,116.00,65.61,360.80,122.40" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0"><head></head><label></label><figDesc></figDesc><graphic coords="4,125.87,342.98,340.80,344.40" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0"><head></head><label></label><figDesc></figDesc><graphic coords="5,125.27,102.68,342.00,475.20" type="bitmap" /></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>https://www.poolparty.biz/</p></note>
+		</body>
+		<back>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledge-intensive NLP tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>-T. Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Kiela</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 34th International Conference on Neural Information Processing Systems, NIPS &apos;20</title>
+		<meeting>the 34th International Conference on Neural Information Processing Systems, NIPS &apos;20<address><addrLine>Red Hook, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Curran Associates Inc</publisher>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W.-t. Yih, T. Rocktäschel, S. Riedel, D. Kiela, Retrieval-augmented generation for knowledge-intensive NLP tasks, in: Proceedings of the 34th International Conference on Neural Information Processing Systems, NIPS &apos;20, Curran Associates Inc., Red Hook, NY, USA, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<monogr>
+		<title level="m" type="main">Semantic Web for the Working Ontologist</title>
+		<author>
+			<persName><forename type="first">Dean</forename><surname>Allemang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jim</forename><surname>Hendler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fabien</forename><surname>Gandon</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3382097</idno>
+		<imprint>
+			<date type="published" when="2011">2011</date>
+			<publisher>ACM</publisher>
+			<pubPlace>San Francisco, CA, USA</pubPlace>
+		</imprint>
+	</monogr>
+	<note>2 ed</note>
+	<note type="raw_reference">D. Allemang, J. Hendler, Semantic Web for the Working Ontologist: Effective Modeling in RDFS and OWL, 2 ed., Morgan Kaufmann Publishers Inc., San Francisco, CA, USA, 2011.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Use Large Language Models for Named Entity Disambiguation in Academic Knowledge Graphs</title>
+		<author>
+			<persName><forename type="first">Shaojun</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanfeng</forename><surname>Fang</surname></persName>
+		</author>
+		<idno type="DOI">10.2991/978-94-6463-264-4_79</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Atlantis Highlights in Computer Sciences</title>
+		<imprint>
+			<publisher>Atlantis Press International BV</publisher>
+			<date type="published" when="2023-09-28">2023</date>
+			<biblScope unit="page" from="681" to="691" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Liu, Y. Fang, Use Large Language Models for Named Entity Disambiguation in Academic Knowledge Graphs, in: 2023 3rd International Conference on Education, Information Management and Service Science (EIMSS 2023), Atlantis Press, 2023, pp. 681-691.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

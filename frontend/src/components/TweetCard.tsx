@@ -345,7 +345,7 @@ function TweetCard({ tweet, onTagAdded, onTagRemoved, onTweetClick, onSuggestTag
           }}
           className="suggest-tags-button"
         >
-          🏷️ Suggest Tags
+          🏷️ Suggest Concept Tags
         </button>
       </div>
 

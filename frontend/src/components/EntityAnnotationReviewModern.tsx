@@ -9,6 +9,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Sparkles, Check, X, Edit2, Save, AlertCircle, Undo2, CheckSquare, XSquare } from 'lucide-react'
 import ModelBadge from './ModelBadge'
+import UnifiedModelSelector from './UnifiedModelSelector'
+import { getDefaultModel } from '@/config/models'
 
 interface EntitySuggestion {
   id: string
@@ -46,6 +48,16 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
   const [editedValues, setEditedValues] = useState<Record<string, any>>({})
   const [extractionModel, setExtractionModel] = useState<string>('')
 
+  // Model selection with localStorage persistence - uses centralized config default
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    return localStorage.getItem('preferredEntityExtractionModel') || getDefaultModel('entityExtraction')
+  })
+
+  // Save model preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('preferredEntityExtractionModel', selectedModel)
+  }, [selectedModel])
+
   // Load schema on mount
   useEffect(() => {
     loadSchema()
@@ -64,12 +76,15 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
   const runExtraction = async () => {
     setExtracting(true)
     setLoading(true)
-    
+
     try {
       const payload: any = {}
       if (articleId) payload.article_id = articleId
       if (tweetId) payload.tweet_id = tweetId
       payload.use_fast_model = false
+
+      // Add model selection
+      if (selectedModel) payload.model = selectedModel
 
       const response = await fetch('http://localhost:8000/api/entities/extract', {
         method: 'POST',
@@ -81,7 +96,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
         const data = await response.json()
         setEntities(data.entities)
         setStats(data.stats)
-        setExtractionModel(data.model || 'claude-sonnet-4-20250514')
+        setExtractionModel(data.model || selectedModel || 'claude-sonnet-4-20250514')
       }
     } catch (error) {
       console.error('Error extracting entities:', error)
@@ -359,21 +374,37 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Extraction Button */}
+        {/* Extraction Configuration */}
         {entities.length === 0 && !loading && (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>No entities extracted yet. Run automatic annotation to detect entities.</span>
+          <div className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                No entities extracted yet. Configure your model and run automatic annotation to detect entities.
+              </AlertDescription>
+            </Alert>
+
+            {/* Model Selection - Uses UnifiedModelSelector with centralized model config */}
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <UnifiedModelSelector
+                  taskType="entity_extraction"
+                  value={selectedModel}
+                  onValueChange={setSelectedModel}
+                  label="AI Model for Extraction"
+                  description="Select the model to use for entity extraction"
+                />
+              </div>
+
               <Button
                 onClick={runExtraction}
                 disabled={extracting}
-                className="ml-4"
+                size="lg"
               >
                 {extracting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Extracting entities...
+                    Extracting...
                   </>
                 ) : (
                   <>
@@ -382,8 +413,8 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
                   </>
                 )}
               </Button>
-            </AlertDescription>
-          </Alert>
+            </div>
+          </div>
         )}
 
         {/* Loading overlay while extracting */}

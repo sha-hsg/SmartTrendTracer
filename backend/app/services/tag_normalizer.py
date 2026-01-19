@@ -2,10 +2,9 @@
 Tag normalization service
 Handles tag case normalization and synonym resolution
 """
-from typing import Optional, List, Dict
-from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from typing import Optional, List, Dict, Any
 import re
+from pymongo.database import Database
 
 class TagNormalizer:
     """Service for normalizing tags and resolving synonyms"""
@@ -52,10 +51,28 @@ class TagNormalizer:
         'rlhf': 'RLHF',
         'rag': 'RAG',
         'lora': 'LoRA',
-        'peft': 'PEFT'
+        'peft': 'PEFT',
+        'qwen': 'Qwen',
+        'qwen-2': 'Qwen-2',
+        'qwen-2.5': 'Qwen-2.5',
+        'llms': 'LLMs',
+        'gemma': 'Gemma',
+        'gemma-2': 'Gemma-2',
+        'llama-3': 'LLaMA-3',
+        'llama-3.1': 'LLaMA-3.1',
+        'sota': 'SOTA',
+        'vllm': 'vLLM',
+        'bert': 'BERT',
+        'clip': 'CLIP',
+        'gan': 'GAN',
+        'vae': 'VAE',
+        'rnn': 'RNN',
+        'cnn': 'CNN',
+        'lstm': 'LSTM',
+        'gru': 'GRU'
     }
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Database):
         self.db = db
         self._synonym_cache = None
         
@@ -324,6 +341,6 @@ class TagNormalizer:
         
         return result
 
-def get_tag_normalizer(db: Session) -> TagNormalizer:
+def get_tag_normalizer(db: Database) -> TagNormalizer:
     """Factory function to create a TagNormalizer instance"""
     return TagNormalizer(db)

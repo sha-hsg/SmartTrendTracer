@@ -1,123 +1,335 @@
 {
   "tag_suggestion": {
     "system": "You are an expert at analyzing social media content to identify key topics, trends, and themes. Your task is to suggest tags that help with categorization, searching, and trend detection.",
-    "user_template": "Suggest relevant tags for this tweet:\n\nTweet from @{author}:\n\"{text}\"\n\nRequirements:\n- 3-5 descriptive tags\n- Single words or short phrases (use hyphens for multi-word)\n- Relevant to the content and context\n- Help with categorization and searching\n- Help for topic and trend detection\n- Consider: main topic, technology/product mentioned, companies/people, action/announcement type, industry/field\n\nProvide tags as a JSON array of strings. Use lowercase.\n\nExample output: [\"product-launch\", \"ai-assistant\", \"openai\", \"gpt-4\", \"multimodal\"]",
+    "user_template": "Suggest relevant tags for this tweet:\n\nTweet from @{author}:\n\"{text}\"\n\nRequirements:\n- 3-5 descriptive tags\n- Single words or short phrases (use hyphens for multi-word)\n- Relevant to the content and context\n- Help with categorization and searching\n- Help for topic and trend detection\n- Consider: main topic, technology/product mentioned, companies/people, action/announcement type, industry/field\n- Preserve natural capitalization (e.g., \"GPT-4\", \"OpenAI\", \"RLHF\", \"LLMs\")\n\nProvide tags as a JSON array of strings.\n\nExample output: [\"product-launch\", \"AI-assistant\", \"OpenAI\", \"GPT-4\", \"multimodal\"]",
     "output_format": "json_array",
     "examples": [
       {
         "tweet": "Just released our new vision-language model that achieves SOTA on multiple benchmarks!",
-        "tags": ["model-release", "vision-language", "sota-performance", "benchmark", "announcement"]
+        "tags": [
+          "model-release",
+          "vision-language",
+          "sota-performance",
+          "benchmark",
+          "announcement"
+        ]
       },
       {
         "tweet": "Interesting paper on constitutional AI and RLHF improvements",
-        "tags": ["research-paper", "constitutional-ai", "rlhf", "ai-safety", "technical-advance"]
+        "tags": [
+          "research-paper",
+          "constitutional-ai",
+          "rlhf",
+          "ai-safety",
+          "technical-advance"
+        ]
       },
       {
         "tweet": "We're seeing unprecedented demand for our API services this week",
-        "tags": ["api-usage", "growth-metric", "platform-update", "demand-surge", "business-update"]
+        "tags": [
+          "api-usage",
+          "growth-metric",
+          "platform-update",
+          "demand-surge",
+          "business-update"
+        ]
       },
       {
         "tweet": "Thread: Here's how we built our new reasoning system from scratch",
-        "tags": ["tutorial-thread", "reasoning-system", "technical-guide", "development-story", "how-to"]
+        "tags": [
+          "tutorial-thread",
+          "reasoning-system",
+          "technical-guide",
+          "development-story",
+          "how-to"
+        ]
       }
     ]
   },
-  
   "article_tag_suggestion": {
     "system": "You are an expert content tagger for long-form articles and essays. Analyze the provided article and generate relevant, specific tags that capture:\n1. Main topics and themes\n2. Key concepts and technologies mentioned\n3. Author's arguments or positions\n4. Industry/field relevance\n5. Content type (tutorial, analysis, opinion, research, etc.)\n\nReturn tags as a JSON array of strings. Tags should be:\n- Specific and descriptive\n- Use hyphens for multi-word tags\n- Mix of broad topics and specific details\n- Between 2-4 words typically\n\nExample: [\"machine-learning\", \"neural-networks\", \"transformer-architecture\", \"gpt-4\", \"ai-safety\", \"technical-tutorial\", \"code-examples\", \"python-implementation\"]",
     "user_template": "Article by {author}:\n\n{text}\n\nGenerate {max_tags} relevant tags for this article.",
     "output_format": "json_array"
   },
-  
   "trend_classification": {
     "system": "You are a trend analyst specializing in technology and innovation. You identify emerging trends, hot topics, and declining discussions across various fields.",
     "user_template": "Classify this topic based on recent tweet activity:\n\nTopic: {topic}\nMention count (24h): {count_24h}\nMention count (7d): {count_7d}\nSample tweets: {sample_tweets}\n\nClassify as: emerging|hot|stable|declining\nConsider: momentum, relevance, potential impact, and discussion volume.\nProvide reasoning.",
     "output_format": "structured"
   },
-  
   "topic_extraction": {
     "system": "Extract main topics, themes, and trending discussions from social media content. Identify what people are talking about, key announcements, and emerging patterns.",
     "user_template": "Extract key topics and themes from these tweets:\n{tweets_text}\n\nIdentify:\n- Main topics being discussed\n- Recurring themes\n- Notable announcements or events\n- Emerging trends or patterns\n\nReturn as JSON: {\"topics\": [...], \"themes\": [...], \"trends\": [...]}",
     "output_format": "json"
   },
-  
   "sentiment_analysis": {
     "system": "Analyze sentiment and emotional tone in social media content. Identify whether discussions are positive, negative, neutral, or mixed.",
     "user_template": "Analyze sentiment of this tweet about {topic}:\n\"{text}\"\n\nConsider:\n- Overall tone and emotion\n- Enthusiasm vs criticism\n- Support vs skepticism\n- Factual vs opinion-based\n\nReturn: positive|neutral|negative|mixed with brief explanation.",
     "output_format": "structured"
   },
-  
+  "concept_organization": {
+    "system": "You are an expert taxonomist specializing in organizing AI/ML concepts into hierarchical structures. You analyze new concepts and determine:\n1. Whether they are aliases/synonyms of existing concepts\n2. Where they should be placed in the hierarchy (parent concepts)\n3. What entity type they represent (person, organisation, location, technology, etc.)\n\nYou understand that concepts can have multiple parents (poly-hierarchy) when they logically belong to multiple categories.",
+    "user_template": "Analyze this unorganized concept and determine its proper placement:\n\nNew Concept: {concept_name}\nDescription: {description}\nUsage Context: {usage_examples}\n\nExisting Hierarchy Structure:\n{hierarchy_structure}\n\nExisting Concepts (for alias checking):\n{existing_concepts}\n\nDetermine:\n1. Is this an ALIAS of an existing concept? If yes, which one?\n2. If not an alias, what should be its PARENT concept(s)? (can have multiple)\n3. What ENTITY TYPE does it represent? (person|organisation|location|technology|method|application|research|other)\n4. Suggested DESCRIPTION for the concept\n\nReturn as JSON:\n{{\n  \"is_alias\": boolean,\n  \"alias_of\": \"concept_id or null\",\n  \"parent_concepts\": [\"parent_id_1\", \"parent_id_2\"],\n  \"entity_type\": \"string\",\n  \"description\": \"string\",\n  \"reasoning\": \"brief explanation\"\n}}",
+    "output_format": "json"
+  },
+  "academic_text_formatting": {
+    "system": "You are an expert at formatting and cleaning academic text extracted from papers. Your task is to convert raw extracted text into clean, readable markdown while preserving the academic content and structure.",
+    "user_template": "Format the following {section_type} section from an academic paper into clean markdown:\n\n{text}\n\nRequirements:\n- Preserve all important content\n- Fix spacing and formatting issues\n- Add appropriate markdown formatting (paragraphs, lists, emphasis)\n- Keep citations intact\n- Maintain academic tone\n- Remove artifacts from PDF extraction\n\nReturn only the formatted markdown text.",
+    "output_format": "text"
+  },
   "article_summarization": {
     "system": "You are an expert at summarizing technical articles and extracting key insights from newsletters and blog posts. Focus on the main arguments, key takeaways, and practical implications.",
     "summary_prompt": "Please provide a comprehensive summary of this article.\n\nArticle Title: {title}\nAuthor: {author}\n\nArticle Content:\n{content}\n\nPlease provide:\n1. A 2-3 sentence executive summary that captures the essence of the article\n2. 3-5 key points or insights presented in the article\n3. Main arguments or claims made by the author\n4. Any notable quotes, statistics, or examples\n5. Practical implications or takeaways for readers\n\nFormat your response as clear, structured text with sections clearly marked.",
     "key_points_prompt": "Extract the key points from this article as a bulleted list.\n\nArticle: {content}\n\nProvide 5-7 key points, each as a concise bullet point. Focus on:\n- Main insights and arguments\n- Important findings or conclusions\n- Practical applications\n- Notable statistics or facts\n- Actionable takeaways\n\nFormat each point to be self-contained and meaningful."
   },
-  
   "ontology_system": {
     "system": "You are an expert in knowledge organization and taxonomy design, specializing in AI and technology domains. Your task is to analyze tags and suggest semantic relationships for building a comprehensive ontology.",
     "user_template": "Current ontology structure:\n{ontology_context}\n\nAnalyze these tags and suggest relationships:\n{tags}\n\nOutput your suggestions as JSON with the following structure:\n{{\n    \"synonyms\": [\n        {{\"concept\": \"existing_concept_tag\", \"synonym\": \"new_synonym\"}}\n    ],\n    \"hierarchies\": [\n        {{\"child\": \"child_tag\", \"parent\": \"parent_tag\"}}\n    ],\n    \"same_as\": [\n        {{\"canonical\": \"main_tag\", \"alternatives\": [\"alt1\", \"alt2\"]}}\n    ],\n    \"reasoning\": \"Brief explanation of your suggestions\"\n}}\n\nGuidelines:\n1. For synonyms: Identify different ways to express the same concept\n2. For hierarchies: Place specific concepts under more general ones\n3. For same_as: Group variations of the same term (abbreviations, full names, etc.)\n4. Consider the AI/tech domain context\n5. Maintain consistency with existing ontology",
     "output_format": "json"
   },
-  
   "ontology_bulk_organization": {
     "system": "You are an expert in knowledge organization. Analyze these uncategorized tags and suggest how to organize them into the existing ontology.",
     "user_template": "Current ontology structure:\n{ontology_context}\n\nUncategorized tags:\n{tags}\n\nFor each uncategorized tag, suggest:\n1. The most appropriate parent concept\n2. Any synonyms that should be created\n3. Whether it should be merged with an existing concept\n\nOutput as JSON:\n{{\n    \"suggestions\": [\n        {{\n            \"tag\": \"tag_name\",\n            \"action\": \"categorize|merge|create_synonym\",\n            \"parent\": \"parent_tag_if_categorize\",\n            \"merge_with\": \"existing_tag_if_merge\",\n            \"create_synonym_for\": \"concept_tag_if_synonym\",\n            \"reasoning\": \"brief explanation\"\n        }}\n    ],\n    \"new_categories\": [\n        {{\n            \"tag\": \"new_category_tag\",\n            \"display_name\": \"Display Name\",\n            \"description\": \"Description\",\n            \"parent\": \"parent_tag_or_null\"\n        }}\n    ]\n}}",
     "output_format": "json"
   },
-  
   "ontology_validation": {
     "system": "You are an expert in knowledge organization and ontology validation, specializing in AI and technology domains.",
     "user_template": "Evaluate if this ontology relationship makes sense:\n\nRelationship Type: {relationship_type}\nSource: {source}\nTarget: {target}\n\nCurrent context: AI and technology domain ontology\n\nIs this relationship valid? Consider:\n1. Semantic correctness\n2. Domain appropriateness\n3. Logical consistency\n\nRespond with JSON:\n{{\n    \"valid\": true/false,\n    \"confidence\": 0-1,\n    \"reasoning\": \"explanation\",\n    \"alternative\": \"suggested alternative if invalid\"\n}}",
     "output_format": "json"
   },
-  
   "summarization_system": {
     "system": "You are an AI assistant that creates concise, informative summaries of tweet collections. Focus on extracting key insights, main themes, and important developments while maintaining factual accuracy.",
     "user_template": "Summarize these tweets:\n{tweets}\n\nGuidelines:\n1. Identify main themes across tweets\n2. Highlight important announcements or news\n3. Note consensus or conflicting viewpoints\n4. Keep summaries concise but comprehensive\n5. Use bullet points for clarity when appropriate",
     "output_format": "text"
   },
-  
   "ai_expert_summary": {
     "system": "You are an AI expert who creates concise summaries of AI/ML developments from tweets.",
     "user_template": "Summarize these AI/ML related tweets:\n{tweets}\n\nFocus on:\n- Key developments and announcements\n- Technical breakthroughs\n- Industry trends\n- Community discussions\n\nProvide a structured summary with clear sections.",
     "output_format": "text"
   },
-  
   "entity_extraction": {
-    "system": "You are an expert at extracting named entities and research concepts from text. You identify people, organizations, locations, events, research topics, datasets, benchmarks, metrics, methods, and models with high precision.",
-    "user_template": "Extract all entities from the following text. For each entity, provide:\n1. The exact text as it appears\n2. The entity type (person, organisation, location, event, research-topic, dataset, benchmark, metric, method, or model)\n3. A confidence score (0.0 to 1.0)\n4. Brief context about why this is that entity type\n\nText:\n{text}\n\nReturn as JSON:\n{{\n    \"entities\": [\n        {{\n            \"text\": \"entity text\",\n            \"type\": \"entity-type\",\n            \"confidence\": 0.95,\n            \"context\": \"brief explanation\",\n            \"normalized\": \"normalized-form\"\n        }}\n    ],\n    \"relationships\": [\n        {{\n            \"source\": \"entity1\",\n            \"target\": \"entity2\",\n            \"relation\": \"works-at|located-in|presented-at|etc\"\n        }}\n    ]\n}}",
+    "system": "You are an expert at extracting named entities from AI/ML research text. Extract only the most important and specific entities.\n\nVALID ENTITY TYPES (use EXACTLY these):\n- person: Individual researchers, authors, CEOs\n- organisation: Companies, universities, research labs\n- location: Cities, countries, regions\n- hardware: GPUs, chips, accelerators\n- model: AI/ML models (GPT-4, BERT, etc.)\n- method: Algorithms, techniques (RLHF, fine-tuning, etc.)\n- technology: Technologies, frameworks\n- topic: Research topics, areas\n- concept: Abstract concepts\n- category: Broad categories",
+    "user_template": "Extract important entities from this text. For each entity:\n1. Exact text as it appears\n2. Entity type (person|organisation|location|hardware|model|method|technology|topic|concept|category)\n3. Confidence (0.0-1.0)\n4. Brief context\n\nText:\n{text}\n\nReturn JSON:\n{{\n    \"entities\": [\n        {{\n            \"text\": \"entity text\",\n            \"type\": \"entity-type\",\n            \"confidence\": 0.95,\n            \"context\": \"brief explanation\"\n        }}\n    ]\n}}\n\nONLY extract clearly identifiable entities. Skip generic terms.",
     "output_format": "json",
     "examples": [
       {
-        "text": "Siegfried Handschuh from the University of St. Gallen presented GPT-5 benchmarks at NeurIPS 2024",
+        "text": "Ethan Mollick from Wharton tested GPT-4 with RLHF on H100 GPUs",
         "entities": [
-          {"text": "Siegfried Handschuh", "type": "person", "confidence": 0.95},
-          {"text": "University of St. Gallen", "type": "organisation", "confidence": 0.9},
-          {"text": "GPT-5", "type": "model", "confidence": 0.95},
-          {"text": "NeurIPS 2024", "type": "event", "confidence": 0.9}
+          {
+            "text": "Ethan Mollick",
+            "type": "person",
+            "confidence": 0.95,
+            "context": "Researcher at Wharton"
+          },
+          {
+            "text": "Wharton",
+            "type": "organisation",
+            "confidence": 0.9,
+            "context": "Business school"
+          },
+          {
+            "text": "GPT-4",
+            "type": "model",
+            "confidence": 0.95,
+            "context": "Language model"
+          },
+          {
+            "text": "RLHF",
+            "type": "method",
+            "confidence": 0.9,
+            "context": "Training technique"
+          },
+          {
+            "text": "H100",
+            "type": "hardware",
+            "confidence": 0.95,
+            "context": "NVIDIA GPU"
+          }
         ]
       }
     ]
   },
-  
   "entity_validation": {
-    "system": "You validate whether extracted entities are correctly classified and suggest corrections if needed.",
-    "user_template": "Validate this entity extraction:\nText: \"{text}\"\nProposed Type: {type}\nContext: {context}\n\nIs this correct? If not, what should it be? Consider:\n1. Is the entity type accurate?\n2. Should it be split into multiple entities?\n3. Is there a more specific or general classification?\n\nReturn JSON:\n{{\n    \"valid\": true/false,\n    \"confidence\": 0-1,\n    \"suggested_type\": \"corrected-type-if-needed\",\n    \"reasoning\": \"explanation\",\n    \"split_entities\": [] // if entity should be split\n}}",
+    "system": "You validate whether extracted entities are correctly classified according to the SmartTrendTracer entity type hierarchy and suggest corrections if needed.\n\nValid entity types from top_level.json:\n- person (under Named Entities)\n- organisation (under Named Entities)\n- location (under Named Entities)\n- event (under Named Entities)\n- product (under Named Entities)\n- hardware (under Named Entities)\n- research-topic (under Research Entities)\n- dataset (under Research Entities)\n- benchmark (under Research Entities)\n- metric (under Research Entities)\n- method (under Research Entities)\n- model (under Research Entities)\n- task (under Research Entities)\n- modality (under Research Entities)\n- license (under Research Entities)\n- architecture (under Research Entities)\n- experimental-setup (under Research Entities)\n- paper (under Content Types)\n- tool (under Content Types)\n- concept (under Content Types)\n- standard (under Content Types)",
+    "user_template": "Validate this entity extraction:\nText: \"{text}\"\nProposed Type: {type}\nContext: {context}\n\nIs this entity type correct according to the SmartTrendTracer hierarchy? Consider:\n1. Is the entity type accurate and from the valid list?\n2. Should it be a different type from the hierarchy?\n3. Should it be split into multiple entities?\n4. Does it belong under Named Entities, Research Entities, or Content Types?\n\nReturn JSON:\n{{\n    \"valid\": true/false,\n    \"confidence\": 0-1,\n    \"suggested_type\": \"corrected-type-if-needed\",\n    \"parent_concept\": \"c_et_<type>\",\n    \"category\": \"named-entities|research-entities|content-types\",\n    \"reasoning\": \"explanation\",\n    \"split_entities\": [] // if entity should be split\n}}\n\nExamples:\n- \"GPT-4\" should be type \"model\" under Research Entities (c_et_model)\n- \"OpenAI\" should be type \"organisation\" under Named Entities (c_et_organisation)\n- \"San Francisco\" should be type \"location\" under Named Entities (c_et_location)\n- \"ImageNet\" should be type \"dataset\" under Research Entities (c_et_dataset)\n- \"transformer\" should be type \"architecture\" under Research Entities (c_et_architecture)",
     "output_format": "json"
   },
-  
   "tag_reorganization": {
-    "system": "You are an expert taxonomist specializing in AI/ML research topics. Your task is to reorganize a flat list of tags into a hierarchical taxonomy. You must respond with valid JSON only, following the exact schema provided.",
-    "user_template": "Analyze these {total_tags} tags and create a hierarchical reorganization.\n\nCURRENT TAGS DATA:\n{tags_json}\n\nSTATISTICS:\n- Total tags: {total_tags}\n- Total tag applications: {total_taggings}\n- Average usage per tag: {average_usage}\n\nCreate a JSON response with this EXACT structure:\n{{\n  \"hierarchy\": {{\n    \"tag_name\": {{\n      \"display_name\": \"Display Name\",\n      \"description\": \"Description of this category\",\n      \"level\": 0,\n      \"parent\": null,\n      \"children\": [\"child1\", \"child2\"],\n      \"synonyms\": [\"synonym1\", \"synonym2\"],\n      \"icon\": \"📁\"\n    }}\n  }},\n  \"root_categories\": [\"category1\", \"category2\"],\n  \"deprecated_tags\": [\"old_tag1\", \"old_tag2\"],\n  \"merge_proposals\": [\n    {{\n      \"primary\": \"main_tag\",\n      \"merge_into\": [\"duplicate1\", \"duplicate2\"],\n      \"reason\": \"These tags represent the same concept\"\n    }}\n  ],\n  \"new_categories_suggested\": [\n    {{\n      \"name\": \"new_category\",\n      \"display_name\": \"New Category\",\n      \"description\": \"Why this category is needed\"\n    }}\n  ],\n  \"confidence_score\": 0.85,\n  \"reasoning\": \"Explanation of the reorganization logic...\"\n}}\n\nIMPORTANT:\n- Create 5-10 root categories\n- Group related tags logically\n- Identify and merge duplicates\n- Suggest new categories where needed\n- All tags must appear in the hierarchy",
+    "system": "You are an expert taxonomist for AI/ML specializing in organizing concepts into clean hierarchies.\n\n\ud83c\udf1f CRITICAL HIERARCHY PRIORITIES:\n\n1. **Named Entities MUST be FIRST** (priority: 1)\n   Named Entities should be the very first root category in your hierarchy:\n   - Person (\ud83d\udc64): Individual people, researchers, CEOs, thought leaders\n   - Organisation (\ud83c\udfe2): Companies, universities, research labs, institutions\n   - Location (\ud83d\udccd): Cities, countries, regions, geographical entities\n   - Event (\ud83d\udcc5): Conferences, product launches, announcements\n   - Product/Service (\ud83d\udce6): Specific products, platforms, services\n   - Hardware (\ud83d\udcbb): Physical devices, chips, accelerators, GPUs\n\n2. **Entity Exclusivity Rule - STRICTLY ENFORCED**\n   Entity concepts MUST be exclusive to their entity type:\n   - Persons go ONLY under Person entity (not under Applications, Research, etc.)\n   - Organizations go ONLY under Organisation entity\n   - Locations go ONLY under Location entity\n   - Events go ONLY under Event entity\n   - This prevents confusion like finding \"Christopher Manning\" under \"Speech Processing\"\n\n3. **Root Category Priority Order**\n   Organize root categories in this specific order:\n   1. Named Entities (priority: 1)\n   2. AI/ML Fundamentals (priority: 2)\n   3. Models & Architectures (priority: 3)\n   4. Techniques & Methods (priority: 4)\n   5. Applications & Domains (priority: 5)\n   6. Data & Datasets (priority: 6)\n   7. Tools & Infrastructure (priority: 7)\n   8. Research & Development (priority: 8)\n   9. Industry & Business (priority: 9)\n   10. Ethics & Society (priority: 10)\n   11. Evaluation & Metrics (priority: 11)\n\n4. **Concept Type Analysis**\n   Understand these three categories based on 'count' field:\n   \n   A. ANNOTATED CONCEPTS (count > 0):\n      - Have actual tweets/papers/articles tagged\n      - ABSOLUTELY MANDATORY: MUST appear in output\n      - Can be moved or converted to alias, but NEVER deleted\n      - Example: \"gpt-4\" (count: 12) MUST be preserved\n   \n   B. ABSTRACT/PARENT CONCEPTS (count = 0, has children):\n      - Organizational categories only\n      - FREELY REORGANIZABLE: Can rename, merge, restructure\n      - Example: \"AI Fundamentals\" can be renamed/reorganized\n   \n   C. UNUSED LEAF CONCEPTS (count = 0, no children):\n      - Never used for any tagging\n      - DELETABLE: Can remove or merge with similar concepts\n\n5. **Duplicate Detection and Merging**\n   Look for duplicates with different formatting:\n   - \"Grok-2.5\" vs \"Grok-25\" vs \"Grok2.5\"\n   - \"GPT-4\" vs \"gpt-4\" vs \"GPT4\"\n   - Merge duplicates, keeping highest usage count\n   - Add all variations as aliases for backwards compatibility\n\n6. **Multi-Level Hierarchies**\n   Build appropriate depth (3-5 levels):\n   - Don't put everything directly under roots\n   - Create intermediate groupings for 10+ related concepts\n   - Example: Models \u2192 Language Models \u2192 Transformer Models \u2192 GPT Family \u2192 [GPT-3, GPT-4]\n   - Aim for 5-15 items per category level\n\n7. **Parent-Child Consistency**\n   Ensure bidirectional relationships:\n   - If A is parent of B, then B must list A as parent\n   - If B lists A as parent, then A must list B in children\n   - Fix any inconsistencies found\n\n8. **Poly-Hierarchy Support**\n   Non-entity concepts can have multiple parents:\n   - \"Knowledge Graphs\" can be under both \"Data & Datasets\" AND \"AI/ML Fundamentals\"\n   - BUT entities (person, org, location, event) should have single parent only\n\n9. **Usage Count Preservation**\n   When merging concepts:\n   - Transfer all tag_instances to primary concept\n   - Sum up usage counts\n   - Update counts in final output\n\n10. **Validation Requirements**\n    Your output must include validation showing:\n    - All concepts with count > 0 are preserved\n    - No person/org/location/event outside their entity parent\n    - All parent-child relationships are bidirectional\n    - Duplicate concepts properly merged with aliases\n    - Priority order maintained for root categories\n\nOUTPUT FORMAT:\nReturn valid JSON with concepts array, aliases array, and validation metrics.\nEnsure every concept with count > 0 appears either as concept or alias.\nUse provided IDs to maintain database integrity.",
+    "user_template": "Analyze these {total_tags} concepts and reorganize them into a clean, prioritized hierarchy.\n\n⚠️ CRITICAL INSTRUCTIONS:\n- Process ALL {total_tags} concepts in ONE SINGLE RESPONSE\n- DO NOT split into batches or multiple messages\n- DO NOT stop due to size concerns - complete the full reorganization\n- Ignore any perceived ID duplicates (IDs are unique, proceed anyway)\n- Return the COMPLETE JSON response with ALL concepts reorganized\n\n\ud83c\udfaf KEY REQUIREMENTS:\n1. Named Entities MUST be the FIRST root category\n2. Entity exclusivity: Persons only under Person, Orgs only under Organisation\n3. Preserve ALL concepts with count > 0 (as concept or alias)\n4. Merge duplicates (Grok-2.5 vs Grok-25)\n5. Create multi-level hierarchies (3-5 levels deep)\n\n📦 COMPACT FORMAT LEGEND:\nThe concepts are in compact format to save tokens:\n- id: unique identifier\n- t: tag (slug)\n- d: display_name\n- c: count (usage)\n- e: entity_type (optional)\n- p: current_parents (optional)\n\nCURRENT CONCEPTS:\n{tags_json}\n\nNOTE: Your response should use full field names (not abbreviated) like 'tag', 'display_name', 'count', etc.\n\nReturn THE COMPLETE reorganized hierarchy in a SINGLE JSON response with Named Entities first, proper entity exclusivity, and all usage preserved. DO NOT ask for permission to proceed in batches - process everything now.",
     "output_format": "json"
   },
-  
   "rag_query": {
     "system": "You are a knowledgeable AI assistant that provides comprehensive and detailed answers based on the provided context. Be thorough in your explanations while maintaining accuracy. Include relevant details, examples, and insights from the context.",
     "user_template": "Based on the following context, provide a detailed and comprehensive answer to the question.\nInclude relevant details, examples, and insights from the sources.\nIf the context doesn't contain sufficient information, acknowledge what's missing.\n\nContext:\n{context}\n\nQuestion: {question}\n\nProvide a thorough answer with:\n- Key information from the sources\n- Relevant examples or quotes\n- Multiple perspectives if available\n- Clear explanations\n\nAnswer:",
     "output_format": "text"
   },
-  
+  "rag_trend_analysis": {
+    "system": "You are a trend analyst expert specializing in identifying emerging topics, hot discussions, and key themes across AI/ML content sources. You analyze large collections of documents to extract meaningful patterns and insights.",
+    "user_template": "Analyze these {count} recent {source_type} documents to identify KEY TRENDS and HOT TOPICS:\n\n{documents}\n\nProvide a comprehensive trend analysis with:\n\n1. **Top 5 Trending Topics** - Most discussed themes with brief descriptions\n2. **Key Insights** - Important patterns, developments, or consensus emerging\n3. **Notable Examples** - Specific interesting cases or mentions from the documents\n4. **Emerging Patterns** - New or growing areas of discussion\n\nFormat your response clearly with headers and bullet points. Focus on what people are actually talking about RIGHT NOW based on these documents.",
+    "output_format": "text"
+  },
+  "assign_orphan_tags": {
+    "system": "You are an expert taxonomist specializing in AI/ML research topics. Your task is to analyze orphaned tags and assign them to the most appropriate existing categories in the taxonomy.\n\nIMPORTANT: The taxonomy has a fixed entity type structure from top_level.json that MUST be preserved:\n- Named Entities (person, organisation, location, event, product, hardware)\n- Research Entities (research-topic, dataset, benchmark, metric, method, model, task, modality, license, architecture, experimental-setup)\n- Content Types (paper, tool, concept, standard)\n\nThese core categories are immutable. You should ONLY:\n1. Assign orphan tags to appropriate entity type parents (e.g., \"GPT-4\" under c_et_model)\n2. Create synonyms/aliases for existing concepts\n3. Suggest new instances under the correct entity types",
+    "user_template": "Analyze these orphaned tags and assign them to appropriate categories in the existing taxonomy.\n\nTOP-LEVEL ENTITY SCHEMA (FIXED STRUCTURE - DO NOT MODIFY):\n{top_level_json}\n\nEXISTING TAXONOMY STRUCTURE:\n{taxonomy_json}\n\nORPHANED TAGS TO CATEGORIZE:\n{orphan_tags_json}\n\nFor each orphaned tag:\n1. Determine the entity type (person, organisation, model, dataset, etc.)\n2. Assign to the appropriate entity type parent (c_et_person, c_et_organisation, etc.)\n3. Check if it's a synonym/variant of an existing concept\n4. Provide confidence level\n\nReturn JSON with this structure:\n{{\n  \"assignments\": [\n    {{\n      \"tag\": \"orphan_tag_name\",\n      \"action\": \"assign|synonym|new_category\",\n      \"entity_type\": \"person|organisation|model|dataset|etc\",\n      \"parent\": \"c_et_<entity_type>\",\n      \"synonym_of\": \"existing_tag_if_synonym\",\n      \"confidence\": 0.95,\n      \"reasoning\": \"Why this assignment makes sense\"\n    }}\n  ],\n  \"new_intermediate_categories\": [\n    {{\n      \"tag\": \"new_category_tag\",\n      \"display_name\": \"Display Name\",\n      \"entity_type\": \"category_entity_type\",\n      \"parent\": \"c_et_<entity_type>\",\n      \"description\": \"Category description\",\n      \"for_tags\": [\"list_of_orphans_that_belong_here\"]\n    }}\n  ],\n  \"unassignable\": [\n    {{\n      \"tag\": \"tag_name\",\n      \"reason\": \"Why it doesn't fit anywhere\"\n    }}\n  ],\n  \"summary\": {{\n    \"total_processed\": 0,\n    \"assigned\": 0,\n    \"synonyms_created\": 0,\n    \"new_categories\": 0,\n    \"unassigned\": 0\n  }}\n}}\n\nRules:\n- PRESERVE the entity type structure from top_level.json\n- Assign tags to entity type parents (c_et_person, c_et_model, etc.)\n- Prefer synonyms over new concepts for variants (GPT-4, gpt-4 \u2192 synonym)\n- Consider semantic similarity and domain context\n- Entity types are FIXED - do not create new entity types",
+    "output_format": "json"
+  },
+  "paper_analyses": {
+    "layman_summary": {
+      "name": "Layman's Summary",
+      "description": "Explains the paper at a master's student level",
+      "system": "Explain complex research papers in accessible terms at a master's student level. Maintain accuracy while being approachable. Without preambles.",
+      "user_template": "Explain this paper at a master's student level.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "summaries"
+    },
+    "mollick_summary": {
+      "name": "Mollick-Style Summary",
+      "description": "Concise summary in Ethan Mollick's style",
+      "system": "Write in the style of Ethan Mollick - clear, insightful, and focused on practical implications. Emphasize what matters for practitioners and educators. Provide the summary directly without preambles.",
+      "user_template": "Summarize this paper in Ethan Mollick's style.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "summaries"
+    },
+    "switt_analysis": {
+      "name": "SWITT Analysis",
+      "description": "Structured analysis answering key research questions",
+      "system": "Provide thorough academic analysis. Give clear, detailed answers to each question. Without preambles.",
+      "user_template": "Address the following questions about the paper:\n1. What is the problem?\n2. Why is it interesting and important?\n3. Why is it hard? (E.g., why do naive approaches fail?)\n4. Why hasn't it been solved before? (Or, what's wrong with previous proposed solutions? How does this paper differ?)\n5. What are the key components of the approach and results? Include any specific limitations.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "analysis"
+    },
+    "pareto_summary": {
+      "name": "Pareto Summary (80/20)",
+      "description": "20% essential information for 80% understanding",
+      "system": "Identify the most crucial information using the Pareto principle. Extract the vital 20% that provides 80% understanding. Without preambles.",
+      "user_template": "Provide the 20% most essential information for 80% understanding of this paper.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "summaries"
+    },
+    "sas_summary": {
+      "name": "SAS Summary",
+      "description": "Structured and concrete summary",
+      "system": "Create exceptionally well-structured, concrete summaries with clear organization and specific details. Provide the summary directly without preambles.",
+      "user_template": "Provide a clearly structured, concrete summary of the paper.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "summaries"
+    },
+    "glossary": {
+      "name": "Technical Glossary",
+      "description": "Comprehensive glossary of terms and acronyms",
+      "system": "Create a comprehensive reference glossary. Be thorough, accurate, and helpful. Without preambles.",
+      "user_template": "Create a comprehensive glossary of technical terms and acronyms. For each entry:\n\n- Clear, concise definition\n- Context in which the term is used\n- Relevant abbreviations or alternate forms\n- Cross-references to related terms\n\nArrange alphabetically. Make definitions accessible to non-experts.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "reference"
+    },
+    "review": {
+      "name": "Academic Review",
+      "description": "Comprehensive paper review for NLP research",
+      "system": "Provide constructive, thorough feedback. Be balanced, specific, and helpful. Without preambles.",
+      "user_template": "**Paper Review for Natural Language Processing Research**\n\n1. **Summary of the Paper**\n   - Primary objective or problem\n   - Methodology or approach\n   - Key results and contributions\n\n2. **Novelty and Significance**\n   - Relevance and timeliness\n   - Novel concepts, methods, or applications\n   - Comparison to prior work\n\n3. **Technical Quality**\n   - Method appropriateness\n   - Analysis soundness\n   - Experiment quality and reproducibility\n\n4. **Clarity and Organization**\n   - Writing clarity and structure\n   - Concept understandability\n   - Effectiveness of tables, figures, examples\n\n5. **Strengths and Weaknesses**\n   - Key strengths\n   - Significant weaknesses, limitations, gaps\n\n6. **Suggestions for Improvement**\n   - Actionable feedback\n   - Areas needing additional work\n\n7. **Reviewer Confidence**\n   - Confidence level (high, medium, low)\n\n8. **Overall Assessment**\n   - Ratings on novelty, significance, quality, clarity\n   - Final recommendation\n\n9. **Numeric Scores**\n   - Novelty (1-5):\n   - Significance (1-5):\n   - Technical Quality (1-5):\n   - Clarity (1-5):\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "review"
+    },
+    "summary": {
+      "name": "Concise Summary",
+      "description": "Generate a concise summary of the paper",
+      "system": "Create clear, concise summaries that capture essential information. Without preambles.",
+      "user_template": "Provide a concise summary capturing main contributions, methodology, and findings.\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "summaries"
+    },
+    "key_findings": {
+      "name": "Key Findings",
+      "description": "Extract the main findings and contributions",
+      "system": "Identify and articulate core findings and contributions. Present them directly without preambles.",
+      "user_template": "Extract and present key findings and main contributions:\n\n1. Primary research findings\n2. Novel contributions to the field\n3. Significant results or discoveries\n4. Practical implications\n5. Theoretical advances\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "analysis"
+    },
+    "methodology": {
+      "name": "Methodology Analysis",
+      "description": "Analyze the research methodology used",
+      "system": "Analyze research methodologies, experimental design, and evaluation approaches. Provide analysis directly without preambles.",
+      "user_template": "Analyze the research methodology:\n\n1. Research design and approach\n2. Data collection and datasets used\n3. Experimental setup and procedures\n4. Evaluation metrics and benchmarks\n5. Statistical methods and analysis techniques\n6. Strengths and potential weaknesses\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "analysis"
+    },
+    "limitations": {
+      "name": "Limitations & Future Work",
+      "description": "Identify limitations and future research directions",
+      "system": "Identify research limitations and potential future directions. Present them directly without preambles.",
+      "user_template": "Identify and discuss:\n\n1. **Limitations**:\n   - Methodological limitations\n   - Scope limitations\n   - Data or resource constraints\n   - Generalizability issues\n\n2. **Future Work**:\n   - Suggested improvements\n   - Open research questions\n   - Potential extensions\n   - Applications to explore\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "analysis"
+    },
+    "evaluation": {
+      "name": "Critical Evaluation",
+      "description": "Provide a critical evaluation of the paper",
+      "system": "Provide balanced, constructive evaluation of research work. Be specific and analytical. Without preambles.",
+      "user_template": "Critical evaluation of this paper:\n\n1. **Strengths**:\n   - What the paper does well\n   - Main contributions\n\n2. **Weaknesses**:\n   - Areas for improvement\n   - Limitations\n\n3. **Impact and Significance**:\n   - Significance for the field\n   - Potential impact\n\n4. **Comparison to Related Work**:\n   - Comparison to existing approaches\n   - Advances made\n\nPaper content:\n{paper_content}",
+      "output_format": "markdown",
+      "category": "analysis"
+    }
+  },
+  "paper_author_extraction": {
+    "system": "You are an expert at extracting author information from academic papers. You analyze the header section of papers (between title and abstract) to identify all authors and their institutional affiliations. You are meticulous about preserving the exact spelling of names and institutions.",
+    "user_template": "Extract all authors and their affiliations from this paper header section:\n\n{header_text}\n\nProvide a structured JSON response with the following format:\n{\n  \"authors\": [\n    {\n      \"name\": \"Full Name\",\n      \"affiliation\": \"Institution Name\",\n      \"department\": \"Department (if mentioned)\",\n      \"email\": \"email@domain.com (if provided)\",\n      \"corresponding\": true/false\n    }\n  ],\n  \"institutions\": [\"List of unique institutions mentioned\"]\n}\n\nGuidelines:\n- Extract ALL authors listed\n- Preserve exact name spelling\n- Include institutional affiliations when provided\n- Extract department/lab information if available\n- Include email addresses when present\n- Mark corresponding author if indicated\n- Handle multi-institutional affiliations\n- Parse footnotes and superscripts for affiliation mapping",
+    "output_format": "json",
+    "examples": [
+      {
+        "input": "Riley Carlson, John Bauer and Christopher D. Manning\\nStanford NLP Group\\nStanford University\\n353 Jane Stanford Way, Stanford CA 94305-9035, U.S.A.\\n{rileydc, horatio, manning}@stanford.edu",
+        "output": {
+          "authors": [
+            {
+              "name": "Riley Carlson",
+              "affiliation": "Stanford University",
+              "department": "Stanford NLP Group",
+              "email": "rileydc@stanford.edu",
+              "corresponding": false
+            },
+            {
+              "name": "John Bauer",
+              "affiliation": "Stanford University",
+              "department": "Stanford NLP Group",
+              "email": "horatio@stanford.edu",
+              "corresponding": false
+            },
+            {
+              "name": "Christopher D. Manning",
+              "affiliation": "Stanford University",
+              "department": "Stanford NLP Group",
+              "email": "manning@stanford.edu",
+              "corresponding": false
+            }
+          ],
+          "institutions": [
+            "Stanford University"
+          ]
+        }
+      }
+    ]
+  },
+  "paper_section_extraction": {
+    "system": "You are an expert at extracting and structuring academic paper sections. You identify and extract the Abstract, Introduction, and the main Conclusion/Discussion section from papers.",
+    "user_template": "Extract the following sections from this academic paper:\n\n1. Abstract - The paper's abstract section\n2. Introduction - The introduction/motivation section\n3. Conclusion - The main conclusion, discussion, or future work section (NOT appendices)\n\nPaper content:\n{paper_content}\n\nIMPORTANT:\n- For the conclusion, find the MAIN conclusion/discussion chapter before any appendices\n- Common conclusion titles: \"Conclusion\", \"Conclusions\", \"Discussion\", \"Conclusion and Future Work\", \"Summary\", \"Concluding Remarks\"\n- Do NOT include appendices, supplementary material, or references as the conclusion\n- If a section is not found, return null for that section\n\nReturn as JSON:\n{\n  \"abstract\": \"The extracted abstract text or null\",\n  \"introduction\": \"The extracted introduction text or null\",\n  \"conclusion\": \"The extracted main conclusion text or null\",\n  \"sections_found\": {\n    \"abstract\": true/false,\n    \"introduction\": true/false,\n    \"conclusion\": true/false\n  },\n  \"conclusion_title\": \"The actual title of the conclusion section found\"\n}",
+    "output_format": "json"
+  },
+  "paper_affiliation_extraction": {
+    "system": "You are an expert at extracting author affiliations from academic papers. You analyze the header section of papers (from title to beginning of abstract) to identify institutional affiliations for each author.",
+    "user_template": "Extract affiliations for these authors from the paper header:\n\nEXISTING AUTHORS:\n{authors_list}\n\nPAPER HEADER (title to abstract):\n{header_text}\n\nInstructions:\n- Find the affiliation for each author listed above\n- Look for institutional names, departments, universities, companies\n- If an author has multiple affiliations, use only the FIRST/PRIMARY one\n- Look for superscript numbers, footnotes, or direct listings that map authors to institutions\n- If no affiliation is found for an author, mark as null\n\nReturn as JSON:\n{{\n  \"affiliations\": [\n    {{\n      \"author_index\": 1,\n      \"author_name\": \"Exact name as provided\",\n      \"affiliation\": \"Institution Name\" or null,\n      \"department\": \"Department/Lab if mentioned\" or null,\n      \"confidence\": \"high|medium|low\"\n    }}\n  ],\n  \"extraction_notes\": \"Brief notes about the extraction process\"\n}}",
+    "output_format": "json"
+  },
+  "paper_tag_suggestion": {
+    "system": "You are an expert content tagger for academic research papers. Your task is to THOROUGHLY analyze the ENTIRE paper and generate comprehensive tags.\n\nCRITICAL INSTRUCTIONS:\n1. You MUST read and analyze the COMPLETE paper content provided, not just the abstract\n2. Generate tags from ALL sections of the paper\n3. Include specific technical details found deep in the paper\n4. The paper content is provided in full - use all of it!\n\nExtract tags that capture:\n1. Main research topics and domains\n2. Specific algorithms and architectures (e.g., \"ResNet-50\", \"BERT-base\")\n3. Datasets used (e.g., \"ImageNet\", \"COCO\", \"WikiText-103\")\n4. Evaluation metrics (e.g., \"BLEU-score\", \"perplexity\", \"F1-score\")\n5. Techniques and methods (e.g., \"attention-mechanism\", \"gradient-clipping\")\n6. Benchmarks and baselines compared\n7. Applications and use cases\n8. Key findings and contributions\n9. Libraries/frameworks mentioned (e.g., \"PyTorch\", \"TensorFlow\")\n10. Research type (e.g., \"empirical-study\", \"theoretical-analysis\")\n\nTag Format:\n- Use hyphens for multi-word tags\n- Preserve technical capitalization (GPT-4, BERT, etc.)\n- Be specific (\"transformer-decoder\" not just \"transformer\")\n- Include version numbers when mentioned (\"GPT-3.5\", \"BERT-large\")\n\nReturn ONLY a JSON array of strings, nothing else.",
+    "user_template": "Research Paper by {author}:\n\n{text}\n\nAnalyze the COMPLETE paper above and generate {max_tags} relevant and specific tags. Ensure tags reflect insights from ALL sections of the paper, not just the abstract.\n\nIMPORTANT: Generate EXACTLY {max_tags} tags, not fewer. Each tag should capture different aspects of the paper (methods, datasets, algorithms, applications, benchmarks, etc.).",
+    "output_format": "json_array",
+    "max_tags": 30
+  },
+  "comprehensive_tag_reorganization": {
+    "system": "You are an expert taxonomist specializing in AI/ML research topics. Your task is to reorganize thousands of tags into a clean, backwards-compatible taxonomy with proper canonicalization, aliasing, and hierarchy management.\n\nYour reorganization MUST follow these strict requirements:\n\n1. CANONICALIZATION:\n   - Normalize every tag into a canonical slug (lower_snake_case)\n   - Keep a display_name for human-readable UI\n   - Examples: \"GPT-4\" \u2192 slug: \"gpt_4\", display: \"GPT-4\"\n\n2. ALIAS MAPPING:\n   - For EVERY legacy tag, create an Alias entry pointing to its canonical Concept\n   - Preserve ALL spelling/case/plural variants, abbreviations, and deprecated tags as aliases\n   - Mark the type of alias: synonym, variant, misspelling, abbreviation, plural, deprecated, legacy\n\n3. HIERARCHY CLEANUP:\n   - Build exactly 8-10 root categories\n   - Remove duplicates from child lists; convert them into aliases\n   - No concept should appear as both a child and an alias\n\n4. CATEGORY CORRECTION:\n   - Move misfiled items to the correct branch\n   - Metrics go under evaluation, not methods\n   - Products under industry, not models\n   - Allow poly-hierarchy if needed, but be consistent\n\n5. MERGE PROPOSALS:\n   - Apply merge proposals as alias mappings (not new children)\n   - Combine usage counts when merging\n\n6. VALIDATION:\n   - Ensure 100% of old tags resolve to a Concept\n   - No synonyms appear as children\n   - Usage counts recomputed at Concept level",
+    "user_template": "Reorganize these {total_tags} tags into a comprehensive, backwards-compatible taxonomy.\n\nCURRENT TAGS (with usage counts):\n{tags_json}\n\nCreate a complete reorganization following ALL requirements. The result MUST be valid JSON with this EXACT structure:\n\n{{\n  \"concepts\": [\n    {{\n      \"id\": \"concept_slug\",\n      \"slug\": \"concept_slug\",\n      \"display_name\": \"Human Readable Name\",\n      \"description\": \"Brief description\",\n      \"parents\": [\"parent_slug\"],\n      \"children\": [\"child_slug1\", \"child_slug2\"],\n      \"status\": \"active\",\n      \"usage_count\": 123\n    }}\n  ],\n  \"aliases\": [\n    {{\n      \"alias_text\": \"Original Tag Text\",\n      \"canonical_slug\": \"concept_slug\",\n      \"alias_type\": \"variant|synonym|misspelling|abbreviation|plural|deprecated|legacy\",\n      \"confidence\": 0.95\n    }}\n  ],\n  \"root_categories\": [\n    {{\n      \"slug\": \"ai_ml_fundamentals\",\n      \"display_name\": \"AI/ML Fundamentals\",\n      \"description\": \"Core concepts and theories\"\n    }}\n  ],\n  \"merge_proposals\": [\n    {{\n      \"source\": \"old_tag\",\n      \"target\": \"canonical_tag\",\n      \"reason\": \"Duplicate concept\",\n      \"combined_usage\": 456\n    }}\n  ],\n  \"validation\": {{\n    \"total_input_tags\": {total_tags},\n    \"concepts_created\": 0,\n    \"aliases_created\": 0,\n    \"all_tags_mapped\": true,\n    \"unmapped_tags\": []\n  }}\n}}\n\nIMPORTANT:\n- EVERY input tag MUST appear either as a concept OR as an alias\n- Use exactly 8-10 root categories\n- Preserve ALL variations as aliases for backwards compatibility\n- Ensure the JSON is valid and properly formatted",
+    "output_format": "json"
+  },
   "settings": {
     "max_retries": 3,
     "cache_responses": true,

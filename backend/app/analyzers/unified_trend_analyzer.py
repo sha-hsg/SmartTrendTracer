@@ -5,17 +5,11 @@ Provides tag-based trends and clustering for both tweets and articles
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from collections import Counter, defaultdict
-from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import re
-
-from app.models import Tweet, Tag, get_db
-from app.models.substack import SubstackArticle, ArticleTag, SubstackAuthor
-
 
 class UnifiedTrendAnalyzer:
     """Unified analyzer for tweets and articles with clustering capabilities"""

@@ -2,22 +2,18 @@
 API endpoints for paper trends and analytics
 """
 from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from ..models import get_db
 from ..services.paper_trends_service import PaperTrendsService
 
 router = APIRouter(prefix="/api/papers/trends", tags=["paper-trends"])
 trends_service = PaperTrendsService()
 
-
 @router.get("/popular")
 def get_popular_papers(
     days: int = Query(30, description="Time window in days"),
     limit: int = Query(10, description="Number of papers to return"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get most popular papers by engagement metrics"""
     try:
@@ -30,12 +26,10 @@ def get_popular_papers(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/emerging-topics")
 def get_emerging_topics(
     days_window: int = Query(7, description="Recent time window in days"),
     min_papers: int = Query(2, description="Minimum papers for a topic"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Identify emerging research topics based on recent activity"""
     try:
@@ -53,11 +47,9 @@ def get_emerging_topics(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/active-authors")
 def get_active_authors(
     limit: int = Query(10, description="Number of authors to return"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get most active authors and their research topics"""
     try:
@@ -69,11 +61,9 @@ def get_active_authors(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/cross-mentions/{paper_id}")
 def get_cross_source_mentions(
     paper_id: int,
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Find mentions of a paper in tweets and articles"""
     try:
@@ -86,12 +76,10 @@ def get_cross_source_mentions(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/topic-evolution")
 def get_topic_evolution(
     tag: str = Query(..., description="Tag to analyze"),
     days: int = Query(90, description="Time window in days"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Track how a research topic has evolved over time"""
     try:
@@ -100,12 +88,10 @@ def get_topic_evolution(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/citation-network/{paper_id}")
 def get_citation_network(
     paper_id: int,
     depth: int = Query(2, description="Network depth", le=3),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get citation network around a paper"""
     try:
@@ -118,11 +104,9 @@ def get_citation_network(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/unified-timeline")
 def get_unified_timeline(
     days: int = Query(30, description="Time window in days"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get unified timeline of papers, tweets, and articles"""
     try:
@@ -192,11 +176,9 @@ def get_unified_timeline(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/research-impact/{paper_id}")
 def get_research_impact(
     paper_id: int,
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Analyze the impact of a research paper across all sources"""
     try:

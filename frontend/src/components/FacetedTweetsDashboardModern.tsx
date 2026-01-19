@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -7,31 +7,33 @@ import { Badge } from "@/components/ui/badge"
 import { TagBadge } from "@/components/ui/tag-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  Search, 
-  Filter, 
-  User, 
-  Hash, 
+import { Progress } from "@/components/ui/progress"
+import {
+  Search,
+  User,
+  Tag,
   Calendar,
   Loader2,
   ChevronLeft,
   ChevronRight,
   Twitter,
   RefreshCw,
-  Tag,
   GitBranch,
   Layers,
   ChevronDown,
   ChevronRight as ChevronRightIcon,
-  Eye,
-  EyeOff,
-  Sparkles
+  Sparkles,
+  X,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react'
 import TweetCardModern from './TweetCardModern'
 import TagSuggestionModalModern from './TagSuggestionModalModern'
+import SemanticConceptSearch from './SemanticConceptSearch'
+import UnifiedModelSelector from './UnifiedModelSelector'
 import { cn } from "@/lib/utils"
+import { Concept } from '@/types/concept'
+import conceptService from '@/services/conceptService'
 
 interface AuthorFacet {
   username: string
@@ -48,21 +50,40 @@ interface TagFacet {
   children?: TagFacet[]
 }
 
+interface YearFacet {
+  year: number
+  count: number
+}
+
+interface AnnotationFacet {
+  status: string
+  label: string
+  count: number
+}
+
 interface Tweet {
   id: string
   text: string
   author_username: string
   author_name?: string
   tags: any
+  concepts?: Concept[]
   created_at: string
   is_retweet?: boolean
   like_count?: number
   retweet_count?: number
   reply_count?: number
   metrics?: {
+    // API returns these fields
+    like_count?: number
+    retweet_count?: number
+    reply_count?: number
+    quote_count?: number
+    // Transformed to these for display
     likes: number
     retweets: number
     replies: number
+    quotes?: number
   }
   media?: Array<{
     type: string
@@ -71,11 +92,25 @@ interface Tweet {
   }>
 }
 
+interface ConceptFacet {
+  concept_id: string
+  id?: string
+  slug: string
+  display_name: string
+  count: number
+  aggregate_count?: number
+  entity_type?: string
+  children?: ConceptFacet[]
+  parents?: string[]
+}
+
 interface FacetedSearchResponse {
   tweets: Tweet[]
   facets: {
     authors: AuthorFacet[]
-    tags: TagFacet[]
+    concepts: ConceptFacet[]
+    years?: YearFacet[]
+    annotation_status?: AnnotationFacet[]
   }
   total: number
   page: number
@@ -84,30 +119,49 @@ interface FacetedSearchResponse {
 
 export default function FacetedTweetsDashboardModern() {
   const [tweets, setTweets] = useState<Tweet[]>([])
-  const [facets, setFacets] = useState<{ authors: AuthorFacet[]; tags: TagFacet[] }>({
+  const [facets, setFacets] = useState<{ authors: AuthorFacet[]; concepts: ConceptFacet[]; years: YearFacet[]; annotation_status: AnnotationFacet[] }>({
     authors: [],
-    tags: []
+    concepts: [],
+    years: [],
+    annotation_status: []
   })
-  const [hierarchyFacets, setHierarchyFacets] = useState<TagFacet[]>([])
+  const [hierarchyFacets, setHierarchyFacets] = useState<ConceptFacet[]>([])
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([])
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedConcepts, setSelectedConcepts] = useState<string[]>([])
+  const [selectedYears, setSelectedYears] = useState<number[]>([])
+  const [selectedAnnotationStatus, setSelectedAnnotationStatus] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [excludeRetweets, setExcludeRetweets] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalTweets, setTotalTweets] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [showAllTags, setShowAllTags] = useState(false)
   const [showHierarchy, setShowHierarchy] = useState(false)
-  const [expandedTags, setExpandedTags] = useState<Set<string>>(new Set())
+  const [expandedConcepts, setExpandedConcepts] = useState<Set<string>>(new Set())
   const [selectedTweet, setSelectedTweet] = useState<Tweet | null>(null)
   const [showSuggestionModal, setShowSuggestionModal] = useState(false)
+  const [showAllConcepts, setShowAllConcepts] = useState(false)
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0)
+
+  // Batch annotation state
+  const [batchAnnotating, setBatchAnnotating] = useState(false)
+  const [_batchTaskId, setBatchTaskId] = useState<string | null>(null)
+  const [batchProgress, setBatchProgress] = useState(0)
+  const [batchModel, setBatchModel] = useState<string>('')
+  const [batchResult, setBatchResult] = useState<{
+    status: 'idle' | 'running' | 'completed' | 'error'
+    newTagsCount?: number
+    skippedCount?: number
+    errorCount?: number
+    message?: string
+  }>({ status: 'idle' })
+  const batchPollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const pageSize = 50
   const totalPages = Math.ceil(totalTweets / pageSize)
 
   useEffect(() => {
     fetchTweets()
-  }, [selectedAuthors, selectedTags, searchTerm, excludeRetweets, currentPage])
+  }, [selectedAuthors, selectedConcepts, selectedYears, selectedAnnotationStatus, searchTerm, excludeRetweets, currentPage])
 
   useEffect(() => {
     if (showHierarchy) {
@@ -131,18 +185,30 @@ export default function FacetedTweetsDashboardModern() {
       }
       
       selectedAuthors.forEach(author => params.append('authors', author))
-      selectedTags.forEach(tag => params.append('tags', tag))
+      selectedConcepts.forEach(conceptId => params.append('concept_ids', conceptId))
+      selectedYears.forEach(year => params.append('years', year.toString()))
+      
+      // Add annotation status filter
+      if (selectedAnnotationStatus.length === 1) {
+        params.append('annotation_status', selectedAnnotationStatus[0])
+      }
       
       const response = await axios.get<FacetedSearchResponse>(
-        `http://localhost:8000/api/v2/tweets/tweets/faceted-search?${params.toString()}`
+        `http://localhost:8000/api/tweets/faceted-search?${params.toString()}`
       )
       
       const transformedTweets = response.data.tweets.map(tweet => ({
         ...tweet,
-        metrics: tweet.metrics || {
-          likes: tweet.like_count || 0,
-          retweets: tweet.retweet_count || 0,
-          replies: tweet.reply_count || 0
+        metrics: tweet.metrics ? {
+          likes: tweet.metrics.like_count || 0,
+          retweets: tweet.metrics.retweet_count || 0,
+          replies: tweet.metrics.reply_count || 0,
+          quotes: tweet.metrics.quote_count || 0
+        } : {
+          likes: 0,
+          retweets: 0,
+          replies: 0,
+          quotes: 0
         },
         tags: tweet.tags ? tweet.tags.map((tag: any) => 
           typeof tag === 'string' ? { tag, type: 'manual' } : tag
@@ -150,7 +216,12 @@ export default function FacetedTweetsDashboardModern() {
       }))
       
       setTweets(transformedTweets)
-      setFacets(response.data.facets)
+      setFacets({
+        authors: response.data.facets.authors,
+        concepts: response.data.facets.concepts,
+        years: response.data.facets.years || [],
+        annotation_status: response.data.facets.annotation_status || []
+      })
       setTotalTweets(response.data.total)
     } catch (error) {
       console.error('Error fetching tweets:', error)
@@ -161,10 +232,10 @@ export default function FacetedTweetsDashboardModern() {
 
   const fetchHierarchyFacets = async () => {
     try {
-      const response = await axios.get<TagFacet[]>(
-        'http://localhost:8000/api/v2/tweets/tweets/hierarchy-facets'
+      const response = await axios.get<any>(
+        'http://localhost:8000/api/tweets/hierarchy-facets'
       )
-      setHierarchyFacets(response.data)
+      setHierarchyFacets(response.data.hierarchy || [])
     } catch (error) {
       console.error('Error fetching hierarchy facets:', error)
     }
@@ -180,84 +251,209 @@ export default function FacetedTweetsDashboardModern() {
     setCurrentPage(1)
   }
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => {
-      if (prev.includes(tag)) {
-        return prev.filter(t => t !== tag)
+  const toggleYear = (year: number) => {
+    setSelectedYears(prev => {
+      if (prev.includes(year)) {
+        return prev.filter(y => y !== year)
       }
-      return [...prev, tag]
+      return [...prev, year]
     })
     setCurrentPage(1)
   }
 
-  const toggleTagExpansion = (tag: string) => {
-    setExpandedTags(prev => {
+  const toggleConcept = (conceptId: string) => {
+    setSelectedConcepts(prev => {
+      if (prev.includes(conceptId)) {
+        return prev.filter(c => c !== conceptId)
+      }
+      return [...prev, conceptId]
+    })
+    setCurrentPage(1)
+  }
+
+  const toggleConceptExpansion = (conceptId: string) => {
+    setExpandedConcepts(prev => {
       const newSet = new Set(prev)
-      if (newSet.has(tag)) {
-        newSet.delete(tag)
+      if (newSet.has(conceptId)) {
+        newSet.delete(conceptId)
       } else {
-        newSet.add(tag)
+        newSet.add(conceptId)
       }
       return newSet
     })
   }
 
-  const handleTagAdded = async (tweetId: string, tag: string) => {
-    try {
-      await axios.post(`http://localhost:8000/api/tags`, {
-        tweet_id: tweetId,
-        tag: tag
-      })
-      fetchTweets()
-    } catch (error) {
-      console.error('Error adding tag:', error)
-    }
+
+
+  const handleConceptAdded = async (tweetId: string, concept: Concept) => {
+    // Local state update - no full refresh needed
+    setTweets(prev => prev.map(tweet =>
+      tweet.id === tweetId
+        ? { ...tweet, concepts: [...(tweet.concepts || []), concept] }
+        : tweet
+    ))
   }
 
-  const handleTagRemoved = async (tweetId: string, tag: string) => {
-    try {
-      await axios.delete(`http://localhost:8000/api/tags`, {
-        data: { tweet_id: tweetId, tag: tag }
-      })
-      fetchTweets()
-    } catch (error) {
-      console.error('Error removing tag:', error)
-    }
+  const handleConceptRemoved = async (tweetId: string, conceptId: string) => {
+    // Local state update - no full refresh needed
+    setTweets(prev => prev.map(tweet =>
+      tweet.id === tweetId
+        ? { ...tweet, concepts: tweet.concepts?.filter(c => c.concept_id !== conceptId) }
+        : tweet
+    ))
   }
 
-  const handleSuggestTags = (tweet: Tweet) => {
+  const handleSuggestConcepts = (tweet: Tweet) => {
+    // Save current scroll position before opening modal
+    setSavedScrollPosition(window.scrollY)
     setSelectedTweet(tweet)
     setShowSuggestionModal(true)
   }
 
+  const handleTagsUpdated = async () => {
+    // Fetch only the updated tweet - no full refresh needed
+    if (selectedTweet) {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/tweets/${selectedTweet.id}`)
+        const updatedTweet = response.data
+        setTweets(prev => prev.map(tweet =>
+          tweet.id === selectedTweet.id
+            ? { ...tweet, concepts: updatedTweet.concepts }
+            : tweet
+        ))
+      } catch (error) {
+        console.error('Error fetching updated tweet:', error)
+      }
+    }
+    // No need to restore scroll position - we didn't scroll
+  }
+
+  // Batch annotation handlers
+  const handleBatchAnnotate = async () => {
+    if (!batchModel) {
+      setBatchResult({
+        status: 'error',
+        message: 'Please select a model first'
+      })
+      return
+    }
+
+    if (tweets.length === 0) {
+      setBatchResult({
+        status: 'error',
+        message: 'No tweets to annotate'
+      })
+      return
+    }
+
+    setBatchAnnotating(true)
+    setBatchProgress(0)
+    setBatchResult({ status: 'running' })
+
+    try {
+      // Get all tweet IDs from current filtered view
+      const tweetIds = tweets.map(t => t.id)
+
+      const response = await axios.post('http://localhost:8000/api/tweets/batch-annotate', {
+        tweet_ids: tweetIds,
+        model: batchModel
+      })
+
+      setBatchTaskId(response.data.task_id)
+      // Start polling for progress
+      pollBatchStatus(response.data.task_id)
+    } catch (error: any) {
+      console.error('Error starting batch annotation:', error)
+      setBatchAnnotating(false)
+      setBatchResult({
+        status: 'error',
+        message: error.response?.data?.detail || 'Failed to start batch annotation'
+      })
+    }
+  }
+
+  const pollBatchStatus = (taskId: string) => {
+    // Clear any existing polling
+    if (batchPollingRef.current) {
+      clearInterval(batchPollingRef.current)
+    }
+
+    batchPollingRef.current = setInterval(async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/tweets/batch-annotate/${taskId}/status`)
+        const status = response.data
+
+        setBatchProgress(status.progress)
+
+        if (status.status === 'completed') {
+          // Stop polling
+          if (batchPollingRef.current) {
+            clearInterval(batchPollingRef.current)
+            batchPollingRef.current = null
+          }
+
+          setBatchAnnotating(false)
+          setBatchTaskId(null)
+          setBatchResult({
+            status: 'completed',
+            newTagsCount: status.new_tags_count,
+            skippedCount: status.skipped_count,
+            errorCount: status.error_count
+          })
+
+          // Refresh tweets to show new tags
+          fetchTweets()
+
+          // Clear result message after 10 seconds
+          setTimeout(() => {
+            setBatchResult({ status: 'idle' })
+          }, 10000)
+        }
+      } catch (error) {
+        console.error('Error polling batch status:', error)
+        // Continue polling unless there's a consistent error
+      }
+    }, 2000) // Poll every 2 seconds
+  }
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (batchPollingRef.current) {
+        clearInterval(batchPollingRef.current)
+      }
+    }
+  }, [])
+
   const clearFilters = () => {
     setSelectedAuthors([])
-    setSelectedTags([])
+    setSelectedConcepts([])
+    setSelectedYears([])
     setSearchTerm('')
     setExcludeRetweets(false)
     setCurrentPage(1)
   }
 
-  const renderHierarchicalTag = (tag: TagFacet, level: number = 0) => {
-    const isExpanded = expandedTags.has(tag.tag)
-    const hasChildren = tag.children && tag.children.length > 0
-    const isSelected = selectedTags.includes(tag.tag)
+  const renderHierarchicalConcept = (concept: ConceptFacet, level: number = 0) => {
+    const isExpanded = expandedConcepts.has(concept.concept_id)
+    const hasChildren = concept.children && concept.children.length > 0
+    const isSelected = selectedConcepts.includes(concept.concept_id)
 
     return (
-      <div key={tag.tag} className="w-full">
+      <div className="w-full">
         <div 
           className={cn(
             "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
             isSelected && "bg-blue-50",
             level > 0 && "ml-4"
           )}
-          onClick={() => toggleTag(tag.tag)}
+          onClick={() => toggleConcept(concept.concept_id)}
         >
           {hasChildren && (
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                toggleTagExpansion(tag.tag)
+                toggleConceptExpansion(concept.concept_id)
               }}
               className="p-0.5 hover:bg-gray-200 rounded"
             >
@@ -273,22 +469,37 @@ export default function FacetedTweetsDashboardModern() {
           <TagBadge 
             variant={isSelected ? "default" : "system"}
             className="flex-1 justify-between cursor-pointer"
+            style={{
+              backgroundColor: isSelected ? '#93C5FD' : '#DBEAFE', // lighter blue when selected
+              color: '#1E40AF'
+            }}
           >
-            <span>{tag.display_name || tag.tag}</span>
-            <span className="ml-2 text-xs opacity-70">{tag.count}</span>
+            <span className="flex items-center gap-1">
+              <span>{conceptService.getConceptIcon(concept)}</span>
+              <span>{concept.display_name}</span>
+            </span>
+            <span className="ml-2 text-xs opacity-70">{concept.aggregate_count ?? concept.count}</span>
           </TagBadge>
         </div>
         
         {hasChildren && isExpanded && (
           <div className="mt-1">
-            {tag.children!.map(child => renderHierarchicalTag(child, level + 1))}
+            {concept.children!.map((child, childIndex) => (
+              <React.Fragment key={`${concept.concept_id}-child-${child.concept_id}-${childIndex}`}>
+                {renderHierarchicalConcept(child, level + 1)}
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>
     )
   }
 
-  const displayedTags = showHierarchy ? hierarchyFacets : (showAllTags ? facets.tags : facets.tags.slice(0, 20))
+  // Control how many concepts to show initially
+  const INITIAL_CONCEPTS_LIMIT = 50
+  const displayedConcepts = showHierarchy 
+    ? hierarchyFacets 
+    : (showAllConcepts ? facets.concepts : facets.concepts.slice(0, INITIAL_CONCEPTS_LIMIT))
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
@@ -332,7 +543,7 @@ export default function FacetedTweetsDashboardModern() {
               <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
               Refresh
             </Button>
-            {(selectedAuthors.length > 0 || selectedTags.length > 0 || searchTerm) && (
+            {(selectedAuthors.length > 0 || selectedConcepts.length > 0 || selectedYears.length > 0 || searchTerm) && (
               <Button onClick={clearFilters} variant="outline">
                 Clear Filters
               </Button>
@@ -341,19 +552,97 @@ export default function FacetedTweetsDashboardModern() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sidebar Filters */}
-        <div className="lg:col-span-1 space-y-4">
-          {/* Authors Filter */}
+      {/* Batch Annotation Controls */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-500" />
+              <span className="text-sm font-medium">Batch Annotation</span>
+            </div>
+
+            <div className="flex-1 min-w-[200px] max-w-[300px]">
+              <UnifiedModelSelector
+                taskType="tag_suggestion"
+                value={batchModel}
+                onValueChange={setBatchModel}
+                compact={true}
+                disabled={batchAnnotating}
+              />
+            </div>
+
+            <Button
+              onClick={handleBatchAnnotate}
+              disabled={batchAnnotating || tweets.length === 0 || !batchModel}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {batchAnnotating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Annotating... {batchProgress}%
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Batch Annotate ({tweets.length} tweets)
+                </>
+              )}
+            </Button>
+
+            {/* Progress bar when running */}
+            {batchAnnotating && (
+              <div className="flex-1 min-w-[200px]">
+                <Progress value={batchProgress} className="h-2" />
+              </div>
+            )}
+
+            {/* Result message */}
+            {batchResult.status === 'completed' && (
+              <div className="flex items-center gap-2 text-sm">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span className="text-green-700">
+                  {batchResult.newTagsCount} new tags added
+                  {batchResult.skippedCount ? `, ${batchResult.skippedCount} skipped` : ''}
+                  {batchResult.errorCount ? `, ${batchResult.errorCount} errors` : ''}
+                </span>
+              </div>
+            )}
+
+            {batchResult.status === 'error' && (
+              <div className="flex items-center gap-2 text-sm">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span className="text-red-700">{batchResult.message}</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Sidebar - Authors Filter */}
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Authors
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Authors
+                </CardTitle>
+                {selectedAuthors.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedAuthors([])}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="p-0">
-              <ScrollArea className="h-[300px] px-4 pb-4">
+              <ScrollArea className="h-[553px] px-4 pb-4">
                 {facets.authors.map(author => (
                   <div
                     key={author.username}
@@ -378,87 +667,247 @@ export default function FacetedTweetsDashboardModern() {
               </ScrollArea>
             </CardContent>
           </Card>
+          
+          {/* Year Navigation */}
+          <Card className="mt-6">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Years
+                </CardTitle>
+                {selectedYears.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedYears([])}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ScrollArea className="h-[200px] px-4 pb-4">
+                {facets.years.map(year => (
+                  <div
+                    key={year.year}
+                    className={cn(
+                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
+                      selectedYears.includes(year.year) && "bg-blue-50"
+                    )}
+                    onClick={() => toggleYear(year.year)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={selectedYears.includes(year.year)}
+                        onCheckedChange={() => toggleYear(year.year)}
+                      />
+                      <span className="text-sm font-medium">{year.year}</span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {year.count}
+                    </Badge>
+                  </div>
+                ))}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+          
+          {/* Annotation Status Filter */}
+          <Card className="mt-6">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  Annotation Status
+                </CardTitle>
+                {selectedAnnotationStatus.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSelectedAnnotationStatus([])}
+                    className="h-7 px-2 text-xs"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="px-4 pb-4 space-y-2">
+                {facets.annotation_status.map(status => (
+                  <div
+                    key={status.status}
+                    className={cn(
+                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
+                      selectedAnnotationStatus.includes(status.status) && "bg-blue-50"
+                    )}
+                    onClick={() => {
+                      // Toggle annotation status (only allow one at a time)
+                      if (selectedAnnotationStatus.includes(status.status)) {
+                        setSelectedAnnotationStatus([])
+                      } else {
+                        setSelectedAnnotationStatus([status.status])
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={selectedAnnotationStatus.includes(status.status)}
+                        onCheckedChange={() => {
+                          if (selectedAnnotationStatus.includes(status.status)) {
+                            setSelectedAnnotationStatus([])
+                          } else {
+                            setSelectedAnnotationStatus([status.status])
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm font-medium">
+                        {status.label}
+                      </span>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {status.count}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Tags Filter */}
+        {/* Right Sidebar - Tags Filter */}
+        <div className="lg:col-span-3 order-last lg:order-last">
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Hash className="h-4 w-4" />
-                  Tags
+                  <Tag className="h-4 w-4" />
+                  Concepts
                 </CardTitle>
                 <div className="flex gap-1">
+                  {selectedConcepts.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSelectedConcepts([])}
+                      className="h-7 px-2 text-xs"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant={showHierarchy ? "default" : "outline"}
                     onClick={() => setShowHierarchy(!showHierarchy)}
                     className="h-7 px-2"
+                    title={showHierarchy ? "Show flat list" : "Show hierarchy"}
                   >
                     {showHierarchy ? <GitBranch className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
                   </Button>
                 </div>
               </div>
             </CardHeader>
+            
+            {/* Semantic Concept Search */}
+            <div className="px-4 pt-4 pb-2">
+              <SemanticConceptSearch
+                onConceptSelect={(conceptId, displayName) => {
+                  if (!selectedConcepts.includes(conceptId)) {
+                    setSelectedConcepts([...selectedConcepts, conceptId])
+                  }
+                }}
+                selectedConcepts={selectedConcepts}
+                contentTypes={['tweet']}
+                placeholder="Search concepts semantically..."
+                className="w-full"
+              />
+            </div>
+            
             <CardContent className="p-0">
-              <ScrollArea className="h-[400px] px-4 pb-4">
+              <ScrollArea className="h-[1200px] px-4 pb-4">
                 {showHierarchy ? (
                   <div className="space-y-1">
-                    {hierarchyFacets.map(tag => renderHierarchicalTag(tag))}
+                    {hierarchyFacets && hierarchyFacets.map((concept, index) => (
+                      <React.Fragment key={`hierarchy-root-${concept.concept_id}-${index}`}>
+                        {renderHierarchicalConcept(concept)}
+                      </React.Fragment>
+                    ))}
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {displayedTags.map(tag => (
+                  <div className="space-y-1">
+                    {displayedConcepts.map((concept, index) => (
                       <div
-                        key={tag.tag}
+                        key={`${concept.concept_id}-${index}`}
                         className={cn(
-                          "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-                          selectedTags.includes(tag.tag) && "bg-blue-50"
+                          "flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
+                          selectedConcepts.includes(concept.concept_id) && "bg-blue-50"
                         )}
-                        onClick={() => toggleTag(tag.tag)}
+                        onClick={() => toggleConcept(concept.concept_id)}
                       >
                         <div className="flex items-center gap-2">
                           <Checkbox
-                            checked={selectedTags.includes(tag.tag)}
-                            onCheckedChange={() => toggleTag(tag.tag)}
+                            checked={selectedConcepts.includes(concept.concept_id)}
+                            onCheckedChange={() => toggleConcept(concept.concept_id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-3 w-3"
                           />
-                          <TagBadge variant="default" size="sm">
-                            {tag.display_name || tag.tag}
-                          </TagBadge>
+                          <div
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-medium"
+                            style={{
+                              backgroundColor: selectedConcepts.includes(concept.concept_id) ? '#93C5FD' : '#DBEAFE',
+                              color: '#1E40AF'
+                            }}
+                          >
+                            <span className="text-xs">{conceptService.getConceptIcon(concept)}</span>
+                            <span>{concept.display_name}</span>
+                          </div>
                         </div>
-                        <Badge variant="secondary" className="text-xs">
-                          {tag.count}
+                        <Badge variant="secondary" className="text-xs py-0 px-1">
+                          {concept.count}
                         </Badge>
                       </div>
                     ))}
-                  </div>
-                )}
-                {!showHierarchy && facets.tags.length > 20 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-2"
-                    onClick={() => setShowAllTags(!showAllTags)}
-                  >
-                    {showAllTags ? (
-                      <>
-                        <EyeOff className="h-3 w-3 mr-2" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="h-3 w-3 mr-2" />
-                        Show All ({facets.tags.length})
-                      </>
+                    
+                    {/* Show More/Less button */}
+                    {!showHierarchy && facets.concepts.length > INITIAL_CONCEPTS_LIMIT && (
+                      <div className="mt-3 pt-3 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setShowAllConcepts(!showAllConcepts)}
+                          className="w-full justify-center text-xs"
+                        >
+                          {showAllConcepts ? (
+                            <>
+                              <ChevronDown className="h-3 w-3 mr-1 rotate-180" />
+                              Show Less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-3 w-3 mr-1" />
+                              Show {facets.concepts.length - INITIAL_CONCEPTS_LIMIT} More Concepts
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     )}
-                  </Button>
+                  </div>
                 )}
               </ScrollArea>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content */}
-        <div className="lg:col-span-3">
+        {/* Main Content - Center */}
+        <div className="lg:col-span-7 order-2 lg:order-2">
           {/* Stats Bar */}
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -471,9 +920,15 @@ export default function FacetedTweetsDashboardModern() {
                   {selectedAuthors.length} author{selectedAuthors.length !== 1 ? 's' : ''} selected
                 </Badge>
               )}
-              {selectedTags.length > 0 && (
+              {selectedConcepts.length > 0 && (
                 <Badge variant="secondary" className="py-1.5 px-3">
-                  {selectedTags.length} tag{selectedTags.length !== 1 ? 's' : ''} selected
+                  {selectedConcepts.length} concept{selectedConcepts.length !== 1 ? 's' : ''} selected
+                </Badge>
+              )}
+              {selectedYears.length > 0 && (
+                <Badge variant="secondary" className="py-1.5 px-3">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {selectedYears.length > 1 ? `${selectedYears.length} years` : selectedYears[0]} selected
                 </Badge>
               )}
             </div>
@@ -502,9 +957,9 @@ export default function FacetedTweetsDashboardModern() {
                 <TweetCardModern
                   key={tweet.id}
                   tweet={tweet}
-                  onTagAdded={handleTagAdded}
-                  onTagRemoved={handleTagRemoved}
-                  onSuggestTags={handleSuggestTags}
+                  onConceptAdded={handleConceptAdded}
+                  onConceptRemoved={handleConceptRemoved}
+                  onSuggestConcepts={handleSuggestConcepts}
                 />
               ))}
             </div>
@@ -573,7 +1028,7 @@ export default function FacetedTweetsDashboardModern() {
             setShowSuggestionModal(false)
             setSelectedTweet(null)
           }}
-          onTagsUpdated={fetchTweets}
+          onTagsUpdated={handleTagsUpdated}
         />
       )}
     </div>

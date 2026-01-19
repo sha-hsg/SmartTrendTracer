@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, RefreshCcw, Check, Plus, Sparkles, Hash, Tags, Info, LoaderCircle } from "lucide-react";
+import { RefreshCcw, Check, Plus, Sparkles, Hash, Tags, Info, LoaderCircle } from "lucide-react";
 
 // shadcn/ui
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";

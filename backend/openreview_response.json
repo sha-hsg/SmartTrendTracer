@@ -1,0 +1,864 @@
+{
+  "notes": [
+    {
+      "content": {
+        "title": {
+          "value": "E$^2$-RAG: Towards Editable Efficient RAG by Editing Compressed KV Caches"
+        },
+        "authors": {
+          "value": [
+            "Tongxu Luo",
+            "Wenyu Du",
+            "HanWen Hao",
+            "Min Zhang",
+            "Hao Yang",
+            "Benyou Wang"
+          ]
+        },
+        "authorids": {
+          "value": [
+            "~Tongxu_Luo1",
+            "~Wenyu_Du1",
+            "~HanWen_Hao1",
+            "~Min_Zhang10",
+            "~Hao_Yang7",
+            "~Benyou_Wang2"
+          ]
+        },
+        "keywords": {
+          "value": [
+            "Retrieval Augmented Generation"
+          ]
+        },
+        "TLDR": {
+          "value": "E$^2$-RAG efficiently edits compressed KV caches for knowledge updates, achieving 40x faster editing and 3x faster generation than standard RAG with minimal performance loss."
+        },
+        "abstract": {
+          "value": "Retrieval-Augmented Generation (RAG) demonstrates remarkable capabilities for enhancing the performance of Large Language Models (LLMs) by integrating external knowledge.\nStandard RAG introduces additional computations due to the extra retrieved context.\nTo improve efficiency, recent studies propose compressing chunk tokens into compact forms, such as key-value (KV) caches.\nHowever, maintaining these compressed KV caches in an updated state presents a significant challenge, undermining the primary goal of RAG: acquiring up-to-date knowledge.\nIn this work, we propose **E$^{2}$-RAG**, the first **E**ditable **E**fficient-**RAG** method designed to efficiently edit compressed KV caches for knowledge updates.\nE$^2$-RAG features an encoder-decoder architecture similar to efficient RAG methods, along with an additional editor.\nThe encoder-decoder compresses chunk tokens into KV caches and generates responses.\nThe editor takes old KV caches and new knowledge tokens as inputs, enabling efficient updates to the KV caches.\nTo formalize knowledge updating, we define three operations: INSERT, DELETE, and UPDATE.\nWe create three sets of datasets for each operation.\nThrough extensive experiments, E$^2$-RAG achieves nearly **40x faster** editing compared to recomputing KV caches while maintaining **3x faster** generation efficiency than standard RAG, with a performance downgrade of 1%-5%.\nWe also conduct various ablation studies, including multi-turn editing, multi-chunk capability, and knowledge conflicts, to explore the capabilities of E$^2$-RAG."
+        },
+        "code_of_ethics": {
+          "value": "I acknowledge that I and all co-authors of this work have read and commit to adhering to the COLM Code of Ethics on https://colmweb.org/CoE.html"
+        },
+        "author_guide": {
+          "value": "I certify that this submission complies with the submission instructions as described on https://colmweb.org/AuthorGuide.html"
+        },
+        "venue": {
+          "value": "COLM 2025"
+        },
+        "venueid": {
+          "value": "colmweb.org/COLM/2025/Conference"
+        },
+        "pdf": {
+          "value": "/pdf/90a703fd95fe0a78eba30c62f09d41700971be6f.pdf"
+        },
+        "supplementary_material": {
+          "value": "/attachment/cb6b8a5009cad693d953c6721496aa806e2f5e1b.zip"
+        },
+        "_bibtex": {
+          "value": "@inproceedings{\nluo2025erag,\ntitle={E\\${\\textasciicircum}2\\$-{RAG}: Towards Editable Efficient {RAG} by Editing Compressed {KV} Caches},\nauthor={Tongxu Luo and Wenyu Du and HanWen Hao and Min Zhang and Hao Yang and Benyou Wang},\nbooktitle={Second Conference on Language Modeling},\nyear={2025},\nurl={https://openreview.net/forum?id=ZZ4tcxJvux}\n}"
+        },
+        "paperhash": {
+          "value": "luo|e^2rag_towards_editable_efficient_rag_by_editing_compressed_kv_caches"
+        }
+      },
+      "id": "ZZ4tcxJvux",
+      "forum": "ZZ4tcxJvux",
+      "license": "CC BY 4.0",
+      "signatures": [
+        "colmweb.org/COLM/2025/Conference/Submission1944/Authors"
+      ],
+      "readers": [
+        "everyone"
+      ],
+      "writers": [
+        "colmweb.org/COLM/2025/Conference",
+        "colmweb.org/COLM/2025/Conference/Submission1944/Authors"
+      ],
+      "number": 1944,
+      "invitations": [
+        "colmweb.org/COLM/2025/Conference/-/Submission",
+        "colmweb.org/COLM/2025/Conference/-/Post_Submission",
+        "colmweb.org/COLM/2025/Conference/Submission1944/-/Full_Submission",
+        "colmweb.org/COLM/2025/Conference/-/Edit",
+        "colmweb.org/COLM/2025/Conference/Submission1944/-/Camera_Ready"
+      ],
+      "domain": "colmweb.org/COLM/2025/Conference",
+      "tcdate": 1742729841300,
+      "cdate": 1742729841300,
+      "tmdate": 1756169237150,
+      "mdate": 1756169237150,
+      "pdate": 1751944508681,
+      "odate": 1756169237131,
+      "version": 2,
+      "details": {
+        "replyCount": 17,
+        "invitations": [
+          {
+            "content": {
+              "email_authors": {
+                "value": true
+              },
+              "email_pcs": {
+                "value": false
+              }
+            },
+            "id": "colmweb.org/COLM/2025/Conference/-/Submission",
+            "type": "note",
+            "cdate": 1740571140000,
+            "expdate": 1742732940000,
+            "duedate": 1742731140000,
+            "signatures": [
+              "colmweb.org/COLM/2025/Conference"
+            ],
+            "readers": [
+              "everyone"
+            ],
+            "writers": [
+              "colmweb.org/COLM/2025/Conference"
+            ],
+            "invitees": [
+              "~"
+            ],
+            "edit": {
+              "signatures": {
+                "param": {
+                  "items": [
+                    {
+                      "prefix": "~.*",
+                      "optional": true
+                    },
+                    {
+                      "value": "colmweb.org/COLM/2025/Conference/Program_Chairs",
+                      "optional": true
+                    }
+                  ]
+                }
+              },
+              "readers": [
+                "colmweb.org/COLM/2025/Conference",
+                "${2/note/content/authorids/value}"
+              ],
+              "writers": [
+                "colmweb.org/COLM/2025/Conference",
+                "${2/note/content/authorids/value}"
+              ],
+              "ddate": {
+                "param": {
+                  "range": [
+                    0,
+                    9999999999999
+                  ],
+                  "optional": true,
+                  "deletable": true
+                }
+              },
+              "note": {
+                "content": {
+                  "title": {
+                    "order": 1,
+                    "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "regex": "^.{1,250}$"
+                      }
+                    }
+                  },
+                  "authors": {
+                    "order": 2,
+                    "value": {
+                      "param": {
+                        "type": "string[]",
+                        "regex": "[^;,\\n]+(,[^,\\n]+)*",
+                        "hidden": true
+                      }
+                    },
+                    "description": "Comma separated list of author names."
+                  },
+                  "authorids": {
+                    "order": 3,
+                    "description": "Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.",
+                    "value": {
+                      "param": {
+                        "type": "profile[]",
+                        "regex": "~.*"
+                      }
+                    }
+                  },
+                  "keywords": {
+                    "description": "Comma separated list of keywords.",
+                    "order": 4,
+                    "value": {
+                      "param": {
+                        "type": "string[]",
+                        "regex": ".+"
+                      }
+                    }
+                  },
+                  "TLDR": {
+                    "order": 5,
+                    "description": "\"Too Long; Didn't Read\": a short sentence describing your paper",
+                    "value": {
+                      "param": {
+                        "fieldName": "TL;DR",
+                        "type": "string",
+                        "maxLength": 250
+                      }
+                    }
+                  },
+                  "abstract": {
+                    "order": 6,
+                    "description": "Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "maxLength": 5000,
+                        "markdown": true,
+                        "input": "textarea"
+                      }
+                    }
+                  },
+                  "pdf": {
+                    "order": 8,
+                    "description": "Upload a PDF file that ends with .pdf. The main content is limited to 9 pages, excluding references. Appendices should be included within the PDF, and follow the references section. There is no page limit on the appendices. Authors can add an optional ethics statement to the paper between the main text and the references; it will not count toward the page limit, but should not be more than 1 page.",
+                    "value": {
+                      "param": {
+                        "type": "file",
+                        "extensions": [
+                          "pdf"
+                        ],
+                        "maxSize": 50,
+                        "optional": true
+                      }
+                    }
+                  },
+                  "supplementary_material": {
+                    "value": {
+                      "param": {
+                        "type": "file",
+                        "extensions": [
+                          "zip"
+                        ],
+                        "maxSize": 50,
+                        "optional": true,
+                        "deletable": true
+                      }
+                    },
+                    "description": "All supplementary material must be self-contained and zipped into a single file (*.zip). Note that supplementary material will be visible to reviewers throughout and after the review period, and ensure all material is anonymized. The maximum file size is 50MB.",
+                    "order": 9
+                  },
+                  "code_of_ethics": {
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "enum": [
+                          "I acknowledge that I and all co-authors of this work have read and commit to adhering to the COLM Code of Ethics on https://colmweb.org/CoE.html"
+                        ],
+                        "input": "checkbox"
+                      }
+                    },
+                    "order": 10
+                  },
+                  "author_guide": {
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "enum": [
+                          "I certify that this submission complies with the submission instructions as described on https://colmweb.org/AuthorGuide.html"
+                        ],
+                        "input": "checkbox"
+                      }
+                    },
+                    "order": 11
+                  },
+                  "reciprocal_reviewing_status": {
+                    "order": 12,
+                    "description": "As explained in the Call For Papers for COLM 2025, at least one author of each submission must be registered as a reciprocal reviewer. The registered reviewer should be qualified to review according to the definition given in the COLM FAQ (https://colmweb.org/faq.html). If none of the authors are qualified under this definition, or if all of the qualified authors are serving as ACs or in other organizing roles (excluding reviewing) for COLM 2025, then the submission is exempt from this requirement. If one of the authors is already a reviewer, we encourage other authors to volunteer, but you may list the currently reviewing author below. Reciprocal reviewers cannot request a lower quota. Multiple submissions cannot have the same reciprocal reviewer, unless all other authors do not qualify or are serving in other roles. **Select one of the following.**",
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "enum": [
+                          "This submission is NOT exempt from the Reciprocal Reviewing requirement. (We expect most submissions to fall in this category.)",
+                          "None of the authors are qualified according to the definition given in the Peer Review FAQ.",
+                          "All of the qualified authors are serving as ACs or in other organizing roles for COLM 2025.",
+                          "I believe the submission is exempt for a different reason, specified below. (very rare category)"
+                        ],
+                        "input": "radio"
+                      }
+                    },
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "reciprocal_reviewing_exemption_reason": {
+                    "order": 13,
+                    "description": "If you believe this submission is exempt from the Reciprocal Reviewing requirement for a different reason (e.g., all authors are starting parental leave on April 1, 2025), please enter it here.",
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "optional": true
+                      }
+                    },
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "reciprocal_reviewing_author": {
+                    "order": 14,
+                    "description": "Please specify the profile ID (e.g., ~First_Last1) of the author who agrees to register as a reviewer to satisfy the Reciprocal Reviewing requirement. **Note that if this submission is exempt from Reciprocal Reviewing, then the selected author will not be required to review, so in this case, please just specify any author.** If the reciprocal reviewer is already a reviewer and requested a reduced load, this request will be ignored.",
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "regex": "~.*"
+                      }
+                    },
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "venue": {
+                    "value": {
+                      "param": {
+                        "const": "COLM 2025 Conference Submission",
+                        "hidden": true
+                      }
+                    }
+                  },
+                  "venueid": {
+                    "value": {
+                      "param": {
+                        "const": "colmweb.org/COLM/2025/Conference/Submission",
+                        "hidden": true
+                      }
+                    }
+                  }
+                },
+                "id": {
+                  "param": {
+                    "withVenueid": "colmweb.org/COLM/2025/Conference/Submission",
+                    "optional": true
+                  }
+                },
+                "ddate": {
+                  "param": {
+                    "range": [
+                      0,
+                      9999999999999
+                    ],
+                    "optional": true,
+                    "deletable": true
+                  }
+                },
+                "signatures": [
+                  "${3/signatures}"
+                ],
+                "readers": [
+                  "colmweb.org/COLM/2025/Conference",
+                  "${2/content/authorids/value}"
+                ],
+                "writers": [
+                  "colmweb.org/COLM/2025/Conference",
+                  "${2/content/authorids/value}"
+                ],
+                "license": {
+                  "param": {
+                    "enum": [
+                      {
+                        "value": "CC BY 4.0",
+                        "description": "CC BY 4.0"
+                      },
+                      {
+                        "value": "CC BY-NC-SA 4.0",
+                        "description": "CC BY-NC-SA 4.0"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "invitations": [
+              "colmweb.org/COLM/2025/Conference/-/Edit"
+            ],
+            "domain": "colmweb.org/COLM/2025/Conference",
+            "tcdate": 1734369326104,
+            "tmdate": 1744064488494,
+            "mdate": 1744064488494,
+            "details": {
+              "writable": true
+            },
+            "replyForumViews": [
+              {
+                "id": "discussion",
+                "label": "Discussion",
+                "filter": "-invitations:colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Chat",
+                "nesting": 3,
+                "sort": "date-desc",
+                "layout": "default",
+                "live": true
+              },
+              {
+                "id": "committee-chat",
+                "label": "Committee Members Chat",
+                "filter": "invitations:colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Chat,colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Official_Review",
+                "nesting": 1,
+                "sort": "date-asc",
+                "layout": "chat",
+                "live": true,
+                "expandedInvitations": [
+                  "colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Chat"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "colmweb.org/COLM/2025/Conference/-/Post_Submission",
+            "type": "note",
+            "cdate": 1742732940000,
+            "signatures": [
+              "colmweb.org/COLM/2025/Conference"
+            ],
+            "readers": [
+              "everyone"
+            ],
+            "writers": [
+              "colmweb.org/COLM/2025/Conference"
+            ],
+            "invitees": [
+              "colmweb.org/COLM/2025/Conference"
+            ],
+            "dateprocesses": [
+              {
+                "dates": [
+                  "#{4/cdate}",
+                  "#{4/mdate} + 5000"
+                ],
+                "script": "def process(client, invitation):\n\n    domain = client.get_group(invitation.domain)\n    venue_id = domain.id\n    submission_venue_id = domain.content['submission_venue_id']['value']\n    venue_name = domain.content['title']['value']\n\n    now = openreview.tools.datetime_millis(datetime.datetime.now())\n    cdate = invitation.cdate\n\n    if cdate > now:\n        ## invitation is in the future, do not process\n        print('invitation is not yet active', cdate)\n        return\n\n    def post_submission_edit(submission):\n\n        updated_note = openreview.api.Note(\n            id=submission.id\n        )\n\n        if invitation.edit['note']['readers'] == ['everyone'] and submission.odate is None:\n            updated_note.odate = now\n            updated_note.content = {\n                '_bibtex': {\n                    'value': openreview.tools.generate_bibtex(\n                        note=submission,\n                        venue_fullname=venue_name,\n                        year=str(datetime.datetime.now().year),\n                        url_forum=submission.forum,\n                        paper_status='under review',\n                        anonymous='readers' in submission.content['authors'] or 'readers' in invitation.edit.get('note', {}).get('content', {}).get('authors', {})\n                    )\n                }\n            }\n\n        client.post_note_edit(\n            invitation=invitation.id,\n            note=updated_note,\n            signatures=[venue_id]\n        )\n    \n    ## Release the submissions to specified readers if venueid is still submission\n    submissions = client.get_all_notes(content= { 'venueid': submission_venue_id })\n    print(f'update {len(submissions)} submissions')\n    openreview.tools.concurrent_requests(post_submission_edit, submissions, desc='post_submission_edit')"
+              }
+            ],
+            "edit": {
+              "signatures": [
+                "colmweb.org/COLM/2025/Conference"
+              ],
+              "readers": [
+                "colmweb.org/COLM/2025/Conference",
+                "colmweb.org/COLM/2025/Conference/Submission${{2/note/id}/number}/Authors"
+              ],
+              "writers": [
+                "colmweb.org/COLM/2025/Conference"
+              ],
+              "note": {
+                "content": {
+                  "authors": {
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "authorids": {
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "_bibtex": {
+                    "value": {
+                      "param": {
+                        "type": "string",
+                        "maxLength": 200000,
+                        "input": "textarea",
+                        "optional": true,
+                        "deletable": true
+                      }
+                    }
+                  },
+                  "reciprocal_reviewing_status": {
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "reciprocal_reviewing_exemption_reason": {
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  },
+                  "reciprocal_reviewing_author": {
+                    "readers": [
+                      "colmweb.org/COLM/2025/Conference",
+                      "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                    ]
+                  }
+                },
+                "id": {
+                  "param": {
+                    "withInvitation": "colmweb.org/COLM/2025/Conference/-/Submission",
+                    "optional": true
+                  }
+                },
+                "odate": {
+                  "param": {
+                    "range": [
+                      0,
+                      9999999999999
+                    ],
+                    "optional": true,
+                    "deletable": true
+                  }
+                },
+                "signatures": [
+                  "colmweb.org/COLM/2025/Conference/Submission${{2/id}/number}/Authors"
+                ],
+                "readers": [
+                  "colmweb.org/COLM/2025/Conference",
+                  "colmweb.org/COLM/2025/Conference/Submission${{2/id}/number}/Area_Chairs",
+                  "colmweb.org/COLM/2025/Conference/Submission${{2/id}/number}/Reviewers",
+                  "colmweb.org/COLM/2025/Conference/Submission${{2/id}/number}/Authors"
+                ],
+                "writers": [
+                  "colmweb.org/COLM/2025/Conference",
+                  "colmweb.org/COLM/2025/Conference/Submission${{2/id}/number}/Authors"
+                ]
+              }
+            },
+            "invitations": [
+              "colmweb.org/COLM/2025/Conference/-/Edit"
+            ],
+            "domain": "colmweb.org/COLM/2025/Conference",
+            "tcdate": 1734369350177,
+            "tmdate": 1744064959276,
+            "mdate": 1744064959276,
+            "details": {
+              "writable": true
+            }
+          }
+        ],
+        "invitation": {
+          "content": {
+            "email_authors": {
+              "value": true
+            },
+            "email_pcs": {
+              "value": false
+            }
+          },
+          "id": "colmweb.org/COLM/2025/Conference/-/Submission",
+          "type": "note",
+          "cdate": 1740571140000,
+          "expdate": 1742732940000,
+          "duedate": 1742731140000,
+          "signatures": [
+            "colmweb.org/COLM/2025/Conference"
+          ],
+          "readers": [
+            "everyone"
+          ],
+          "writers": [
+            "colmweb.org/COLM/2025/Conference"
+          ],
+          "invitees": [
+            "~"
+          ],
+          "edit": {
+            "signatures": {
+              "param": {
+                "items": [
+                  {
+                    "prefix": "~.*",
+                    "optional": true
+                  },
+                  {
+                    "value": "colmweb.org/COLM/2025/Conference/Program_Chairs",
+                    "optional": true
+                  }
+                ]
+              }
+            },
+            "readers": [
+              "colmweb.org/COLM/2025/Conference",
+              "${2/note/content/authorids/value}"
+            ],
+            "writers": [
+              "colmweb.org/COLM/2025/Conference",
+              "${2/note/content/authorids/value}"
+            ],
+            "ddate": {
+              "param": {
+                "range": [
+                  0,
+                  9999999999999
+                ],
+                "optional": true,
+                "deletable": true
+              }
+            },
+            "note": {
+              "content": {
+                "title": {
+                  "order": 1,
+                  "description": "Title of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "regex": "^.{1,250}$"
+                    }
+                  }
+                },
+                "authors": {
+                  "order": 2,
+                  "value": {
+                    "param": {
+                      "type": "string[]",
+                      "regex": "[^;,\\n]+(,[^,\\n]+)*",
+                      "hidden": true
+                    }
+                  },
+                  "description": "Comma separated list of author names."
+                },
+                "authorids": {
+                  "order": 3,
+                  "description": "Search author profile by first, middle and last name or email address. All authors must have an OpenReview profile prior to submitting a paper.",
+                  "value": {
+                    "param": {
+                      "type": "profile[]",
+                      "regex": "~.*"
+                    }
+                  }
+                },
+                "keywords": {
+                  "description": "Comma separated list of keywords.",
+                  "order": 4,
+                  "value": {
+                    "param": {
+                      "type": "string[]",
+                      "regex": ".+"
+                    }
+                  }
+                },
+                "TLDR": {
+                  "order": 5,
+                  "description": "\"Too Long; Didn't Read\": a short sentence describing your paper",
+                  "value": {
+                    "param": {
+                      "fieldName": "TL;DR",
+                      "type": "string",
+                      "maxLength": 250
+                    }
+                  }
+                },
+                "abstract": {
+                  "order": 6,
+                  "description": "Abstract of paper. Add TeX formulas using the following formats: $In-line Formula$ or $$Block Formula$$.",
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "maxLength": 5000,
+                      "markdown": true,
+                      "input": "textarea"
+                    }
+                  }
+                },
+                "pdf": {
+                  "order": 8,
+                  "description": "Upload a PDF file that ends with .pdf. The main content is limited to 9 pages, excluding references. Appendices should be included within the PDF, and follow the references section. There is no page limit on the appendices. Authors can add an optional ethics statement to the paper between the main text and the references; it will not count toward the page limit, but should not be more than 1 page.",
+                  "value": {
+                    "param": {
+                      "type": "file",
+                      "extensions": [
+                        "pdf"
+                      ],
+                      "maxSize": 50,
+                      "optional": true
+                    }
+                  }
+                },
+                "supplementary_material": {
+                  "value": {
+                    "param": {
+                      "type": "file",
+                      "extensions": [
+                        "zip"
+                      ],
+                      "maxSize": 50,
+                      "optional": true,
+                      "deletable": true
+                    }
+                  },
+                  "description": "All supplementary material must be self-contained and zipped into a single file (*.zip). Note that supplementary material will be visible to reviewers throughout and after the review period, and ensure all material is anonymized. The maximum file size is 50MB.",
+                  "order": 9
+                },
+                "code_of_ethics": {
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "enum": [
+                        "I acknowledge that I and all co-authors of this work have read and commit to adhering to the COLM Code of Ethics on https://colmweb.org/CoE.html"
+                      ],
+                      "input": "checkbox"
+                    }
+                  },
+                  "order": 10
+                },
+                "author_guide": {
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "enum": [
+                        "I certify that this submission complies with the submission instructions as described on https://colmweb.org/AuthorGuide.html"
+                      ],
+                      "input": "checkbox"
+                    }
+                  },
+                  "order": 11
+                },
+                "reciprocal_reviewing_status": {
+                  "order": 12,
+                  "description": "As explained in the Call For Papers for COLM 2025, at least one author of each submission must be registered as a reciprocal reviewer. The registered reviewer should be qualified to review according to the definition given in the COLM FAQ (https://colmweb.org/faq.html). If none of the authors are qualified under this definition, or if all of the qualified authors are serving as ACs or in other organizing roles (excluding reviewing) for COLM 2025, then the submission is exempt from this requirement. If one of the authors is already a reviewer, we encourage other authors to volunteer, but you may list the currently reviewing author below. Reciprocal reviewers cannot request a lower quota. Multiple submissions cannot have the same reciprocal reviewer, unless all other authors do not qualify or are serving in other roles. **Select one of the following.**",
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "enum": [
+                        "This submission is NOT exempt from the Reciprocal Reviewing requirement. (We expect most submissions to fall in this category.)",
+                        "None of the authors are qualified according to the definition given in the Peer Review FAQ.",
+                        "All of the qualified authors are serving as ACs or in other organizing roles for COLM 2025.",
+                        "I believe the submission is exempt for a different reason, specified below. (very rare category)"
+                      ],
+                      "input": "radio"
+                    }
+                  },
+                  "readers": [
+                    "colmweb.org/COLM/2025/Conference",
+                    "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                  ]
+                },
+                "reciprocal_reviewing_exemption_reason": {
+                  "order": 13,
+                  "description": "If you believe this submission is exempt from the Reciprocal Reviewing requirement for a different reason (e.g., all authors are starting parental leave on April 1, 2025), please enter it here.",
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "maxLength": 500,
+                      "optional": true
+                    }
+                  },
+                  "readers": [
+                    "colmweb.org/COLM/2025/Conference",
+                    "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                  ]
+                },
+                "reciprocal_reviewing_author": {
+                  "order": 14,
+                  "description": "Please specify the profile ID (e.g., ~First_Last1) of the author who agrees to register as a reviewer to satisfy the Reciprocal Reviewing requirement. **Note that if this submission is exempt from Reciprocal Reviewing, then the selected author will not be required to review, so in this case, please just specify any author.** If the reciprocal reviewer is already a reviewer and requested a reduced load, this request will be ignored.",
+                  "value": {
+                    "param": {
+                      "type": "string",
+                      "regex": "~.*"
+                    }
+                  },
+                  "readers": [
+                    "colmweb.org/COLM/2025/Conference",
+                    "colmweb.org/COLM/2025/Conference/Submission${{4/id}/number}/Authors"
+                  ]
+                },
+                "venue": {
+                  "value": {
+                    "param": {
+                      "const": "COLM 2025 Conference Submission",
+                      "hidden": true
+                    }
+                  }
+                },
+                "venueid": {
+                  "value": {
+                    "param": {
+                      "const": "colmweb.org/COLM/2025/Conference/Submission",
+                      "hidden": true
+                    }
+                  }
+                }
+              },
+              "id": {
+                "param": {
+                  "withVenueid": "colmweb.org/COLM/2025/Conference/Submission",
+                  "optional": true
+                }
+              },
+              "ddate": {
+                "param": {
+                  "range": [
+                    0,
+                    9999999999999
+                  ],
+                  "optional": true,
+                  "deletable": true
+                }
+              },
+              "signatures": [
+                "${3/signatures}"
+              ],
+              "readers": [
+                "colmweb.org/COLM/2025/Conference",
+                "${2/content/authorids/value}"
+              ],
+              "writers": [
+                "colmweb.org/COLM/2025/Conference",
+                "${2/content/authorids/value}"
+              ],
+              "license": {
+                "param": {
+                  "enum": [
+                    {
+                      "value": "CC BY 4.0",
+                      "description": "CC BY 4.0"
+                    },
+                    {
+                      "value": "CC BY-NC-SA 4.0",
+                      "description": "CC BY-NC-SA 4.0"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "invitations": [
+            "colmweb.org/COLM/2025/Conference/-/Edit"
+          ],
+          "domain": "colmweb.org/COLM/2025/Conference",
+          "tcdate": 1734369326104,
+          "tmdate": 1744064488494,
+          "mdate": 1744064488494,
+          "details": {
+            "writable": true
+          },
+          "replyForumViews": [
+            {
+              "id": "discussion",
+              "label": "Discussion",
+              "filter": "-invitations:colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Chat",
+              "nesting": 3,
+              "sort": "date-desc",
+              "layout": "default",
+              "live": true
+            },
+            {
+              "id": "committee-chat",
+              "label": "Committee Members Chat",
+              "filter": "invitations:colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Chat,colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Official_Review",
+              "nesting": 1,
+              "sort": "date-asc",
+              "layout": "chat",
+              "live": true,
+              "expandedInvitations": [
+                "colmweb.org/COLM/2025/Conference/Submission${note.number}/-/Chat"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

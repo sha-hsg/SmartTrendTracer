@@ -1,0 +1,661 @@
+# LLMs can Perform Multi-Dimensional Analytic Writing Assessments: A Case Study of L2 Graduate-Level Academic English Writing
+
+Zhengxiang Wang†\* Veronika Makarova\* Zhi Li\* Jordan Kodner† Owen Rambow†
+
++Department of Linguistics & Institute for Advanced Computational Science, Stony Brook University \*Department of Linguistics, University of Saskatchewan zhengxiang.wang@stonybrook.edu
+
+# Abstract
+
+The paper explores the performance of LLMs in the context of multi-dimensional analytic writing assessments,i.e.their ability to provide both scores and comments based on multiple assessment criteria.Using a corpus of literature reviews written by L2 graduate students and assessed by human experts against 9 analytic criteria,we prompt several popular LLMs to perform the same task under various conditions. To evaluate the quality of feedback comments, we apply a novel feedback comment quality evaluation framework.This framework is interpretable,cost-efficient, scalable,and reproducible, compared to existing methods that rely on manual judgments. We find that LLMs can generate reasonably good and generally reliable multi-dimensional analytic assessments.We release our corpus and codel for reproducibility.
+
+# 1 Introduction
+
+Assessing the writing quality of essays manually is both time-consuming and labor-intensive.This task becomes even more demanding and challenging due to high cognitive load (Cai, 2015), when assessors have to assign scores and provide comments based on multi-dimensional analytic criteria, referred to here as multi-dimensional analytic assessments (see Fig.1 for an illustration). For evaluation of non-native language (L2) learners’ writing, such precise and multi-dimensional assessments are highly valuable and desirable,but they are often not provided, due to the significant time, cost, and expertise required to produce them. This is also evidenced by the dearth of publicly available L2 writing corpora annotated with multi-dimensional analytic assessments (Banno et al., 2024).
+
+![](images/237dd24dacd6e88ee9a35d391512a672015d93807f10c18ff1d30e7599ec8f52.jpg)  
+Figure 1: Multi-dimensional analytic assessments relevant to the corpus used in the study, where each assessment contains a score and a comment.
+
+In recent years, large language models (LLMs) have emerged as promising tools for self-regulated writing assessments among L2 learners. A growing number of studies (Chiang and Lee, 2O23; Mizumoto and Eguchi, 2023; Han et al.,2024; Yancey et al., 2O23,i.a.) have indicated the general usefulness of LLMs for automated writing assessments. Given their increasing use for this task, the following question remains understudied: can LLMs provide reasonably good multi-dimensional analytic writing assessments? We use the phrase “reasonably good" intentionally, given the open-ended nature of the task, particularly generating essay-level feedback comments.2
+
+To address this question, we utilize an Englishlanguage corpus of literature reviews written by L2 graduate students and assessed by human experts on 9 analytic assessment criteria. We prompt various popular LLMs to assess the corpus using the same criteria under various conditions,and we examine the quality of their generated assessments compared to human-generated assessments.
+
+Our study makes three primary contributions:
+
+1. We provide empirical evidence that LLMs can generate reasonably good and generally reliable multi-dimensional analytic writing assessments. This is the primary goal of this study; we do not argue in favor of a specific LLM, nor do we advocate replacing humans with LLMs for this task.
+
+2. We release a corpus of L2 English graduatelevel literature reviews,annotated with multidimensional analytic assessments,which will facilitate future studies.
+
+3.We propose and validate a novel LLM-based framework, ProEval, for evaluating the quality of feedback comments. ProEval is timeand cost-efficient, scalable,and reproducible, compared to manual judgments. It is also interpretable and fine-grained, compared to direct quality ratings.
+
+# 2Related Work
+
+Automated Writing Evaluation (AWE) We use AWE to include both automated essay scoring (AES)³ and feedback comment generation (Shermis and Burstein, 2013). AWE systems have existed since the 1960s (Page,1966) and have evolved over time with a predominant focus on AES (Ke and Ng, 2019; Hussein et al., 2019; Zhang and Zou, 2020; Uto, 2021; Lagakis and Demetriadis, 2021). Modern AWE systems use deep neural networks for scoring (Taghipour and Ng, 2016; Alikaniotis et al., 2016; Dong et al., 2017; Rodriguez et al., 2019; Yang et al., 2020; Xie et al., 2022) and feedback comment generation (Nagata, 2O19; Han et al., 2019; Babakov et al., 2O23). The latter task typically focuses on sentence-level grammatical error identification and correction (Behzad et al., 2024b). Existing non-LLM AWE systems mainly provide holistic assessment, with some specialized systems offering uni-dimensional analytic assessment based on a specific dimension of writing quality (Ke and Ng, 2019; Jong et al., 2023; Banno et al., 2024).
+
+LLMs used for AWEUnlike prior AWE systems, LLMs can be prompted in natural language to jointly score and comment on a given essay. A growing body of research has explored the use of LLMs for assessing L2 writing. For AES,LLMs have been examined for holistic scoring (Mizumoto and Eguchi, 2023; Yancey et al., 2023; Wang and Gayed, 2O24)，discourse coherence scoring (Naismith et al., 2023), and multi-dimensional analytic scoring (Yavuz et al., 2O24; Banno et al., 2024). For feedback comment generation, LLMs have been studied for generating corrective comments (Mizumoto et al., 2024; Song et al., 2024), holistic comments (Behzad et al., 2024a,b), and multi-dimensional analytic comments (Guo and Wang, 2024; Behzad et al., 2024a; Han et al., 2024). Stahl et al. (2024) is the only study we know of which explores LLMs jointly performing scoring and feedback comment generation, but holistically. Moreover, the ${ \mathsf { A S A P } } ^ { 4 }$ corpus they use contains short essays by native speakers from Grade 7 to Grade 1O and has no human reference comments.
+
+Related Corpora Major L2 writing corpora include TOEFL11 (Blanchard et al., 2013), which contains scored essays from TOEFL tests，and CLC-FCE(Yannakoudakis et al., 2011), which includes error-annotated short texts in response to exam prompts. Other notable corpora are derived from online language learning platforms, such as EFCAMDAT (van Rooy, 2015), Write & Improve (Yannakoudakis et al., 2018), and LEAF (Behzad et al., 2O24b), focusing on scoring，grammatical error correction, and personalized feedback,respectively. We are not aware of any publicly available corpora annotated with multi-dimensional analytic scores and comments jointly.
+
+# 3 Corpus
+
+OverviewOur corpus consists of 141 literature reviews written in English by 51 L2 graduate students, with an average word count of 1321 (930 excluding references). The reviews cover five broad topics from the humanities and social sciences, chosen to minimize the need for specialized disciplinary knowledge: (1） the social consequences of legalized cannabis,(2) the Canadian linguistic landscape, (3) online learning,(4) lessons from the COVID-19 pandemic,and (5) pacifism. Essays on topics 1,3,and 5 were written individually, while those on topics 2 and 4 were completed collaboratively by 2-4 authors.
+
+The corpus is a result of a large research project conducted at the University of Saskatchewan,a Canadian public research university, in 2O21 with an aim to examine the developmental trajectory of literature review writing skills among L2 graduate students. The project involved three rounds of a 5-unit online tutorial series conducted over the course of 2021, with each round lasting 13 weeks (see Appendix A for details). Participation was voluntary, with 31 participants completing all five writing tasks across all rounds,and 2O further students completing at least one task before withdrawing.
+
+Our Previous StudiesThe corpus has been used in our previous studies (Li et al., 2023a,b; Makarova et al., 2024), although it has not been made public until now. These three studies only use a subset of the corpus, namely essays written individually or those based on topics 1, 3,and 5.
+
+Among these studies,Li et al. (2023a,b) focus on individual writing development without examining feedback comments, placing their work within English for Academic Purposes rather than AWE. While Makarova et al. (2024) explore ChatGPT's ability to assess L2 academic writing, they only compare model output to averaged human scores and aggregated comments,lacking criterion-level analysis. Their analysis is limited to surface features (e.g., word count, type-token ratio, comment length) and does not consider different prompting conditions.In contrast, this study offers a broader evaluation using the full corpus, distinct methodologies,and a more fine-grained analysis,with no substantial overlap with our prior work.
+
+Essay AuthorsThe corpus authors comprise a diverse group of L2 learners, representing a wide range of first languages and enrolled in graduate programs across various disciplines at multiple Canadian universities. Their English proficiency ranged from upper-intermediate to advanced, with an average score equivalent to IELTS band score5 7 based on conversions from various standardized English language tests. Scores varied from IELTS 6.5 to 8.5, with a standard deviation of 0.55.
+
+To support their writing, authors received a curated bibliography for each writing task, designed to facilitate literature review writing while reducing the burden of bibliographic searches.Before submitting their final drafts for expert assessments, they participated in peer review (for topics 1, 3, and 5) or group collaboration (for topics 2 and 4). These two measures were intended to enhance the overall quality of the submitted essays.
+
+Table 1: Anonymized information for the six assessors (A-F). The columns “Rounds” and “Topics” indicate the specific rounds and writing topics they participated in.Assessors C and E never co-assessed together.   
+![](images/853eacefc32b3e5a67e08e0caab742c09ca7f0857a9340af9bf80576c7ab4126.jpg)
+
+Human AssessmentsMost essays in the corpus were assessed by three $( 9 4 . 3 \% )$ or two $( 5 . 0 \% )$ independent human experts.As illustrated in Fig.1, the assessments consist of scores on a 1O-point scale and comments based on 9 analytic assessment criteria. While scores were required, comments were optional for the assessors. Six assessors with professional experience in English language teaching assessed at different stages of the research project. Table 1 provides basic information about them.
+
+The 9 assessment criteria include: (C1) material selection; (C2） material integration and citation; (C3) quality of key components; (C4) logic of structure; (C5) content and clarity of ideas; (C6) coherence (flow of ideas) ;(C7) cohesion (use of connectors); (C8) grammar and sentence structure; and (C9) academic vocabulary. Comparatively, criteria C2, C8,and C9 are more technical and objective,since there are clearer rules and conventions governing proper citation practices, grammatical correctness, and appropriate academic word usage. In contrast, other criteria require more interpretive judgment, making them relatively more subjective in nature. See Table 7 in Appendix A.3 for details about these criteria.
+
+Assessment QualityThe 31 students who completed all writing tasks evaluated the quality of human assessments on a 4-point scale in an anonymous fnal project survey. Based on the 3O submitted survey responses, all participants agreed that the assessments were at least “useful" (rating $= 3$ ), with 24 participants $( 8 0 \% )$ rating them as “very useful" (rating $= 4$ ）
+
+Data Contamination Since the corpus was created prior to the release of ChatGPT and has never been made public, it contains no LLM-generated contents and is free from the risk of data contamination (Jacovi et al., 2023; Sainz et al., 2023), making it an ideal resource for LLM evaluation.
+
+![](images/0e4f471e6852ec891ec2c36d1a47340953dc66c1b10321cb240a29a4b46a913b.jpg)  
+Figure 2: Left: Pipeline of the proposed feedback comment quality evaluation framework. The input and output for each step ofthe pipeline are illustrated using a human-generated comment on the use of academic vocabulary, with relatedtasks performed byan LLM. Answers to the 6classification questions from the last two steps are highlighted in bold. Right: Validation results for the pipeline, where IAA (inter-annotator agreement)and exact match rate are measured between raw annotations by two annotators. See Appendix B for further details.
+
+# 4ProEval: A Novel Feedback Comment Quality Evaluation Framework
+
+A common approach to evaluating feedback comment quality for an essay uses manual judgments (e.g.,rating on a Likert scale), since generating essay-level feedback is an open-ended task.However, this approach is expensive, time-consuming, not scalable,and may not always be reproducible.
+
+For L2-related feedback comments, common criteria for assessing comment quality include specificity，relevance, helpfulness (Han et al., 2024; Stahl et al., 2024; Behzad et al., 2024a,b), and the ability to identify writing problems (Stahl et al., 2024; Behzad et al., 2024a,b). These criteria reflect a common and practical need of L2 learners to be shown specific problems in their essays and how to correct them to improve their writing quality.
+
+# 4.1The Framework
+
+To address the issues of manual judgment, we propose ProEval, an automatic problem-focused evaluation framework that evaluates the quality of a feedback comment in terms of its ability to effectively identify relevant writing problems within the assessed essay. As illustrated in Fig.2 (left), the framework utilizes LLMs to extract problems identified in feedback comments and to characterize their specificity and potential helpfulness. Rather than prompting an LLM to directly rate comment quality, which raises concerns about the reliability of LLM-based evaluators (Doddapaneni et al., 2024),our approach prioritizes transparency and interpretability by grounding evaluation in concrete,
+
+observable features.
+
+More concretely, ProEval consists of the following three steps,with the first two steps automated by GPT-40-2024-11-20 (OpenAI et al., 2024a) and the last step by GPT-4-TURBO-2024-04-09 (OpenAI, 2023). See Appendix B for additional details and explanations.
+
+Problem ExtractionWe start out by extracting any writing problems stated or implied in assessment comments, along with any relevant contextual information for each problem, such as further explanations, suggestions for improvement, concrete corrections,or clarifying questions.We define a problem as any writing-related issue that affects the quality of the writing,such as citation errors, logical flaws, or grammatical mistakes.
+
+Problem Classification The extracted problems are further characterized along three dimensions: whether an extracted problem (1) points to a specific part of the essay, (2) includes any form of suggestion (general or specific),and (3) provides a concrete correction that can be directly applied to fix an identified problem. These classifications offer a quantifiable way to assess the specificity and potential helpfulness of related comments.
+
+Correction Relevance CheckWe perform a sanity check to determine whether the proposed correction (and thus the comment) is in fact relevant to the original essay. The Correction Relevance Check also contains three binary classification questions for a more nuanced relevance analysis: (1) does the problem indicated in the correction exist in the essay? (2) is the indicated problem related to the given assessment question? and (3) is the correction correct?
+
+The results show that both human- and LLMprovided corrections are highly relevant, with answers to those three questions being“Yes” typically above $90 \%$ time (see Table 1O in Appendix B.3). We thus focus on the Problem Classification results in the next two sections.
+
+# 4.2Validations of the Framework
+
+The basic idea of ProEval is to break down a complex and inherently subjective evaluation task into multi-level subtasks that are easy for humans to verify and well-suited for LLMs to perform. To validate that, the first author and a paid graduate student in Linguistics (native speaker) first annotated some held-out samples for training and developing the annotation guidelines. Each then independently annotated at least another 2OO samples containing human- and LLM-generated comments orproblems for Problem Extraction and Problem Classification. Afterward, they met to resolve disagreements before the inter-annotator agreement (IAA) was calculated.
+
+We measure IAA using Cohen's Kappa. As is known (Feinstein and Cicchetti, 199O), Cohen's Kappa can provide misleading values with highly imbalanced class distributions.We therefore also provide exact match rates which have not been corrected for random agreement. Fig. 2 (right) shows that the IAA is typically high. When the Cohen's Kappa is low due to class imbalance (i.e., problems being incorrectly or not extracted is uncommon or rare and nearly all extracted problems contain a suggestion), the exact match rates are high. LLM task performance, evaluated based on the resolved annotations, is also notably high (e.g., O.92 F1 for Problem Extraction and at least $87 \%$ accuracy for the classification tasks in Problem Classification).
+
+We automatically evaluate LLM performance on the Correction Relevance Check by assuming that human-identified corrections are generally relevant. Specifically,we assess whether the LLM classifies these corrections as mostly relevant when presented with their corresponding essays and assessment questions (positive samples),and as mostly irrelevant when paired with random essays and questions (negative samples). As shown in Fig. 2 (right), our results confirm this expectation.
+
+# 5Experiments
+
+This sections describes and presents the main experiments conducted and the results obtained.
+
+# 5.1 LLM Prompting
+
+List of LLMsWe evaluate variants of three popular LLMs: GPT-40-2024-08-06 (GPT-4o, OpenAI et al., 2024a), GEMINI-1.5-FLASH (Gemini-1.5, Gemini Team et al., 2024), and LLAMA-3 70BINSTRUCT (Llama-3, Grattafiori et al., 2024).
+
+Default Prompt SettingAll prompts contain a system prompt,an input essay,and an assessment instruction. There are four default conditions. (1) The system prompt contains not only essential background information, such as writing topic, but also helpful information regarding the L2 nature of the input essay, year of writing, the same general assessment guidance used by human assessors.(2) The input essay always includes references. (3) LLMs are instructed to produce a score before an optional comment for each assessment question (4) via greedy decoding, i.e., with temperature set to 0. Conditions 1-3 are used to maximize the alignment between human and LLM assessment conditions.
+
+Interaction ModesWe consider three possible user-LLM interaction modes, depending on how the 9 assessment questions are presented. In Interaction Mode 1 (IM1),all questions are prompted at once in a single-turn conversation, where all LLM assessments are generated in a single response. In Interaction Mode 2 (IM 2), the questions are asked one at a time, with an LLM generating answers to each question in corresponding turns in a multiturn conversation. In Interaction Mode 3 (IM 3), however, the assessment questions are provided independently of one another in 9 separate prompts to elicit 9 separate outputs from an LLM.
+
+# 5.2 Baselines
+
+Given the open-ended nature of the task, we compareraw assessments produced across individual assessors to understand the assessment patterns and behaviors of humans and LLMs.For a more robust statistical analysis,we only consider raw assessments made by assessors B,C,and F, since the essays they each assessed and co-assessed both cover at least half of the corpus (at least 78 essays between assessors C and F). See Table 11 in Appendix C.1 for exact numbers of essays all assessor pairs (including LLM assessors) co-assessed.
+
+![](images/f79e4f9e3acea09ecdd55d0bbfa4e463e065075f08fb079b9270c5fe1eb8a8c0.jpg)  
+Figure 3: Heatmaps of overall QWK (bottom, gren) and AAR1 (top, blue) among assessors.Darker shades indicate a higher degree of agreement.
+
+# 5.3Evaluation of Scores
+
+Quadratic Weighted Kappa (QWK) This is a metric for rating inter-rater agreement. It ranges from O (random agreement) to 1 (perfect agreement), though it can be negative when agreement is worse than chance. QWK places higher penalties for larger score mismatches, but can yield misleadingly high or low values due to chance correction when the distribution of scores is highly skewed (Yannakoudakis and Cummins, 2015).
+
+Adjacent Agreement Rate (AAR) AAR measures the percentage of scores (from two raters) that lie within a specified threshold $k$ of one another. When $k = 0$ ,it assesses exact matches.For this study, we set $k = 1$ (AAR1), meaning raters' scores are treated as matching or equivalent as long as they differ by no greater than 1.
+
+We use AAR1 in addition to QWK to account for the limitation of QWK's chance correction, as we observe that both human- and LLM-assigned scores are highly biased toward the respective means. AAR1 also helps address observed scoring inconsistency issues (often by 1 point) by humans. See Appendix C.2 for more details and discussions.
+
+# 5.4Results
+
+We compare human- and LLM-generated assessments in terms of scores,comments,and the interaction between scores and comments.
+
+![](images/43770d21265a54b82e0dc06694da36fd2e6139f17ab2d7a8c1ae16dbe9ae12e5.jpg)  
+Figure 4: Criterion-level AAR1 between average human scores ("Human Avg") and human or LLM assessors. See Appendix C.2 for full results for QWK and AAR1.
+
+# 5.4.1 Scores
+
+Fig. 3 illustrates the overall scoring agreement between all pairs of assessors.
+
+Humans score more like humans and LLMs score more like LLMs. More concretely, humanhuman QWK and AAR1 are almost always higher than the corresponding human-LLM agreement. Similarly, LLM-LLM agreement exceeds humanLLM agreement in virtually all cases, with a much larger margin, suggesting that LLMs may resemble each other in scoring more closely than humans resemble each other. This may be attributed to the substantial overlap in LLM training data, in contrast to the broader variability in human linguistic experiences,which contributes to greater divergence in human scoring patterns. Criterionlevel agreement between human/LLM assessors shows similar patterns,as shown in Fig. 4.
+
+LLMs can score approximately like humans. The best human-LLM AAR1 for the three LLMs ranges from 0.59 to O.88, with all LLMs achieving an AAR1 above O.5 with assessor F (Fig. 3). Moreover, the AAR1 scores between GPT-4o and assessor B and between Llama-3 and assessors B and C are always greater than O.5. Overall, it shows that LLMs can generate sensible or reasonably good scores, often differing by no more than l point from the corresponding human-generated scores.
+
+Human-LLM agreement tends to be higher when LLMs respond to each assessment criterion separately under IM3. This is particularly true compared to when LLMs respond to all criteria at once under IM1,since IM 3 exhibits a generally higher agreement level (Fig. 3). This result may imply that, while human assessors score the 9 assessment criteria sequentially, they effectively make independent scoring decisions based on the specifics of each assessment question.
+
+Table 2: Overall statistics of feedback comments generated by human and LLM assessors.The last column shows the Spearman Rank correlations measured between scores and related comments (length /number of identified problems). Stronger negative correlations (smaller numbers) in each number pair are in bold.   
+![](images/e989cc9cdb2d17dadd853917dbeec9da094d8fd4b53fc064b606e04fa923f003.jpg)
+
+That said, the effect of interaction modes is overall limited, given the fairly close scores (i.e., high QWK/AAR1) assigned across them for each LLM. Therefore, we average human-LLM agreement for each LLM across the three interaction modes to obtain human-LLM agreement in Fig. 4.
+
+The degree of human-LLM agreement varies across assessment criteria. For example, Fig. 4 shows that LLM-assigned scores are relatively closer to human-assigned scores on assessment criteria C1 (material selection), C2 (material integration and citation), C8 (grammar and sentence structure), and C9 (academic vocabulary) than the other criteria. Among criteria C3-C7,LLMs and humans agree rather poorly on C7 (use of connectors), with LLMs consistently assigning scores more than 1 point away from human-assigned ones.
+
+# 5.4.2 Comments
+
+Table 2 shows the percentage of time an assessor provided a comment, and when they did, the average length of these comments, the percentage of comments identifying a problem, and the average number of problems identified in each comment.
+
+LLMs always provide comments and identify problems, but humans do not.This is an apparent advantage of LLMs since, unlike humans, they do not experience practical constraints like mental fatigue and limited time for writing comments.
+
+While humans show different tendencies in comment writing, they tend to write more comments and/or identify more problems (with longer comments) on criteria that are technical and objective, including C2, C8,and C9,also mentioned in the end of Section 5.4.1. See Appendix C.3 for details.
+
+Interacting with LLMs one question at a time leads to more elaborate, specific,and helpful comments. LLM comments are much longer and identify more problems in IM2 and IM3 than in IM1 (see Table 2). Additionally, Fig. 5 shows that comments generated in IM1 are also less likely to refer to a specific essay part and offer a concrete correction than those generated in IM2 and IM 3 or human-generated comments. This suggests that IM 2 and IM 3 provide higher levels of elaboration than IM1. Furthermore, IM 3 produces more corrections than both IM 2 and humans across all assessment criteria, except C1, for which a correction is unlikely since it is about evaluating the relevance of cited references.In other words,LLMs can be more elaborate, specific,and potentially helpful than humans in their comments.
+
+LLMs can be more specific than humans on assessing subjective criteria. While humans and LLMs (in IM 3) are comparably likely to include a correction in their comments for objective criteria C2, C8,and C9, LLMs’ comments (in IM 3) tend to offer more corrections on other subjective criteria (e.g., C3: quality of key components, C4: logic of structure etc.), except for C1 (see above). This aligns with the observation that humans tend to comment more on objective criteria, since commenting on subjective criteria requires more explanations and can thus be more demanding to do.
+
+# 5.4.3 Score-Comment Interaction
+
+Since lower scores reflect a perception of more writing problems,an assessor typically needs to provide a more extensive feedback comment to both cover the identified problems and justify their low scores.We highlight this score-comment interaction by measuring the correlations between scores and the token counts of or the numbers of identified problems in the related comments.
+
+Asexpected, the last column in Table 2 shows strongly negative score-comment correlations across both human- and LLM-generated assessments. The fact that these negative correlations are generally much stronger when measured with the number of identified problems suggests that it is a more fine-grained metric than comment length and also indicates the usefulness of our framework (ProEval) proposed in Section 4. See Fig. 6 in Appendix C.4 for full results of the correlations.
+
+![](images/33b53a40f563e390605ccb457257b1a2e327a0852f0cc458d94140e4a057035b.jpg)  
+Figure 5: Percentage of comments identifying a problem that mentions a specific essay part (left),offers a comment (middle),and offers a concrete correction (right) across assessment criteria by different assessors.
+
+# 5.5Summary
+
+We show that LLMs can generate sensible scores, typically within 1 point of human-generated ones on a1O-point scale,and feedback comments that identify more writing problems than human assessors that are specific,and potentially helpful. This is particularly true when LLMs are prompted in IM 3 where each assessment question is asked independently of each other. Moreover,like humans,LLMs also generate assessments that exhibit an expected and negative score-comment correlation, justifying the validity of their assessments. Overall, these results highlight that LLMs can generate reasonably good multi-dimensional analytic assessments.
+
+# 6Further Analyses
+
+This section reexamines the assumption underlying our proposed feedback comment quality evaluation framework, i.e., ProEval,and evaluates the reliability of LLM-generated assessments.
+
+# 6.1Re-examining Our Assumption about Feedback Comment Quality
+
+ProEval assumes that the quality of a feedback comment is related to how well it identifies relevant writing problems of an assessed essay. The framework extracts and characterizes problems of assessed essays identified in comments to evaluate the specificity and helpfulness of these comments.
+
+To assess this assumption, we adopt an LLM-asa-judge approach (Zheng et al., 2023), prompting
+
+Table 3: Spearman Rank correlations between the specificity and helpfulness scores and the number of different types of problems identified by our framework under different conditions. Corrections with number of problems making a suggestion are omitted as they are nearly identical to those with“#Problems."”   
+![](images/485f81c29928afba416c2aa1fa89c344eb7eb9c76e90c72da1a07083488216ad.jpg)
+
+OPENAI-01-MINI-2024-09-12 (01-mini, OpenAI et al., 2O24b) to directly assess the specificity and helpfulness of a feedback comment, given the corresponding essay and assessment question on a 10-point scale. We do not define specificity and helpfulness to avoid injecting biases and choose all comments,generated by humans and LLMs, from one subjective criterion (C6: coherence or flow of ideas) and one objective criterion (C9: academic vocabulary) to balance our examination.We then calculate the average Spearman rank correlations between these two scores produced by ol-mini and the number of different types of problems identified by ProEval under varying conditions.
+
+The results in Table 3 shows that the characteristics extractable from applying ProEval correlate very well with the ol-mini-assigned specificity and helpfulness scores. In particular, the number of problems that mention specific essay parts and offer corrections appears to be overall stronger signals of specificity and helpfulness than the mere number of problems,which shows negligible correlations for comments from IM1 or IM2. This shows the potential of ProEval in providing a more fine-grained and interpretable measurement of specificity and helpfulness levels of comments.
+
+Table 4: Reliability tests results.“QWK/AAR1" and “BLEU /ROUGE-L /BERTScore”are used to measure score stability and comment similarity, respectively.   
+![](images/68eaa46161d752afddbd06dc9084a63f99cec97cf76293e5de8ae27c81a0ba8f.jpg)
+
+# 6.2Reliability of LLM-generated Assessments
+
+We evaluate the reliability of LLM-generated assessments across different realistic conditions that mirror potential real-world use cases. To prevent experimental confounding，we change only one condition at a time for a given LLM in a specific interaction mode, assuming that users tend to interact with their chosen LLM in a consistent manner.
+
+First, we c0nsider GPT-4O-2024-08-06 (GPT4o-Aug) in IM 1 with the default prompt setting from Section 5.1 as the baseline. To test the effect of model variant, we run the same experiment but with GPT-40-2024-05-13 (GPT-4o-May). We also prompt GPT-4o-Aug while varying one of the four conditions in the default prompt setting (see Section 5.1) by(1) removing the helpful information from the system prompt, (2) excluding references in the input essays, (3) instructing LLMs to produce a comment before a score, or (4) setting temperature to 1 to increase output randomness.
+
+To ensure the comprehensiveness of our experiments,we prompt GPT-4o-May in IM 2 and IM 3 under default prompt setting to study the effect of model variant under other interaction modes.We also prompt Llama-3 in IM1 changing the first three conditions in the default prompt setting mentioned in the last paragraph. The baselines here are GPT-4o-Aug and Llama-3 prompted under respective interaction modes from Section 5.1.
+
+We use QWK and AAR1 and three widely adopted machine translation metrics,i.e., BLEU (Papineni et al., 2002), ROUGE-L (Lin, 2004), and BERTScore (Zhang et al., 2O2O), to evaluate the reliability of the generated scores and comments between contrastive condition pairs, respectively.
+
+The results in Table 4 show that LLMs are capable of generating highly stable scores,with an AAR1 score at least O.81 and mostly above 0.9 across all conditions. Their generated comments are also decently similar with BERTScore typically no lower than O.67. A small-scale manual check and a correlation analysis performed in Appendix D further verify the validity of BERTScore in measuring comment similarity.
+
+# 7Conclusion
+
+This study provides evidence that LLMs can generate reasonably good and generally reliable multidimensional analytic assessments. Our findings highlight the promising role of LLMs in assessing academic English writing, especially for graduatelevel literature reviews, which is a highly technical genre. In short, LLMs show strong pedagogical potential, benefiting both L2 learners and instructors for self-regulated learning or teaching assistance. We propose and validate a novel problem-focused evaluation framework, namely ProEval, to facilitate our analysis. Our stduy demonstrates that ProEval is time-and cost-efficient, scalable,and reproducible, compared to manual judgments. It is also interpretable and fine-grained, compared to direct quality ratings.
+
+Looking ahead, future studies could further characterize and compare the writing problems identified by human- versus LLM-generated comments, offering deeper qualitative insights. Additionally, it would be valuable to develop a metric grounded in our proposed framework that can directly compare the relative quality of two sets of comments. We release our corpus to support continued research in this area.
+
+# Acknowledgments
+
+Zhengxiang Wang,Veronika Makarova, and Zhi Li would like to thank Social Sciences and Humanities Research Council of Canada (SSHRC) for funding the writing project ("Collaborative development of written academic genre awareness by international graduate students") under the Insight Development Grants (430-2020-00179). They also appreciate three graduate students, i.e., Leslee G. Mann, Abdelrahman Alqudah,and Hanh Pham who expertly assessed the participants’ submitted writings, and the participants who participated in the project.
+
+Zhengxiang Wang and Owen Rambow were supported in part by funding from the Defense Advanced Research Projects Agency (DARPA) under Contracts No.HR01121C0186, No. HR001120C0037,and PR No． HR0011154158. Any opinions, findings and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of DARPA.
+
+Zhengxiang Wang, Jordan Kodner, and Owen Rambow are grateful for the supports from the Institute for Advanced Computational Science (IACS) at Stony Brook University, in particular the free GPT access it provides. Zhengxiang Wang is supported by IACS's Junior Researcher Award since Fall 2024.
+
+We thank Yongjun Zhang and the three anonymous reviewers for their valuable feedback. This work was presented at several venues, including All Things Language and Computation (ATLAC) at Stony Brook University, the Mid-Atlantic Student Colloquium on AI, Language, and Learning (MASC-ALL) at Penn State University,and the New England NLP Meeting Series (NENLP) at Yale University. We are grateful for the insightful discussions and feedback received from the audiences at these events.
+
+We thank Hannah Stortz for providing manual annotations for our study.
+
+# Limitations
+
+Generality of FindingsThis study focuses on L2 graduate-level academic writing, specifically literature reviews in the humanities and social sciences. While this domain represents a significant subset of academic writing, the findings may not generalize to other genres (e.g., technical reports, creative writing) or proficiency levels (e.g., undergraduate or professional writers). Additionally, our study is limited to English,a high-resource language, which means our results may not be indicative of LLMs' capabilities in other languages, particularly lowresource ones.Future research should explore the applicability of our findings across diverse writing contexts and linguistic backgrounds.
+
+Weakness of Our Assumption About Feedback QualityA key limitation of our approach is that it does not account for other factors that may influence the perceived quality of a feedback comment, such as politeness (e.g., rude comments may not be well received) or the logical coherence of the argument (e.g., illogical comments could be misleading). However, this concern is less pronounced for LLM-generated feedback comments, as LLMs are trained to align with human preferences and social norms (Ouyang et al., 2022). Moreover, these factors could potentially be incorporated into our framework by adding additional steps focused on politeness and argumentation etc.
+
+Indirect Evaluation of Feedback Quality While our approach to measuring the general quality of LLM-generated assessments is intuitive and simple, it is inherently indirect. A large-scale manual evaluation remains necessary to more accurately assess and compare the quality of humanand LLM-generated multi-dimensional analytic assessments.Due to resource constraints,we leave this investigation to future studies.
+
+Limited Validation and Reliability TestingDue to time and resource constraints, we were unable to comprehensively validate our proposed feedback comment quality evaluation framework. As a result, we may have overlooked some potential issues with the framework or the LLM outputs. Similarly, the reliability assessments we conducted are limited, with only one factor being changed at a time in each evaluation.More extensive experiments are needed to further validate our claim that LLM-generated assessments are generally reliable and to explore the conditions influencing this reliability.
+
+# Ethical Considerations
+
+Corpus CreationThe research project that led to the construction of the corpus was ethically reviewed and received approval from the University of Saskatchewan for involving human participants. Participants provided informed consent to allow the use of their materials, with the option to withdraw at any time.
+
+Human AnnotationsWe compensated the hired annotator at a rate of approximately $\mathrm { U S } \$ 25$ per hour, which exceeds the minimum wage in the region where the annotations took place.
+
+Potential Biases in LLM AssessmentsLLMs are trained on large-scale datasets that may contain inherent biases,which can be reflected in their assessments.For example, they might systematically favor certain writing styles, linguistic structures, or cultural conventions, leading to biased evaluations. However, we argue that in contexts where human assessments are not readily accessible, the benefits ofLLM-generated feedback-particularly for L2 learners -may outweigh potential biases.Furthermore, bias mitigation strategies, such as improved prompting techniques or advancements in LLM development, could help reduce these concerns.
+
+# References
+
+Dimitrios Alikaniotis,Helen Yannakoudakis,and Marek Rei. 2016. Automatic text scoring using neural networks. In Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 715-725,Berlin, Germany. Association for Computational Linguistics.
+
+Nikolay Babakov,Maria Lysyuk,Alexander Shvets, Lilya Kazakova,and Alexander Panchenko. 2023. Error syntax aware augmentation of feedback comment generation dataset. In Proceedings of the l6th International Natural Language Generation Conference: Generation Challenges, pages 37-44, Prague, Czechia.Association for Computational Linguistics.
+
+Cheng-Han Chiang and Hung-yi Lee. 2O23. Can large language models be an alternative to human evaluations? In Proceedings of the 6lst Annual Meeting of the Association for Computational Linguistics(Volume 1: Long Papers), pages 15607-15631, Toronto, Canada. Association for Computational Linguistics.
+
+Stefano Banno,Hari Krishna Vydana,Kate Knill,and Mark Gales. 2024. Can GPT-4 do L2 analytic assessment? In Proceedings of the 19th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2024), pages 149-164,Mexico City, Mexico.Association for Computational Linguistics.
+
+Sumanth Doddapaneni,Mohammed Safi Ur Rahman Khan, Sshubam Verma,and Mitesh M Khapra. 2024. Finding blind spots in evaluator LLMs with interpretable checklists. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing，pages 16279-16309,Miami,Florida, USA.Association for Computational Linguistics.
+
+Shabnam Behzad, Omid Kashefi, and Swapna Somasundaran. 2O24a. Assessing online writing feedback resources: Generative AI vs. good samaritans. In Proceedings of the 2O24 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024), pages 1638- 1644,Torino, Italia.ELRA and ICCL.
+
+Shabnam Behzad, Omid Kashefi,and Swapna Somasundaran. 2024b. LEAF: Language learners’English essays and feedback corpus. In Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics:Human Language Technologies (Volume 2: Short Papers), pages 433-442, Mexico City, Mexico. Association for Computational Linguistics.
+
+Daniel Blanchard， Joel Tetreault，Derrick Higgins, Aoife Cahill, and Martin Chodorow.2013. Toefl11: A corpus of non-native english. ETS Research Report Series,2013(2):i-15.
+
+Hongwen Cai. 2015. Weight-based classification of raters and rater cognition in an efl speaking test. Language Assessment Quarterly,12(3):262-282.
+
+Fei Dong, Yue Zhang,and Jie Yang.2O17. Attentionbased recurrent convolutional neural network for automatic essay scoring. In Proceedings of the 21st Conference on Computational Natural Language Learning (CoNLL 2017), pages 153-162, Vancouver, Canada. Association for Computational Linguistics.
+
+Alvan R. Feinstein and Domenic V. Ciccheti.1990. High agreement but low kappa: I. the problems of two paradoxes. Journal of Clinical Epidemiology, 43(6):543-549.
+
+Gemini Team,Petko Georgiev, Ving Ian Lei, Ryan Burnell, Libin Bai,Anmol Gulati, Garrett Tanzer, Damien Vincent, Zhufeng Pan, Shibo Wang, Soroosh Mariooryad, Yifan Ding,Xinyang Geng, Fred Alcober, Roy Frostig,Mark Omernick,Lexi Walker, Cosmin Paduraru,Christina Sorokin,and 1118 others. 2024. Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context. Preprint, arXiv:2403.05530.
+
+Aaron Grattafiori, Abhimanyu Dubey,Abhinav Jauhri, Abhinav Pandey,Abhishek Kadian,Ahmad AlDahle,Aiesha Letman,Akhil Mathur,Alan Schelten,Alex Vaughan,Amy Yang,Angela Fan,Anirudh Goyal,Anthony Hartshorn,Aobo Yang,Archi Mitra,Archie Sravankumar,Artem Korenev,Arthur Hinsvark,and 542 others.2024. The llama 3 herd of models. Preprint,arXiv:2407.21783.
+
+Kai Guo and Deliang Wang. 2O24. To resist it or to embrace it? examining ChatGPT's potential to support teacher feedback in EFL writing. Educ.Inf. Technol., 29(7):8435-8463.
+
+Jieun Han, Haneul Yoo, Junho Myung,Minsun Kim, Hyunseung Lim, Yoonsu Kim, Tak Yeon Lee, Hwajung Hong, Juho Kim, So-Yeon Ahn, and Alice Oh. 2024.LLM-as-a-tutor in EFL writing education: Focusing on evaluation of student-LLM interaction.In Proceedings of the 1st Workshop on Customizable NLP: Progress and Challenges in Customizing NLP for a Domain,Application, Group,or Individual (CustomNLP4U),pages 284-293,Miami, Florida, USA.Association for Computational Linguistics.
+
+Wen-Bin Han,Jhih-Jie Chen, Chingyu Yang,and Jason Chang. 2019. Level-up: Learning to improve proficiency level of essays. In Proceedings of the 57th
+
+Annual Meeting of the Association for Computational Linguistics: System Demonstrations, pages 207-212, Florence, Italy. Association for Computational Linguistics.
+
+Nicky Hockly. 2019. Automated writing evaluation. ELT Journal, 73:82-88.
+
+Mohamed Abdellatif Hussein,Hesham Hassan,and Mohammad Nassef. 2019. Automated language essay scoring systems:a literature review. PeerJ Computer Science,5:e208.
+
+Alon Jacovi, Avi Caciularu, Omer Goldman,and Yoav Goldberg.2O23. Stop uploading test data in plain text: Practical strategies for mitigating data contamination by evaluation benchmarks. In Proceedings of the2023 Conference on Empirical Methods in Natural Language Processing, pages 5075-5084, Singapore.Association for Computational Linguistics.
+
+You-Jin Jong,Yong-Jin Kim,and Ok-Chol Ri. 2023. Review of feedback in_ automated essay scoring. Preprint,arXiv:2307.05553.
+
+Zixuan Ke and Vincent Ng. 2019. Automated essay scoring: A survey of the state of the art. In Proceedings of the Twenty-Eighth International Joint Conference on Artificial Intelligence, IJCAI-2019, page 6300-6308. International Joint Conferences on Artificial Intelligence Organization.
+
+Paraskevas Lagakis and Stavros Demetriadis.2O21.Automated essay scoring: A review of the field. In 2021 International Conference on Computer, Information and Telecommunication Systems (CITS), pages 1-6.
+
+Zhi Li, Veronika Makarova, and Zhengxiang Wang. 2023a.Assessment of academic esl writing in an online tutorial for graduate students. In 22nd European Conference on e-Learning: ECEL 2023.Academic Conferences and publishing limited.
+
+Zhi Li, Veronika Makarova, and Zhengxiang Wang. 2023b. Developing literature review writing and citation practices through an online writing tutorial series: Corpus-based evidence. Frontiers in Communication, 8:1035394.
+
+Chin-Yew Lin. 2004. ROUGE: A package for automatic evaluation of summaries. In Text Summarization Branches Out, pages 74-81,Barcelona, Spain. Association for Computational Linguistics.
+
+Veronika Makarova, Zhi Li, and Zhengxiang Wang. 2024. Can chatgpt grade non-native academic english writing?In AI Approaches to Literacy in Higher Education, pages 97-116.IGI Global.
+
+Atsushi Mizumoto and Masaki Eguchi. 2023. Exploring the potential of using an ai language model for automated essay scoring. Research Methods in Applied Linguistics,2(2):100050.
+
+Atsushi Mizumoto,Natsuko Shintani,Miyuki Sasaki, and Mark Feng Teng. 2O24. Testing the viability of chatgpt as a companion in l2 writing accuracy assessment. Research Methods in Applied Linguistics, 3(2):100116.
+
+Ryo Nagata. 2O19. Toward a task of feedback comment generation for writing learning. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-JCNLP), pages 3206-3215, Hong Kong, China. Association for Computational Linguistics.
+
+Ben Naismith,Phoebe Mulcaire,and Jill Burstein.2023. Automated evaluation of written discourse coherence using GPT-4.In Proceedings of the 18th Workshop onInnovativeUseofNLPforBuildingEducational Applications (BEA 2023), pages 394-403, Toronto, Canada. Association for Computational Linguistics.
+
+OpenAI,:,Aaron Hurst, Adam Lerer, Adam P.Goucher, Adam Perelman,Aditya Ramesh，Aidan Clark, AJ Ostrow,Akila Welihinda,Alan Hayes,Alec Radford, Aleksander Madry,Alex Baker-Whitcomb, Alex Beutel,Alex Borzunov, Alex Carney，Alex Chow,Alex Kirillov,and 401 others. 2024a. Gpt4o system card. Preprint, arXiv:2410.21276.
+
+OpenAI, :,Aaron Jaech,Adam Kalai,Adam Lerer, Adam Richardson,Ahmed El-Kishky,Aiden Low, AlecHelyar,AleksanderMadry,AlexBeutel,Alex Carney, Alex Iftimie,Alex Karpenko,Alex Tachard Passos，Alexander Neitz，Alexander Prokofiev, Alexander Wei,Allison Tam,and 244 others.2024b. Openai o1 system card. Preprint,arXiv:2412.16720.
+
+OpenAI. 2023.GPT-4 technical report. Preprint, arXiv:2303.08774.
+
+Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida, Carroll L.Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray, John Schulman, Jacob Hilton, Fraser Kelton, Luke Miller, Maddie Simens,Amanda Askell,Peter Welinder, Paul Christiano,Jan Leike,and Ryan Lowe.2022. Training language models to follow instructions with human feedback. In Proceedingsof the 36th International Conference on Neural Information Processing Systems,NIPS '22, Red Hook, NY, USA.Curran Associates Inc.
+
+Ellis B Page. 1966. The imminence of.. grading essays by computer. The Phi Delta Kappan,47(5):238-243.
+
+Kishore Papineni, Salim Roukos,Todd Ward,and WeiJing Zhu. 2Oo2. Bleu: a method for automatic evaluation of machine translation.In Proceedings of the 40th annual meeting of the Association for Computational Linguistics, pages 311-318.
+
+Pedro Uria Rodriguez,Amir Jafari,and Christopher M. Ormerod. 2019. Language models and automated essay scoring. Preprint,arXiv:1909.09482.
+
+Oscar Sainz, Jon Campos,Iker Garcia-Ferrero, Julen Etxaniz, Oier Lopez de Lacalle,and Eneko Agirre. 2023.NLP evaluation in trouble: On the need to measure LLM data contamination for each benchmark. In Findings of the Association for Computational Linguistics: EMNLP 2023,pages 10776-10787, Singapore.Association for Computational Linguistics.
+
+Mark D Shermis and Jill C Burstein,editors.2013. Handbook of automated essay evaluation. Routledge, London, England.
+
+Yixiao Song,Kalpesh Krishna,Rajesh Bhatt,Kevin Gimpel, and Mohit Iyyer. 2024.GEE! grammar error explanation with large language models. In Findings of the Association for Computational Linguistics: NAACL 2024, pages 754-781, Mexico City, Mexico. Association for Computational Linguistics.
+
+Maja Stahl, Leon Biermann,Andreas Nehring,and Henning Wachsmuth. 2024. Exploring LLM prompting strategies for joint essay scoring and feedback generation. In Proceedings of the 19th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2024), pages 283-298,Mexico City, Mexico. Association for Computational Linguistics.
+
+Kaveh Taghipourand Hwee Tou Ng.2O16.A neural approach to automated essay scoring. In Proceedings of the 2Ol6 Conference on Empirical Methods in Natural Language Processing, pages 1882-1891, Austin, Texas.Association for Computational Linguistics.
+
+Masaki Uto. 2021.A review of deep-neural automated essay scoring models. Behaviormetrika, 48(2):459-484.
+
+Bertus van Rooy. 2015. Annotating learner corpora, page 79-106. Cambridge Handbooks in Language and Linguistics. Cambridge University Press.
+
+Qiao Wang and John Maurice Gayed. 2O24. Effectiveness of large language models in automated evaluation of argumentative essays: finetuning vs. zero-shot prompting. Computer Assisted Language Learning, page 1-29.
+
+Jiayi Xie, Kaiwei Cai, Li Kong, Junsheng Zhou, and Weiguang Qu. 2022. Automated essay scoring via pairwise contrastive regression. In Proceedings of the 29th International Conference on Computational Linguistics,pages 2724-2733, Gyeongju,Republic of Korea. International Committee on Computational Linguistics.
+
+Kevin P. Yancey, Geoffrey Laflair,Anthony Verardi, and Jill Burstein. 2023. Rating short L2 essays on the CEFR scale with GPT-4. In Proceedings of the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023), pages 576- 584,Toronto, Canada. Association for Computational Linguistics.
+
+Ruosong Yang, Jiannong Cao, Zhiyuan Wen, Youzheng Wu, and Xiaodong He. 2020. Enhancing automated essay scoring performance via fine-tuning pre-trained language models with combination of regression and ranking. In Findings of the Association for Computational Linguistics:EMNLP 2020,pages 1560-1569, Online.Association for Computational Linguistics.
+
+Helen Yannakoudakis,Ted Briscoe,and Ben Medlock. 2011.A new dataset and method for automatically grading ESOL texts. In Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies, pages 180-189, Portland, Oregon, USA. Association for Computational Linguistics.
+
+Helen Yannakoudakis and Ronan Cummins.2O15.Evaluating the performance of automated text scoring systems.In Proceedings of the Tenth Workshop on Innovative Use of NLP for Building Educational Applications, pages 213-223, Denver, Colorado.Association for Computational Linguistics.
+
+Helen Yannakoudakis,Oistein E Andersen,Ardeshir Geranpayeh, Ted Briscoe,and Diane Nicholls.2018. Developing an automated writing placement system for esl learners. Applied Measurement in Education, 31(3):251-267.
+
+Fatih Yavuz, Ozguir undefinedelik, and Gamze Yavas undefinedelik. 2O24. Utilizing large language models for efl essay grading: An examination of reliability and validity in rubric-based assessments. British Journal of Educational Technology.
+
+Ruofei Zhang and Di Zou. 2O20. Types, purposes, and effectiveness of state-of-the-art technologies for second and foreign language learning. Computer Assisted Language Learning,35(4):696-742.
+
+Tianyi Zhang,Varsha Kishore, Felix Wu, Kilian Q. Weinberger, and Yoav Artzi. 2020. Bertscore: Evaluating text generation with bert. In International Conference on Learning Representations.
+
+Lianmin Zheng,Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric P. Xing,Hao Zhang, Joseph E. Gonzalez,and Ion Stoica. 2023. Judging llm-as-a-judge with mt-bench and chatbot arena. In Proceedings of the 37th International Conference on Neural Information Processing Systems,NIPS '23, Red Hook, NY, USA. Curran Associates Inc.
+
+# A Corpus
+
+# A.1 Basic Corpus Statistics
+
+Table 5 provides the basic statistics of the corpus. Note that throughout this study, we use the default word tokenizer of NLTK to compute word counts. See: https://www.nltk.org/api/nltk. tokenize.html.
+
+# A.2Details of the 5-Unit Tutorial Series
+
+Table 6 presents details of the 5-unit tutorial series, including the themes, notions,activities, duration, and writing task for each unit.
+
+Table 5: Basic statistics of the corpus.“T” in each column stands for“Topic.”“WC” means“word count."   
+![](images/a2aeaef770e8a074770b09e70d6aa988e24cf4826d66addceb18b1fdacb72d61.jpg)
+
+# A.3Assessment Criteria
+
+The 9 assessment criteria/questions provided to human assessors are detailed in Table 7.
+
+# BFeedback Comment Quality Evaluation Framework
+
+# B.1 Implementation
+
+The framework is implemented using LLMs. More concretely, we used GPT-4O-2024-11-20 for Problem Extraction and Problem Classification,and GPT-4-TURBO-2024-04-09 for Correction Relevance Check. An example implementation of our framework can be found in Table 8.
+
+Related prompts used for implementing our framework can be found in Appendix E.1.
+
+# B.2Annotation
+
+GuidelinesTable 9 provides explanations and examples of what is considered as a problem for Problem Extraction,and the three characteristics relevant to Problem Classification: whether an extracted problem(1) refers to a specific part of the essay, (2) provides a suggestion (general or specific),and (3) offers a concrete correction.
+
+Samples for Problem ExtractionWe employed stratified sampling to randomly select 1Oo humangenerated feedback comments and 1O8 LLMgenerated feedback comments. In total, there are 208 comments for manual annotations.
+
+For LLM-generated comments,half of them were generated under Interaction Mode 1 and the otherhalfunderInteractionModes2and3.Comments from Interaction Modes 2 and 3 were sampled together to reduce manual annotation effort, as these comments tend to be lengthy. The sampling covered the 9 assessment criteria,with 2 comments from each of the 3 LLMs used, resulting in $9 ^ { \ast } 3 ^ { \ast }$ $2 = 5 4$ comments from Interaction Mode 1 and another 54 comments from the combined Interaction Modes 2 and 3.
+
+Samples for Problem ClassificationWe randomly sampled 1OO problems extracted from both human- and LLM-generated comments, resulting in 200 problems for annotations.
+
+Since the distribution of extracted problems across the nine assessment criteria are highly skewed, we ensured that there were at least 5 problems for each assessment criterion.
+
+Problem Extraction For each feedback comment, the two annotators were provided with LLMextracted problems and asked to identify the number of correctly extracted problems (true positives), the number of incorrectly extracted problems (false positives),and the number of problems not extracted (false negatives). The number of true negatives is always set to O,as there is no negative prediction in problem extraction.
+
+A problem is considered correctly extracted if the LLM output contains the exact or paraphrased problem stated or implied in the feedback comment. It is acceptable if additional information relevant to the problem, such as elaborations,suggestions, clarifying questions, or quoted text from the assessed essay, is not included in the LLM-identified problems,which appears to be uncommon based on our annotations.However, if the problem and relevant additional information are extracted as separate problems,only the stated or implied problem is counted as a true positive,and the relevant information is treated as a false positive. This oversegmentation is the primary source of errors in LLM-extracted problems.
+
+Problem Classification For each extracted problem, the two annotators were asked to answer the three classification problems based on Table 9.
+
+# B.3Correction Relevance Check
+
+Table 10 demonstrates that comments generated by both humans and LLMs are overall highly relevant. However, human-generated comments tend to exhibit slightly lower relevance—either broadly or strictly—compared to those generated by LLMs.
+
+We conducted a smal-scale error analysis to investigate the reasons behind the $8 \%$ $15 \%$ ,and $9 \%$ of human-identified problems that GPT-4 incorrectly classified as not present in the essays, not adhering to the assessment criteria,and being incorrect, respectively.
+
+Problems not Present in EssaysWe randomly selected 1O problems identified by GPT-4 as not present in the assessed essays. Upon reviewing each human-identified problem in the original essay, we found that 6 of these problems were indeed present, while 4 were not. Of the 4 problems that did not exist in the essays,3 appeared to be misassigned comments (2 of these 3 were extracted from the same comment), while the remaining one seemed to be an assessor error. Among the 6 problems that GPT-4 misclassified, 4 were due to GPT-4 misunderstanding the identified problems,1 was due to GPT-4 failing to locate a quoted word in the essay, and 1 was because GPT-4 mistakenly deemed the identified problem not to be a problem, despite its presence in the essay.
+
+Table 6: Details of the 5-unit online tutorial series.   
+![](images/837591e18e0251d19d233f12898556071f6351838da0d955232e10057309a5c5.jpg)
+
+Table 7: The 9 assessment criteria/questions, reflecting 4 general aspects of writing quality.   
+![](images/b9e4bc929e9f2898c1d0dd9c22a45e9d56a9ca43832dd6ed898fada32e0c269b.jpg)
+
+Table 8:An example implementation of our framework ProEval on a feedback comment on the second assessment criteria,i.e.,material integration $\&$ citation,which is about citation practices.ProEval correctly identifies three problems (color-coded) identified in the comment and performs Problem Classification on each one of hem, of which only the first problem ofers aconcrete correction.The Correction Relevance Check is thus only performed on the first extracted problem.   
+![](images/f5ccf3ee39a5c98de73001b2ef15a9c2de809809d3197a412bb97c80289ad760.jpg)
+
+![](images/d31150b5eb877845bc01612ca3b52e0f48475ffebde8380564e683c97711609a.jpg)
+
+Problems not Adherent to the Assessment CriteriaWe randomly selected 1O problems identified by GPT-4 as not adhering to the assessment criteria. Of these, 9 were related to C8(grammar & sentence structure),and 1 was related to C9 (academic vocabulary). Our manual validation showed that 7 of the problems were less related to grammar and sentence structure but more related to word choice or clarity of expression. The remaining 3 were misclassified by GPT-4, mostly due to its requirement that problems be explicitly related to both grammar and sentence structure in order to adhere to C8.
+
+Correction being IncorrectWe randomly selected 1O problems containing corrections identified by GPT-4 as incorrect. We found that 5 of these problems involved accurate corrections,all related to grammar. There were 2 corrections proposed to be suggestions and 3 corrections that require subjective judgments to determine their correctness.
+
+RemarksBased on this error analysis, we can attributed the discrepancy in relevance to two primary reasons:(1) human comments often include (inconsistent use of) diacritics that complicate problem extraction and characterization,and (2) human assessors may occasionally deviate from instructions, providing corrections unrelated to the assessment question.These issues are less frequent in LLM-generated comments,which benefit from their strong adherence to instructions and the ability to handle extended context windows. That said, both human- and LLM-identified problems are highly relevant.
+
+# CResults
+
+# C.1 Number of Co-Assessed Essays
+
+Table 11 shows the number of essays co-assessed by different assessor pairs.
+
+# C.2 Scores
+
+Scoring RangesTable 12 summarizes the scoring ranges, in the form of means and standard deviations for each assessment criterion,as produced by three human assessors and the three LLMs under three interaction modes.
+
+Full QWK/AAR1 Table 13 presents the full results for Quadratic Weighted Kappa (QWK) and Table 14 presents the full results for AAR1.
+
+Inconsistencies in Scoring by Human Assessors First, there is an instance in the corpus, where assessor B accidentally assessed the same essay twice on separate days.6 While assessor B provided identical scores for 5 out of the 9 assessment criteria, discrepancies of 1 point occurred for the remaining 4 criteria, with scores alternating between (8,7), (8, 7), (4, 5), and (7, 8).
+
+Second, we observe that human assessors assigned different scores to identical or similar comments,mostly within 1-point differences.For example,assessor F gave the same comment “Decent number of citations” three times but assigned three different scores: 6,7,and 8. Similarly, assessor C assigned scores of 7 and 8 to the comment “Appropriate use of connectors.”However, when the same comment is repeated, scores tend to be very close, typically within one point. For instance,assessor A assigned a score of 8 to the comment “Great use of academic words and formal tone” five times, and there was only one more instance where the score was 9.
+
+# C.3 Comments
+
+Table 15 presents the general statistics of feedback comments generated by human assessors and LLMs under the three interaction modes.
+
+# C.4Score-Comment Interaction
+
+Fig. 6 provides the full results of the correlations measured between scores and the token counts of or the numbers of identified problems in the related comments.
+
+# D Further Analyses
+
+Table 16 provides five random example comment pairs sampled from GPT-4o-Aug and GPT-4o-May prompted under default prompt setting specified in Section 5.1.We find that when BERTScore is
+
+Table 10: Overall Correction Relevance Check rsults $( \% )$ , representing the percentage of instances each attribute is true for corrections made byan assessor.“In Essay": whether the problem indicated in the correction exists in the essay.“n Question": whether the correction relates to the assessment question.“Is Correct": whether the correction is correct“Broadly Relevant": applicable when both“In Essay”and “Is Correct”are true.“Strictly Revelant": applicable when both“Broadly Relevant” and “In Question” are true.   
+![](images/691accbad3d6abe99e2fce3545b2a6f61875937aa4df47405b5d3a8d41c2008d.jpg)
+
+![](images/773cdbe97435eb1318ec11d551c9e2dc0a2289beb2064604b0378ad62d35e734.jpg)
+
+Table 11: Number of essys co-assessed by different assessor pairs. We only show three LLMs, which failed to generate assessments forall141 essays in the corpus for some reason (e.g. content moderation, exceeding context window). We omit the otherLLMs since they assessed al essays and the numbers of essays they co-assessed with the five assessors in the table excluding human B are identical to those between human B and those five assessors. The number of essays the omitted LLMs and human B co-assessed is always 141.
+
+Table 12: Means and standard deviations of scores assigned by three human assessors and three LLMs prompted under thre interaction modes (IM),denoted by“IM" in parentheses. C1: Material selection. C2:Material integration and citation; C3: Quality of keycomponents. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.   
+![](images/c4c35fd0a8f979148abef8aee7c3fb172805eac4853bdf6b7e044566124a6968.jpg)
+
+Table 13: Full QWK(Quadratic Weighted Kappa) results between all assessor pairs, evaluated at the level of each assessment criterion and the whole essay("Overall). C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.   
+![](images/1abba0dccc7c84fa6237dfc8271fe77e4ce863cf37ba8913173e81b32e95bfbe.jpg)
+
+![](images/036c93d96eb1247f8e7db8d4899af2dc6ae23bf9deabff3cdf4841fbabf1632c.jpg)
+Table 14: Full AAR1 (adjacent agreement rate with $k = 1$ )results between all assessor pairs,evaluated at the level of each assessment criterion and the whole essay("Overall"). C1: Material selection. C2: Material integration and citation; C3: Quality of key components.C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.
+
+![](images/633e58acf7bb4afa2f41dfa19816229e063e732067b3a94a121fe2893beee538.jpg)
+
+Table 15: General statistics of feedback comments generated by human and LLM assessors. CR $( \% )$ : comment rate,i.e.,the percentage of time a comment is provided. AL: average length (measured in tokens)of the provided comments (excluding cases where comments are not given),along with their respective standard deviations. PR $( \% )$ ：： problem rate,i.e., te percentage of time a problem is mentioned or implied in the provided comments.AP: average number ofproblems identified in the provided comments,along with their respective standard deviations.“AllLLMs" means all three LLMs across the three interaction modes.C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.
+
+![](images/c07f5c6985748c3b6d480d698a43e9221c90cf83540a103bdf7d4c756cb93d92.jpg)  
+Figure 6: Heatmaps showing score-comment correlations between scores and the length of the related comments (left)and between scores and the number of problems identified in the related comments (right). Darker blue shades indicate astronger negative correlation and darker orange shades a stronger positive correlation, with gray-ish colors indicating negligible corelations. To ensure meaningful analysis,correlations are calculated only when at least 10 score-comment pairs are available. C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.
+
+-0.24 -0.01 -0.14 -0.28   
+-0.41 -0.61 -0.51 -0.5 -0.32 -0.43 -0.26 -0.55 -0.53   
+-0.56 -0.55 -0.57 -0.3 -0.37 -0.47 -0.54 -0.35 -0.48   
+-0.66 -0.61 -0.48 -0.58 -0.54 -0.24 -0.01 -0.63 -0.54   
+-0.71 -0.38 -0.5 -0.57 -0.36 -0.4 -0.34 -0.47 -0.38   
+JSssssss -0.36 -0.17 -0.69 -0.39 -0.21 -0.21 0.05 -0.23 -0.26   
+-0.64 -0.41 -0.09 -0.61 -0.34 -0.28 -0.22 -0.23 -0.56   
+-0.76 -0.27 -0.61 -0.58 -0.47 -0.75 -0.51 -0.52 -0.55   
+-0.5 -0.59 -0.09 -0.5 -0.55 -0.52 -0.36 -0.36 -0.33   
+-0.65 -0.49 -0.48 -0.53 -0.17 -0.53 -0.49 -0.56 -0.67   
+-0.7 -0.56 -0.3 -0.32 -0.52 -0.46 -0.48 -0.53 -0.41   
+-0.41 -0.06 -0.23 -0.37 0.02 -0.39 -0.17 -0.12 -0.38   
+C1 C2 C3 C4 C5 C6 C7 C8 C9
+
+# E.1.1Prompt for Problem Extraction
+
+low (the last row), the comment pair is less similar compared to other pairs. While other two metrics (BLEU and ROUGE-L) are highly correlated with BERTScore (BLUE: 0.78, ROUGE-L: 0.88, Pearson), they consistently yield lower values than BERTScore. This indicates that these two lexical overlap-based metrics may be less effective at measuring comment reliability compared to the semantic similarity captured by BERTScore.
+
+# EPrompts
+
+Note that,any word followed by a dollar sign‘ $^ { \bullet } \mathbb { S } ^ { : }$ is a placeholder for all prompt templates included in this section. For example,“\$comment” is a placeholder for a comment.
+
+# E.1Prompts for the Feedback Comment Quality Evaluation Framework ProEval
+
+The full prompt templates for the three steps in the pipeline of the feedback comment quality evaluation framework are given below. Among these three prompts, the prompt for Problem Extraction contains three in-context exemplars,whereas the prompts for the other two steps are zero-shot prompts.
+
+You will be given a feedback comment written fora student's essay.Your task is to identify and extract all the writing-related problems mentioned or implied in the comment,along with any explanations, suggestions,corrections, questions, quotations,or other relevant information provided in the comment for each extracted problem.
+
+A writing-related problem is any issue that affects the quality of the writing,such as citation errors, logical flaws,coherence issues,grammatical mistakes,or inappropriate word choices,among others.
+
+### Extraction Instructions - Each extracted problem must be clear and can be understood without the need to refer to the original comment.
+
+- Each extracted problem must faithfully reflect the provided comment by including any relevant information.Relevant information includes a further explanation or an elaboration of the problem，a suggestion for improvement,a concrete correction,a clarifying question,an excerpt (possibly without quotation marks) from the student's essay,or any other relevant information that helps to understand the problem.
+
+- Whenever possible,extract each problem and the relevant information as they are written in the
+
+![](images/ad4569b069b5f66979826f24b1cb109e956e7ca92bbe832cf00d25f819aef716.jpg)
+
+comment.
+
+### Output Instructions
+
+- Output each extracted problem along with their relevant information line by line headed by“-" Output “None”if no writing-related problems are mentioned or implied in the comment.
+
+###Examples
+
+Example 1 input:
+
+The content is generally informative and relevant, but the clarity of ideas could be improved. Some sentences are overly complex and could be simplified for better understanding.For instance,the sentence“Gandhi's Satyagraha asan adequate substitute for violent methods of conducting social conflict in an early and thorough philosophical examination of Gandhi's attitude to violence in extreme group conflict" is difficult to parse and could be rephrased for clarity.
+
+Example 1 output:
+
+- The clarity of ideas could be improved. Some sentences are overly complex and could be simplified for better understanding.For instance,the sentence “Gandhi's Satyagraha asan adequate substitute for violent methods of conducting social conflict in an early and thorough philosophical examination of Gandhi's attitude to violence in extreme group conflict" is difficult to parse and could be rephrased for clarity.
+
+Example 2 input:
+
+The content and clarity of ideas are generally good, but there are some areas where the author could provide more depth or analysis.For example,the author could have explored the potential reasons why students in India may be more vulnerable to substance abuse,or discussed the implications of legalization for public health policy.To improve,the author could revisit the body of the literature review and provide more nuanced analysis of the findings.
+
+Example 2 output:
+
+- There are some areas where the author could provide more depth or analysis.For example, the author could have explored the potential reasons why students in India may be more vulnerable to substance abuse,or discussed the implications of legalization for public health policy. To improve. the author could revisit the body of the literature review and provide more nuanced analysis of the findings.
+
+Example 3 input:
+
+The author has generally done a good job of integrating source materials and presenting information clearly. However, there are some instances where the connections between ideas could be more explicitly stated,and the citation practices could be more consistent (e.g.,some sources are cited with author names,while others are cited with only the year).
+
+Example 3 output:
+
+- There are some instances where the connections between ideas could be more explicitly stated. - The citation practices could be more consistent (e.g., some sources are cited with author names, while others are cited with only the year).
+
+### Input \$comment ## Output
+
+# E.1.2Prompt for Problem Classification
+
+You will be given an excerpt of a feedback comment written for a student's essay.Your task is to answer the following questions:
+
+1.Does the excerpt refer to a specific part of the essay?A specific part refers to a part of the essay that can be easily located by the student. For example,it can be a specific word,phrase, sentence,paragraph,reference etc.used in the essay.It can be a concrete location,such as “sentence 2 in paragraph 2,”“in paragraph 6," “the first citation,”or“the first sentence of the paper"and so on.A less concrete location,such as“the introduction,”or“the conclusion,”is also considered a specific part if it is accompanied by some referenceable details,such as‘The significance of South Australian policy is unclear, as it is the first citation and the only one in the Introduction.” Note that the excerpt may only contain a quoted text from the essay,in which case,the quoted text is considered a specific part.
+
+2.Does the excerpt offer some form of suggestions,general or specific,for the student to improve the essay? If the excerpt only describes a problem and it is unclear what the student should do to fix it, then there is no suggestion. If the excerpt provides a concrete correction, it is considered a suggestion.
+
+3.Does the excerpt provide a concrete correction for the student to apply? Note that when the excerpt only contains a quoted text from the essay and there are some notes indicating a correction (e.g.,adding/removing a punctuation, correcting a spelling), this is considered a correction.
+
+Answer each question with“Yes"or“No”based on the content of the excerpt and briefly justify your answer. After answering all the questions, produce your final answers in a newline separated by commas.
+
+Excerpt: \$excerpt
+
+# E.1.3 Prompt for Correction Relevancy Check
+
+You will be given an excerpt of a feedback comment written for a student's essay according to an assessment question.Your task is to answer the following questions:
+
+1.Does the problem pointed out in the excerpt exist in the corresponding essay? If the excerpt uses a quoted text to point out a problem,check if the quoted text is present in the essay.Please note that the quoted text may not be an exact match either due to misspellings,capitalization errors etc.,or because the quoted already contains the correction in place.
+
+2.Is the problem pointed out in the excerpt relevant to the corresponding assessment question? Check if the excerpt is broadly related to any aspect of the assessment question.
+
+3.Is the correction of the problem pointed out in the excerpt correct?If the problem does exist in the essay,check if the correction fixes the problem or presents a plausible solution or improvement.
+
+Here is the essay:
+
+\$essay
+
+Here is the assessment question:
+
+\$question
+
+Here is the excerpt:
+
+\$excerpt
+
+Answer each question with“Yes”or“No”utilizing all the information provided and briefly justify your answer. After answering all the questions, produce your final answers in a newline separated by commas.
+
+# E.2Prompts for the Main Experiments
+
+Our prompts consist of three parts:(1） a system prompt part that provides general background information and specifies the writing topic and some general assessment guidance; (2) a writing part that includes an entire literature review(with references); (3)an assessment instruction part, where one or multiple assessment questions (see Table 7) are asked in various manners according to the interaction modes.
+
+We keep the system prompt fixed across the three interaction modes. For the main experiments, the system prompt is as follows:
+
+You are an expert academic writing instructor specializing in graduate-level work,with particular experience supporting students who speak English as an additional language.You have been asked to evaluate a literature review submitted by a graduate student on the following topic: $\$ 1$ Topic. The review was written in 2O21,so references after this year are not expected.
+
+When assessing the student's writing，please strictly follow the instruction provided to you and make sure your score/feedback is carefully considered and constructive.Please provide your comments and/or suggestions with as much detail and specificity as possible.Please provide specific examples of sentences,paragraphs or sections that you think could use improvement. If you write comments,please start them with something positive.Please proceed with things that could be improved,would make things clearer for the reader, would make the text flow better, etc.
+
+For the writing part, we explicitly mark the beginning and end of the writing for clarity:
+
+##########Writing starts########## \$writing ########## Writing ends ##########
+
+The specifics of how the assessment instruction part is constructed are detailed below.
+
+# E.2.1Interaction Mode 1
+
+In Interaction Mode 1,all assessment questions (see Table7) are asked at once:
+
+Q1: {Assessment question 1} Q2:{Assessment question 2} · Q9: {Assessment question 9}
+
+After these assessment questions is an answer instruction:
+
+For each of the 9 questions above,provide your comments or suggestions if any,followed by your score out of 1O.Please indicate which question you are providing feedback for by starting your response with ‘A1:',‘A2:,etc. Each response should use the following format:
+
+Score: ..   
+Comments or suggestions: ...
+
+Note that we use“if any”to denote the optionality of the comments and suggestions. We tried putting“(Optional)’ after“Comments or suggestions,” but that does not make a difference.
+
+# E.2.2Interaction Mode 2
+
+In Interaction Mode 2, the assessment questions are presented sequentially and one at a time.Below is the basic structure:
+
+${ \bf Q } _ { i }$ : {The ith assessment question.}   
+{Answer instruction}   
+$\mathbf { A } _ { i }$
+
+The answer instruction resembles the one used in the Interaction Mode 1.
+
+Provide your score out of 10, followed by comments or suggestions if any. Your response should use the following format:
+
+Score:...   
+Comments or suggestions:...
+
+Note that, we append LLM's response to the ith assessment question to the original prompt to form a new prompt, to which the next assessment question is added. This way, the writing is only provided once (at the beginning), but the LLM will have access to previous assessment questions as well as its answers to those questions.
+
+# E.2.3Interaction Mode 3
+
+In Interaction Mode 3, each assessment question is asked independently,so there are 9 separate prompts for each essay.
+
+The structure for the assessment part of the prompt is similar to that in Interaction Mode 2, but without indexation and prefix “Q/A":
+
+{An assessment question.} {Answer instruction}
+
+The answer instruction works exactly the same as in Interaction Mode 2.
+
+# E.3Prompts for the Follow-Up Experiments
+
+# E.3.1System Prompt Simplification
+
+Below is a simplified system prompt removing the helpful information from the default system prompt used in Section 5.
+
+You are an expert academic writing instructor for graduate students. You have been asked to evaluatea literature review submitted bya student below. The writing is broadly related to the following topic: $\$ 1$ Topic.
+
+# E.4Prompts for Assessing Specificity and Helpfulness
+
+You will be given a feedback comment written for a student's essay according to an assessment question. Your task is to rate the feedback comment on (1) specificity and (2) helpfulness,using a scale from1 to 1O,where 1 is the lowest and 10 is the highest. Conclude your response with the final ratings in this format: "Specificity: X, Helpfulness: ${ \bar { \mathbf { X } } } "$ (where $\mathrm { X }$ is a score from 1 to 10).
+
+When assessing the student's writing，please strictly follow the instruction provided to you and make sure your score/feedback is carefully considered and constructive.
+
+Here is the essay:   
+\$essay   
+Here is the assessment question:   
+\$question   
+Here is the feedback comment:   
+\$feedback   
+Please rate the specificity and helpfulness of the feedback comment.

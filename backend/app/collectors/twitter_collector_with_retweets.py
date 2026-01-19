@@ -6,9 +6,7 @@ import os
 import tweepy
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
-from sqlalchemy.orm import Session
 
-from ..models import Tweet, TweetMedia
 from ..config import TWITTER_BEARER_TOKEN, ACCOUNTS_TO_FOLLOW
 from ..rate_limiter import get_rate_limiter
 

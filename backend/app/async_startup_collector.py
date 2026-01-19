@@ -6,11 +6,9 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 
-from app.models import get_db, CollectionState, Tweet
 from app.collectors.twitter_collector import TwitterCollector
 from app.persistent_rate_limiter import get_persistent_rate_limiter
 from app.config import ACCOUNTS_TO_FOLLOW
-from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +17,6 @@ async def async_collect_tweets():
     Completely non-blocking tweet collection
     Returns immediately if rate limited
     """
-    db = next(get_db())
     
     try:
         logger.info("Starting async tweet collection (non-blocking)")

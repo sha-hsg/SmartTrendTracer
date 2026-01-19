@@ -13,11 +13,11 @@ import { TagBadge } from "@/components/ui/tag-badge"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
-import { 
-  Sparkles, 
-  Hash, 
-  Loader2, 
-  Check, 
+import {
+  Sparkles,
+  Tag,
+  Loader2,
+  Check,
   X,
   Brain,
   Lightbulb,
@@ -26,6 +26,8 @@ import {
   FileText
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
+import UnifiedModelSelector from './UnifiedModelSelector'
+import { getDefaultModel } from '@/config/models'
 
 interface TagSuggestion {
   tag: string
@@ -59,35 +61,96 @@ export default function ArticleTagSuggestionModalModern({
     existing: TagSuggestion[]
     new: TagSuggestion[]
     already_tagged: string[]
+    model_used?: string
   } | null>(null)
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [applying, setApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
+  // Use centralized model config for default
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    return localStorage.getItem('preferredArticleTagModel') || getDefaultModel('articleSummarization')
+  })
+  const [showModelSelector, setShowModelSelector] = useState(true)
+
+  // Save model preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('preferredArticleTagModel', selectedModel)
+  }, [selectedModel])
 
   useEffect(() => {
     if (isOpen && article) {
-      fetchSuggestions()
+      // Reset state when modal opens
+      setShowModelSelector(true)
+      setSuggestions(null)
+      setSelectedTags(new Set())
+      setError(null)
     }
   }, [isOpen, article])
 
-  const fetchSuggestions = async () => {
+  const fetchSuggestions = async (model?: string) => {
     setLoading(true)
     setError(null)
+    setShowModelSelector(false)
+    
+    // Create new abort controller for this request
+    const controller = new AbortController()
+    setAbortController(controller)
+    
     try {
       const response = await axios.post(
-        `http://localhost:8000/api/v2/substack/articles/${article.id}/suggest-tags`
+        `http://localhost:8000/api/articles/${article.id}/tags/suggest`,
+        {
+          model: model || selectedModel
+        },
+        {
+          timeout: 120000, // 120 second timeout for GPT-5 processing
+          signal: controller.signal
+        }
       )
+
+      // Filter out already tagged items from suggestions
+      const alreadyTagged = response.data.already_tagged || []
+      const alreadyTaggedLower = alreadyTagged.map((t: string) => t.toLowerCase())
+
+      // Map backend response format (display_name) to frontend format (tag)
+      const filteredExisting = (response.data.existing_suggestions || [])
+        .map((s: any) => ({ tag: s.display_name, score: s.score, type: 'existing' as const }))
+        .filter((s: TagSuggestion) => !alreadyTaggedLower.includes(s.tag.toLowerCase()))
+
+      const filteredNew = (response.data.new_suggestions || [])
+        .map((s: any) => ({ tag: s.display_name, type: 'new' as const }))
+        .filter((s: TagSuggestion) => !alreadyTaggedLower.includes(s.tag.toLowerCase()))
+      
       setSuggestions({
-        existing: response.data.existing_suggestions || [],
-        new: response.data.new_suggestions || [],
-        already_tagged: response.data.already_tagged || []
+        existing: filteredExisting,
+        new: filteredNew,
+        already_tagged: alreadyTagged,
+        model_used: response.data.model_used
       })
       setSelectedTags(new Set())
+      setAbortController(null)
     } catch (error: any) {
       console.error('Error fetching suggestions:', error)
-      setError(error.response?.data?.detail || 'Failed to fetch suggestions')
+      if (axios.isCancel(error)) {
+        setError('Tag generation was cancelled.')
+      } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        setError('Tag generation timed out after 2 minutes. The model may be overloaded. Please try again.')
+      } else {
+        setError(error.response?.data?.detail || 'Failed to fetch suggestions')
+      }
     } finally {
       setLoading(false)
+      setAbortController(null)
+    }
+  }
+
+  const cancelFetch = () => {
+    if (abortController) {
+      abortController.abort()
+      setAbortController(null)
+      setLoading(false)
+      setError('Tag generation was cancelled.')
     }
   }
 
@@ -107,21 +170,37 @@ export default function ArticleTagSuggestionModalModern({
     if (selectedTags.size === 0) return
 
     setApplying(true)
-    try {
-      for (const tag of selectedTags) {
-        await axios.post(`http://localhost:8000/api/v2/substack/articles/${article.id}/tags`, {
-          tag: tag,
-          tag_type: 'manual'
-        })
+    let successCount = 0
+    let failCount = 0
+    
+    for (const tag of selectedTags) {
+      try {
+        // Use the concepts endpoint with text query parameter
+        await axios.post(
+          `http://localhost:8000/api/articles/${article.id}/concepts?text=${encodeURIComponent(tag)}`
+        )
+        successCount++
+      } catch (error: any) {
+        console.error(`Error applying tag "${tag}":`, error.response?.data?.detail || error.message)
+        failCount++
+        // Continue with next tag instead of stopping
       }
-      onTagsUpdated()
-      onClose()
-    } catch (error) {
-      console.error('Error applying tags:', error)
-      setError('Failed to apply some tags')
-    } finally {
-      setApplying(false)
     }
+    
+    // Show appropriate message based on results
+    if (failCount > 0 && successCount > 0) {
+      setError(`Applied ${successCount} tags. ${failCount} tags were already present or failed.`)
+    } else if (failCount > 0) {
+      setError(`Failed to apply tags. They may already be present.`)
+    }
+    
+    // Always update and close if at least one tag was applied
+    if (successCount > 0) {
+      onTagsUpdated()
+      setTimeout(() => onClose(), failCount > 0 ? 2000 : 0) // Delay close if there were errors
+    }
+    
+    setApplying(false)
   }
 
   const getScoreIcon = (score?: number) => {
@@ -145,22 +224,97 @@ export default function ArticleTagSuggestionModalModern({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-              <span className="ml-3 text-gray-500">Analyzing article content...</span>
-            </div>
-          ) : error ? (
+        <ScrollArea className="flex-1 h-[500px] overflow-y-auto">
+            {showModelSelector && !loading ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-6">
+                <div className="text-center space-y-2">
+                  <Brain className="h-12 w-12 mx-auto text-purple-600" />
+                  <h3 className="text-lg font-semibold">Choose AI Model</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Select the AI model to analyze this article and generate tags
+                  </p>
+                </div>
+                
+                <div className="w-full max-w-md space-y-4">
+                  {/* Uses UnifiedModelSelector with centralized model config */}
+                  <UnifiedModelSelector
+                    taskType="tag_suggestion"
+                    value={selectedModel}
+                    onValueChange={setSelectedModel}
+                    label="AI Model"
+                    description="Select the AI model to analyze this article"
+                  />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={onClose}
+                      className="w-full"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => fetchSuggestions(selectedModel)}
+                      className="w-full bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Generate Tags
+                    </Button>
+                  </div>
+
+                  <div className="text-xs text-center text-muted-foreground space-y-1">
+                    <p>• Advanced models: More comprehensive analysis (30-90s)</p>
+                    <p>• Gemini 2.5 Pro: Large context window, fast processing</p>
+                    <p>• Claude 3.5: Excellent for article analysis</p>
+                  </div>
+                </div>
+              </div>
+            ) : loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-3">
+                  <Loader2 className="h-10 w-10 animate-spin mx-auto text-purple-600" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-900">
+                      Analyzing article with {
+                        selectedModel === 'gpt-5' ? 'GPT-5' :
+                        selectedModel === 'gpt-4o' ? 'GPT-4o' :
+                        selectedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' :
+                        selectedModel === 'claude-3.5-sonnet' ? 'Claude 3.5 Sonnet' :
+                        selectedModel === 'gpt-4o-mini' ? 'GPT-4o Mini' :
+                        selectedModel
+                      }...
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      This analysis may take 30-90 seconds for long articles
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Please wait while we generate tag suggestions
+                    </p>
+                  </div>
+                  <div className="w-64 mx-auto bg-gray-200 rounded-full h-1.5">
+                    <div className="bg-purple-600 h-1.5 rounded-full animate-pulse" style={{width: '60%'}}></div>
+                  </div>
+                  <Button
+                    onClick={cancelFetch}
+                    variant="outline"
+                    size="sm"
+                    className="mt-4"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : error ? (
             <div className="py-8 text-center">
               <X className="h-12 w-12 text-red-400 mx-auto mb-3" />
               <p className="text-red-600">{error}</p>
-              <Button onClick={fetchSuggestions} variant="outline" className="mt-4">
+              <Button onClick={() => fetchSuggestions()} variant="outline" className="mt-4">
                 Try Again
               </Button>
             </div>
           ) : suggestions ? (
-            <ScrollArea className="h-[400px] pr-4">
+            <div className="space-y-4 p-4">
               {/* Article Preview */}
               <Card className="mb-4 p-4 bg-gray-50">
                 <div className="flex items-start gap-2 mb-2">
@@ -174,17 +328,17 @@ export default function ArticleTagSuggestionModalModern({
                 </div>
               </Card>
 
-              {/* Already Tagged */}
+              {/* Already Tagged - Show prominently at the top */}
               {suggestions.already_tagged.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500" />
-                    Already Tagged
+                <div className="mb-6 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <h3 className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+                    <Check className="h-4 w-4 text-green-600" />
+                    Already Applied Tags ({suggestions.already_tagged.length})
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {suggestions.already_tagged.map(tag => (
-                      <TagBadge key={tag} variant="default" className="opacity-60">
-                        <Hash className="h-3 w-3" />
+                      <TagBadge key={tag} variant="default" className="bg-green-100 text-green-800 border-green-300">
+                        <Check className="h-3 w-3" />
                         {tag}
                       </TagBadge>
                     ))}
@@ -196,7 +350,7 @@ export default function ArticleTagSuggestionModalModern({
               {suggestions.existing.length > 0 && (
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <Hash className="h-4 w-4 text-green-600" />
+                    <Tag className="h-4 w-4 text-green-600" />
                     Existing Tags (Similar to content)
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -267,11 +421,21 @@ export default function ArticleTagSuggestionModalModern({
                   <p>No suggestions available for this article</p>
                 </div>
               )}
-            </ScrollArea>
-          ) : null}
-        </div>
 
-        <DialogFooter className="flex items-center justify-between">
+              {/* Model Info */}
+              {suggestions.model_used && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    <Brain className="h-3 w-3" />
+                    Powered by {suggestions.model_used}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </ScrollArea>
+
+        <DialogFooter className="mt-4 p-4 border-t flex items-center justify-between">
           <div className="flex items-center gap-2">
             {selectedTags.size > 0 && (
               <Badge variant="secondary">

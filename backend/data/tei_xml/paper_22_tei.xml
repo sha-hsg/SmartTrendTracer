@@ -1,0 +1,3386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">STRUCTURED PROMPT INTERROGATION AND RECURSIVE EXTRACTION OF SEMANTICS (SPIRES): A METHOD FOR POPULATING KNOWLEDGE BASES USING ZERO-SHOT LEARNING</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2023-12-22">December 22, 2023</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">J</forename><forename type="middle">Harry</forename><surname>Caufield</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Harshad</forename><surname>Hegde</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Vincent</forename><surname>Emonet</surname></persName>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Institute of Data Science , Faculty of Science and Engineering , Maastricht University , Maastricht , The Netherlands</note>
+								<orgName type="department" key="dep1">Institute of Data Science</orgName>
+								<orgName type="department" key="dep2">Faculty of Science and Engineering</orgName>
+								<orgName type="institution">Maastricht University</orgName>
+								<address>
+									<settlement>Maastricht</settlement>
+									<country key="NL">The Netherlands</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Marcin</forename><surname>Joachimiak</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Nicolas</forename><surname>Matentzoglu</surname></persName>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> Semanticly Ltd , Athens , Greece</note>
+								<orgName type="institution">Semanticly Ltd</orgName>
+								<address>
+									<settlement>Athens</settlement>
+									<country key="GR">Greece</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Hyeongsik</forename><surname>Kim</surname></persName>
+							<affiliation key="aff3">
+								<note type="raw_affiliation"><label>4</label> Robert Bosch LLC , Sunnyvale , CA 94085 , USA</note>
+								<orgName type="institution">Robert Bosch LLC</orgName>
+								<address>
+									<postCode>94085</postCode>
+									<settlement>Sunnyvale</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Sierra</forename><surname>Moxon</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Justin</forename><forename type="middle">T</forename><surname>Reese</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Haendel</surname></persName>
+							<affiliation key="aff4">
+								<note type="raw_affiliation"><label>5</label> Anschutz Medical Campus , University of Colorado , Aurora , CO 80217 , USA</note>
+								<orgName type="department">Anschutz Medical Campus</orgName>
+								<orgName type="institution">University of Colorado</orgName>
+								<address>
+									<postCode>80217</postCode>
+									<settlement>Aurora</settlement>
+									<region>CO</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Peter</forename><forename type="middle">N</forename><surname>Robinson</surname></persName>
+							<affiliation key="aff5">
+								<note type="raw_affiliation"><label>6</label> The Jackson Laboratory for Genomic Medicine , Farmington , CT 06032 , USA</note>
+								<orgName type="department">The Jackson Laboratory for Genomic Medicine</orgName>
+								<address>
+									<postCode>06032</postCode>
+									<settlement>Farmington</settlement>
+									<region>CT</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Division of Environmental Genomics and Systems Biology , Lawrence Berkeley National Laboratory , Berkeley , CA 94720 , USA</note>
+								<orgName type="department">Division of Environmental Genomics and Systems Biology</orgName>
+								<orgName type="institution">Lawrence Berkeley National Laboratory</orgName>
+								<address>
+									<postCode>94720</postCode>
+									<settlement>Berkeley</settlement>
+									<region>CA</region>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">STRUCTURED PROMPT INTERROGATION AND RECURSIVE EXTRACTION OF SEMANTICS (SPIRES): A METHOD FOR POPULATING KNOWLEDGE BASES USING ZERO-SHOT LEARNING</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2023-12-22">December 22, 2023</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">1A866EB9946A62B92575AC04E0C1B115</idno>
+					<idno type="arXiv">arXiv:2304.02711v2[cs.AI]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-20T09:49+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Creating knowledge bases and ontologies is a time consuming task that relies on manual curation. AI/NLP approaches can assist expert curators in populating these knowledge bases, but current approaches rely on extensive training data, and are not able to populate arbitrarily complex nested knowledge schemas. Here we present Structured Prompt Interrogation and Recursive Extraction of Semantics (SPIRES), a Knowledge Extraction approach that relies on the ability of Large Language Models (LLMs) to perform zero-shot learning (ZSL) and general-purpose query answering from flexible prompts and return information conforming to a specified schema. Given a detailed, user-defined knowledge schema and an input text, SPIRES recursively performs prompt interrogation against an LLM to obtain a set of responses matching the provided schema. SPIRES uses existing ontologies and vocabularies to provide identifiers for matched elements.</p><p>We present examples of applying SPIRES in different domains, including extraction of food recipes, multi-species cellular signaling pathways, disease treatments, multi-step drug mechanisms, and chemical to disease orange relationships. Current SPIRES accuracy is comparable to the mid-range of existing Relation Extraction (RE) methods, but greatly surpasses an LLM's native capability of grounding entities with unique identifiers. SPIRES has the advantage of easy customization, flexibility, and, crucially, the ability to perform new tasks in the absence of any new training data. This method supports a general strategy of leveraging the language interpreting capabilities of LLMs to assemble knowledge bases, assisting manual knowledge curation and acquisition while supporting validation with publicly-available databases and ontologies external to the LLM.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Knowledge Bases and ontologies (here collectively referred to as KBs) encode domain knowledge in a structure that is amenable to precise querying and reasoning. General purpose KBs such as Wikidata <ref type="bibr" target="#b0">[1]</ref> contain broad contextual knowledge, and are used for a wide variety of tasks, such as integrative analyses of otherwise disconnected data and enrichment of web applications (for example, a recipe website may want to dynamically query Wikidata to retrieve information about ingredients or country of origin). In the life sciences, KBs such as the Gene Ontology (GO) <ref type="bibr" target="#b1">[2]</ref> and the Reactome biological pathway KB <ref type="bibr" target="#b2">[3]</ref> contain extensive curated knowledge detailing cellular mechanisms that involve interacting gene products and molecules. These domain-specific KBs are used for tasks such as interpreting high-throughput experimental data. All KBs, whether general purpose or domain-specific, owe their existence to curation, often a concerted effort by human experts.</p><p>However, the vast majority of human knowledge is communicated via natural language, with scientific knowledge communicated textually in journal abstracts and articles, which has historically been largely opaque to machines. The latest Natural Language Processing (NLP) techniques making use of Large Language Models (LLMs) have shown great promise in interpreting highly technical language, as demonstrated by orange their performance on question-answering benchmarks <ref type="bibr" target="#b3">[4]</ref>. These techniques have known limitations, such as being prone to hallucinations <ref type="bibr" target="#b4">[5]</ref> (i.e., generating incorrect statements) and insensitivity to negations <ref type="bibr" target="#b5">[6]</ref>. Applications such as clinical decision support require precision and reliability not yet demonstrated by LMs of any size, though recent demonstrations offer promise <ref type="bibr" target="#b6">[7,</ref><ref type="bibr" target="#b7">8,</ref><ref type="bibr" target="#b8">9,</ref><ref type="bibr" target="#b9">10]</ref>.</p><p>If instead of passing the unfiltered results of LLM queries to users, we use LLMs to build KBs using NLP at the time of KB construction, then we can assist manual knowledge curation and acquisition while validating facts prior to insertion into the KB. NLP can assist KB construction at multiple stages. Literature triage aids selection of relevant texts to curate; Named Entity Recognition (NER) can identify textual spans mentioning relevant things or concepts such as genes or ingredients; grounding maps these spans to persistent identifiers in databases or ontologies; Relation Extraction (RE) connects named entities via predicates such as 'causes' into simple triple statements. Deep Learning methods such as autoregressive LMs <ref type="bibr" target="#b10">[11]</ref> have made considerable gains in all these areas. The first generation of these methods relied heavily on task-specific training data, but the latest generation of LLMs such as GPT-3 and GPT-4 are able to generalize and perform zero-shot or few-shot learning on these tasks by reframing them as prompt-completion tasks <ref type="bibr" target="#b11">[12]</ref>.</p><p>Most KBs are built upon detailed knowledge schemas which prove challenging to populate. Schemas describe the forms in which data should be structured within a domain. For example, a food recipe KB may break a recipe down into a sequence of dependent steps, where each step is a complex knowledge structure involving an action, utensils, and quantified inputs and outputs. Inputs and outputs might be a tuple of a food type plus a state (e.g. cooked) (Figure <ref type="figure" target="#fig_0">1</ref>). Ontologies such as FOODON <ref type="bibr" target="#b6">[7]</ref> may be used to provide identifiers for any named entities. Similarly, a biological pathway database might break down a cellular program into subprocesses and further into individual steps, each step involving actions, subcellular locations, and inputs and outputs with activation states and stoichiometry. Adapting existing pipelines to custom KB schemas requires considerable engineering.</p><p>A schema provides a structure for data. For example, the recipe schema in Figure <ref type="figure" target="#fig_0">1</ref> could be used in a recipe database, with each record instantiating the recipe class, with additional linked records instantiating contained classes, e.g. individual ingredients or steps. Figure <ref type="figure" target="#fig_1">2</ref> shows an example of an instantiated schema class, rendered using YAML <ref type="bibr" target="#b12">[13]</ref> syntax.</p><p>Here we present Structured Prompt Interrogation and Recursive Extraction of Semantics (SPIRES), an automated approach for population of custom schemas and ontology models. The objective of SPIRES is to generate an instance (i.e., an object) from a text, where that instance has a collection of attribute-value associations. Each value is either a primitive (e.g. string, number, or identifier) or another inlined instance (Figure <ref type="figure" target="#fig_1">2</ref>). SPIRES integrates the flexibility of LLMs with the reliability of publicly-available databases and ontologies (Figure <ref type="figure" target="#fig_2">3</ref>). This strategy allows SPIRES to fill out schemas with linked data while bypassing a need for training examples. A major advantage of SPIRES over more traditional RE is its ability to populate schemas that exhibit nesting, in which complex classes may have attributes whose ranges are themselves complex classes. SPIRES also makes use of a flexible grounding approach that can leverage over a thousand ontologies in the OntoPortal Alliance <ref type="bibr" target="#b16">[17]</ref>, as well as biomedical lexical grounders such as Gilda <ref type="bibr" target="#b17">[18]</ref> and OGER <ref type="bibr" target="#b18">[19]</ref>. This grounding method offers far more consistent mapping to unique identifiers than hallucination-prone LLM querying alone.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">System and Methods</head><p>In SPIRES, A knowledge schema is a structure for constraining the shape of instances for a given domain. A schema is a collection of classes or templates, each of which can be instantiated by instances. Each class has a collection of attribute constraints, which control the attribute-value pairs that can be associated with each instance. The range of an Here, the top level container class "Recipe" is composed of a label, description, categories, steps, and ingredients. Steps and ingredients are further decomposed into food items, quantities, etc. attribute specifies the allowed value or values. A range can be either (1) a primitive type such as a string or number;</p><p>(2) a class; or (3) an enumeration of permissible value tokens (e.g., an enumeration of days of the week may include "Monday", "Tuesday", and so on). Attributes also have cardinality, specifying the minimum and maximum number of values each instance can take. Additionally, each schema element can have arbitrary metadata associated with it.</p><p>Formally, a schema S consists of n classes:</p><formula xml:id="formula_0">Classes (S) = {c 1 , • • • , c n }<label>(1)</label></formula><p>Classes correspond to the kinds of entities present in a database (e.g. in a recipe database, this would include recipes, as well as ingredients and steps; see example in Figure <ref type="figure" target="#fig_0">1</ref>).</p><p>Each class c i has an ordered list of attributes:</p><formula xml:id="formula_1">Attributes (c i ) = {c i a 1 , • • • , c i a m }<label>(2)</label></formula><p>Instances of c i may have values specified for each of these attributes. An attribute a can have associated properties:</p><p>• N ame(a) : the name of the attribute; for example, "summary" or "steps".</p><p>• M ultivalued(a) = {T rue, F alse}, indicating whether the value of a is a list, or single-valued. A recipe might have a single-valued attribute for the name of the recipe, and a multivalued attribute for the steps. In each attributevalue pair, the attribute is shown in bold, followed by a colon and then the value or values. For multivalued attributes, each list element value is indicated with a hyphen at the beginning of the line. Terminal elements that are value sets from ontologies and standards such as FOODON <ref type="bibr" target="#b13">[14]</ref>, UCUM <ref type="bibr" target="#b14">[15]</ref>, and DBPedia <ref type="bibr" target="#b15">[16]</ref> are shown here with their human-readable labels in blue after the double-hash comment symbol. Dynamic elements are indicated via RDF blank node syntax (e.g. _:ChoppedOnion does not correspond to a named entity and serves as a placeholder.</p><p>• Identif ier(a) = {T rue, F alse}, indicating whether a is a persistent identifier for instances, such as the FOODON identifiers in Figure <ref type="figure" target="#fig_1">2</ref>.</p><p>• P rompt(a) = string, which is a user-specified custom prompt for that attribute.</p><p>• Range(a): the allowable values for this attribute; this can be a class c in S, or a primitive type such as string or number, or a value set (see below). In Figure <ref type="figure" target="#fig_0">1</ref>, the range of the ingredients attribute is Ingredient, and the range of the id attribute is a string.</p><p>• V alueSets(c): a list of atomic values from which values of a can be drawn, where a value set is either an extensional list (fixed/static) or intensional (specified by ontology query). For example, a value set for a food element in an ingredient may be drawn from the food branch of the Food Ontology.</p><p>• Inlined(a) = {T rue, F alse}, indicating, when the range is a class, if the object should be nested/embedded, or passed by reference.</p><p>Additionally, a class c can include a set of identifier constraints: The constraint set is a list of strings that are the allowable prefixes that the identifier can take-for example, "WIKIDATA", "MESH", "GO", or "FOODON". The prefixes should come from a standard prefix registry such as BioRegistry <ref type="bibr" target="#b19">[20]</ref> to ensure consistency across schemas and projects; SPIRES expects upper-case prefixes.</p><formula xml:id="formula_2">IDSpaces (c i ) = {pref ix i , • • • , pref ix}<label>(3)</label></formula></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1">Evaluation of Entity Grounding</head><p>To determine the extent to which SPIRES improves entity grounding relative to prompting alone, we queried two GPT models with sets of ontology term labels with and without our grounding. We selected 100 terms at random from each of three ontologies: the Gene Ontology (GO), the Mouse Developmental Anatomy Ontology (EMAPA), and the MONDO Disease Ontology. The 16k GPT-3.5-turbo (gpt-3.5-turbo-16k) and the newly available GPT-4-turbo (gpt-4-1106-preview) models were each queried with the full term list in a single prompt each along with text requesting corresponding identifiers from the specified ontology (or, for SPIRES, a structured query based on a minimal schema).</p><p>A match was considered successful for each pair of identifier and label in which the label text was parsed as a single entity, remained unchanged in the output, and matched to the correct identifier. The full evaluation and results are available in a code notebook online<ref type="foot" target="#foot_0">foot_0</ref> .</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.2">Evaluation Against Chemical Disease Relation Task</head><p>We evaluated SPIRES on the Biocreative Chemical-Disease-Relation task <ref type="bibr" target="#b20">[21]</ref>. We used all 500 abstracts of the BC5CDR test set and evaluated against the set of 1066 chemical-induces-disease (CID) triples. For each triple, the SPIRES predicate is fixed, and the subject and object are always identifiers drawn from the Medical Subject Headings (MeSH) vocabulary <ref type="bibr" target="#b21">[22]</ref>. Grounding was performed using multiple ontologies beyond MeSH, including three resources for chemical and drug information: Chemical Entities of Biological Interest (ChEBI) <ref type="bibr" target="#b22">[23]</ref>, DrugBank <ref type="bibr" target="#b23">[24]</ref>, and MedDRA <ref type="bibr" target="#b24">[25]</ref> (See Table <ref type="table" target="#tab_0">S1</ref> for a full list of external resources used for grounding). We used the Translator NodeNormalizer <ref type="bibr" target="#b25">[26]</ref> to normalize these to MeSH IDs to permit comparison with the test set. No fine tuning was performed. The training set was used to enhance our mappings of named entity spans to MeSH identifiers; after building this lexicon, the training set was discarded.</p><p>We provided SPIRES with a model of chemical to disease (CTD) associations based on the Biolink Model <ref type="bibr" target="#b26">[27]</ref>. Biolink extends the simple triple model of associations to include qualifiers on the predicate, subject, and object. Subject and object qualifier information was discarded in this evaluation as extracting these details was not tested for in the original CDR benchmark. Statements with predicate qualifiers of "NOT" were discarded. We configured value sets for MeSH Disease and Chemical entries manually (see the full list of identifiers used to define these sets in Table <ref type="table" target="#tab_1">S2</ref>). NER of chemical and disease entities was also evaluated based on ability to identify a corresponding MeSH. We compared two pre-processing approaches: a "chunking" approach in which input documents were processed as separate subsegments (essentially a sliding window approach) and a "no chunking" approach in which the entirety of the test corpus document title and abstract was passed in a prompt. Two OpenAI models were used in these comparisons: gpt-3.5-turbo and gpt-4.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Algorithm</head><p>The SPIRES extraction procedure takes as input (1) a schema S, (2) an entry point class C, and ( <ref type="formula" target="#formula_2">3</ref>) a text T (Figure <ref type="figure" target="#fig_3">4</ref>, top). It returns a structured instance i conforming to S, making use of a large language model (LLM) that allows prompt completion, such as GPT-3 and its more recent versions. The procedure is detailed below: Here, the Instructions function returns a piece of text such as "From the text below, extract the following entities in the following format".</p><p>The AttributeTemplate function generates a pseudo-YAML structure that is a template for results. For each a in Attributes(C), we write: N ame (a) + " : " + P rompt (a) + "\n"</p><p>If Prompt is undefined for attribute a, then it is automatically generated from the name. If M ultivalued(a) is True, then the text is preceded with "A semicolon-separated list".</p><p>The TextIntro function introduces a break between the template and the input text and is a fixed string "Text:". The Break function is also a fixed string that serves to demarcate the end of the text and is a sequence of three break characters, e.g. "===". As an example, when calling this function when S=RecipeSchema, C=Ingredient, and T="garlic powder (2 tablespoons)", the following prompt would be generated:</p><p>Split the following piece of text into fields in the following format:</p><p>food_item: &lt;the food item&gt; amount: &lt;the quantity of the ingredient&gt; Text: garlic powder (2 tablespoons) === Note that typical input texts will be larger, except when the function is called recursively.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Step 2: Complete the Prompt</head><p>The generated prompt is provided to the LLM using a completion API (Figure <ref type="figure" target="#fig_3">4</ref>, Complete Prompt). The nature of the prompt can be adapted for different language models; the OntoGPT implementation defaults to the orange GPT-3.5-turbo model <ref type="bibr" target="#b27">[28]</ref> but is compatible with any model capable of delivering a payload orange that conforms to a prompt-specified structure. The intended completion results are a pseudo-YAML structure conforming to the specified template. For example, when passing the example prompt in Step 1, the return payload may be the following text:</p><p>food_item: garlic powder amount: 2 tablespoons</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3">Step 3: Completion Result Parsing and Recursive Extraction</head><p>The P arseCompletion(r, S, C) function returns a pre-grounded instance object i partially conforming to C. This step consists of two sub-steps: (1) parsing the pseudo-YAML; (2) recursively calling SPIRES on any inlined attributes.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>SPIRES</head><p>For the parsing step (Figure <ref type="figure" target="#fig_3">4</ref>, Parse Completion), the completion provided by the LLM is not guaranteed to be strict YAML or even conform directly to the specified template, so a heuristic approach is used. The response is separated by newlines into a list. Each line is split on the first instance of a ":"; the part before is matched against the attribute name, and the part after is the value, which is parsed as detailed below. Attribute matching is case-insensitive. All whitespace is normalized to underscores.</p><p>Each value v is parsed according to the range and cardinality of the matched attribute a, populating each attribute a of i:</p><formula xml:id="formula_4">i[a] = P arseV alue(v)<label>(6)</label></formula><p>If a is multivalued, then v is first split according to a delimiter (default ";"), and the rules below are applied on each token; otherwise the rules below are applied directly.</p><p>Rule 1: If the range is a primitive data type (i.e. string, number, or boolean) then the value is returned as-is.</p><p>Rule 2: If the range of the attribute is a class, and the attribute is non-inlined (i.e. a reference) or an enumeration, then the value will be grounded, as specified in Step 4 below.</p><p>Rule 3: if the range of the attribute is an inlined class, then SPIRES is called recursively:</p><formula xml:id="formula_5">SP IRES(S, Range(a), v)<label>(7)</label></formula><p>This proceeds until a non-inlined class is reached. For example, given the example payload from the previous step, the attribute food item is a reference to an ontology class, so the value "garlic powder" is grounded using the grounding procedure (Step 4). The attribute amount is a reference to an inlined class Quantity, so this will be recursively parsed by calling GenerateP rompt(RecipeSchema, Quantity, "2 tablespoons").</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.4">Step 4: Grounding and Normalization</head><p>All leaf nodes of the instance tree that correspond to named entities are grounded, i.e., mapped to an identifier in an existing vocabulary, ontology, or database (Figure <ref type="figure" target="#fig_3">4</ref>, Ground). Classes representing named entities can each be annotated with one or more vocabularies. Each vocabulary is identified by a unique prefix. For example, in Figure <ref type="figure" target="#fig_0">1</ref>, the FoodItem class could be annotated with both FOODON and Wikidata, indicating that grounding on labels can be performed using these vocabularies. Grounding on the string "garlic powder" may then yield FOODON:03301844 when the BioPortal <ref type="bibr" target="#b28">[29]</ref> or AgroPortal annotator <ref type="bibr" target="#b29">[30]</ref> is used, and WIKIDATA:Q10716334 when a Wikidata normalizer is used. The final results are normalized via validation against identifier constraints for the class. If IDSpaces(c) is set, then the prefix of the identifier is checked against the list of valid prefixes. If V alueSets(c) is set, then the value returned must be present in the value set.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.5">Step 5: Translation to OWL and Reasoning</head><p>Step 4 produces an instance tree that can be directly represented in JSON or YAML syntax (both of which allow for arbitrary nesting of objects). For some KBs, this is sufficient. Further conversion to an ontological representation in OWL (Figure <ref type="figure" target="#fig_3">4</ref>, Translate to OWL), and additional reasoning steps, then support checking for consistency and population of missing axioms. There are multiple methods for translating to OWL, including ROBOT templates <ref type="bibr" target="#b30">[31]</ref>, DOSDPs <ref type="bibr" target="#b31">[32]</ref>, and OTTR <ref type="bibr" target="#b32">[33]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Implementation</head><p>We provide an implementation of SPIRES in Python as part of the OntoGPT Python package <ref type="foot" target="#foot_1">2</ref> , which provides both a command line interface (CLI) and a simple web application (Supplementary Figure <ref type="figure" target="#fig_4">S1</ref>). SPIRES uses LinkML <ref type="bibr" target="#b33">[34]</ref> as its Knowledge Schema language. This allows for a full representation of the necessary schema elements while incorporating LinkML's powerful mechanism for specifying static and dynamic value sets. For example, a value set can be constructed as a declarative query of the form "include branches A, B and C from ontology O 1 , excluding sub-branch D, and include all of ontology O 2 ". The LinkML framework also supports converting schemas to LinkML from forms such as SHACL <ref type="bibr" target="#b34">[35]</ref>, JSON-Schema <ref type="bibr" target="#b35">[36]</ref>, or SQL Data Definition Language, allowing their use with SPIRES.</p><p>SPIRES performs grounding and normalization with the Ontology Access Kit library (OAKlib) <ref type="bibr" target="#b36">[37]</ref>, which provides interfaces for multiple annotation tools (i.e., those providing links to external vocabularies and ontologies), including the Gilda entity normalization tool <ref type="bibr" target="#b17">[18]</ref>, the BioPortal annotator <ref type="bibr" target="#b37">[38]</ref>, and the Ontology Lookup Service <ref type="bibr" target="#b38">[39]</ref>. For  <ref type="bibr" target="#b25">[26]</ref>.</p><p>The results of extraction can optionally be further processed using LinkML-OWL <ref type="bibr" target="#b39">[40]</ref>, which generates an OWL representation of instance data using mappings specified in a LinkML schema. This OWL file can be used as an input to ROBOT <ref type="bibr" target="#b30">[31]</ref> to run OWL reasoning to check for logical inconsistencies and perform automated classification.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Standard Templates for Multiple Applications</head><p>The SPIRES implementation comes with a growing collection of ready-made schemas for multiple applications. These are primarily life-science focused, for example, deriving a pathway from a Mechanism of Action description in a database such as DrugBank. We also include a schema for food recipes to demonstrate general applicability in domains beyond the environmental and life sciences. Table <ref type="table" target="#tab_0">1</ref> lists a selection of the pre-made schemas.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Extraction of Recipe Ontologies from Websites</head><p>To demonstrate the full functionality of OntoGPT we created a pipeline for extracting recipes from websites and generating an OWL ontology from the combined outputs. Recipes are extracted using the recipe-scrapers Python module <ref type="foot" target="#foot_2">3</ref> . The pipeline takes the output of scraping, concatenates the results into a text, then feeds this to OntoGPT using the recipe template. We use LinkML-OWL to map the recipe template to OWL axioms, such that each recipe is represented as a class defined by its ingredients and its steps. We use ROBOT to extract the relevant parts of the FOODON ontology, and merge this with the extraction results, combined with a manually coded simple recipe classification with defined classes for groupings such as "Meat Recipe" and "Wheat Based Recipe". We use the Elk reasoner <ref type="bibr" target="#b40">[41]</ref> to classify the results. The results of this process are highlighted in Figure <ref type="figure" target="#fig_5">S3</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">Entity Grounding</head><p>Grounding entities with ontology terms is part of the core functionality of SPIRES and its value is well demonstrated in a direct comparison with the straightforward approach of directly querying an LLM with term descriptions. If we request the GO term for "integrase activity" we expect the response to include GO:0008907, for example. Of 100 GO terms chosen at random, SPIRES returned the correct identifiers for 98 when using GPT-3.5-turbo and 97 with GPT-4-turbo.</p><p>Without SPIRES, GPT-3.5-turbo returned just 3 correct identifiers. Though it yielded 100 putative matches, few included correct GO identifiers. This "mass hallucination" may be an artifact of prompting with terms lacking surrounding context. Even so, it may be challenging to determine how much context is sufficient to improve grounding. GPT-4-turbo demonstrated a different challenge by consistently refusing to retrieve identifiers, returning responses such as "As an AI developed before 2023, I do not have real-time access to databases...". For the EMAPA mouse anatomy ontology, SPIRES returned correct identifiers for all 100 term descriptions, while GPT-3.5-turbo repeatedly provided identifiers from the EHDAA2 human anatomy ontology instead. GPT-4-turbo refused to ground EMAPA terms as it had with GO. Transient MONDO terms posed some surprising difficulty: SPIRES with GPT-3.5-turbo correctly returned 97 of 100 identifiers but SPIRES with GPT-4-turbo returned just 18 correct matches. In some cases, this may have been due to incorrectly parsing entities (e.g., parsing "UV-induced skin damage, susceptibility to" as "skin damage"). As with GO, prompting without SPIRES only returned one correct identifier at most from both GPT-3.5-turbo and GPT-4-turbo.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.4">Evaluation on BioCreative Chemical Disease Relation Task</head><p>We evaluated SPIRES on the BioCreative Chemical-Disease-Relation (BC5CDR) task corpus. To demonstrate the zero-shot learning approach, we did not perform any fine tuning using the training set. The training set was used to enhance our mappings of named entity spans to MeSH identifiers and was then discarded. For our CTD schema (see Figure <ref type="figure" target="#fig_1">S2</ref>), we follow the Biolink Model <ref type="bibr" target="#b26">[27]</ref> which extends the simple triple model of associations to include qualifiers on the predicate, subject, and object. This yields finer-grained predictions; for example, SPIRES correctly parses the statements in Table <ref type="table" target="#tab_1">2</ref>. In these cases, SPIRES grounds the drug entity Cromakalim to its corresponding MeSH identifier and extracts its relationship with vasodilation along with a qualifier noting the observation is specific to "large and small coronary vessels", an anatomical entity worthy of further grounding (though this was not explored within the original BC5CDR task). Similarly, the correctly extracted relationship between lithium and hypercalcemia includes the qualifier that the observation pertains to chronic lithium exposure.</p><p>When evaluating, we discard subject and object qualifier information, as this is not tested for in the original CDR benchmark. If the predicate qualifier is "NOT" then we discard the whole statement. Note that in the examples in Table <ref type="table" target="#tab_1">2</ref>, even though we evaluated the first two statements to be a correct interpretation of the abstract, they were counted as false negatives; the corresponding triple was not in the test set, presumably an error of omission.</p><p>For SPIRES, we saw initially encouraging results on the BC5CDR task with chunking and GPT-3.5-turbo: we observed an F-score of 41.16, precision of 0.43, and recall of 0.39. Using the "no chunking" approach (i.e., no preprocessing of the test document) yielded an F-score of 36.64 (precision 0.63, recall 0.26) with GPT-3.5-turbo and an F-score of 43.80 (precision 0.69, recall 0.32). For NER results alone (i.e., correct grounding against MeSH for chemical and disease entities), see Table <ref type="table">S3</ref>.</p><p>These results place SPIRES just below the average of all 18 teams that participated in the original CDR challenge. We assume all 18 teams used the full training set, whereas with SPIRES there was no task-specific training or fine tuning. For comparison, Luo et al. report an F-score of 44.98 on BC5CDR with their biomedical domain-specific, trained-from-scratch BioGPT model <ref type="bibr" target="#b8">[9]</ref>. We note that the best-scoring relation extraction results from the CDR task achieved an impressive score of 0.57, though with a model trained on a large and carefully engineered set of training examples <ref type="bibr" target="#b44">[45]</ref>. SPIRES bypasses this step but may see further improvement with fine-tuned and/or domain-specific LLMs.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Discussion</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.1">Comparable Methods</head><p>SPIRES is a well-developed and generally model-agnostic approach for information extraction designed with structured schemas and standardized ontologies in mind. Some recent efforts have made great strides in leveraging the first type of resource, i.e., they address the task of aligning extracted information with pre-defined data models. The fine-tuned SPIRES GPT-3-based approach described by Dunn and Dagdelen et al. employs engineered schemas to extract structured relationships from unstructured text in materials chemistry <ref type="bibr" target="#b45">[46]</ref>. The authors of the LLMs4OL approach also explored application of LLMs to information extraction, but concluded that the models are not yet sufficiently flexible for ontology-driven needs <ref type="bibr" target="#b46">[47]</ref>. We also consider the task of ontology alignment to be related to our efforts; we have found that LLMs can noticeably improve accuracy in ontology alignment <ref type="bibr" target="#b47">[48]</ref> and the development of general frameworks such as Agent-OM <ref type="bibr" target="#b48">[49]</ref> may further improve the grounding inherent to information extraction.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.2">Choosing a Model</head><p>OntoGPT currently supports both select open LLMs and the OpenAI API. Running OntoGPT across a large corpus with OpenAI models may be prohibitively expensive for some users. Additionally, the use of this API involves closed models with inscrutable training data, which may be plagued by biases <ref type="bibr" target="#b49">[50]</ref>. Though our experiments here generally concern GPT-3 and 4, the rapid pace of model development will ensure access to progressively more capable (and ideally, more transparent) language models. Smaller LMs such as LLaMA have been shown to outperform models ten times their size <ref type="bibr" target="#b50">[51]</ref>, and it is possible to fine-tune these into instruction following models <ref type="bibr" target="#b51">[52]</ref>. LLMs based on LLaMA2 and adapted for biomedical language, including BioMedGPT-LM <ref type="bibr" target="#b52">[53]</ref> and Radiology-Llama2 <ref type="bibr" target="#b53">[54]</ref>, may complement the grounding provided through SPIRES.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.3">Reliability and Hallucinations</head><p>A common problem with LLMs is hallucination of results (producing factually invalid statements that are not consistent with the input text) <ref type="bibr" target="#b4">[5,</ref><ref type="bibr" target="#b49">50]</ref>. We crafted prompts to limit hallucination, asking only for the LM to extract what was found in the text, and keeping default low-creativity settings. On examination we found that hallucinations were generally infrequent, with most false positives and negatives attributable to incorrect relation extraction. It is worth noting that LLM interfaces designed for direct function calling may duplicate some of the data structure enforcement afforded by SPIRES but do not alleviate the issue of hallucination: a model may still improperly associate real or fictional ontology identifiers with extracted entities when queried without aid of our approach.</p><p>Some text generation may yield technically correct results. For example, one result extracted from the title "Increased frequency and severity of angio-oedema related to long-term therapy with angiotensin-converting enzyme inhibitor in two patients", yielded "Lisinopril INDUCES angio-oedema". Lisinopril is in fact a subtype of ACE inhibitor, and the extracted association is supported by other literature. However, this more precise statement is not the one that is in the original text. Presumably the LM is substituting the class of drug with a specific member here, but it is unclear why it does it on this occasion. Until there are better methods to control this hallucination and explain justifications for statements in terms of the text and prior knowledge, results from LMs should be carefully validated before being entered into KBs.</p><p>SPIRES is a new approach to information extraction that leverages recent advances in large language models to populate complex knowledge schemas from unstructured text. It uses zero-shot learning to identify and extract relevant information from query text, which is then normalized and grounded using existing ontologies and vocabularies. SPIRES requires no model tuning or training data. The approach is customizable, flexible, and can be used to populate knowledge schemas across varied domains. We envision SPIRES being used not in isolation, but rather in synergistic strategies combining human expertise, linguistic pattern recognition, deep learning and classical deductive reasoning approaches. SPIRES is one component of a growing toolkit of methods for transforming noisy, heterogeneous information into actionable knowledge.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Competing interests</head><p>No competing interest is declared.  </p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Figure 1 :</head><label>1</label><figDesc>Figure 1: Example schema. Boxes denote classes and arrows denote attributes whose range are classes (compound attributes). Crows feet above boxes denote multivalued attributes. Attributes whose ranges are primitives or value sets are shown within each box. Here, the top level container class "Recipe" is composed of a label, description, categories, steps, and ingredients. Steps and ingredients are further decomposed into food items, quantities, etc.</figDesc><graphic coords="3,72.00,72.00,468.00,337.74" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Figure 2 :</head><label>2</label><figDesc>Figure2: Example of a portion of text to parse and a corresponding instantiation of the recipe schema from Figure1, using YAML syntax. Input text is truncated for brevity; the full input is available at https://github.com/ monarch-initiative/ontogpt/blob/main/tests/input/cases/recipe-spaghetti.txt. In each attributevalue pair, the attribute is shown in bold, followed by a colon and then the value or values. For multivalued attributes, each list element value is indicated with a hyphen at the beginning of the line. Terminal elements that are value sets from ontologies and standards such as FOODON<ref type="bibr" target="#b13">[14]</ref>, UCUM<ref type="bibr" target="#b14">[15]</ref>, and DBPedia<ref type="bibr" target="#b15">[16]</ref> are shown here with their human-readable labels in blue after the double-hash comment symbol. Dynamic elements are indicated via RDF blank node syntax (e.g. _:ChoppedOnion does not correspond to a named entity and serves as a placeholder.</figDesc><graphic coords="4,165.60,72.00,280.82,353.98" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Figure 3 :</head><label>3</label><figDesc>Figure 3: Overview of the SPIRES approach. A knowledge schema and text containing instances defined in the schema are processed by OntoGPT, yielding a query for GPT-3 or newer, accessed through the OpenAI API. OntoGPT parses the result, grounding extracted instances with specific entries and terms retrieved from queries of databases and ontologies where possible. The final product is a set of structured data (instances and relationship) in the shapes defined by the schema. Icons by user Khoirin from the Noun Project (https://thenounproject.com/besticon/).</figDesc><graphic coords="5,187.76,72.00,234.01,314.84" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>Figure 4 :</head><label>4</label><figDesc>Figure 4: Flowchart depicting the SPIRES algorithm.</figDesc><graphic coords="6,72.00,348.00,468.02,351.01" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>1 Funding</head><label>1</label><figDesc>This work was supported by the National Institutes of Health National Human Genome Research Institute [RM1 HG010860]; National Institutes of Health Office of the Director [R24 OD011883]; and the Director, Office of Science, Office of Basic Energy Sciences, of the US Department of Energy [DE-AC0205CH11231 to J.H.C., H.H., N.L.H., M.J., S.M., J.T.R, and C.J.M.]. We also gratefully acknowledge Bosch Research for their support of this research project.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>Figure S3 :</head><label>S3</label><figDesc>FigureS3: Screenshot of extracted recipes in a merged OWL file from the Protege ontology editor<ref type="bibr" target="#b54">[55]</ref>. The "Simple Spaghetti" recipe is correctly classified under MeatRecipe, due to the presence of an ingredient that is classified as a meat-based product in FOODON. The right hand panel shows OWL logical axioms for the recipe, including its ingredients, and the steps involved.</figDesc><graphic coords="19,72.00,224.82,468.00,289.60" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0"><head></head><label></label><figDesc></figDesc><graphic coords="18,72.87,109.48,466.24,260.90" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 :</head><label>1</label><figDesc>Pre-made schemas. Example use cases are included but are not comprehensive. Note the CTD schema is deliberately restricted to only use the MESH vocabulary for purposes of evaluation. Identifiers refers to all ontologies, value sets, and other unique term sets incorporated in a given schema.</figDesc><table><row><cell>Schema</cell><cell>Use Case</cell><cell>Identifiers</cell><cell>Text inputs</cell></row><row><cell>Food Recipes</cell><cell>Enforcing consistent structure</cell><cell>FOODON,</cell><cell>Unstructured and semi-structured</cell></row><row><cell></cell><cell>on stepwise processes</cell><cell>UO</cell><cell>recipes</cell></row><row><cell cols="2">Drug mechanisms Integrating drug descriptions</cell><cell>MONDO,</cell><cell>Mechanism of Action (MOA) descrip-</cell></row><row><cell></cell><cell></cell><cell>CHEBI,</cell><cell>tions</cell></row><row><cell></cell><cell></cell><cell>MESH</cell><cell></cell></row><row><cell>Chemical-disease</cell><cell>Assembling knowledge graphs</cell><cell>MESH</cell><cell>Abstracts describing effects of chemi-</cell></row><row><cell>interactions</cell><cell>of chemical-impacted pheno-</cell><cell></cell><cell>cals on conditions</cell></row><row><cell></cell><cell>types</cell><cell></cell><cell></cell></row><row><cell>Metagenomic</cell><cell>Standardizing metadata for</cell><cell>ENVO</cell><cell>Descriptions of environmental samples</cell></row><row><cell>Samples</cell><cell>metagenomics</cell><cell></cell><cell></cell></row><row><cell>Mendelian</cell><cell>Extracting disease relationships</cell><cell>MONDO,</cell><cell>Case studies or descriptions of</cell></row><row><cell>Diseases</cell><cell>from literature</cell><cell>HPO</cell><cell>Mendelian diseases</cell></row><row><cell cols="4">identifier normalization a number of services can be used, including OntoPortal mappings, with the default being the</cell></row><row><cell cols="2">NCATS Biomedical Translator Node Normalizer</cell><cell></cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2 :</head><label>2</label><figDesc>Extracted relation examples. All predicates are 'INDUCES'. Sources are PubMed identifiers (PMIDs). PMID 2160002 is "Vasodilation of large and small coronary vessels and hypotension induced by cromakalim and pinacidil"<ref type="bibr" target="#b41">[42]</ref>. PMID 19154241 is a case report on lithium therapy<ref type="bibr" target="#b42">[43]</ref>. PMID 10327032 is a study of hyperammonemic encephalopathy risks in cancer patients<ref type="bibr" target="#b43">[44]</ref>.</figDesc><table><row><cell>Source</cell><cell>Subject</cell><cell cols="2">Sub. qual. Predicate</cell><cell>Object</cell><cell>Object qual.</cell></row><row><cell>2160002</cell><cell>MESH:D019806</cell><cell>-</cell><cell cols="2">INDUCES MESH:D014664</cell><cell>large and small</cell></row><row><cell></cell><cell>Cromakalim</cell><cell></cell><cell></cell><cell>Vasodilation</cell><cell>coronary vessels</cell></row><row><cell>2160002</cell><cell>MESH:D020110</cell><cell>-</cell><cell cols="2">INDUCES MESH:D014664</cell><cell>large and small</cell></row><row><cell></cell><cell>Pinacidil</cell><cell></cell><cell></cell><cell>Vasodilation</cell><cell>coronary vessels</cell></row><row><cell>19154241</cell><cell>MESH:D008094</cell><cell>Chronic</cell><cell cols="2">INDUCES MESH:D006934</cell><cell>-</cell></row><row><cell></cell><cell>Lithium</cell><cell></cell><cell></cell><cell>Hypercalcemia</cell></row><row><cell>10327032</cell><cell>MESH:D005472</cell><cell>-</cell><cell cols="2">INDUCES MESH:D001927</cell></row><row><cell></cell><cell>Fluorouracil</cell><cell></cell><cell></cell><cell>Brain Diseases</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>https://github.com/monarch-initiative/ontogpt-experiments/blob/main/experiments/ground_compare/ Comparing_Grounding.ipynb</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_1"><p>https://github.com/monarch-initiative/ontogpt</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_2"><p>https://github.com/hhursev/recipe-scrapers</p></note>
+		</body>
+		<back>
+
+			<div type="availability">
+<div xmlns="http://www.tei-c.org/ns/1.0"><p><ref type="url" target="https://github.com/monarch-">https://github.com/ monarch-</ref></p></div>
+			</div>
+
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>SPIRES 8 Supplementary Data</head></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Wikidata</title>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Vrandečić</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2187980.2188242</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 21st International Conference on World Wide Web</title>
+		<meeting>the 21st International Conference on World Wide Web<address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2012-04-16">2012</date>
+			<biblScope unit="page" from="1063" to="1064" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Denny Vrandečić. Wikidata: A new platform for collaborative data collection. In Proceedings of the 21st International Conference on World Wide Web, WWW &apos;12 Companion, pages 1063-1064, New York, NY, USA, 2012. ACM. ISBN 9781450312301. doi:10.1145/2187980.2188242.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">The Gene Ontology Resource: 20 years and still GOing strong</title>
+		<author>
+			<persName><forename type="first">The</forename><surname>Gene</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ontology</forename><surname>Consortium</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gky1055</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<idno type="ISSN">0305-1048</idno>
+		<idno type="ISSNe">1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">47</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="D330" to="D338" />
+			<date type="published" when="2019-01">January 2019</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">The Gene Ontology Consortium. The gene ontology resource: 20 years and still GOing strong. Nucleic Acids Res., 47(D1):D330-D338, January 2019. ISSN 0305-1048, 1362-4962. doi:10.1093/nar/gky1055.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">The Reactome Pathway Knowledgebase</title>
+		<author>
+			<persName><forename type="first">Antonio</forename><surname>Fabregat</surname></persName>
+			<idno type="ORCID">0000-0002-3288-8599</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Steven</forename><surname>Jupe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lisa</forename><surname>Matthews</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Konstantinos</forename><surname>Sidiropoulos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marc</forename><surname>Gillespie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Phani</forename><surname>Garapati</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robin</forename><surname>Haw</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bijay</forename><surname>Jassal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Florian</forename><surname>Korninger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bruce</forename><surname>May</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marija</forename><surname>Milacic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Corina</forename><forename type="middle">Duenas</forename><surname>Roca</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karen</forename><surname>Rothfels</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cristoffer</forename><surname>Sevilla</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Veronica</forename><surname>Shamovsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Solomon</forename><surname>Shorser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thawfeek</forename><surname>Varusai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guilherme</forename><surname>Viteri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joel</forename><surname>Weiser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guanming</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lincoln</forename><surname>Stein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Henning</forename><surname>Hermjakob</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>D’eustachio</surname></persName>
+			<idno type="ORCID">0000-0002-5494-626X</idno>
+		</author>
+		<idno type="DOI">10.1093/nar/gkx1132</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<idno type="ISSN">0305-1048</idno>
+		<idno type="ISSNe">1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">46</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="D649" to="D655" />
+			<date type="published" when="2018-01">January 2018</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Antonio Fabregat, Steven Jupe, Lisa Matthews, Konstantinos Sidiropoulos, Marc Gillespie, Phani Garapati, Robin Haw, Bijay Jassal, Florian Korninger, Bruce May, Marija Milacic, Corina Duenas Roca, Karen Rothfels, Cristoffer Sevilla, Veronica Shamovsky, Solomon Shorser, Thawfeek Varusai, Guilherme Viteri, Joel Weiser, Guanming Wu, Lincoln Stein, Henning Hermjakob, and Peter D&apos;Eustachio. The reactome pathway knowledgebase. Nucleic Acids Res., 46(D1):D649-D655, January 2018. ISSN 0305-1048, 1362-4962. doi:10.1093/nar/gkx1132.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Is ChatGPT a biomedical expert? -exploring the Zero-Shot performance of current GPT models in biomedical tasks</title>
+		<author>
+			<persName><forename type="first">Samy</forename><surname>Ateia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Udo</forename><surname>Kruschwitz</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2306.16108</idno>
+	</analytic>
+	<monogr>
+		<title level="m">CLEF 2023: Conference and Labs of the Evaluation Forum</title>
+		<imprint>
+			<date type="published" when="2023-06">June 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Samy Ateia and Udo Kruschwitz. Is ChatGPT a biomedical expert? -exploring the Zero-Shot performance of current GPT models in biomedical tasks. In CLEF 2023: Conference and Labs of the Evaluation Forum, June 2023. doi:10.48550/arXiv.2306.16108.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">Survey of Hallucination in Natural Language Generation</title>
+		<author>
+			<persName><forename type="first">Ziwei</forename><surname>Ji</surname></persName>
+			<idno type="ORCID">0000-0002-0206-7861</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nayeon</forename><surname>Lee</surname></persName>
+			<idno type="ORCID">0000-0003-1144-1103</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Rita</forename><surname>Frieske</surname></persName>
+			<idno type="ORCID">0000-0002-3921-3519</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tiezheng</forename><surname>Yu</surname></persName>
+			<idno type="ORCID">0000-0001-5396-950X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Su</surname></persName>
+			<idno type="ORCID">0000-0001-5746-9545</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Xu</surname></persName>
+			<idno type="ORCID">0000-0003-2205-2429</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Etsuko</forename><surname>Ishii</surname></persName>
+			<idno type="ORCID">0000-0002-6423-539X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Ye</forename><forename type="middle">Jin</forename><surname>Bang</surname></persName>
+			<idno type="ORCID">0000-0002-2968-0033</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Andrea</forename><surname>Madotto</surname></persName>
+			<idno type="ORCID">0000-0002-8672-715X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Pascale</forename><surname>Fung</surname></persName>
+			<idno type="ORCID">0000-0002-0628-7132</idno>
+		</author>
+		<idno type="DOI">10.1145/3571730</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">55</biblScope>
+			<biblScope unit="issue">12</biblScope>
+			<biblScope unit="page" from="1" to="38" />
+			<date type="published" when="2022-02">February 2022</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Ziwei Ji, Nayeon Lee, Rita Frieske, Tiezheng Yu, Dan Su, Yan Xu, Etsuko Ishii, Yejin Bang, Wenliang Dai, Andrea Madotto, and Pascale Fung. Survey of hallucination in natural language generation. arXiv, February 2022. doi:10.1145/3571730.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">What BERT Is Not: Lessons from a New Suite of Psycholinguistic Diagnostics for Language Models</title>
+		<author>
+			<persName><forename type="first">Allyson</forename><surname>Ettinger</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00298</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<title level="j" type="abbrev">Transactions of the Association for Computational Linguistics</title>
+		<idno type="ISSN">2307-387X</idno>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="page" from="34" to="48" />
+			<date type="published" when="2020-12">December 2020</date>
+			<publisher>MIT Press - Journals</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Allyson Ettinger. What BERT is not: Lessons from a new suite of psycholinguistic diagnostics for language models. Trans. Assoc. Comput. Linguist., 8:34-48, December 2020. ISSN 2307-387X. doi:10.1162/tacl_a_00298.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">The 2019 n2c2/OHNLP Track on Clinical Semantic Textual Similarity: Overview</title>
+		<author>
+			<persName><forename type="first">Yanshan</forename><surname>Wang</surname></persName>
+			<idno type="ORCID">0000-0003-4433-7839</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Sunyang</forename><surname>Fu</surname></persName>
+			<idno type="ORCID">0000-0003-1691-5179</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Feichen</forename><surname>Shen</surname></persName>
+			<idno type="ORCID">0000-0002-7803-2331</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Sam</forename><surname>Henry</surname></persName>
+			<idno type="ORCID">0000-0002-7246-1151</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Ozlem</forename><surname>Uzuner</surname></persName>
+			<idno type="ORCID">0000-0001-8011-9850</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hongfang</forename><surname>Liu</surname></persName>
+			<idno type="ORCID">0000-0003-2570-3741</idno>
+		</author>
+		<idno type="DOI">10.2196/23375</idno>
+	</analytic>
+	<monogr>
+		<title level="j">JMIR Medical Informatics</title>
+		<title level="j" type="abbrev">JMIR Med Inform</title>
+		<idno type="ISSN">2291-9694</idno>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="issue">11</biblScope>
+			<biblScope unit="page">e23375</biblScope>
+			<date type="published" when="2020-11-27">November 2020</date>
+			<publisher>JMIR Publications Inc.</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yanshan Wang, Sunyang Fu, Feichen Shen, Sam Henry, Ozlem Uzuner, and Hongfang Liu. The 2019 n2c2/OHNLP track on clinical semantic textual similarity: Overview. JMIR Med Inform, 8(11):e23375, November 2020. ISSN 2291-9694. doi:10.2196/23375.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Quantification of BERT diagnosis generalizability across medical specialties using semantic dataset distance</title>
+		<author>
+			<persName><forename type="first">William</forename><surname>Mihir P Khambete</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Juan</forename><forename type="middle">C</forename><surname>Su</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marcus</forename><forename type="middle">A</forename><surname>Garcia</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Badgeley</surname></persName>
+		</author>
+		<idno type="DOI">10.1371/journal.pone.0112774</idno>
+	</analytic>
+	<monogr>
+		<title level="j">AMIA Jt Summits Transl Sci Proc</title>
+		<idno type="ISSN">2153-4063</idno>
+		<imprint>
+			<biblScope unit="page" from="345" to="354" />
+			<date type="published" when="2021-05">2021. May 2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mihir P Khambete, William Su, Juan C Garcia, and Marcus A Badgeley. Quantification of BERT diagnosis generalizability across medical specialties using semantic dataset distance. AMIA Jt Summits Transl Sci Proc, 2021:345-354, May 2021. ISSN 2153-4063. doi:10.1371/journal.pone.0112774.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">BioGPT: generative pre-trained transformer for biomedical text generation and mining</title>
+		<author>
+			<persName><forename type="first">Renqian</forename><surname>Luo</surname></persName>
+			<idno type="ORCID">0000-0002-9062-3484</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Liai</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yingce</forename><surname>Xia</surname></persName>
+			<idno type="ORCID">0000-0001-9823-9033</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tao</forename><surname>Qin</surname></persName>
+			<idno type="ORCID">0000-0002-9095-0776</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Sheng</forename><surname>Zhang</surname></persName>
+			<idno type="ORCID">0000-0003-3672-5436</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hoifung</forename><surname>Poon</surname></persName>
+			<idno type="ORCID">0000-0002-9067-0918</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tie-Yan</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/bib/bbac409</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Briefings in Bioinformatics</title>
+		<idno type="ISSN">1467-5463</idno>
+		<idno type="ISSNe">1477-4054</idno>
+		<imprint>
+			<biblScope unit="volume">23</biblScope>
+			<biblScope unit="issue">6</biblScope>
+			<date type="published" when="2022-11">November 2022</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Renqian Luo, Liai Sun, Yingce Xia, Tao Qin, Sheng Zhang, Hoifung Poon, and Tie-Yan Liu. BioGPT: generative pre-trained transformer for biomedical text generation and mining. Brief. Bioinform., 23(6), November 2022. ISSN 1467-5463, 1477-4054. doi:10.1093/bib/bbac409.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">Will generative artificial intelligence deliver on its promise in health care?</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Robert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Erik</forename><surname>Wachter</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Brynjolfsson</surname></persName>
+		</author>
+		<idno type="DOI">10.1001/jama.2023.25054</idno>
+	</analytic>
+	<monogr>
+		<title level="j">JAMA</title>
+		<idno type="ISSN">0098-7484, 1538-3598</idno>
+		<imprint>
+			<date type="published" when="2023-11">November 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Robert M Wachter and Erik Brynjolfsson. Will generative artificial intelligence deliver on its promise in health care? JAMA, November 2023. ISSN 0098-7484, 1538-3598. doi:10.1001/jama.2023.25054.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Attention is all you need</title>
+		<author>
+			<persName><forename type="first">Ashish</forename><surname>Vaswani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noam</forename><surname>Shazeer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Niki</forename><surname>Parmar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jakob</forename><surname>Uszkoreit</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Llion</forename><surname>Jones</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aidan</forename><forename type="middle">N</forename><surname>Gomez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Łukasz</forename><surname>Kaiser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Illia</forename><surname>Polosukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lukasz</forename><surname>Kaiser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Illia</forename><surname>Polosukhin</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.1706.03762</idno>
+	</analytic>
+	<monogr>
+		<title level="m">31st Conference on Neural Information Processing Systems (NIPS 2017)</title>
+		<meeting><address><addrLine>Long Beach, CA, USA</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2017-06">June 2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, Illia Polosukhin, Lukasz Kaiser, and Illia Polosukhin. Attention is all you need. In 31st Conference on Neural Information Processing Systems (NIPS 2017), Long Beach, CA, USA, June 2017. doi:10.48550/arXiv.1706.03762.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<title level="m" type="main">Language models are Few-Shot learners</title>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Tom B Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nick</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melanie</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jared</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Prafulla</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arvind</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pranav</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Girish</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amanda</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sandhini</forename><surname>Askell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ariel</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gretchen</forename><surname>Herbert-Voss</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Krueger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rewon</forename><surname>Henighan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aditya</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Ramesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Daniel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Ziegler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clemens</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Winter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Hesse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mateusz</forename><surname>Sigler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Scott</forename><surname>Litwin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Gray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jack</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sam</forename><surname>Berner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alec</forename><surname>Mccandlish</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ilya</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dario</forename><surname>Sutskever</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Amodei</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2005.14165</idno>
+		<imprint>
+			<date type="published" when="2020-05">May 2020</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Tom B Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind Nee- lakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel M Ziegler, Jeffrey Wu, Clemens Winter, Christopher Hesse, Mark Chen, Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and Dario Amodei. Language models are Few-Shot learners. arXiv, May 2020. doi:10.48550/arXiv.2005.14165.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<monogr>
+		<title level="m" type="main">YAML ain&apos;t markup language (YAML™) version 1</title>
+		<author>
+			<persName><forename type="first">Oren</forename><surname>Ben-Kiki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clark</forename><surname>Evans</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ingy</forename><surname>Döt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Net</forename></persName>
+		</author>
+		<ptr target="https://yaml.org/spec/1.2.2/" />
+		<imprint>
+			<date type="published" when="2021">2021. 2023-3-28</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Oren Ben-Kiki, Clark Evans, and Ingy Döt Net. YAML ain&apos;t markup language (YAML™) version 1.2.2. https://yaml.org/spec/1.2.2/, 2021. Accessed: 2023-3-28.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">FoodOn: a harmonized food ontology to increase global food traceability, quality control and data integration</title>
+		<author>
+			<persName><forename type="first">Damion</forename><forename type="middle">M</forename><surname>Dooley</surname></persName>
+			<idno type="ORCID">0000-0002-8844-9165</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Emma</forename><forename type="middle">J</forename><surname>Griffiths</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gurinder</forename><forename type="middle">S</forename><surname>Gosal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pier</forename><forename type="middle">L</forename><surname>Buttigieg</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Hoehndorf</surname></persName>
+			<idno type="ORCID">0000-0001-8149-5890</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><forename type="middle">C</forename><surname>Lange</surname></persName>
+			<idno type="ORCID">0000-0002-6148-7962</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Lynn</forename><forename type="middle">M</forename><surname>Schriml</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fiona</forename><forename type="middle">S L</forename><surname>Brinkman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><forename type="middle">W L</forename><surname>Hsiao</surname></persName>
+			<idno type="ORCID">0000-0002-1342-4043</idno>
+		</author>
+		<idno type="DOI">10.1038/s41538-018-0032-6</idno>
+	</analytic>
+	<monogr>
+		<title level="j">npj Science of Food</title>
+		<title level="j" type="abbrev">npj Sci Food</title>
+		<idno type="ISSN">2396-8370</idno>
+		<imprint>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2018-12-18">December 2018</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Damion M Dooley, Emma J Griffiths, Gurinder S Gosal, Pier L Buttigieg, Robert Hoehndorf, Matthew C Lange, Lynn M Schriml, Fiona S L Brinkman, and William W L Hsiao. FoodOn: a harmonized food ontology to increase global food traceability, quality control and data integration. NPJ Sci Food, 2:23, December 2018. ISSN 2396-8370. doi:10.1038/s41538-018-0032-6.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Units of Measure in Clinical Information Systems</title>
+		<author>
+			<persName><forename type="first">G</forename><surname>Schadow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">J</forename><surname>Mcdonald</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">G</forename><surname>Suico</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">U</forename><surname>Fohring</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Tolxdorff</surname></persName>
+		</author>
+		<idno type="DOI">10.1136/jamia.1999.0060151</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of the American Medical Informatics Association</title>
+		<title level="j" type="abbrev">Journal of the American Medical Informatics Association</title>
+		<idno type="ISSN">1067-5027</idno>
+		<idno type="ISSNe">1527-974X</idno>
+		<imprint>
+			<biblScope unit="volume">6</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="151" to="162" />
+			<date type="published" when="1999-03-01">1999</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">G Schadow, C J McDonald, J G Suico, U Föhring, and T Tolxdorff. Units of measure in clinical information systems. J. Am. Med. Inform. Assoc., 6(2):151-162, 1999. ISSN 1067-5027. doi:10.1136/jamia.1999.0060151.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">DBpedia - A crystallization point for the Web of Data</title>
+		<author>
+			<persName><forename type="first">Christian</forename><surname>Bizer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jens</forename><surname>Lehmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Georgi</forename><surname>Kobilarov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sören</forename><surname>Auer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christian</forename><surname>Becker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Cyganiak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Hellmann</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.websem.2009.07.002</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Web Semantics</title>
+		<title level="j" type="abbrev">Journal of Web Semantics</title>
+		<idno type="ISSN">1570-8268</idno>
+		<imprint>
+			<biblScope unit="volume">7</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="154" to="165" />
+			<date type="published" when="2009-09">September 2009</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Christian Bizer, Jens Lehmann, Georgi Kobilarov, Sören Auer, Christian Becker, Richard Cyganiak, and Sebastian Hellmann. DBpedia -a crystallization point for the web of data. Journal of Web Semantics, 7(3):154-165, September 2009. ISSN 1570-8268. doi:10.1016/j.websem.2009.07.002.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Adoption of BioPortal&apos;s ontology registry software: The emerging OntoPortal community</title>
+		<author>
+			<persName><forename type="first">John</forename><surname>Graybeal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clement</forename><surname>Jonquet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicola</forename><surname>Fiore</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><forename type="middle">A</forename><surname>Musen</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">RDA P13 2019 -13th Research Data Alliance Plenary Meeting</title>
+		<imprint>
+			<date type="published" when="2019-04">April 2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">John Graybeal, Clement Jonquet, Nicola Fiore, and Mark A Musen. Adoption of BioPortal&apos;s ontology registry software: The emerging OntoPortal community. In RDA P13 2019 -13th Research Data Alliance Plenary Meeting, April 2019.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Gilda: biomedical entity text normalization with machine-learned disambiguation as a service</title>
+		<author>
+			<persName><forename type="first">Charles</forename><forename type="middle">Tapley</forename><surname>Benjamin M Gyori</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Albert</forename><surname>Hoyt</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Steppi</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/bioadv/vbac034</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Bioinformatics Advances</title>
+		<imprint>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2022-01">January 2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Benjamin M Gyori, Charles Tapley Hoyt, and Albert Steppi. Gilda: biomedical entity text normaliza- tion with machine-learned disambiguation as a service. Bioinformatics Advances, 2(1), January 2022. doi:10.1093/bioadv/vbac034.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">OGER++: hybrid multi-type entity recognition</title>
+		<author>
+			<persName><forename type="first">Lenz</forename><surname>Furrer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anna</forename><surname>Jancso</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicola</forename><surname>Colic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fabio</forename><surname>Rinaldi</surname></persName>
+		</author>
+		<idno type="DOI">10.1186/s13321-018-0326-3</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Cheminformatics</title>
+		<title level="j" type="abbrev">J Cheminform</title>
+		<idno type="ISSNe">1758-2946</idno>
+		<imprint>
+			<biblScope unit="volume">11</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2019-01-21">2019</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lenz Furrer, Anna Jancso, Nicola Colic, and Fabio Rinaldi. OGER : hybrid multi-type entity recognition. Journal of Cheminformatics, 11(1), 2019. doi:10.1186/s13321-018-0326-3.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Unifying the identification of biomedical entities with the Bioregistry</title>
+		<author>
+			<persName><forename type="first">Charles</forename><forename type="middle">Tapley</forename><surname>Hoyt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Meghan</forename><surname>Balk</surname></persName>
+			<idno type="ORCID">0000-0003-2699-3066</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tiffany</forename><forename type="middle">J</forename><surname>Callahan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Domingo-Fernández</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Haendel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harshad</forename><forename type="middle">B</forename><surname>Hegde</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><forename type="middle">S</forename><surname>Himmelstein</surname></persName>
+			<idno type="ORCID">0000-0002-3012-7446</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Klas</forename><surname>Karis</surname></persName>
+			<idno type="ORCID">0000-0003-1699-7776</idno>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Kunze</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tiago</forename><surname>Lubiana</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicolas</forename><surname>Matentzoglu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julie</forename><surname>Mcmurry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sierra</forename><surname>Moxon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adriano</forename><surname>Rutz</surname></persName>
+			<idno type="ORCID">0000-0003-0443-9902</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Deepak</forename><forename type="middle">R</forename><surname>Unni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Egon</forename><surname>Willighagen</surname></persName>
+			<idno type="ORCID">0000-0001-7542-0286</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Donald</forename><surname>Winston</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><forename type="middle">M</forename><surname>Gyori</surname></persName>
+			<idno type="ORCID">0000-0001-9439-5346</idno>
+		</author>
+		<idno type="DOI">10.1038/s41597-022-01807-3</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Scientific Data</title>
+		<title level="j" type="abbrev">Sci Data</title>
+		<idno type="ISSN">2052-4463</idno>
+		<imprint>
+			<biblScope unit="volume">9</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page">714</biblScope>
+			<date type="published" when="2022-11-19">November 2022</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Charles Tapley Hoyt, Meghan Balk, Tiffany J Callahan, Daniel Domingo-Fernández, Melissa A Haendel, Har- shad B Hegde, Daniel S Himmelstein, Klas Karis, John Kunze, Tiago Lubiana, Nicolas Matentzoglu, Julie McMurry, Sierra Moxon, Christopher J Mungall, Adriano Rutz, Deepak R Unni, Egon Willighagen, Donald Winston, and Benjamin M Gyori. Unifying the identification of biomedical entities with the bioregistry. Sci Data, 9(1):714, November 2022. ISSN 2052-4463. doi:10.1038/s41597-022-01807-3.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">BioCreative V CDR task corpus: a resource for chemical disease relation extraction</title>
+		<author>
+			<persName><forename type="first">Jiao</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yueping</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robin</forename><forename type="middle">J</forename><surname>Johnson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniela</forename><surname>Sciaky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chih-Hsuan</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Leaman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Allan</forename><forename type="middle">Peter</forename><surname>Davis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carolyn</forename><forename type="middle">J</forename><surname>Mattingly</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><forename type="middle">C</forename><surname>Wiegers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhiyong</forename><surname>Lu</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/database/baw068</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Database</title>
+		<title level="j" type="abbrev">Database</title>
+		<idno type="ISSN">0162-4105, 1758-0463</idno>
+		<idno type="ISSNe">1758-0463</idno>
+		<imprint>
+			<biblScope unit="volume">2016</biblScope>
+			<biblScope unit="page">baw068</biblScope>
+			<date type="published" when="2016-05">May 2016</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jiao Li, Yueping Sun, Robin J Johnson, Daniela Sciaky, Chih-Hsuan Wei, Robert Leaman, Allan Peter Davis, Carolyn J Mattingly, Thomas C Wiegers, and Zhiyong Lu. BioCreative V CDR task corpus: a resource for chemical disease relation extraction. Database, May 2016. ISSN 0162-4105, 1758-0463. doi:10.1093/database/baw068.</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">Medical subject headings (MeSH)</title>
+		<author>
+			<persName><forename type="first">C E</forename><surname>Lipscomb</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Bull. Med. Libr. Assoc</title>
+		<idno type="ISSN">0025-7338</idno>
+		<imprint>
+			<biblScope unit="volume">88</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="265" to="266" />
+			<date type="published" when="2000-07">July 2000</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C E Lipscomb. Medical subject headings (MeSH). Bull. Med. Libr. Assoc., 88(3):265-266, July 2000. ISSN 0025-7338.</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">ChEBI in 2016: Improved services and an expanding collection of metabolites</title>
+		<author>
+			<persName><forename type="first">Janna</forename><surname>Hastings</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gareth</forename><surname>Owen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adriano</forename><surname>Dekker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marcus</forename><surname>Ennis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Namrata</forename><surname>Kale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Venkatesh</forename><surname>Muthukrishnan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steve</forename><surname>Turner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Neil</forename><surname>Swainston</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pedro</forename><surname>Mendes</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christoph</forename><surname>Steinbeck</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gkv1031</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<title level="j" type="abbrev">Nucleic Acids Res</title>
+		<idno type="ISSN">0305-1048</idno>
+		<idno type="ISSNe">1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">44</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="D1214" to="D1219" />
+			<date type="published" when="2016-01">January 2016</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Janna Hastings, Gareth Owen, Adriano Dekker, Marcus Ennis, Namrata Kale, Venkatesh Muthukrishnan, Steve Turner, Neil Swainston, Pedro Mendes, and Christoph Steinbeck. ChEBI in 2016: Improved services and an expanding collection of metabolites. Nucleic Acids Res., 44(D1):D1214-9, January 2016. ISSN 0305-1048, 1362-4962. doi:10.1093/nar/gkv1031.</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">DrugBank 5.0: a major update to the DrugBank database for 2018</title>
+		<author>
+			<persName><surname>David S Wishart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Yannick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">An</forename><forename type="middle">C</forename><surname>Feunang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elvis</forename><forename type="middle">J</forename><surname>Guo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ana</forename><surname>Lo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><forename type="middle">R</forename><surname>Marcu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tanvir</forename><surname>Grant</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Sajed</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carin</forename><surname>Johnson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zinat</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nazanin</forename><surname>Sayeeda</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ithayavani</forename><surname>Assempour</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yifeng</forename><surname>Iynkkaran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicola</forename><surname>Maciejewski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Gale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lucy</forename><surname>Wilson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Chin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diana</forename><surname>Cummings</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Allison</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Craig</forename><surname>Pon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Knox</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Wilson</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gkx1037</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Res</title>
+		<idno type="ISSN">0305-1048</idno>
+		<imprint>
+			<biblScope unit="volume">46</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="1074" to="D1082" />
+			<date type="published" when="2018-01">January 2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">David S Wishart, Yannick D Feunang, An C Guo, Elvis J Lo, Ana Marcu, Jason R Grant, Tanvir Sajed, Daniel Johnson, Carin Li, Zinat Sayeeda, Nazanin Assempour, Ithayavani Iynkkaran, Yifeng Liu, Adam Maciejewski, Nicola Gale, Alex Wilson, Lucy Chin, Ryan Cummings, Diana Le, Allison Pon, Craig Knox, and Michael Wilson. DrugBank 5.0: a major update to the DrugBank database for 2018. Nucleic Acids Res., 46(D1):D1074-D1082, January 2018. ISSN 0305-1048. doi:10.1093/nar/gkx1037.</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">The medical dictionary for regulatory activities (MedDRA)</title>
+		<author>
+			<persName><forename type="first">Louise</forename><surname>Elliot G Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sue</forename><surname>Wood</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Wood</surname></persName>
+		</author>
+		<idno type="DOI">10.2165/00002018-199920020-00002</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Drug Saf</title>
+		<idno type="ISSN">0114-5916</idno>
+		<imprint>
+			<biblScope unit="volume">20</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="109" to="117" />
+			<date type="published" when="1999">1999</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Elliot G Brown, Louise Wood, and Sue Wood. The medical dictionary for regulatory activities (MedDRA). Drug Saf., 20(2):109-117, 1999. ISSN 0114-5916. doi:10.2165/00002018-199920020-00002.</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Progress toward a universal biomedical data translator</title>
+		<author>
+			<persName><forename type="first">Karamarie</forename><surname>Fecho</surname></persName>
+			<idno type="ORCID">0000-0002-6704-9306</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Anne</forename><forename type="middle">E</forename><surname>Thessen</surname></persName>
+			<idno type="ORCID">0000-0002-2908-3327</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Sergio</forename><forename type="middle">E</forename><surname>Baranzini</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Bizon</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Jennifer</forename><forename type="middle">J</forename><surname>Hadlock</surname></persName>
+			<idno type="ORCID">0000-0001-6103-7606</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Sui</forename><surname>Huang</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><forename type="middle">T</forename><surname>Roper</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Noel</forename><surname>Southall</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Casey</forename><surname>Ta</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Paul</forename><forename type="middle">B</forename><surname>Watkins</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><forename type="middle">D</forename><surname>Williams</surname></persName>
+			<idno type="ORCID">0000-0001-8020-916X</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Xu</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Byrd</surname></persName>
+			<idno type="ORCID">0000-0003-4730-5293</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Vlado</forename><surname>Dančík</surname></persName>
+			<idno type="ORCID">0000-0002-5970-6660</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Marc</forename><forename type="middle">P</forename><surname>Duby</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Michel</forename><surname>Dumontier</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Gustavo</forename><surname>Glusman</surname></persName>
+			<idno type="ORCID">0000-0001-8060-5955</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+			<idno type="ORCID">0000-0001-6315-3707</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Eugene</forename><forename type="middle">W</forename><surname>Hinderer</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Hyde</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Johs</surname></persName>
+			<idno type="ORCID">0000-0001-7570-4326</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><forename type="middle">I</forename><surname>Su</surname></persName>
+			<idno type="ORCID">0000-0002-9859-4104</idno>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Guangrong</forename><surname>Qin</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<author>
+			<persName><forename type="first">Qian</forename><surname>Zhu</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">Biomedical Data Translator Consortium</orgName>
+			</affiliation>
+		</author>
+		<idno type="DOI">10.1111/cts.13301</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Clinical and Translational Science</title>
+		<title level="j" type="abbrev">Clinical Translational Sci</title>
+		<idno type="ISSN">1752-8054</idno>
+		<idno type="ISSNe">1752-8062</idno>
+		<imprint>
+			<biblScope unit="volume">15</biblScope>
+			<biblScope unit="issue">8</biblScope>
+			<biblScope unit="page" from="1838" to="1847" />
+			<date type="published" when="2022-05">May 2022</date>
+			<publisher>Wiley</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Karamarie Fecho, Anne T Thessen, Sergio E Baranzini, Chris Bizon, Jennifer J Hadlock, Sui Huang, Ryan T Roper, Noel Southall, Casey Ta, Paul B Watkins, Mark D Williams, Hao Xu, William Byrd, Vlado Dančík, Marc P Duby, Michel Dumontier, Gustavo Glusman, Nomi L Harris, Eugene W Hinderer, Greg Hyde, Adam Johs, Andrew Su, Guangrong Qin, Qian Zhu, and Biomedical Data Translator Consortium. Progress toward a universal biomedical data translator. Clin. Transl. Sci., May 2022. ISSN 1752-8054, 1752-8062. doi:10.1111/cts.13301.</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<monogr>
+		<title/>
+		<author>
+			<persName><surname>Deepak R Unni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A T</forename><surname>Sierra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Moxon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Bada</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Brush</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Bruskiewich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Paul</forename><forename type="middle">A</forename><surname>Harry Caufield</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vlado</forename><surname>Clemons</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michel</forename><surname>Dancik</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karamarie</forename><surname>Dumontier</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gustavo</forename><surname>Fecho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jennifer</forename><forename type="middle">J</forename><surname>Glusman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Hadlock</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arpita</forename><surname>Harris</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Joshi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guangrong</forename><surname>Putman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stephen</forename><forename type="middle">A</forename><surname>Qin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kent</forename><forename type="middle">A</forename><surname>Ramsey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harold</forename><surname>Shefchek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karthik</forename><surname>Solbrig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anne</forename><forename type="middle">E</forename><surname>Soman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Thessen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Haendel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Bizon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liliana</forename><surname>Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stanley</forename><forename type="middle">C</forename><surname>Acevedo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Ahalt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmed</forename><surname>Alden</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nada</forename><surname>Alkanaq</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ricardo</forename><surname>Amin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jim</forename><surname>Avila</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sergio</forename><forename type="middle">E</forename><surname>Balhoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Baranzini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Baumgartner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Basazin</forename><surname>Baumgartner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mackenzie</forename><surname>Belhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Namdi</forename><surname>Brandes</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noel</forename><surname>Brandon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Burtt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jackson</forename><surname>Byrd</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marco</forename><forename type="middle">Alvarado</forename><surname>Callaghan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steven</forename><surname>Cano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Remzi</forename><surname>Carrell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Celebi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhehuan</forename><surname>Champion</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mei-Jan</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lawrence</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Cohen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Conlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maria</forename><surname>Corkill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steven</forename><surname>Costanzo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Cox</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Camerron</forename><surname>Crouse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mary</forename><forename type="middle">E</forename><surname>Crowder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cheng</forename><surname>Crumbley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vlado</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ricardo</forename><surname>Dančík</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Miranda</forename><surname>De</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Azevedo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jennifer</forename><surname>Deutsch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marc</forename><forename type="middle">P</forename><surname>Dougherty</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Venkata</forename><surname>Duby</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stephen</forename><surname>Duvvuri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Edwards</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nathaniel</forename><surname>Emonet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Fehrmann</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Flannick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Aleksandra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vicki</forename><surname>Foksinska</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edgar</forename><surname>Gardner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amy</forename><surname>Gatica</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Prateek</forename><surname>Glen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><surname>Goel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alon</forename><surname>Gormley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Perry</forename><surname>Greyber</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kristina</forename><surname>Haaland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kaiwen</forename><surname>Hanspers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kaiwen</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eugene</forename><forename type="middle">W</forename><surname>Henrickson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maureen</forename><surname>Hinderer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Hoatlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sui</forename><surname>Hoffman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Conrad</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kenneth</forename><surname>Hubal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Forest</forename><forename type="middle">B</forename><surname>Huellas-Bruskiewicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lawrence</forename><surname>Huls</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Hunter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tursynay</forename><surname>Hyde</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Issabekova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lindsay</forename><surname>Jarrell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Jenkins</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jimin</forename><surname>Johs</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richa</forename><surname>Kang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yaphet</forename><surname>Kanwar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keum Joo</forename><surname>Kebede</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexandria</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Kluge</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Knowles</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Koesterer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Korn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ashok</forename><surname>Koslicki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lindsey</forename><surname>Krishnamurthy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jay</forename><surname>Kvarfordt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Margaret</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Leigh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zheng</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shaopeng</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chunyu</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tarun</forename><surname>Magis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Meisha</forename><surname>Mamidi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michelle</forename><surname>Mandal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Mantilla</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Denise</forename><surname>Massung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Mauldin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julie</forename><surname>Mcclelland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Philip</forename><surname>Mcmurry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luis</forename><surname>Mease</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marian</forename><surname>Mendoza</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abrar</forename><surname>Mersmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Mesbah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kenny</forename><surname>Might</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sandrine</forename><surname>Morton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arun</forename><surname>Muller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Teja Muluka</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Phil</forename><surname>Osborne</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Owen</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Patton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>David B Peden</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bria</forename><surname>Carter Peene</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emily</forename><surname>Persaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Pfaff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elizabeth</forename><surname>Pico</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guthrie</forename><surname>Pollard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shruti</forename><surname>Price</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Raj</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anders</forename><surname>Reilly</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jared</forename><surname>Riutta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><forename type="middle">T</forename><surname>Roach</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Roper</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Irit</forename><surname>Rosenblatt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sienna</forename><surname>Rubin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nathaniel</forename><surname>Rucka</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rayn</forename><surname>Rudavsky-Brody</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eugene</forename><surname>Sakaguchi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Santos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Charles</forename><forename type="middle">P</forename><surname>Schaper</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shepherd</forename><surname>Schmitt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Erik</forename><surname>Schurman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sarah</forename><surname>Scott</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Priya</forename><surname>Seitanakis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ilya</forename><surname>Sharma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manil</forename><surname>Shmulevich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shalki</forename><surname>Shrestha</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Shrivastava</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Meghamala</surname></persName>
+		</author>
+		<idno type="DOI">10.1111/cts.13302</idno>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">Deepak R Unni, Sierra A T Moxon, Michael Bada, Matthew Brush, Richard Bruskiewich, J Harry Caufield, Paul A Clemons, Vlado Dancik, Michel Dumontier, Karamarie Fecho, Gustavo Glusman, Jennifer J Hadlock, Nomi L Harris, Arpita Joshi, Tim Putman, Guangrong Qin, Stephen A Ramsey, Kent A Shefchek, Harold Solbrig, Karthik Soman, Anne E Thessen, Melissa A Haendel, Chris Bizon, Christopher J Mungall, Liliana Acevedo, Stanley C Ahalt, John Alden, Ahmed Alkanaq, Nada Amin, Ricardo Avila, Jim Balhoff, Sergio E Baranzini, Andrew Baumgartner, William Baumgartner, Basazin Belhu, Mackenzie Brandes, Namdi Brandon, Noel Burtt, William Byrd, Jackson Callaghan, Marco Alvarado Cano, Steven Carrell, Remzi Celebi, James Champion, Zhehuan Chen, Mei-Jan Chen, Lawrence Chung, Kevin Cohen, Tom Conlin, Dan Corkill, Maria Costanzo, Steven Cox, Andrew Crouse, Camerron Crowder, Mary E Crumbley, Cheng Dai, Vlado Dančík, Ricardo De Miranda Azevedo, Eric Deutsch, Jennifer Dougherty, Marc P Duby, Venkata Duvvuri, Stephen Edwards, Vincent Emonet, Nathaniel Fehrmann, Jason Flannick, Aleksandra M Foksinska, Vicki Gardner, Edgar Gatica, Amy Glen, Prateek Goel, Joseph Gormley, Alon Greyber, Perry Haaland, Kristina Hanspers, Kaiwen He, Kaiwen He, Jeff Henrickson, Eugene W Hinderer, Maureen Hoatlin, Andrew Hoffman, Sui Huang, Conrad Huang, Robert Hubal, Kenneth Huellas-Bruskiewicz, Forest B Huls, Lawrence Hunter, Greg Hyde, Tursynay Issabekova, Matthew Jarrell, Lindsay Jenkins, Adam Johs, Jimin Kang, Richa Kanwar, Yaphet Kebede, Keum Joo Kim, Alexandria Kluge, Michael Knowles, Ryan Koesterer, Daniel Korn, David Koslicki, Ashok Krishnamurthy, Lindsey Kvarfordt, Jay Lee, Margaret Leigh, Jason Lin, Zheng Liu, Shaopeng Liu, Chunyu Ma, Andrew Magis, Tarun Mamidi, Meisha Mandal, Michelle Mantilla, Jeffrey Massung, Denise Mauldin, Jason McClelland, Julie McMurry, Philip Mease, Luis Mendoza, Marian Mersmann, Abrar Mesbah, Matthew Might, Kenny Morton, Sandrine Muller, Arun Teja Muluka, John Osborne, Phil Owen, Michael Patton, David B Peden, R Carter Peene, Bria Persaud, Emily Pfaff, Alexander Pico, Elizabeth Pollard, Guthrie Price, Shruti Raj, Jason Reilly, Anders Riutta, Jared Roach, Ryan T Roper, Greg Rosenblatt, Irit Rubin, Sienna Rucka, Nathaniel Rudavsky-Brody, Rayn Sakaguchi, Eugene Santos, Kevin Schaper, Charles P Schmitt, Shepherd Schurman, Erik Scott, Sarah Seitanakis, Priya Sharma, Ilya Shmulevich, Manil Shrestha, Shalki Shrivastava, Meghamala Sinha, Brett Smith, Noel Southall, Nicholas Southern, Lisa Stillwell, Michael &quot; Michi&quot; Strasser, Andrew I Su, Casey Ta, Anne E Thessen, Jillian Tinglin, Lucas Tonstad, Thi Tran-Nguyen, Alexander Tropsha, Gaurav Vaidya, Luke Veenhuis, Adam Viola, Marcin Grotthuss, Max Wang, Patrick Wang, Paul B Watkins, Rosina Weber, Qi Wei, Chunhua Weng, Jordan Whitlock, Mark D Williams, Andrew Williams, Finn Womack, Erica Wood, Chunlei Wu, Jiwen Kevin Xin, Hao Xu, Colleen Xu, Chase Yakaboski, Yao Yao, Hong Yi, Arif Yilmaz, Marissa Zheng, Xinghua Zhou, Eric Zhou, Qian Zhu, Tom Zisk, and The Biomedical Data Translator Consortium. Biolink model: A universal schema for knowledge graphs in clinical, biomedical, and translational science. Clin. Transl. Sci., June 2022. ISSN 1752-8054, 1752-8062. doi:10.1111/cts.13302.</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<monogr>
+		<author>
+			<persName><surname>Openai</surname></persName>
+		</author>
+		<ptr target="https://platform.openai.com/docs/models" />
+		<title level="m">OpenAI API</title>
+		<imprint>
+			<date type="published" when="2023-03-27">2023. 2023-3-27</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">OpenAI. OpenAI API. https://platform.openai.com/docs/models, 2023. Accessed: 2023-3-27.</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">BioPortal: enhanced functionality via new Web services from the National Center for Biomedical Ontology to access and use ontologies in software applications</title>
+		<author>
+			<persName><forename type="first">P L</forename><forename type="middle">L</forename><surname>Whetzel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N F</forename><forename type="middle">F</forename><surname>Noy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N H</forename><forename type="middle">H</forename><surname>Shah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P R</forename><forename type="middle">R</forename><surname>Alexander</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Nyulas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Tudorache</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M A</forename><forename type="middle">A</forename><surname>Musen</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gkr469</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<title level="j" type="abbrev">Nucleic Acids Research</title>
+		<idno type="ISSN">0305-1048</idno>
+		<idno type="ISSNe">1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">39</biblScope>
+			<biblScope unit="issue">suppl</biblScope>
+			<biblScope unit="page" from="W541" to="W545" />
+			<date type="published" when="2011-07">July 2011</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note>suppl</note>
+	<note type="raw_reference">P L Whetzel, N F Noy, N H Shah, P R Alexander, C Nyulas, T Tudorache, and M A Musen. BioPortal: enhanced functionality via new web services from the national center for biomedical ontology to access and use ontologies in software applications. Nucleic Acids Res., 39(suppl):W541-W545, July 2011. ISSN 0305-1048. doi:10.1093/nar/gkr469.</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">AgroPortal: A vocabulary and ontology repository for agronomy</title>
+		<author>
+			<persName><forename type="first">Clément</forename><surname>Jonquet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anne</forename><surname>Toulet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elizabeth</forename><surname>Arnaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sophie</forename><surname>Aubin</surname></persName>
+			<idno type="ORCID">0000-0002-2404-1582</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Esther</forename><surname>Dzalé Yeumo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Emonet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Graybeal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marie-Angélique</forename><surname>Laporte</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><forename type="middle">A</forename><surname>Musen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Valeria</forename><surname>Pesce</surname></persName>
+			<idno type="ORCID">0000-0003-4805-8220</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Pierre</forename><surname>Larmande</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.compag.2017.10.012</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Computers and Electronics in Agriculture</title>
+		<title level="j" type="abbrev">Computers and Electronics in Agriculture</title>
+		<idno type="ISSN">0168-1699</idno>
+		<imprint>
+			<biblScope unit="volume">144</biblScope>
+			<biblScope unit="page" from="126" to="143" />
+			<date type="published" when="2018-01">January 2018</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Clément Jonquet, Anne Toulet, Elizabeth Arnaud, Sophie Aubin, Esther Dzalé Yeumo, Vincent Emonet, John Graybeal, Marie-Angélique Laporte, Mark A Musen, Valeria Pesce, and Pierre Larmande. AgroPortal: A vocabulary and ontology repository for agronomy. Comput. Electron. Agric., 144:126-143, January 2018. ISSN 0168-1699. doi:10.1016/j.compag.2017.10.012.</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">ROBOT: A Tool for Automating Ontology Workflows</title>
+		<author>
+			<persName><forename type="first">Rebecca</forename><forename type="middle">C</forename><surname>Jackson</surname></persName>
+			<idno type="ORCID">0000-0003-4871-5569</idno>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><forename type="middle">P</forename><surname>Balhoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Douglass</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><forename type="middle">A</forename><surname>Overton</surname></persName>
+		</author>
+		<idno type="DOI">10.1186/s12859-019-3002-3</idno>
+	</analytic>
+	<monogr>
+		<title level="j">BMC Bioinformatics</title>
+		<title level="j" type="abbrev">BMC Bioinformatics</title>
+		<idno type="ISSN">1471-2105</idno>
+		<imprint>
+			<biblScope unit="volume">20</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page">407</biblScope>
+			<date type="published" when="2019-07-29">July 2019</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rebecca C Jackson, James P Balhoff, Eric Douglass, Nomi L Harris, Christopher J Mungall, and James A Overton. ROBOT: A tool for automating ontology workflows. BMC Bioinformatics, 20(1):407, July 2019. ISSN 1471-2105. doi:10.1186/s12859-019-3002-3.</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Dead simple OWL design patterns</title>
+		<author>
+			<persName><forename type="first">David</forename><surname>Osumi-Sutherland</surname></persName>
+			<idno type="ORCID">0000-0002-7073-9172</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Melanie</forename><surname>Courtot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><forename type="middle">P</forename><surname>Balhoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Mungall</surname></persName>
+		</author>
+		<idno type="DOI">10.1186/s13326-017-0126-0</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Biomedical Semantics</title>
+		<title level="j" type="abbrev">J Biomed Semant</title>
+		<idno type="ISSN">2041-1480</idno>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page">18</biblScope>
+			<date type="published" when="2017-06-05">2017</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">David Osumi-Sutherland, Melanie Courtot, James P Balhoff, and Christopher Mungall. Dead simple OWL design patterns. J. Biomed. Semantics, 8(1):18, 2017. ISSN 2041-1480. doi:10.1186/s13326-017-0126-0.</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<monogr>
+		<title level="m" type="main">Generating ontologies from templates: A Rule-Based approach for capturing regularity</title>
+		<author>
+			<persName><forename type="first">Christian</forename><surname>Kindermann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Uli</forename><surname>Daniel P Lupp</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evgenij</forename><surname>Sattler</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Thorstensen</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.1809.10436</idno>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Christian Kindermann, Daniel P Lupp, Uli Sattler, and Evgenij Thorstensen. Generating ontologies from templates: A Rule-Based approach for capturing regularity. arXiv, page 13, 2018. doi:10.48550/arXiv.1809.10436.</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">The linked data modeling language (LinkML): A General-Purpose data modeling framework grounded in Machine-Readable semantics</title>
+		<author>
+			<persName><forename type="first">Sierra</forename><surname>Moxon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harold</forename><surname>Solbrig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Deepak</forename><surname>Unni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dazhi</forename><surname>Jiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Bruskiewich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Balhoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gaurav</forename><surname>Vaidya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Duncan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harshad</forename><surname>Hegde</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Others</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">CEUR Workshop Proceedings</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="volume">3073</biblScope>
+			<biblScope unit="page" from="148" to="151" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sierra Moxon, Harold Solbrig, Deepak Unni, Dazhi Jiao, Richard Bruskiewich, James Balhoff, Gaurav Vaidya, William Duncan, Harshad Hegde, Mark Miller, and Others. The linked data modeling language (LinkML): A General-Purpose data modeling framework grounded in Machine-Readable semantics. In CEUR Workshop Proceedings, volume 3073, pages 148-151, 2021.</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">A Review of SHACL: From Data Validation to Schema Reasoning for RDF Graphs</title>
+		<author>
+			<persName><forename type="first">Paolo</forename><surname>Pareti</surname></persName>
+			<idno type="ORCID">0000-0002-2502-0011</idno>
+		</author>
+		<author>
+			<persName><forename type="first">George</forename><surname>Konstantinidis</surname></persName>
+			<idno type="ORCID">0000-0002-3962-9303</idno>
+		</author>
+		<idno type="DOI">10.1007/978-3-030-95481-9_6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page" from="115" to="144" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Paolo Pareti and George Konstantinidis. A review of SHACL: From data validation to schema reasoning for RDF graphs. In Reasoning Web. Declarative Artificial Intelligence, pages 115-144. Springer International Publishing, 2022. doi:10.1007/978-3-030-95481-9_6.</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">The JSON Schema: JSON Structure Validation</title>
+		<author>
+			<persName><forename type="first">Wallace</forename><surname>Jackson</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-1-4842-1863-1_3</idno>
+		<ptr target="http://json-schema.org/" />
+	</analytic>
+	<monogr>
+		<title level="m">JSON Quick Syntax Reference</title>
+		<imprint>
+			<publisher>Apress</publisher>
+			<date type="published" when="2022">2022. 2023-3-28</date>
+			<biblScope unit="page" from="21" to="29" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">JSON schema. http://json-schema.org/, 2022. Accessed: 2023-3-28.</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<monogr>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Harshad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Charles</forename><forename type="middle">Tapley</forename><surname>Kalita</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sujay</forename><surname>Hoyt</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Patil</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joe</forename><surname>Marcin P Joachimiak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Flack</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Linke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sierra</forename><surname>Deepak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nico</forename><surname>Moxon</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Matentzoglu</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Vinícius De Souza</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harry</forename><surname>Glass</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jules</forename><surname>Caufield</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Justin</forename><surname>Jacobsen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><surname>Reese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shawn</forename><surname>Harris</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Tan</surname></persName>
+		</author>
+		<ptr target="https://github.com/INCATools/ontology-access-kit" />
+		<title level="m">INCATools/ontology-access-kit: v0.2.1</title>
+		<imprint>
+			<date type="published" when="2023-03">March 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chris Mungall, Harshad, Patrick Kalita, Charles Tapley Hoyt, Sujay Patil, Marcin p Joachimiak, Joe Flack, David Linke, Deepak, Sierra Moxon, Nico Matentzoglu, Vinícius de Souza, Glass, Harry Caufield, Jules Jacobsen, Justin Reese, Nomi Harris, and Shawn Tan. INCATools/ontology-access-kit: v0.2.1. https://github.com/ INCATools/ontology-access-kit, March 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">The open biomedical annotator</title>
+		<author>
+			<persName><forename type="first">Clement</forename><surname>Jonquet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Nigam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><forename type="middle">A</forename><surname>Shah</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Musen</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Summit Transl Bioinform</title>
+		<idno type="ISSN">2153-6430</idno>
+		<imprint>
+			<biblScope unit="page" from="56" to="60" />
+			<date type="published" when="2009-03">2009. March 2009</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Clement Jonquet, Nigam H Shah, and Mark A Musen. The open biomedical annotator. Summit Transl Bioinform, 2009:56-60, March 2009. ISSN 2153-6430.</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<monogr>
+		<title level="m" type="main">A new ontology lookup service at EMBL-EBI</title>
+		<author>
+			<persName><forename type="first">Simon</forename><surname>Jupp</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tony</forename><surname>Burdett</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Malone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Catherine</forename><surname>Leroy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matt</forename><surname>Pearce</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julie</forename><surname>Mcmurry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Helen</forename><surname>Parkinson</surname></persName>
+		</author>
+		<ptr target="http://ceur-ws.org/Vol-1546/paper_29.pdf" />
+		<imprint>
+			<date type="published" when="2015">2015. 2023-1-3</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Simon Jupp, Tony Burdett, James Malone, Catherine Leroy, Matt Pearce, Julie Mcmurry, and Helen Parkin- son. A new ontology lookup service at EMBL-EBI. http://ceur-ws.org/Vol-1546/paper_29.pdf, 2015. Accessed: 2023-1-3.</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<monogr>
+		<title level="m" type="main">linkml/linkml-owl: v0.2.4</title>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sujay</forename><surname>Patil</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><surname>Harris</surname></persName>
+		</author>
+		<ptr target="https://zenodo.org/record/7384531" />
+		<imprint>
+			<date type="published" when="2022-12">December 2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chris Mungall, Sujay Patil, and Nomi Harris. linkml/linkml-owl: v0.2.4. https://zenodo.org/record/ 7384531, December 2022.</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Session WP2A: SOC outreach workshop panel</title>
+		<author>
+			<persName><forename type="first">Yevgeny</forename><surname>Kazakov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pavel</forename><surname>Klinov</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/socc.2015.7406914</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2015 28th IEEE International System-on-Chip Conference (SOCC)</title>
+		<editor>
+			<persName><forename type="first">Diego</forename><surname>Calvanese</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Boris</forename><surname>Konev</surname></persName>
+		</editor>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2015-09">2015. 2015</date>
+			<biblScope unit="page" from="1" to="1" />
+		</imprint>
+	</monogr>
+	<note>CEUR Workshop Proceedings</note>
+	<note type="raw_reference">Yevgeny Kazakov and Pavel Klinov. Advancing ELK: Not only performance matters. In Diego Calvanese and Boris Konev, editors, Proceedings of the 28th International Workshop on Description Logics (DL-15). CEUR Workshop Proceedings 2015., 2015.</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">Effects of cromakalim and pinacidil on large epicardial and small coronary arteries in conscious dogs.</title>
+		<author>
+			<persName><forename type="first">J F</forename><forename type="middle">F</forename><surname>Giudicelli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">D</forename><surname>La Rochelle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Berdeaux</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/s0022-3565(25)23051-8</idno>
+	</analytic>
+	<monogr>
+		<title level="j">The Journal of Pharmacology and Experimental Therapeutics</title>
+		<title level="j" type="abbrev">The Journal of Pharmacology and Experimental Therapeutics</title>
+		<idno type="ISSN">0022-3565</idno>
+		<imprint>
+			<biblScope unit="volume">255</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="836" to="842" />
+			<date type="published" when="1990-11">November 1990</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">J F Giudicelli, C D la Rochelle, and A Berdeaux. Effects of cromakalim and pinacidil on large epicardial and small coronary arteries in conscious dogs. J. Pharmacol. Exp. Ther., 255(2):836-842, November 1990. ISSN 0022-3565.</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">Long-term lithium therapy leading to hyperparathyroidism: a case report</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Mian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nancy</forename><forename type="middle">D</forename><surname>Rizwan</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Perrier</surname></persName>
+		</author>
+		<idno type="DOI">10.1111/j.1744-6163.2009.00201.x</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Perspect. Psychiatr. Care</title>
+		<idno type="ISSN">0031-5990, 1744-6163</idno>
+		<imprint>
+			<biblScope unit="volume">45</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="62" to="65" />
+			<date type="published" when="2009-01">January 2009</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mian M Rizwan and Nancy D Perrier. Long-term lithium therapy leading to hyperparathyroidism: a case report. Perspect. Psychiatr. Care, 45(1):62-65, January 2009. ISSN 0031-5990, 1744-6163. doi:10.1111/j.1744- 6163.2009.00201.x.</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Risk of transient hyperammonemic encephalopathy in cancer patients who received continuous infusion of 5-fluorouracil with the complication of dehydration and infection</title>
+		<author>
+			<persName><forename type="first">Chuang-Chi</forename><surname>Liaw</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hung-Ming</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cheng-Hsu</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tsai-Shen</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jen-Shi</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hsien-Khun</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yung-Chang</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiumn-Jen</forename><surname>Liaw</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chau-Ting</forename><surname>Yeh</surname></persName>
+		</author>
+		<idno type="DOI">10.1097/00001813-199903000-00004</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Anti-Cancer Drugs</title>
+		<title level="j" type="abbrev">Anti-Cancer Drugs</title>
+		<idno type="ISSN">0959-4973</idno>
+		<imprint>
+			<biblScope unit="volume">10</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="275" to="281" />
+			<date type="published" when="1999-03">March 1999</date>
+			<publisher>Ovid Technologies (Wolters Kluwer Health)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C C Liaw, H M Wang, C H Wang, T S Yang, J S Chen, H K Chang, Y C Lin, S J Liaw, and C T Yeh. Risk of transient hyperammonemic encephalopathy in cancer patients who received continuous infusion of 5-fluorouracil with the complication of dehydration and infection. Anticancer Drugs, 10(3):275-281, March 1999. ISSN 0959-4973. doi:10.1097/00001813-199903000-00004.</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">UTH-CCB: The Participation of the SemEval 2015 Challenge – Task 14</title>
+		<author>
+			<persName><forename type="first">Jun</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yaoyun</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jingqi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yonghui</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Min</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ergin</forename><surname>Soysal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hua</forename><surname>Xu</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/s15-2052</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 9th International Workshop on Semantic Evaluation (SemEval 2015)</title>
+		<meeting>the 9th International Workshop on Semantic Evaluation (SemEval 2015)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2015-07">July 2015</date>
+			<biblScope unit="page" from="311" to="314" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jun Xu, Yonghui Wu, Yaoyun Zhang, Jingqi Wang, Ruiling Liu, Qiang Wei, and Hua Xu. UTH-CCB@BioCreative V CDR task: Identifying chemical-induced disease relations in biomedical text. In Proceedings of the Fifth BioCreative Challenge Evaluation Workshop, pages 254-259, July 2015.</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<monogr>
+		<title level="m" type="main">Structured information extraction from complex scientific text with fine-tuned large language models</title>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Dunn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Dagdelen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicholas</forename><surname>Walker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sanghoon</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gerbrand</forename><surname>Andrew S Rosen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kristin</forename><surname>Ceder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anubhav</forename><surname>Persson</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Jain</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2212.05238</idno>
+		<imprint>
+			<date type="published" when="2022-12">December 2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Alexander Dunn, John Dagdelen, Nicholas Walker, Sanghoon Lee, Andrew S Rosen, Gerbrand Ceder, Kristin Persson, and Anubhav Jain. Structured information extraction from complex scientific text with fine-tuned large language models. arXiv, December 2022. doi:10.48550/arXiv.2212.05238.</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<analytic>
+		<title level="a" type="main">LLMs4OL: Large Language Models for Ontology Learning</title>
+		<author>
+			<persName><forename type="first">Hamed</forename><surname>Babaei Giglou</surname></persName>
+			<idno type="ORCID">0000-0003-3758-1454</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jennifer</forename><surname>D’souza</surname></persName>
+			<idno type="ORCID">0000-0002-6616-9509</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Sören</forename><surname>Auer</surname></persName>
+			<idno type="ORCID">0000-0002-0698-2864</idno>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-47240-4_22</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="408" to="427" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hamed Babaei Giglou, Jennifer D&apos;Souza, and Sören Auer. LLMs4OL: Large language models for ontology learning. In The Semantic Web -ISWC 2023, pages 408-427. Springer Nature Switzerland, 2023. doi:10.1007/978- 3-031-47240-4_22.</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<monogr>
+		<title level="m" type="main">MapperGPT: Large language models for linking and mapping entities</title>
+		<author>
+			<persName><forename type="first">Nicolas</forename><surname>Matentzoglu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Harry Caufield</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Harshad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Justin</forename><forename type="middle">T</forename><surname>Hegde</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sierra</forename><surname>Reese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hyeongsik</forename><surname>Moxon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Harris</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Haendel</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Mungall</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2310.03666</idno>
+		<imprint>
+			<date type="published" when="2023-10">October 2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Nicolas Matentzoglu, J Harry Caufield, Harshad B Hegde, Justin T Reese, Sierra Moxon, Hyeongsik Kim, Nomi L Harris, Melissa A Haendel, and Christopher J Mungall. MapperGPT: Large language models for linking and mapping entities. arXiv, October 2023. doi:10.48550/arXiv.2310.03666.</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<monogr>
+		<title level="m" type="main">Agent-OM: Leveraging large language models for ontology matching</title>
+		<author>
+			<persName><forename type="first">Zhangcheng</forename><surname>Qiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weiqing</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kerry</forename><surname>Taylor</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2312.00326</idno>
+		<imprint>
+			<date type="published" when="2023-12">December 2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Zhangcheng Qiang, Weiqing Wang, and Kerry Taylor. Agent-OM: Leveraging large language models for ontology matching. arXiv, December 2023. doi:10.48550/arXiv.2312.00326.</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<analytic>
+		<title level="a" type="main">On the Dangers of Stochastic Parrots</title>
+		<author>
+			<persName><forename type="first">Emily</forename><forename type="middle">M</forename><surname>Bender</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Timnit</forename><surname>Gebru</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angelina</forename><surname>Mcmillan-Major</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shmargaret</forename><surname>Shmitchell</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3442188.3445922</idno>
+		<ptr target="https://doi.org/10.1145/3442188.3445922" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency</title>
+		<meeting>the 2021 ACM Conference on Fairness, Accountability, and Transparency<address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2021-03">2021</date>
+			<biblScope unit="page" from="610" to="623" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Emily M. Bender, Timnit Gebru, Angelina McMillan-Major, and Shmargaret Shmitchell. On the dangers of stochastic parrots: Can language models be too big? In Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency, FAccT &apos;21, page 610-623, New York, NY, USA, 2021. Association for Computing Machinery. ISBN 9781450383097. doi:10.1145/3442188.3445922. URL https://doi.org/10. 1145/3442188.3445922.</note>
+</biblStruct>
+
+<biblStruct xml:id="b50">
+	<monogr>
+		<title level="m" type="main">Llama: Open and efficient foundation language models</title>
+		<author>
+			<persName><forename type="first">Hugo</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thibaut</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gautier</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xavier</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marie-Anne</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Timothée</forename><surname>Lacroix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Baptiste</forename><surname>Rozière</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Naman</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Hambro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Faisal</forename><surname>Azhar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aurelien</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Armand</forename><surname>Joulin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edouard</forename><surname>Grave</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guillaume</forename><surname>Lample</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2302.13971</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, and Guillaume Lample. Llama: Open and efficient foundation language models. arXiv, 2023. doi:10.48550/arXiv.2302.13971.</note>
+</biblStruct>
+
+<biblStruct xml:id="b51">
+	<monogr>
+		<title level="m" type="main">Llama-adapter: Efficient fine-tuning of language models with zero-init attention</title>
+		<author>
+			<persName><forename type="first">Renrui</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiaming</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aojun</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiangfei</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shilin</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pan</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongsheng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Qiao</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2303.16199</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Renrui Zhang, Jiaming Han, Aojun Zhou, Xiangfei Hu, Shilin Yan, Pan Lu, Hongsheng Li, Peng Gao, and Yu Qiao. Llama-adapter: Efficient fine-tuning of language models with zero-init attention. arXiv, 2023. doi:10.48550/arXiv.2303.16199.</note>
+</biblStruct>
+
+<biblStruct xml:id="b52">
+	<monogr>
+		<title level="m" type="main">BioMedGPT: Open multimodal generative pre-trained transformer for BioMedicine</title>
+		<author>
+			<persName><forename type="first">Yizhen</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiahuan</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siqi</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yushuai</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mu</forename><surname>Qiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zaiqing</forename><surname>Nie</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2308.09442</idno>
+		<imprint>
+			<date type="published" when="2023-08">August 2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Yizhen Luo, Jiahuan Zhang, Siqi Fan, Kai Yang, Yushuai Wu, Mu Qiao, and Zaiqing Nie. BioMedGPT: Open mul- timodal generative pre-trained transformer for BioMedicine. arXiv, August 2023. doi:10.48550/arXiv.2308.09442.</note>
+</biblStruct>
+
+<biblStruct xml:id="b53">
+	<monogr>
+		<title level="m" type="main">Radiology-Llama2: Best-in-Class large language model for radiology</title>
+		<author>
+			<persName><forename type="first">Zhengliang</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yiwei</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Shu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aoxiao</forename><surname>Zhong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Longtao</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chao</forename><surname>Ju</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zihao</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chong</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jie</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cheng</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sekeun</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiang</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haixing</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lin</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dajiang</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jun</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dinggang</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianming</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quanzheng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Li</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/arXiv.2309.06419</idno>
+		<imprint>
+			<date type="published" when="2023-08">August 2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Zhengliang Liu, Yiwei Li, Peng Shu, Aoxiao Zhong, Longtao Yang, Chao Ju, Zihao Wu, Chong Ma, Jie Luo, Cheng Chen, Sekeun Kim, Jiang Hu, Haixing Dai, Lin Zhao, Dajiang Zhu, Jun Liu, Wei Liu, Dinggang Shen, Tianming Liu, Quanzheng Li, and Xiang Li. Radiology-Llama2: Best-in-Class large language model for radiology. arXiv, August 2023. doi:10.48550/arXiv.2309.06419.</note>
+</biblStruct>
+
+<biblStruct xml:id="b54">
+	<analytic>
+		<title level="a" type="main">The protégé project: A look back and a look forward</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Mark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Protégé</forename><surname>Musen</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Team</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2757001.2757003</idno>
+	</analytic>
+	<monogr>
+		<title level="j">AI Matters</title>
+		<idno type="ISSN">2372-3483</idno>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="4" to="12" />
+			<date type="published" when="2015-06">June 2015</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mark A Musen and Protégé Team. The protégé project: A look back and a look forward. AI Matters, 1(4):4-12, June 2015. ISSN 2372-3483. doi:10.1145/2757001.2757003.</note>
+</biblStruct>
+
+<biblStruct xml:id="b55">
+	<analytic>
+		<title level="a" type="main">NCI Thesaurus: A semantic model integrating cancer-related clinical and molecular information</title>
+		<author>
+			<persName><forename type="first">Nicholas</forename><surname>Sioutos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sherri</forename><forename type="middle">De</forename><surname>Coronado</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Margaret</forename><forename type="middle">W</forename><surname>Haber</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Frank</forename><forename type="middle">W</forename><surname>Hartel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wen-Ling</forename><surname>Shaiu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lawrence</forename><forename type="middle">W</forename><surname>Wright</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.jbi.2006.02.013</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Biomedical Informatics</title>
+		<title level="j" type="abbrev">Journal of Biomedical Informatics</title>
+		<idno type="ISSN">1532-0464</idno>
+		<imprint>
+			<biblScope unit="volume">40</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="30" to="43" />
+			<date type="published" when="2007-02">February 2007</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nicholas Sioutos, Sherri de Coronado, Margaret W Haber, Frank W Hartel, Wen-Ling Shaiu, and Lawrence W Wright. NCI thesaurus: a semantic model integrating cancer-related clinical and molecular information. J. Biomed. Inform., 40(1):30-43, February 2007. ISSN 1532-0464, 1532-0480. doi:10.1016/j.jbi.2006.02.013.</note>
+</biblStruct>
+
+<biblStruct xml:id="b56">
+	<analytic>
+		<title level="a" type="main">The monarch initiative: an integrative data and analytic platform connecting phenotypes to genotypes across species</title>
+		<author>
+			<persName><forename type="first">Julie</forename><forename type="middle">A</forename><surname>Christopher J Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Mcmurry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><forename type="middle">P</forename><surname>Köhler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Charles</forename><surname>Balhoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Borromeo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Seth</forename><surname>Brush</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Carbon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nathan</forename><surname>Conlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Dunn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Erin</forename><surname>Engelstad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J P</forename><surname>Foster</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julius O B</forename><surname>Gourdine</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Jacobsen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bryan</forename><surname>Keith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Suzanna</forename><forename type="middle">E</forename><surname>Laraway</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeremy</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kent</forename><surname>Nguyenxuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicole</forename><surname>Shefchek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhou</forename><surname>Vasilevsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicole</forename><surname>Yuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harry</forename><surname>Washington</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tudor</forename><surname>Hochheiser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Damian</forename><surname>Groza</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Smedley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Peter N Robinson</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Haendel</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gkw1128</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Res</title>
+		<idno type="ISSN">0305-1048, 1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">45</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="712" to="D722" />
+			<date type="published" when="2017-01">January 2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Christopher J Mungall, Julie A McMurry, Sebastian Köhler, James P Balhoff, Charles Borromeo, Matthew Brush, Seth Carbon, Tom Conlin, Nathan Dunn, Mark Engelstad, Erin Foster, J P Gourdine, Julius O B Jacobsen, Dan Keith, Bryan Laraway, Suzanna E Lewis, Jeremy NguyenXuan, Kent Shefchek, Nicole Vasilevsky, Zhou Yuan, Nicole Washington, Harry Hochheiser, Tudor Groza, Damian Smedley, Peter N Robinson, and Melissa A Haendel. The monarch initiative: an integrative data and analytic platform connecting phenotypes to geno- types across species. Nucleic Acids Res., 45(D1):D712-D722, January 2017. ISSN 0305-1048, 1362-4962. doi:10.1093/nar/gkw1128.</note>
+</biblStruct>
+
+<biblStruct xml:id="b57">
+	<analytic>
+		<title level="a" type="main">The Human Phenotype Ontology in 2021</title>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Köhler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Gargano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicolas</forename><surname>Matentzoglu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Leigh</forename><forename type="middle">C</forename><surname>Carmody</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Lewis-Smith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicole</forename><forename type="middle">A</forename><surname>Vasilevsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Danis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ganna</forename><surname>Balagura</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gareth</forename><surname>Baynam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amy</forename><forename type="middle">M</forename><surname>Brower</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tiffany</forename><forename type="middle">J</forename><surname>Callahan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">G</forename><surname>Chute</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Johanna</forename><forename type="middle">L</forename><surname>Est</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><forename type="middle">D</forename><surname>Galer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiva</forename><surname>Ganesan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthias</forename><surname>Griese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthias</forename><surname>Haimel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julia</forename><surname>Pazmandi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marc</forename><surname>Hanauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><forename type="middle">J</forename><surname>Hartnett</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maximilian</forename><surname>Hastreiter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fabian</forename><surname>Hauck</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yongqun</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Jeske</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hugh</forename><surname>Kearney</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gerhard</forename><surname>Kindle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christoph</forename><surname>Klein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Katrin</forename><surname>Knoflach</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roland</forename><surname>Krause</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Lagorce</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julie</forename><forename type="middle">A</forename><surname>Mcmurry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jillian</forename><forename type="middle">A</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Monica</forename><forename type="middle">C</forename><surname>Munoz-Torres</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rebecca</forename><forename type="middle">L</forename><surname>Peters</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christina</forename><forename type="middle">K</forename><surname>Rapp</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ana</forename><forename type="middle">M</forename><surname>Rath</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shahmir</forename><forename type="middle">A</forename><surname>Rind</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Avi</forename><forename type="middle">Z</forename><surname>Rosenberg</surname></persName>
+			<idno type="ORCID">0000-0003-2356-950X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><forename type="middle">M</forename><surname>Segal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Markus</forename><forename type="middle">G</forename><surname>Seidel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Damian</forename><surname>Smedley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tomer</forename><surname>Talmy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yarlalu</forename><surname>Thomas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Samuel</forename><forename type="middle">A</forename><surname>Wiafe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julie</forename><surname>Xian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zafer</forename><surname>Yüksel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ingo</forename><surname>Helbig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Haendel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><forename type="middle">N</forename><surname>Robinson</surname></persName>
+			<idno type="ORCID">0000-0002-0736-9199</idno>
+		</author>
+		<idno type="DOI">10.1093/nar/gkaa1043</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<idno type="ISSN">0305-1048</idno>
+		<idno type="ISSNe">1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">49</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="D1207" to="D1217" />
+			<date type="published" when="2021-01">January 2021</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sebastian Köhler, Michael Gargano, Nicolas Matentzoglu, Leigh C Carmody, David Lewis-Smith, Nicole A Vasilevsky, Daniel Danis, Ganna Balagura, Gareth Baynam, Amy M Brower, Tiffany J Callahan, Christopher G Chute, Johanna L Est, Peter D Galer, Shiva Ganesan, Matthias Griese, Matthias Haimel, Julia Pazmandi, Marc Hanauer, Nomi L Harris, Michael J Hartnett, Maximilian Hastreiter, Fabian Hauck, Yongqun He, Tim Jeske, Hugh Kearney, Gerhard Kindle, Christoph Klein, Katrin Knoflach, Roland Krause, David Lagorce, Julie A McMurry, Jillian A Miller, Monica C Munoz-Torres, Rebecca L Peters, Christina K Rapp, Ana M Rath, Shahmir A Rind, Avi Z Rosenberg, Michael M Segal, Markus G Seidel, Damian Smedley, Tomer Talmy, Yarlalu Thomas, Samuel A Wiafe, Julie Xian, Zafer Yüksel, Ingo Helbig, Christopher J Mungall, Melissa A Haendel, and Peter N Robinson. The human phenotype ontology in 2021. Nucleic Acids Res., 49(D1):D1207-D1217, January 2021. ISSN 0305-1048, 1362-4962. doi:10.1093/nar/gkaa1043.</note>
+</biblStruct>
+
+<biblStruct xml:id="b58">
+	<analytic>
+		<title level="a" type="main">Human disease ontology 2018 update: classification, content and workflow expansion</title>
+		<author>
+			<persName><forename type="first">Elvira</forename><surname>Lynn M Schriml</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Mitraka</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Becky</forename><surname>Munro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Tauber</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lance</forename><surname>Schor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Victor</forename><surname>Nickle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Linda</forename><surname>Felix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cynthia</forename><surname>Jeng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Bearer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Katharine</forename><surname>Lichenstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicole</forename><surname>Bisordi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brooke</forename><surname>Campion</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Hyman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Connor</forename><forename type="middle">Patrick</forename><surname>Kurland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siobhan</forename><surname>Oates</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Poorna</forename><surname>Kibbey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Sreekumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michelle</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carol</forename><surname>Giglio</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Greene</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gky1032</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Res</title>
+		<idno type="ISSN">0305-1048, 1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">47</biblScope>
+			<biblScope unit="issue">D1</biblScope>
+			<biblScope unit="page" from="D955" to="D962" />
+			<date type="published" when="2019-01">January 2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lynn M Schriml, Elvira Mitraka, James Munro, Becky Tauber, Mike Schor, Lance Nickle, Victor Felix, Linda Jeng, Cynthia Bearer, Richard Lichenstein, Katharine Bisordi, Nicole Campion, Brooke Hyman, David Kurland, Connor Patrick Oates, Siobhan Kibbey, Poorna Sreekumar, Chris Le, Michelle Giglio, and Carol Greene. Human disease ontology 2018 update: classification, content and workflow expansion. Nucleic Acids Res., 47(D1): D955-D962, January 2019. ISSN 0305-1048, 1362-4962. doi:10.1093/nar/gky1032.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

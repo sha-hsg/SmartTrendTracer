@@ -1,0 +1,1615 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Do LLMs Really Adapt to Domains? An Ontology Learning Perspective</title>
+				<funder ref="#_VtYqhCS">
+					<orgName type="full">EU</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Huu</forename><forename type="middle">Tan</forename><surname>Mai</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data and Web Science Group , 68161 Mannheim , Germany</note>
+								<orgName type="department">Data and Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<postCode>68161</postCode>
+									<settlement>Mannheim</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Bosch Center for AI , 71272 Renningen , Germany</note>
+								<orgName type="institution">Bosch Center for AI</orgName>
+								<address>
+									<postCode>71272</postCode>
+									<settlement>Renningen</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Cuong</forename><forename type="middle">Xuan</forename><surname>Chu</surname></persName>
+							<email>cuongxuan.chu@de.bosch.comhuu.tan.mai</email>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Bosch Center for AI , 71272 Renningen , Germany</note>
+								<orgName type="institution">Bosch Center for AI</orgName>
+								<address>
+									<postCode>71272</postCode>
+									<settlement>Renningen</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Heiko</forename><surname>Paulheim</surname></persName>
+							<email>heiko.paulheim@uni-mannheim.de</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data and Web Science Group , 68161 Mannheim , Germany</note>
+								<orgName type="department">Data and Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<postCode>68161</postCode>
+									<settlement>Mannheim</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Do LLMs Really Adapt to Domains? An Ontology Learning Perspective</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">2B72E6B75ED1F6AA8B81B62F260C97D4</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:38+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>ontology learning</term>
+					<term>LLMs</term>
+					<term>domain adaptation</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Large Language Models (LLMs) have demonstrated unprecedented prowess across various natural language processing tasks in various application domains. Recent studies show that LLMs can be leveraged to perform lexical semantic tasks, such as Knowledge Base Completion (KBC) or Ontology Learning (OL). However, it has not effectively been verified whether their success is due to their ability to reason over unstructured or semi-structured data, or their effective learning of linguistic patterns and senses alone. This unresolved question is particularly crucial when dealing with domain-specific data, where the lexical senses and their meaning can completely differ from what a LLM has learned during its training stage. This paper investigates the following question: Do LLMs really adapt to domains and remain consistent in the extraction of structured knowledge, or do they only learn lexical senses instead of reasoning? To answer this question and, we devise a controlled experiment setup that uses WordNet to synthesize parallel corpora, with English and gibberish terms. We examine the differences in the outputs of LLMs for each corpus in two OL tasks: relation extraction and taxonomy discovery. Empirical results show that, while adapting to the gibberish corpora, off-the-shelf LLMs do not consistently reason over semantic relationships between concepts, and instead leverage senses and their frame. However, fine-tuning improves the performance of LLMs on lexical semantic tasks even when the domain-specific terms are arbitrary and unseen during pre-training, hinting at the applicability of pre-trained LLMs for OL.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Knowledge Bases (KB) and ontologies play a key role in structuring and organizing knowledge across domains, and offer powerful solutions to link data that would otherwise remain unstructured (such as text). As of now, many sources of data can be used as ontologies, of varying specificity. For instance, WordNet <ref type="bibr" target="#b16">[17]</ref>, ConceptNet <ref type="bibr" target="#b13">[14]</ref> and WebIsA <ref type="bibr" target="#b21">[23]</ref> contain common knowledge, whereas KBs such arXiv:2407.19998v1 [cs.CL] 29 Jul 2024 as Unified Medical Language System (UMLS) <ref type="bibr" target="#b1">[2]</ref> and GeoNames <ref type="bibr">[6]</ref> have their own domain specificities (respectively, medical and geographic). For knowledgeintensive applications, access to structured data is of utmost importance, but creating it is a very tedious and time-consuming process that inevitably demands domain expertise. Ontology Learning (OL) is a field of artificial intelligence that concerns itself with automatically identifying terms, types and axioms between them from unstructured or structured information sources such as text or KBs. In particular, OL deals with identifying hyponymy (resp. hypernymy) relations in a KB. That is, for pairs of concepts (A, B) in the KB, one wants to infer whether or not Concept A is a subclass (resp. a superclass) of Concept B.</p><p>In the past few years, Large Language Models (LLMs), such as GPT-3 <ref type="bibr" target="#b2">[3]</ref>, GPT-4, LLaMa2 <ref type="bibr" target="#b24">[26]</ref> or Falcon-40B <ref type="bibr" target="#b0">[1]</ref> have displayed unprecedented prowess in many NLP applications across various domains. LLMs are language models with a very large parameter count that are trained with enormous amounts of textual data. Hence, they are equipped with common knowledge and have shown remarkable success in generating text. Furthermore, LLMs have made it possible to capture the meaning of text and reason about it, providing a promising alternative for knowledge-intensive tasks such as KB completion and ontologyrelated tasks like OL and OM (Ontology Matching). Recent studies have shown that LLMs could be viewed as Knowledge Bases <ref type="bibr" target="#b20">[22]</ref>, storing knowledge incorporated in their parameters (e.g. factual knowledge <ref type="bibr" target="#b23">[25]</ref>, event knowledge <ref type="bibr">[11]</ref>, commonsense knowledge <ref type="bibr" target="#b12">[13,</ref><ref type="bibr" target="#b31">33]</ref>, etc). In particular, LLMs4OL <ref type="bibr" target="#b5">[7]</ref> introduces a novel approach to OL using LLMs: the work provides comprehensive empirical evidence that, although requiring fine-tuning for better performance, LLMs can work as effective ontology learners on specialized datasets. However, there are several challenges that come with LLMs, and that have been left relatively unexplored in the frame of ontology learning. They include: <ref type="bibr" target="#b0">(1)</ref> LLMs are susceptible to hallucinate <ref type="bibr" target="#b11">[12]</ref>, i.e. provide generate text that is syntactically sound but factually incorrect. <ref type="bibr" target="#b1">(2)</ref> LLMs are trained on massive corpora of textual data and acquire common knowledge, but their few -or zero -shot generalizability and adaptability to unknown domains remains relatively undiscussed. Studying these two aspects is crucial to better understand the current limits of LLMs, and is ever so needed since they are being become increasingly prominent for domain-specific uses. On the one hand, it is effectively possible to get LLMs to adapt to a domain by fine-tuning, but such a process requires labeled data in this domain and can be computationally expensive. On the other hand, generalizability is also an extremely valuable quality for OL in domainspecific settings. To illustrate this, consider the Examples 1 and 2.</p><p>In OL, a LLM may be able to identify that a macaron is a subclass of confection that is made from many ingredients such as egg white, icing sugar, granulated sugar, and so on. Given Example 2, obtained by turning the words of Example 1 into gibberish, a model capable of generalization should retrieve the analogous concepts as hypernyms or meronyms (i.e., twiglomptoroa is a subclass of becsverdecoroal etc.). However, it was not explicitly verified if LLMs would do so, or more broadly, if they are able to generalize taxonomic axioms over text Example 1 (macaron). a sweet meringue-based confection made with egg white, icing sugar, granulated sugar, almond powder or ground almond, and food colouring.</p><p>Example 2 (twiglomptoroa). a becsverdecoroa meringue-based becsverdecoroal made with egg white, icing shifbousadu stintsobroa, granulated shifbousadu stintsobroa, almond powder or ground almond, and food colouring.</p><p>(e.g. textual patterns indicating that A is a subclass of B) rather than learn the concepts themselves during the pre-training process.</p><p>This paper presents comprehensive experiments to study the generalizability and domain adaptability of LLMs, with perspective of ontology learning. By synthesizing three new domain corpora from the Open English WordNet, and creating a gibberish counterpart each, we assess the performance of LLMs on two main tasks: relation extraction and taxonomy discovery. We conduct the experiments on popular LLMs, including closed-and open-source, off-the-shelf and fine-tuned, and evaluate them on both in-domain and across-domain setups. The novel contributions of this paper are as follows:</p><p>-We create three synthetic datasets as parallel corpora from the Open English WordNet, by turning domain-specific terms into gibberish. -We conduct experiments to simulate the adaptability and generalizability of LLMs in unseen domains, with or without backpropagation. -We provide empirical evidence that there is a limit to the generalization capability of off-the-shelf LLMs, with OL tasks that leverage lexical semantics such as relation extraction and taxonomy discovery. -We show that in-domain fine-tuning improves in-domain task-specific performance, and that the improvements are transferable to new domains.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>Ontology Learning with LLMs. OL is the (semi)automatic acquisition of T-Box and/or A-Box data from various data sources. In the context of this work, we look at OL from unstructured text or semi-structured data such as Knowledge Graphs paired with textual descriptions. More generally, recent studies show that LLMs can be leveraged to perform ontology related tasks, such as OM (Ontology Matching) or OL. For instance, Norouzi et al. <ref type="bibr" target="#b19">[20]</ref> use a naive approach that uses ChatGPT for ontology alignment, by providing the entire source and target ontologies. Mateiu et al. <ref type="bibr" target="#b14">[15]</ref> use a fine-tuned GPT-3 to convert natural language into OWL Functional Syntax for ontology enrichment. Hertling et al. <ref type="bibr" target="#b7">[9]</ref> use fewshot prompting to enhance the performance of open-source LLMs on OM tasks.</p><p>In LLMs4OL <ref type="bibr" target="#b5">[7]</ref>, the authors argue that with sufficient formulation, all tasks pertinent to OL fall within one of the three categories: A) Term Typing (determining a generalized type for a lexical term), B) Taxonomy Discovery (determin-ing the hierarchy between a pair of concepts), C) Non-Taxonomic Relation Extraction (finding non-hierarchic relations between concepts). This task paradigm allows them to evaluate LLMs in OL with a zero-shot prompting method. In the work, the authors show that although LLMs may not be suitable for OL as is, they may still be helpful when effectively fine-tuned for ontology construction.</p><p>SPIRES <ref type="bibr" target="#b3">[4]</ref> is a successful application of LLMs to populate ontologies. It leverages Zero-Shot Learning to extract relations between concepts in textual corpora, then grounds the concepts using other existing ontologies in the target domain (e.g. FoodOn or Wikidata). However, in a domain-specific setting, it is not granted that public ontologies of the domain exist and are of high quality.</p><p>Moskvoretskii et al. <ref type="bibr" target="#b18">[19]</ref> use LLaMa <ref type="bibr" target="#b24">[26]</ref> fine-tuned on WordNet, to perform OL tasks such as taxonomy discovery, taxonomy enrichment, taxonomy construction and lexical entailment. Specifically, they provide further empirical evidence that fine-tuning LLMs for taxonomy discovery on domains drastically increases their performance, making them suitable for the task. The method was tested on real domains such as the food, music and medical domains. In comparison, our work seeks to establish whether or not domain adaptation would hold in arbitrary domains, where the terminology is unknown to the model. In-Context Learning with LLMs. It was previously observed and verified that LLMs can learn from a few in-context examples in the form of demonstration. In fact, to better answer a given query, a LLM can leverage previous examples to estimate the distribution of input-output pairs. This emergent behavior of LLMs <ref type="bibr" target="#b27">[29]</ref> has become a successful learning paradigm because it no longer requires the expensive optimization of model parameters. With respect to our paper, four particular works pertaining to In-Context Learning (ICL) are of high interest. Firstly, Chain-of-Thought prompting <ref type="bibr" target="#b28">[30]</ref> forces the model to generate intermediate steps before returning an output, which was shown to elicit reasoning in very large language models and improve their symbolic reasoning performance. Secondly, Min et al. <ref type="bibr" target="#b17">[18]</ref> show that ground-truth labels do not significantly hurt the performance of LLMs on downstream tasks, suggesting that models implicitly learn input-label mappings from the language modelling objective alone. Thirdly, symbol tuning [31], the process of fine-tuning by replacing original labels to semantically unrelated ones, was shown to improve the in-context learning performance of very large LMs, and effectively override prior semantic knowledge. Finally, Wei et al. <ref type="bibr" target="#b30">[32]</ref> show that"smaller" LLMs greatly suffer from semantically unrelated labels in comparison to larger ones, heavily implying that they overly rely on semantic priors of targets instead of effectively reasoning over them. The contributions of these works justify our necessity to verify the in-context adaptation of LLMs to domains by extending this verification to semantically unrelated inputs (e.g. gibberish input-label mapings). Domain Adaptation with LLMs. Few works of interest deal with the performance of Large Language Models given domain-specific training corpora. Wan et al. <ref type="bibr" target="#b26">[28]</ref> propose a domain adaptation framework for very large language models (GPT-4 [21]) to address the scarcity of Chinese legal domain texts, using an adapt-retrieve-revise process. With a smaller LLM trained on in-domain cor-  pora, the authors generate a draft answer to retrieve evidence from an external knowledge base, both of which are given to GPT-4 to generate a final answer. Gururangan et al. <ref type="bibr" target="#b6">[8]</ref> show that domain-adaptive pretraining (DAPT), i.e. continued pre-training on domain-specific text, allows one to adapt a language model to a domain at reduced cost. However, Cheng et al. <ref type="bibr" target="#b4">[5]</ref> argue that while DAPT may improve specific task performance after fine-tuning, it overall hurts the ability of LLMs to perform question answering. Instead, they propose AdaptLLM, a scalable approach that aims to train a LLM on reading comprehension texts created from the raw domain-specific corpora. Finally, Shin et al. <ref type="bibr" target="#b22">[24]</ref> show that the in-context learning ability of a LLM heavily depends on the corpus sources, and may emerge by combining multiple corpora, but the domain relevance of the corpus may not be indicative of the few-shot performance of the model.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Approach</head><p>Figure <ref type="figure" target="#fig_0">1</ref> illustrates an overview of the pipeline we employ to test the adaptability and generalizability of off-the-shelf LLMs (pretrained, and as is), which includes two main steps: corpus preparation and LLMs evaluation.</p><p>In particular, we use the English WordNet (2023 Edition) <ref type="bibr" target="#b15">[16]</ref> to generate a parallel corpus of terms and definitions in the form of gibberish, which serve as our reference domain-specific setting. The process begins by choosing root concepts (for instance, sweets and desserts) in the WordNet taxonomy, then explores the graph through hyponymy, derivation and other (e.g. topic) relationships across concepts (with a set maximal exploration depth). The explored concepts form a domain in the real WordNet (e.g. sweets domain) that can be used to create a parallel corpus by propagating gibberish representations and definitions. More details about the algorithm can be found in Section 3.1.</p><p>After obtaining a parallel corpus of a particular domain, we evaluate a LLM on two different tasks: relation extraction and taxonomy discovery, each on both versions of the corpus. Naturally, since the concepts remain the same up to an input-label mapping, we ideally expect the results to be analogous. More details can be found in Subsection 3.2. Additionally, we investigate the effect of finetuning on the in-domain performance of LLMs, as described in Subsection 3.3.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Parallel Corpus Synthesis</head><p>To simulate a domain that is unseen for the LLM, we generate another KG where the domain concepts have gibberish representations and definitions that do not collide (e.g. if "sugar" is turned into "arghl" then any definition that contains the word "sugar" will see it turned into the word "arghl" instead). For this purpose, we devise a procedure which includes three steps: concept mining, concept linking and gibberish generation. The code can be found online. <ref type="foot" target="#foot_0">3</ref>Concept Mining. The concept mining algorithm is a simple Breadth-First Search algorithm, starting from each of the root concepts C 0 and only going through user-selected relationships (hypernymy, sense derivation, and concept topic). We set a maximal exploration depth D, which is set to 5 during experiments. The explored concepts form a dataset D.</p><p>Concept Linking. The next step of this process is to establish the dependencies between concept definitions and other concepts. For example, if "sugar" is mentioned in the definition of concept c, then we will link all the concepts c sugar which have "sugar" as a representation with c by introducing a blank node as follows, where {c id} denotes the WordNet ID of c: c sct : definitionWord _ : _sugar_ { c_id } . _ : _sugar_ { c_id } rdf : value " sugar " @en . _ : _sugar_ { c_id } sct : references c_sugar .</p><p>Listing 1.1: Example of linking triples. Gibberish Generation. We assume that we have an algorithm T that creates a gibberish representation T (c) from a concept c based on its initial representation, definition and part-of-speech. A concept is fully processed when it has a gibberish definition AND a gibberish representation. A concept is partially processed when it has a gibberish representation (fully processed implies partially processed).</p><p>Denote D 0 the set of concepts in D that have no internal dependencies (i.e. for any c in D 0 , the definition of c does not refer to any concept in D), as shown in Figure <ref type="figure" target="#fig_2">2a</ref>. We create an initial representation T (c) for any c in D 0 , and give them a gibberish definition identical to their original one. We will additionally  add the homonyms of the previously processed concepts in D 0 , with no gibberish representation. Moreover, set D -1 = ∅. We then repeat the following loop until we have fully processed all the concepts in D, as illustrated in Figure <ref type="figure" target="#fig_2">2b</ref>.</p><p>Suppose we have obtained</p><formula xml:id="formula_0">D n-1 and D n-2 . If |D n-1 | &gt; |D n-2 |</formula><p>, we proceed as follows: obtain concepts c that are not fully labeled and which dependencies can all be resolved (i.e. for each dependency c sct:definitionWord x, there exists c ′ ∈ D n-1 , or c ′ = c such that x sct:references c'). We create gibberish representations T (c) if there is not one already, we resolve the dependencies using the gibberish representations in D n-1 to make a definition for c. All homonyms of processed concepts are also partially processed, and all the partially processed concepts are added to D n-1 to form D n .</p><p>If</p><formula xml:id="formula_1">|D n-1 | = |D n-2 |</formula><p>, we sample a random concept c of D that is not partially processed, assign a gibberish representation T (c) to it and add c to D n-1 to form D n . Note that for i ≥ 0, D i does not exclusively contain concepts in D, but Di = D i ∩ D does. This pipeline yields a set of concepts D, where each concept c ∈ D has a gibberish representation T (c) as well as a gibberish definition consistent with the internal dependencies in D.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Example.</head><p>Consider the example depicted in Figure <ref type="figure" target="#fig_2">2</ref>. In the first step, Sweet (adjective) and Fruit do not reference any other nodes in their definitions: they can be fully processed. In the second step, since Dessert refers to both Sweet (noun) and Sweet (adjective) and the latter was processed, it is eligible to be processed next. Moreover, since Sweet (adjective) is a homonym of Sweet (noun), it can also be processed. However, since Compote refers to both Dessert and Fruit, it may not be processed yet, since Dessert has not been processed yet. It will be processed in the following step.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Off-the-Shelf Evaluation Methodology</head><p>For each dataset D, we perform an evaluation by comparing the performance of off-the-shelf LLMs in two different lexical semantic tasks: relation extraction and taxonomy discovery; and compare the outputs coming from two cases: on the original dataset, and its gibberish counterpart.</p><p>Relation Extraction. Given a query concept in D, its lexical senses (i.e. written forms) and its definition, the goal of this task is to extract all relations between the concepts mentioned in the definition, including the query concept. To remain in the frame of ontology learning, we focus only on hypernymy and holonymy relationships. For instance, in Example 1, the extracted relations should be as follows: macaron is a subclass of confection, egg white is a part of macaron, icing sugar is a part of macaron, etc. Likewise, given the gibberish definition in 2 instead, we expect the same relations to be extracted, only with the concept names replaced with their gibberish counterpart. In order to retrieve a prediction, the LLM is prompted to output triples in the form: (A, r, B) where r is either is a subclass of or is a part of.</p><p>Taxonomy Discovery. Given two concepts A and B in D, with their lexical senses and definitions, the goal of this task is to determine whether or not A is a subclass of B. Likewise, we expect that turning the lexical senses and definitions of A and B into gibberish will not change the outcome. WordNet hypernymy relations are used as a ground-truth: the predictions on the real (resp. gibberish counterpart of the) dataset are compared with the real (resp. gibberish counterpart of the) ground-truth. Indirect hypernymy relations (obtained with the transitive closure of the relation gwn:hypernym) are also used. Negative examples are produced by corrupting the hypernym once or twice per query (hyponym, subclass of, ?). This classification task can be evaluated with F1-score: a drop in performance should indicate that a LLM relies on the lexical senses to infer taxonomical relationships rather than textual semantic information.</p><p>Prompting. For each task/model configuration, we follow general guidelines for prompting a LLM. (1) The return is in JSON format, (2) Chain-of-Thought (CoT) <ref type="bibr" target="#b28">[30]</ref> can be used if it improves the performance of the model, (3) One or few exemplar(s) can be used, with example(s) outside of the dataset, if it improves the performance of the model. In the relation extraction task, for a concept C, its written form F C , its part-of-speech P C , and its definition D C , we construct a prompt p(C) as shown in Listing 1.2. In the taxonomy discovery task, for A, B two concepts, F A , F B their written forms, D A , D B their definition, we construct a prompt p(A, B) as shown in Listing 1.3. Prompt templates can be found here. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3">Fine-tuning Experiment</head><p>While it was previously verified that fine-tuning improves OL performance in existing domains <ref type="bibr" target="#b18">[19]</ref>, it is not clear if this statement still holds for arbitrary domains and unknown vocabularies where reasoning is required. To verify this question, after evaluating the zero/one/few-shot performance of LLMs in the gibberish domains, we propose to assess the effect of fine-tuning models on the inference performance for a specific task.</p><p>Data split. For each dataset D, we fine-tune a LLM for taxonomy discovery on a train split of hypernymy relations. Half of the concepts in the dataset, and their hypernymy relations, are used for training. The inverse relations are used as negatives (if A is a subclass of B, then B is not a subclass of A), alongside some randomly sampled negatives. The remaining relations are used for testing.</p><p>Prompting. We train LLMs on instructive datasets with the prefix prompt in Listing 1.4, completed using each pair of concepts in the hypernymy dataset.  Listing 1.4: Prefix prompt used for the fine-tuning experiment. The content between curly brackets is formatted for each pair of concepts in the dataset.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Experiments</head><p>In this section, we explore the off-the-shelf evaluation proposed in Subsection 3.2, and the fine-tuning experiments described in Subsection 3.3.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Experimental setup</head><p>Datasets. To assess the performance variation with domain specificity, we generate three synthetic domain-specific datasets as parallel corpora from the Open English WordNet <ref type="bibr" target="#b15">[16]</ref>, using the methodology described in Section 3.1. They are:</p><p>-Sweets: A collection of concepts related to sweets, desserts, sweet food or sugar. In this dataset, hypernyms are frequent, and concepts are relatively well constructed from their hypernyms. -Football: A collection of concepts related to football. This dataset, created by browsing co-topic concepts, includes less taxonomic relationships, but has its own terminology and jargon. -Music: A collection of concepts related to musical instruments. It is the largest of the three.</p><p>Table <ref type="table" target="#tab_1">1</ref> shows, for each dataset, the number of concepts, the number of hypernymy relationships, the exploration depth and the root concepts. The translator T used to generate gibberish representations of concepts is available online. <ref type="foot" target="#foot_3">4</ref> .</p><p>Models. While this study is not comprehensive of all existing LLMs, our goal is to show a particular trend between them. In the off-the-shelf evaluation, we evaluate the following popular LLMs, with their number of parameters between parentheses: GPT-3.5 <ref type="bibr" target="#b2">[3]</ref> (174B), GPT-4 [21] (≥ 1T), Falcon-40B <ref type="bibr" target="#b0">[1]</ref> (40B), LLaMa2-13B <ref type="bibr" target="#b24">[26]</ref> (13B), and Zephyr-7B-β <ref type="bibr" target="#b25">[27]</ref> (7B). The former two, accessed with a paid subscription, are closed-source, whereas the latter three are opensource. In the fine-tuning experiment, we consider Zephyr-7B-β <ref type="bibr" target="#b25">[27]</ref> and Falcon-7B <ref type="bibr" target="#b0">[1]</ref>, which are both open-source. For the paid subscription models, We limit our budget to 15e per dataset.</p><p>Specificities. We henceforth consider the three following evaluation methods:</p><p>-Ground-truth (GT)(en) vs en we compare the answers on the original English dataset against the ground-truth -Ground-truth (GT)(gib) vs gib: we compare the answers on the gibberish dataset against the gibberish ground-truth en vs gib: using the answers on the original dataset as a ground-truth, we evaluate the consistency of the predictions on the gibberish dataset, regardless of their correctness.</p><p>In the relation extraction (GT(X) vs X), due to the scarcely annotated holonymy relationships in WordNet, we focus on hypernymy relationships to compute metrics. Moreover, a model prediction is processed by taking into account the inferred hypernymy relationships, using the transitive property of the relation. For instance, if a model outputs the triples (vanilla pudding, is a subclass of, custardlike pudding), and (custard-like pudding, is a subclass of, pudding), we count the triple (vanilla pudding, is a subclass of, pudding) as effectively predicted by the model. In the taxonomy discovery task, predictions that are neither "True" or "False" are ignored. Thus, macro-averaged F1-scores may not be between the macro-averaged precisions and the macro-averaged recalls.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Off-the-Shelf Evaluation</head><p>Metrics. For each model/task configuration, we compute metrics in three settings: GT(en) vs en, GT(gib) vs gib, and en vs gib. The goal is to see if the predictions with gibberish terms align with the predictions with the real terms. We compute the following metrics: precision, recall and F1-score.</p><p>Results. We first examine the results with respect the to ground-truths. It is important to mention that the English WordNet is scarcely annotated in terms of hypernymy and holonymy relationships. Consider the following example:</p><p>Example 3 (toffee apple). an apple that is covered with a candy-like substance (usually caramelized sugar).</p><p>In this example, the definition obviously implies that a toffee apple is an apple, but WordNet only considers sweet, confection to be valid hypernyms. The incompleteness of WordNet explains why the observed performances are so low, but because our goal is a relative comparison of performances on real corpora and their gibberish counterpart, rather than absolute scores, it is not critical to have a high-quality ground-truth.</p><p>In both tasks, which results are reported in Table <ref type="table" target="#tab_2">2</ref> and Table <ref type="table">3</ref>, a common trend occurs across all LLMs and in all synthetic domains: a significant performance decrease is observed when replacing real terms with gibberish. Although GPT-4 (tested on WN-sweets only because of the slowness and the costs) performs best on gibberish corpora, it suffers from the same performance drop.</p><p>While the performance on relation extraction is generally low across all LLMs with the real datasets, which we mainly attribute to the poor quality of the annotations, it is even lower with the gibberish datasets. In each case, the macro F1-score is practically halved, e.g. in WN-sweets, GPT-3.5 drops from 0.228 to 0.115, Falcon-40B drops from 0.238 to 0.128, LLaMa2-13B drops from 0.223 to 0.138, Zephyr-7B-β drops from 0.233 to 0.137. Note that the recall is low in comparison to the precision, which indicates that a LLM tends to overlook indicators that two concepts are hierarchically related. This observation aligns with the conclusion of LLMs4OL <ref type="bibr" target="#b5">[7]</ref>, according to which off-the-shelf LLMs are not sufficiently suitable for OL tasks, particularly in the case of relation extraction.</p><p>In the taxonomy discovery task, the performance of LLMs also plummets when using the gibberish dataset instead of the real one. The LLMs are relatively good at identifying whether two real concepts are hierarchically related (e.g. F1score up to 0.940 on the WN-sweets dataset by GPT-3.5), but suffer from a large performance drop when confronted to unknown words which share the same semantic relations (e.g. the F1-score of GPT-3.5 drops from 0.940 to 0.446 when using the gibberish counterpart of WN-sweets; the same behavior is observed across all datasets and LLMs). We interpret this drop as the fact that LLMs are significantly better at leveraging semantic priors (i.e. lexical senses known from pre-training), to deduce that Concept A is a subclass of Concept B. Table <ref type="table">3</ref>: Results (macro-average) on the taxonomy discovery task in the GT(X) vs X setting, where X is either en or gib. Although the general performance drop is expected because the tested LLM would then be dealing with words it has never seen during its training, we furthermore observe that the prediction alignment is very low. In spite of analogous concepts sharing the same semantic relations with each other in the parallel corpora, the model is unable to produce analogous outputs from analogous inputs, as shown by the low F1-scores in Tables <ref type="table" target="#tab_3">4</ref> and<ref type="table" target="#tab_4">5</ref>. This is evidence that as is, LLMs do not reason over semantic relationships.</p><p>Our interpretation is that the attention mechanism heavily relies on the lexical sense and the frame of a token, instead of leveraging the semantic relationships that hold between tokens. In other words, the "reasoning" abilities of LLMs for Ontology Learning are mostly limited to entities and concepts that the models have already been trained on, i.e. prior semantics. However, such a quality is critical for Ontology Learning in arbitrary domains, where hypernymy relationships must be retrieved for unknown concepts, or new concepts that share the same lexical form as some existing word (for instance, if domain-specific jargon employs existing words with different meanings). This trend seems to hold true in both tasks, which confirms the fact that off-the-shelf LLMs are currently not suited for OL tasks on arbitrary domains.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">Fine-Tuning Evaluation</head><p>Training details. Table <ref type="table" target="#tab_5">6</ref> shows the number of hypernym pairs used for the fine-tuning experiment. We use instruction tuning specifically tailored towards taxonomy discovery. In the prefix prompt documented in Listing 1.4, given two concepts A and B, the model must return "True" if A is a subclass of B and "False" otherwise. We train the model on 20 epochs, with a batch size of 4 and a learning rate of 3 • 10 -6 . For efficient training, we quantize the model on 4 bits and use the LoRA <ref type="bibr" target="#b9">[10]</ref> method with parameters α = 256 and r = 1024.</p><p>Metrics. Similarly to the first experiment, we use Precision, Recall and F1-score to evaluate the performance of the model on the testing set.</p><p>Results. The results of the fine-tuning experiment are reported in Table <ref type="table">7</ref>. Two general observations can be made about the experiment. Firstly, we notice that fine-tuning drastically improves the task-specific performance of the LLM regardless the domain and corpus version. For instance, while Falcon-7B seems to be initially worse-performing than Zephyr-7B-β overall, the F1-score improves up to almost threefold (real WN-music dataset, from 0.327 to 0.874). Although not surprising for real corpora, an improvement on gibberish corpora is nontrivial: the LLMs show signs of adaptation on gibberish corpora with improved Table <ref type="table">7</ref>: Taxonomy discovery results with fine-tuning in the GT(X) vs X setting, where X is either en or gib. Evaluation is performed before and after fine-tuning. performance. Secondly, while the performance of a model on a gibberish corpus increases after fine-tuning, it never matches the performance of the same model fine-tuned on the real counterpart of the corpus. It is worth noting that this is a limitation of adaptation solely due to the reliance on prior semantics, since a corpus and its gibberish counterpart only differ in their input-label mapping.</p><p>Transfer Learning. In spite of the two previous observations, we can hypothesize that the improvement in performance on the gibberish corpora may indicate signs of reasoning and generalization on unseen domains, given that gibberish words are most likely not contained in the vocabulary of LLMs. To elaborate this claim, we propose another experiment: we use Zephyr-7B-β, trained for taxonomy discovery in a domain, and test it on another domain. By only using gibberish corpora, we ensure that most of the domain-specific terminology is anonymized, preventing the LLM from effectively using prior semantics. Results are reported in Figure <ref type="figure" target="#fig_5">3</ref>. We observe the following. Firstly, the F1-scores generally tend to increase after transfer, with the exception of the WN-music to WN-sweets case. The increase in F1-score is substantial, from 14% (WNfootball to WN-sweets), up to 32% (WN-music to WN-football). This result is quite promising, as it points towards the possibility of OL on arbitrary domains with LLMs with effective pre-training. Secondly, the precision tends to drop in favor of the recall, indicating that fine-tuning makes the LLM more sensitive to syntactic clues of hypernymy relations at the cost of making them less precise. Due to the fact that both the training and the testing domains are made of gibberish words, we attribute the performance improvements of the LLM (with respect to its base version) to emerging reasoning capabilities: the fine-tuning LLM becomes more capable of abstraction and of focusing on semantic relationships between concepts, rather than the concepts themselves.  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Conclusion</head><p>We have explored and tested the limits of adaptability and generalizability of LLMs, and observed that LLMs do not adapt well to arbitrary domains. By creating gibberish datasets based on real data and real domains from Word-Net, and using LLMs to perform ontology learning tasks on these data, it is realized that LLMs are unable to consistently retrieve the same taxonomic relationships between analogous concepts, which highlights their clear reliance on priorly learned semantics, lexical senses, and the frame of the tokens. However, we notice that after fine-tuning on gibberish data, LLMs improve at discovering hierarchies, both on the domain they were trained on and other arbitrary domains. We attribute this improvement to the emergence of reasoning with lexical semantics. Our work serves as cautionary advice for the community that LLMs do not adapt to arbitrary domains, and we hope that it can inspire future work to leverage reasoning with LLMs for Ontology Learning.</p><p>Supplemental Material Statement: Generated datasets (real and gibberish for all domains), source code for generating the synthetic datasets from the Open English WordNet, and for fine-tuning or evaluating LLMs on OL tasks are available online. <ref type="foot" target="#foot_4">5</ref></p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Fig. 1 :</head><label>1</label><figDesc>Fig. 1: Overview of the off-the-shelf evaluation pipeline. The dataset extraction and the prompt depend on the task to perform.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head></head><label></label><figDesc>(a)  Step 0 : Make a gibberish representation and (unchanged) definition for concepts with no dependencies.Step n + 1: Use at least partially processed concepts to resolve dependencies and create new gibberish representations and definitions.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Fig. 2 :</head><label>2</label><figDesc>Fig.2: Algorithm to propagate gibberish representations and definitions. Squares are blank nodes that indicate that the preceding concept has a word that refers to one of the node's successors. Dashed circles represent the concepts eligible to be fully processed. Green circles represent (at least partially) processed concepts.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head></head><label></label><figDesc>Concept : { F_C } Part -of -speech : { P_C } Definition : { D_C } Listing 1.2: Relation extraction generic prompt p(C). { FORMAT INSTRUCTIONS ( Task and return format ) } { EXAMPLE ( S ) ( zero , one or few exemplars ) } Concept A : { F_A } Definition : { D_A } Concept B : { F_B } Definition : { D_B } Listing 1.3: Taxonomy discovery generic prompt p(A, B).</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>#</head><label></label><figDesc>## HUMAN : Identify whether the statement is true or false . Answer with only one word : ' True ' or ' False '. CONCEPT A : { term_a } ({ pos_a }) Definition : { definition_a } CONCEPT B : { term_b } ({ pos_b }) Definition : { definition_b } Statement : '{ term_a } ' is a subclass of '{ term_b } '.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>Fig. 3 :</head><label>3</label><figDesc>Fig. 3: Domain transfer experiment results with Zephyr-7B-β. Only gibberish corpora are selected for both training and testing.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 1 :</head><label>1</label><figDesc>Dataset statistics. The 'Hypernyms' column indicates the number of retrieved hypernymy relationships within the dataset. The 'Depth' column indicates the exploration depth of the algorithm.</figDesc><table><row><cell>D</cell><cell cols="3">Concepts Hypernyms Depth</cell><cell>Root Concepts</cell></row><row><cell>WN-sweets</cell><cell>244</cell><cell>418</cell><cell>5</cell><cell>sweet (n), sweet (a), sugar</cell></row><row><cell>WN-football</cell><cell>937</cell><cell>1401</cell><cell>5</cell><cell>football, team, offensive (a), defensive (a)</cell></row><row><cell>WN-music</cell><cell>1366</cell><cell>2497</cell><cell>5</cell><cell>musical instrument</cell></row><row><cell cols="2">11 ### ASSISTANT :</cell><cell></cell><cell></cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 2 :</head><label>2</label><figDesc>Results on the relation extraction task in the GT(X) vs X setting, where X is either en or gib. Only hypernymy relations are considered.</figDesc><table><row><cell>Model</cell><cell>X</cell><cell>Pre.</cell><cell>WN-sweets Rec. F1</cell><cell cols="3">WN-football Pre. Rec. F1</cell><cell>Pre.</cell><cell>WN-music Rec. F1</cell></row><row><cell>GPT-3.5</cell><cell>en gib</cell><cell cols="7">0.478 0.150 0.228 0.383 0.056 0.097 0.397 0.060 0.104 0.336 0.069 0.115 0.371 0.035 0.065 0.307 0.029 0.053</cell></row><row><cell>GPT-4</cell><cell>en gib</cell><cell cols="3">0.583 0.160 0.251 -0.530 0.129 0.207 -</cell><cell>--</cell><cell>--</cell><cell>--</cell><cell>--</cell><cell>--</cell></row><row><cell>Falcon-40B</cell><cell>en gib</cell><cell cols="7">0.573 0.151 0.238 0.489 0.067 0.118 0.529 0.065 0.116 0.330 0.080 0.128 0.382 0.050 0.088 0.341 0.042 0.074</cell></row><row><cell>LLaMa2-13B</cell><cell>en gib</cell><cell cols="7">0.536 0.141 0.223 0.423 0.035 0.065 0.434 0.030 0.056 0.365 0.085 0.138 0.341 0.018 0.035 0.296 0.014 0.026</cell></row><row><cell>Zephyr-7B-β</cell><cell>en gib</cell><cell cols="7">0.441 0.158 0.233 0.399 0.067 0.115 0.374 0.063 0.108 0.243 0.095 0.137 0.313 0.052 0.089 0.261 0.044 0.075</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 4 :</head><label>4</label><figDesc>Alignment results (macro-average) on the relation extraction task in the en vs gib setting. Both hypernymy and holonymy relations are considered.</figDesc><table><row><cell>Model</cell><cell>X</cell><cell>Pre.</cell><cell>WN-sweets Rec. F1</cell><cell cols="3">WN-football Pre. Rec. F1</cell><cell cols="2">Pre.</cell><cell>WN-music Rec. F1</cell></row><row><cell>GPT-3.5</cell><cell>en gib</cell><cell cols="7">0.944 0.937 0.940 0.758 0.701 0.648 0.829 0.858 0.818 0.783 0.539 0.446 0.640 0.505 0.333 0.687 0.537 0.361</cell></row><row><cell>GPT-4</cell><cell>en gib</cell><cell cols="3">0.949 0.943 0.945 -0.591 0.576 0.566 -</cell><cell>--</cell><cell>--</cell><cell>--</cell><cell>--</cell><cell>--</cell></row><row><cell>Falcon-40B</cell><cell>en gib</cell><cell cols="7">0.775 0.658 0.598 0.800 0.648 0.637 0.787 0.620 0.613 0.591 0.575 0.574 0.483 0.475 0.478 0.541 0.535 0.480</cell></row><row><cell>LLaMa2-13B</cell><cell>en gib</cell><cell cols="7">0.819 0.772 0.750 0.808 0.811 0.809 0.785 0.800 0.790 0.450 0.447 0.444 0.533 0.531 0.504 0.576 0.556 0.465</cell></row><row><cell>Zephyr-7B-β</cell><cell>en gib</cell><cell cols="7">0.899 0.897 0.898 0.813 0.751 0.759 0.821 0.762 0.778 0.691 0.634 0.621 0.500 0.500 0.469 0.530 0.524 0.523</cell></row><row><cell>Model</cell><cell>Pre.</cell><cell cols="2">WN-sweets Rec. F1</cell><cell cols="3">WN-football Pre. Rec. F1</cell><cell>Pre.</cell><cell>WN-music Rec. F1</cell></row><row><cell cols="9">GPT-3.5 0.371 0.304 0.334 0.263 0.175 0.210 0.207 0.138 0.166</cell></row><row><cell>GPT-4</cell><cell cols="4">0.504 0.527 0.515 -</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell cols="9">Falcon-40B 0.310 0.303 0.306 0.236 0.238 0.237 0.225 0.224 0.225</cell></row><row><cell cols="9">LLaMa2-13B 0.347 0.340 0.344 0.386 0.225 0.284 0.374 0.215 0.273</cell></row><row><cell cols="9">Zephyr-7B-β 0.214 0.229 0.221 0.192 0.180 0.185 0.148 0.142 0.145</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_4"><head>Table 5 :</head><label>5</label><figDesc>Alignment results (macro-average) on the taxonomy discovery task in the en vs gib setting.</figDesc><table><row><cell>Model</cell><cell>Pre.</cell><cell>WN-sweets Rec. F1</cell><cell cols="3">WN-football Pre. Rec. F1</cell><cell>Pre.</cell><cell>WN-music Rec. F1</cell></row><row><cell cols="8">GPT-3.5 0.789 0.541 0.465 0.700 0.517 0.488 0.738 0.544 0.459</cell></row><row><cell>GPT-4</cell><cell cols="3">0.611 0.594 0.590 -</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell cols="8">Falcon-40B 0.541 0.557 0.412 0.502 0.495 0.443 0.529 0.562 0.352</cell></row><row><cell cols="8">LLaMa2-13B 0.565 0.570 0.556 0.618 0.610 0.586 0.641 0.599 0.535</cell></row><row><cell cols="8">Zephyr-7B-β 0.818 0.727 0.716 0.557 0.544 0.545 0.570 0.572 0.570</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head>Table 6 :</head><label>6</label><figDesc>Hypernym train-test split for the fine-tuning experiment.</figDesc><table><row><cell>D</cell><cell cols="4">Train Positives Negatives Positives Negatives Test</cell></row><row><cell>WN-sweets</cell><cell>189</cell><cell>393</cell><cell>229</cell><cell>284</cell></row><row><cell>WN-football</cell><cell>674</cell><cell>1043</cell><cell>727</cell><cell>567</cell></row><row><cell>WN-music</cell><cell>1367</cell><cell>1882</cell><cell>1130</cell><cell>851</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_0"><p>https://github.com/boschresearch/llm-vs-gibberish-ontologies</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_1"><p>{ FORMAT INSTRUCTIONS ( Task and return format ) }</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_2"><p>{ EXAMPLE ( S ) ( zero , one or few exemplars ) }</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_3"><p>https://github.com/htmai-880/gibberify</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="5" xml:id="foot_4"><p>https://github.com/boschresearch/llm-vs-gibberish-ontologies Do LLMs Really Adapt to Domains? An Ontology Learning Perspective</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><p>Acknowledgement. The work was partially supported by <rs type="funder">EU</rs> project: <rs type="projectName">enRich-MyData</rs> (<rs type="grantNumber">HORIZON-CL4-2021-DATA-01 -GA 101070284</rs>).</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funded-project" xml:id="_VtYqhCS">
+					<idno type="grant-number">HORIZON-CL4-2021-DATA-01 -GA 101070284</idno>
+					<orgName type="project" subtype="full">enRich-MyData</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">AlGhafa Evaluation Benchmark for Arabic Language Models</title>
+		<author>
+			<persName><forename type="first">Ebtesam</forename><surname>Almazrouei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruxandra</forename><surname>Cojocaru</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michele</forename><surname>Baldo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quentin</forename><surname>Malartic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hamza</forename><surname>Alobeidli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniele</forename><surname>Mazzotta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guilherme</forename><surname>Penedo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Giulia</forename><surname>Campesan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mugariya</forename><surname>Farooq</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maitha</forename><surname>Alhammadi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julien</forename><surname>Launay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Badreddine</forename><surname>Noune</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.arabicnlp-1.21</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of ArabicNLP 2023</title>
+		<meeting>ArabicNLP 2023</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="244" to="275" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Almazrouei, E., Alobeidli, H., Alshamsi, A., Cappelli, A., Cojocaru, R., Debbah, M., Goffinet, E., Heslow, D., Launay, J., Malartic, Q., Noune, B., Pannier, B., Penedo, G.: Falcon-40B: an open large language model with state-of-the-art per- formance (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">The Unified Medical Language System (UMLS): integrating biomedical terminology</title>
+		<author>
+			<persName><forename type="first">O</forename><surname>Bodenreider</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gkh061</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<title level="j" type="abbrev">Nucleic Acids Research</title>
+		<idno type="ISSNe">1362-4962</idno>
+		<imprint>
+			<biblScope unit="volume">32</biblScope>
+			<biblScope unit="issue">90001</biblScope>
+			<biblScope unit="page" from="267D" to="270" />
+			<date type="published" when="2004-01-01">2004</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note>Database issue</note>
+	<note type="raw_reference">Bodenreider, O.: The unified medical language system (umls): integrating biomed- ical terminology. Nucleic acids research 32 Database issue, D267-70 (2004)</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<monogr>
+		<title level="m" type="main">Language models are few-shot learners</title>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">B</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Askell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Herbert-Voss</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Krueger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Henighan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ramesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">M</forename><surname>Ziegler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Winter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Hesse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Sigler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Litwin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Berner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Mccandlish</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Sutskever</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Amodei</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Brown, T.B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., Nee- lakantan, A., Shyam, P., Sastry, G., Askell, A., Agarwal, S., Herbert-Voss, A., Krueger, G., Henighan, T., Child, R., Ramesh, A., Ziegler, D.M., Wu, J., Win- ter, C., Hesse, C., Chen, M., Sigler, E., Litwin, M., Gray, S., Chess, B., Clark, J., Berner, C., McCandlish, S., Radford, A., Sutskever, I., Amodei, D.: Language models are few-shot learners (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Structured Prompt Interrogation and Recursive Extraction of Semantics (SPIRES): a method for populating knowledge bases using zero-shot learning</title>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">Harry</forename><surname>Caufield</surname></persName>
+			<idno type="ORCID">0000-0001-5705-7831</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Harshad</forename><surname>Hegde</surname></persName>
+			<idno type="ORCID">0000-0002-2411-565X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Emonet</surname></persName>
+			<idno type="ORCID">0000-0002-1501-1082</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+			<idno type="ORCID">0000-0001-6315-3707</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Marcin</forename><forename type="middle">P</forename><surname>Joachimiak</surname></persName>
+			<idno type="ORCID">0000-0001-8175-045X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nicolas</forename><surname>Matentzoglu</surname></persName>
+			<idno type="ORCID">0000-0002-7356-1779</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hyeongsik</forename><surname>Kim</surname></persName>
+			<idno type="ORCID">0000-0002-3002-9838</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Sierra</forename><surname>Moxon</surname></persName>
+			<idno type="ORCID">0000-0002-8719-7760</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Justin</forename><forename type="middle">T</forename><surname>Reese</surname></persName>
+			<idno type="ORCID">0000-0002-2170-2250</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Haendel</surname></persName>
+			<idno type="ORCID">0000-0001-9114-8737</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><forename type="middle">N</forename><surname>Robinson</surname></persName>
+			<idno type="ORCID">0000-0002-0736-9199</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+			<idno type="ORCID">0000-0002-6601-2165</idno>
+		</author>
+		<idno type="DOI">10.1093/bioinformatics/btae104</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Bioinformatics</title>
+		<idno type="ISSN">1367-4803</idno>
+		<idno type="ISSNe">1367-4811</idno>
+		<imprint>
+			<biblScope unit="volume">40</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<date type="published" when="2023">2023</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Caufield, J.H., Hegde, H., Emonet, V., Harris, N.L., Joachimiak, M.P., Matent- zoglu, N., Kim, H., Moxon, S.A.T., Reese, J.T., Haendel, M.A., Robinson, P.N., Mungall, C.J.: Structured prompt interrogation and recursive extraction of seman- tics (spires): A method for populating knowledge bases using zero-shot learning (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">geonames: Interface to the &quot;Geonames&quot; Spatial Query Web Service</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Wei</surname></persName>
+		</author>
+		<idno type="DOI">10.32614/cran.package.geonames</idno>
+		<ptr target="https://www.geonames.org/" />
+	</analytic>
+	<monogr>
+		<title level="m">Adapting large language models via reading comprehension</title>
+		<meeting><address><addrLine>GeoNames; Geonames</addrLine></address></meeting>
+		<imprint>
+			<publisher>The R Foundation</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="volume">6</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Cheng, D., Huang, S., Wei, F.: Adapting large language models via reading com- prehension (2024) 6. GeoNames: Geonames, https://www.geonames.org/</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<monogr>
+		<title level="m" type="main">Llms4ol: Large language models for ontology learning</title>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">B</forename><surname>Giglou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>D'souza</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Auer</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Giglou, H.B., D&apos;Souza, J., Auer, S.: Llms4ol: Large language models for ontology learning (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Don’t Stop Pretraining: Adapt Language Models to Domains and Tasks</title>
+		<author>
+			<persName><forename type="first">Suchin</forename><surname>Gururangan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ana</forename><surname>Marasović</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Swabha</forename><surname>Swayamdipta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyle</forename><surname>Lo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iz</forename><surname>Beltagy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Doug</forename><surname>Downey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noah</forename><forename type="middle">A</forename><surname>Smith</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.acl-main.740</idno>
+		<ptr target="https://doi.org/10.18653/v1/2020.acl-main.740" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics</title>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Jurafsky</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Chai</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Schluter</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Tetreault</surname></persName>
+		</editor>
+		<meeting>the 58th Annual Meeting of the Association for Computational Linguistics<address><addrLine>Online</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-07">Jul 2020</date>
+			<biblScope unit="page" from="8342" to="8360" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gururangan, S., Marasović, A., Swayamdipta, S., Lo, K., Beltagy, I., Downey, D., Smith, N.A.: Don&apos;t stop pretraining: Adapt language models to domains and tasks. In: Jurafsky, D., Chai, J., Schluter, N., Tetreault, J. (eds.) Proceed- ings of the 58th Annual Meeting of the Association for Computational Linguis- tics. pp. 8342-8360. Association for Computational Linguistics, Online (Jul 2020). https://doi.org/10.18653/v1/2020.acl-main.740</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">OLaLa: Ontology Matching with Large Language Models</title>
+		<author>
+			<persName><forename type="first">Sven</forename><surname>Hertling</surname></persName>
+			<idno type="ORCID">0000-0003-0333-5888</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Heiko</forename><surname>Paulheim</surname></persName>
+			<idno type="ORCID">0000-0003-4386-8195</idno>
+		</author>
+		<idno type="DOI">10.1145/3587259.3627571</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 12th Knowledge Capture Conference 2023</title>
+		<meeting>the 12th Knowledge Capture Conference 2023</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2023-12-05">2023</date>
+			<biblScope unit="page" from="131" to="139" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hertling, S., Paulheim, H.: Olala: Ontology matching with large language models. In: Proceedings of the 12th Knowledge Capture Conference 2023. p. 131-139.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">OLaLa: Ontology Matching with Large Language Models</title>
+		<author>
+			<persName><forename type="first">Sven</forename><surname>Hertling</surname></persName>
+			<idno type="ORCID">0000-0003-0333-5888</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Heiko</forename><surname>Paulheim</surname></persName>
+			<idno type="ORCID">0000-0003-4386-8195</idno>
+		</author>
+		<idno type="DOI">10.1145/3587259.3627571</idno>
+		<ptr target="https://doi.org/10.1145/3587259.3627571" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 12th Knowledge Capture Conference 2023</title>
+		<meeting>the 12th Knowledge Capture Conference 2023<address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2023-12-05">2023</date>
+			<biblScope unit="page" from="131" to="139" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K- CAP &apos;23, Association for Computing Machinery, New York, NY, USA (2023). https://doi.org/10.1145/3587259.3627571</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Lora: Low-rank adaptation of large language models</title>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">J</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Wallis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Allen-Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Chen</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page">11</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hu, E.J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen, W.: Lora: Low-rank adaptation of large language models (2021) 11</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Event Knowledge in Large Language Models: The Gap Between the Impossible and the Unlikely</title>
+		<author>
+			<persName><forename type="first">Carina</forename><surname>Kauf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anna</forename><forename type="middle">A</forename><surname>Ivanova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Giulia</forename><surname>Rambelli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emmanuele</forename><surname>Chersoni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jingyuan</forename><forename type="middle">Selena</forename><surname>She</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zawad</forename><surname>Chowdhury</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evelina</forename><surname>Fedorenko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alessandro</forename><surname>Lenci</surname></persName>
+		</author>
+		<idno type="DOI">10.1111/cogs.13386</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Cognitive Science</title>
+		<title level="j" type="abbrev">Cognitive Science</title>
+		<idno type="ISSN">0364-0213</idno>
+		<idno type="ISSNe">1551-6709</idno>
+		<imprint>
+			<biblScope unit="volume">47</biblScope>
+			<biblScope unit="issue">11</biblScope>
+			<date type="published" when="2023-11">2023</date>
+			<publisher>Wiley</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kauf, C., Ivanova, A.A., Rambelli, G., Chersoni, E., She, J.S., Chowdhury, Z., Fe- dorenko, E., Lenci, A.: Event knowledge in large language models: the gap between the impossible and the unlikely (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">HaluEval: A Large-Scale Hallucination Evaluation Benchmark for Large Language Models</title>
+		<author>
+			<persName><forename type="first">Junyi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaoxue</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xin</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian-Yun</forename><surname>Nie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ji-Rong</forename><surname>Wen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.emnlp-main.397</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2023 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Li, J., Cheng, X., Zhao, W.X., Nie, J.Y., Wen, J.R.: Halueval: A large-scale hallu- cination evaluation benchmark for large language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">A Systematic Investigation of Commonsense Knowledge in Large Language Models</title>
+		<author>
+			<persName><forename type="first">Xiang</forename><forename type="middle">Lorraine</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adhiguna</forename><surname>Kuncoro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jordan</forename><surname>Hoffmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cyprien</forename><surname>De Masson D’autume</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Phil</forename><surname>Blunsom</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aida</forename><surname>Nematzadeh</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.emnlp-main.812</idno>
+		<ptr target="https://doi.org/10.18653/v1/2022.emnlp-main.812" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing</title>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Goldberg</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Z</forename><surname>Kozareva</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</editor>
+		<meeting>the 2022 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Abu Dhabi, United Arab Emirates</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-12">Dec 2022</date>
+			<biblScope unit="page" from="11838" to="11855" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Li, X.L., Kuncoro, A., Hoffmann, J., de Masson d&apos;Autume, C., Blunsom, P., Ne- matzadeh, A.: A systematic investigation of commonsense knowledge in large lan- guage models. In: Goldberg, Y., Kozareva, Z., Zhang, Y. (eds.) Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing. pp. 11838-11855. Association for Computational Linguistics, Abu Dhabi, United Arab Emirates (Dec 2022). https://doi.org/10.18653/v1/2022.emnlp-main.812</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">ConceptNet — A Practical Commonsense Reasoning Tool-Kit</title>
+		<author>
+			<persName><forename type="first">H</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Singh</surname></persName>
+		</author>
+		<idno type="DOI">10.1023/b:bttj.0000047600.45421.6d</idno>
+		<ptr target="https://doi.org/10.1023/B:BTTJ.0000047600.45421.6d" />
+	</analytic>
+	<monogr>
+		<title level="j">BT Technology Journal</title>
+		<title level="j" type="abbrev">BT Technology Journal</title>
+		<idno type="ISSN">1358-3948</idno>
+		<idno type="ISSNe">1573-1995</idno>
+		<imprint>
+			<biblScope unit="volume">22</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="211" to="226" />
+			<date type="published" when="2004-10">oct 2004</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Liu, H., Singh, P.: Conceptnet -a practical commonsense rea- soning tool-kit. BT Technology Journal 22(4), 211-226 (oct 2004). https://doi.org/10.1023/B:BTTJ.0000047600.45421.6d</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Ontology engineering with Large Language Models</title>
+		<author>
+			<persName><forename type="first">Patricia</forename><surname>Mateiu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adrian</forename><surname>Groza</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/synasc61333.2023.00038</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2023 25th International Symposium on Symbolic and Numeric Algorithms for Scientific Computing (SYNASC)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2023-09-11">2023</date>
+			<biblScope unit="page" from="226" to="229" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mateiu, P., Groza, A.: Ontology engineering with large language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">English Word-Net 2019 -an open-source WordNet for English</title>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">P</forename><surname>Mccrae</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Rademaker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Bond</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Rudnicka</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Fellbaum</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 10th Global Wordnet Conference</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Vossen</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Fellbaum</surname></persName>
+		</editor>
+		<meeting>the 10th Global Wordnet Conference<address><addrLine>Wroclaw, Poland</addrLine></address></meeting>
+		<imprint>
+			<publisher>Global Wordnet Association</publisher>
+			<date type="published" when="2019-07">Jul 2019</date>
+			<biblScope unit="page" from="245" to="252" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">McCrae, J.P., Rademaker, A., Bond, F., Rudnicka, E., Fellbaum, C.: English Word- Net 2019 -an open-source WordNet for English. In: Vossen, P., Fellbaum, C. (eds.) Proceedings of the 10th Global Wordnet Conference. pp. 245-252. Global Wordnet Association, Wroclaw, Poland (Jul 2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">WordNet</title>
+		<author>
+			<persName><forename type="first">George</forename><forename type="middle">A</forename><surname>Miller</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/219717.219748</idno>
+		<ptr target="https://doi.org/10.1145/219717.219748" />
+	</analytic>
+	<monogr>
+		<title level="j">Communications of the ACM</title>
+		<title level="j" type="abbrev">Commun. ACM</title>
+		<idno type="ISSN">0001-0782</idno>
+		<idno type="ISSNe">1557-7317</idno>
+		<imprint>
+			<biblScope unit="volume">38</biblScope>
+			<biblScope unit="issue">11</biblScope>
+			<biblScope unit="page" from="39" to="41" />
+			<date type="published" when="1995-11">nov 1995</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Miller, G.A.: Wordnet: a lexical database for english. Commun. ACM 38(11), 39-41 (nov 1995). https://doi.org/10.1145/219717.219748</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Rethinking the Role of Demonstrations: What Makes In-Context Learning Work?</title>
+		<author>
+			<persName><forename type="first">Sewon</forename><surname>Min</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinxi</forename><surname>Lyu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mikel</forename><surname>Artetxe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannaneh</forename><surname>Hajishirzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.emnlp-main.759</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2022 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Min, S., Lyu, X., Holtzman, A., Artetxe, M., Lewis, M., Hajishirzi, H., Zettlemoyer, L.: Rethinking the role of demonstrations: What makes in-context learning work? (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">TaxoLLaMA: WordNet-based Model for Solving Multiple Lexical Semantic Tasks</title>
+		<author>
+			<persName><forename type="first">Viktor</forename><surname>Moskvoretskii</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ekaterina</forename><surname>Neminova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alina</forename><surname>Lobanova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Panchenko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Irina</forename><surname>Nikishina</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.127</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="2331" to="2350" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Moskvoretskii, V., Neminova, E., Lobanova, A., Panchenko, A., Nikishina, I.: Tax- ollama: Wordnet-based model for solving multiple lexical sematic tasks (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Handbook on Neurosymbolic AI and Knowledge Graphs</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Norouzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">S</forename><surname>Mahdavinejad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<idno type="DOI">10.3233/faia400</idno>
+	</analytic>
+	<monogr>
+		<title level="j">OpenAI</title>
+		<idno type="ISSN">0922-6389</idno>
+		<idno type="ISSNe">1879-8314</idno>
+		<imprint>
+			<biblScope unit="volume">21</biblScope>
+			<date type="published" when="2023">2023. 2024</date>
+			<publisher>IOS Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">Gpt-4 technical report</note>
+	<note type="raw_reference">Norouzi, S.S., Mahdavinejad, M.S., Hitzler, P.: Conversational ontology alignment with chatgpt (2023) 21. OpenAI: Gpt-4 technical report (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Language Models as Knowledge Bases?</title>
+		<author>
+			<persName><forename type="first">Fabio</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anton</forename><surname>Bakhtin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuxiang</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Miller</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d19-1250</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Petroni, F., Rocktäschel, T., Lewis, P., Bakhtin, A., Wu, Y., Miller, A.H., Riedel, S.: Language models as knowledge bases? (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">A large DataBase of hypernymy relations extracted from the web</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Seitner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Bizer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Eckert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Faralli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Meusel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">P</forename><surname>Ponzetto</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC&apos;16)</title>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Calzolari</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Choukri</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Declerck</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Goggi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Grobelnik</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Maegaard</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Mariani</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Mazo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Moreno</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Odijk</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Piperidis</surname></persName>
+		</editor>
+		<meeting>the Tenth International Conference on Language Resources and Evaluation (LREC&apos;16)<address><addrLine>Portorož, Slovenia</addrLine></address></meeting>
+		<imprint>
+			<publisher>European Language Resources Association (ELRA)</publisher>
+			<date type="published" when="2016-05">May 2016</date>
+			<biblScope unit="page" from="360" to="367" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Seitner, J., Bizer, C., Eckert, K., Faralli, S., Meusel, R., Paulheim, H., Ponzetto, S.P.: A large DataBase of hypernymy relations extracted from the web. In: Calzo- lari, N., Choukri, K., Declerck, T., Goggi, S., Grobelnik, M., Maegaard, B., Mariani, J., Mazo, H., Moreno, A., Odijk, J., Piperidis, S. (eds.) Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC&apos;16). pp. 360-367. European Language Resources Association (ELRA), Portorož, Slovenia (May 2016)</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">On the Effect of Pretraining Corpora on In-context Learning by a Large-scale Language Model</title>
+		<author>
+			<persName><forename type="first">Seongjin</forename><surname>Shin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sang-Woo</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hwijeen</forename><surname>Ahn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sungdong</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hyoungseok</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Boseop</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyunghyun</forename><surname>Cho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gichang</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Woomyoung</forename><surname>Park</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jung-Woo</forename><surname>Ha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nako</forename><surname>Sung</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.naacl-main.380</idno>
+		<ptr target="https://doi.org/10.18653/v1/2022.naacl-main.380" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Carpuat</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">C</forename><surname>De Marneffe</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">I</forename><forename type="middle">V</forename><surname>Meza Ruiz</surname></persName>
+		</editor>
+		<meeting>the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>Seattle, United States</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-07">Jul 2022</date>
+			<biblScope unit="page" from="5168" to="5186" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shin, S., Lee, S.W., Ahn, H., Kim, S., Kim, H., Kim, B., Cho, K., Lee, G., Park, W., Ha, J.W., Sung, N.: On the effect of pretraining corpora on in-context learning by a large-scale language model. In: Carpuat, M., de Marneffe, M.C., Meza Ruiz, I.V. (eds.) Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. pp. 5168-5186. Association for Computational Linguistics, Seattle, United States (Jul 2022). https://doi.org/10.18653/v1/2022.naacl-main.380</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Head-to-Tail: How Knowledgeable are Large Language Models (LLMs)? A.K.A. Will LLMs Replace Knowledge Graphs?</title>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yifan</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hanwen</forename><surname>Zha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yue</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xin</forename><forename type="middle">Luna</forename><surname>Dong</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-long.18</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="311" to="325" />
+		</imprint>
+	</monogr>
+	<note>.k.a. will llms replace knowledge graphs?</note>
+	<note type="raw_reference">Sun, K., Xu, Y.E., Zha, H., Liu, Y., Dong, X.L.: Head-to-tail: How knowledgeable are large language models (llm)? a.k.a. will llms replace knowledge graphs? (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Martin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Stone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Albert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Almahairi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Babaei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Bashlykov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Batra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Bhargava</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Bhosale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Bikel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Blecher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">C</forename><surname>Ferrer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Cucurull</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Esiobu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Fernandes</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Fuller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Goswami</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Hartshorn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Hosseini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Inan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Kardas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Kerkez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Khabsa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Kloumann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Korenev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><forename type="middle">S</forename><surname>Koura</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Liskovich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Mao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Mihaylov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Mishra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Molybog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Nie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Poulton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Reizenstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Rungta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Saladi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Schelten</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Silva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">M</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Subramanian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><forename type="middle">E</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Taylor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Williams</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">X</forename><surname>Kuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Zarov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Kambadur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Stojnic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Edunov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Scialom</surname></persName>
+		</author>
+		<title level="m">Llama 2: Open foundation and fine-tuned chat models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Touvron, H., Martin, L., Stone, K., Albert, P., Almahairi, A., Babaei, Y., Bash- lykov, N., Batra, S., Bhargava, P., Bhosale, S., Bikel, D., Blecher, L., Ferrer, C.C., Chen, M., Cucurull, G., Esiobu, D., Fernandes, J., Fu, J., Fu, W., Fuller, B., Gao, C., Goswami, V., Goyal, N., Hartshorn, A., Hosseini, S., Hou, R., Inan, H., Kar- das, M., Kerkez, V., Khabsa, M., Kloumann, I., Korenev, A., Koura, P.S., Lachaux, M.A., Lavril, T., Lee, J., Liskovich, D., Lu, Y., Mao, Y., Martinet, X., Mihaylov, T., Mishra, P., Molybog, I., Nie, Y., Poulton, A., Reizenstein, J., Rungta, R., Sal- adi, K., Schelten, A., Silva, R., Smith, E.M., Subramanian, R., Tan, X.E., Tang, B., Taylor, R., Williams, A., Kuan, J.X., Xu, P., Yan, Z., Zarov, I., Zhang, Y., Fan, A., Kambadur, M., Narang, S., Rodriguez, A., Stojnic, R., Edunov, S., Scialom, T.: Llama 2: Open foundation and fine-tuned chat models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<monogr>
+		<title level="m" type="main">Zephyr: Direct distillation of lm alignment</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Tunstall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Beeching</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Lambert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Rajani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Rasul</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Belkada</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Von Werra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Fourrier</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Habib</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Sarrazin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Sanseviero</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Rush</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Wolf</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tunstall, L., Beeching, E., Lambert, N., Rajani, N., Rasul, K., Belkada, Y., Huang, S., von Werra, L., Fourrier, C., Habib, N., Sarrazin, N., Sanseviero, O., Rush, A.M., Wolf, T.: Zephyr: Direct distillation of lm alignment (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">Reformulating Domain Adaptation of Large Language Models as Adapt-Retrieve-Revise: A Case Study on Chinese Legal Domain</title>
+		<author>
+			<persName><forename type="first">Zhen</forename><surname>Wan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yating</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yexiang</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fei</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sadao</forename><surname>Kurohashi</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.findings-acl.299</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics ACL 2024</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="5030" to="5041" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">wan, Z., Zhang, Y., Wang, Y., Cheng, F., Kurohashi, S.: Reformulating domain adaptation of large language models as adapt-retrieve-revise (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<monogr>
+		<title level="m" type="main">Emergent abilities of large language models</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Bommasani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Borgeaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Yogatama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Metzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">H</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Hashimoto</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Vinyals</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Dean</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Fedus</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Tay, Y., Bommasani, R., Raffel, C., Zoph, B., Borgeaud, S., Yogatama, D., Bosma, M., Zhou, D., Metzler, D., Chi, E.H., Hashimoto, T., Vinyals, O., Liang, P., Dean, J., Fedus, W.: Emergent abilities of large language models (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<monogr>
+		<title level="m" type="main">Chain-of-thought prompting elicits reasoning in large language models</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Schuurmans</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Ichter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Xia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">31</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., Chi, E., Le, Q., Zhou, D.: Chain-of-thought prompting elicits reasoning in large language models (2023) 31</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Symbol tuning improves in-context learning in language models</title>
+		<author>
+			<persName><forename type="first">Jerry</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Lampinen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiangning</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Da</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yi</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinyun</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yifeng</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tengyu</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quoc</forename><surname>Le</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.emnlp-main.61</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2023 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="968" to="979" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Hou, L., Lampinen, A., Chen, X., Huang, D., Tay, Y., Chen, X., Lu, Y., Zhou, D., Ma, T., Le, Q.V.: Symbol tuning improves in-context learning in language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<monogr>
+		<title level="m" type="main">Larger language models do in-context learning differently</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Tran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Webson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Ma</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Wei, J., Tay, Y., Tran, D., Webson, A., Lu, Y., Chen, X., Liu, H., Huang, D., Zhou, D., Ma, T.: Larger language models do in-context learning differently (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<monogr>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">S</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Hsu</surname></persName>
+		</author>
+		<title level="m">Large language models as commonsense knowledge for large-scale task planning</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhao, Z., Lee, W.S., Hsu, D.: Large language models as commonsense knowledge for large-scale task planning (2023)</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

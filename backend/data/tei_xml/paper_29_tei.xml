@@ -1,0 +1,2695 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">A Systematic Investigation of Commonsense Knowledge in Large Language Models</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author role="corresp">
+							<persName><forename type="first">Lorraine</forename><surname>Xiang</surname></persName>
+							<email>lorrainel@allenai.orgnematzadeh@google.com</email>
+						</author>
+						<author>
+							<persName><surname>Li</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>†</label> Allen Institute for Artificial Intelligence</note>
+								<orgName type="institution">Allen Institute for Artificial Intelligence</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Adhiguna</forename><surname>Kuncoro</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">Jordan</forename><surname>Hoffmann</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">⋆♢</forename><surname>Cyprien De Masson D'autume</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">Phil</forename><surname>Blunsom</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">Aida</forename><surname>Nematzadeh</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">‡</forename><surname>Deepmind</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">⋆</forename><surname>Inflection</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">Ai</forename><forename type="middle">♦</forename><surname>Reka</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">▲</forename><surname>Cohere</surname></persName>
+						</author>
+						<author>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>♠</label> University of Oxford</note>
+								<orgName type="institution">University of Oxford</orgName>
+							</affiliation>
+						</author>
+						<title level="a" type="main">A Systematic Investigation of Commonsense Knowledge in Large Language Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">BF917CD03C2EB04EEEBE9369E9843EAC</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-20T14:04+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Language models (LMs) trained on large amounts of data (e.g., <ref type="bibr" target="#b10">Brown et al., 2020;</ref><ref type="bibr" target="#b40">Patwary et al., 2021)</ref> have shown impressive performance on many NLP tasks under the zeroshot and few-shot setup. Here we aim to better understand the extent to which such models learn commonsense knowledge -a critical component of many NLP applications. We conduct a systematic and rigorous zero-shot and few-shot commonsense evaluation of large pretrained LMs, where we: (i) carefully control for the LMs' ability to exploit potential surface cues and annotation artefacts, and (ii) account for variations in performance that arise from factors that are not related to commonsense knowledge. Our findings highlight the limitations of pre-trained LMs in acquiring commonsense knowledge without task-specific supervision; furthermore, using larger models or few-shot evaluation are insufficient to achieve human-level commonsense performance.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Common sense -the implicit knowledge about everyday situation that is shared by humans -is an important prerequisite for developing generalpurpose intelligent systems <ref type="bibr" target="#b34">(McCarthy et al., 1960;</ref><ref type="bibr" target="#b32">Liu and Singh, 2004;</ref><ref type="bibr" target="#b19">Gunning, 2018)</ref>. Intriguingly, recent large language models (LMs, <ref type="bibr" target="#b10">Brown et al., 2020;</ref><ref type="bibr" target="#b40">Patwary et al., 2021;</ref><ref type="bibr" target="#b44">Rae et al., 2021)</ref> have achieved remarkable performance at various common sense benchmarks (e.g., <ref type="bibr" target="#b47">Sakaguchi et al., 2020;</ref><ref type="bibr">Zellers et al., 2019a;</ref><ref type="bibr">Bisk et al., 2020b;</ref><ref type="bibr">Sap et al., 2019b)</ref>, even when they are evaluated in a zero-shot or few-shot fashion, without explicit commonsense supervision. We revisit this apparent success, and conduct a rigorous study to better understand the extent to which such pre-trained LMs are able to capture commonsense knowledge.</p><p>Figure <ref type="figure">1</ref>: The experiment settings with their corresponding input to the LM. The example is taken from Social IQa <ref type="bibr">(Sap et al., 2019b)</ref> where we convert questions to natural text using the rules of <ref type="bibr">Shwartz et al. (2020)</ref>; this conversion yields to better performance ( §5).</p><p>In this work, we focus on zero-and fewshot evaluations of pre-trained LMs without commonsense-specific fine-tuning for two reasons: First, we aim to examine if a pre-trained LM is able to acquire general commonsense knowledge. As pre-trained LMs constitute a foundational building block of NLP today, any deficiencies in their commonsense understanding can thus adversely manifest in downstream applications <ref type="bibr" target="#b6">(Bommasani et al., 2021)</ref>. Fine-tuning the LM would make it hard to disentangle how much of the commonsense knowledge is acquired by the underlying LM, as opposed to the task-specific supervision from a benchmark <ref type="bibr" target="#b57">(Yogatama et al., 2019)</ref>. Second, humanannotated commonsense datasets are expensive to collect due to the vast, diverse, and growing nature of commonsense knowledge <ref type="bibr" target="#b15">(Elazar et al., 2021)</ref>.</p><p>Concretely, our work differs from prior work on commonsense evaluation of LMs <ref type="bibr" target="#b10">(Brown et al., 2020;</ref><ref type="bibr" target="#b40">Patwary et al., 2021)</ref> by way of a more rigorous evaluation, in which we: (i) carefully control for the LM's ability to exploit potential surface cues and annotation artefacts to predict the answer, without reasoning over the context. We further (ii) account for the variations in factors influencing the LM's performance, which arise from certain evaluation design choices -independently of common-sense knowledge in the models. We systematically conduct this study on four commonsense benchmarks, six model sizes (up to a very large LM with 280B parameters), and multiple evaluation settings (e.g., different score functions and prompt format).</p><p>We begin with our first question: When evaluating a large LM in a zero-shot setting, how does its zero-shot performance compare to a strong baseline ( §3)? Controlling for the LM's ability to guess the correct answer, without even looking at the question <ref type="bibr" target="#b42">(Poliak et al., 2018;</ref><ref type="bibr" target="#b54">Trichelair et al., 2019</ref>, Answer-only baseline, top of Fig. <ref type="figure">1</ref>), we find that, despite the LM's strong zero-shot performance, the Answer-only baseline can nevertheless perform surprisingly well on some benchmarks. Despite the clear importance of comparing with answer-only baselines as shown in Figure <ref type="figure">2</ref>, these comparisons are absent from recent work on large LMs <ref type="bibr" target="#b61">(Zhou et al., 2020;</ref><ref type="bibr" target="#b10">Brown et al., 2020;</ref><ref type="bibr" target="#b44">Rae et al., 2021)</ref>. Furthermore, increasing model size alone is unlikely to bridge the gap with human performance in the near future: Our analysis of scaling behavior suggests that much larger dense LMs (with 100T to 10 18 parameters -which are infeasibly large at present) are needed to achieve human performance for 3 out of 4 benchmarks. Does familiarizing the LM with the task format using a few-shot evaluation setting substantially improve performance ( §4)? We find that the fewshot evaluation (using up to 64 examples) does not substantially improve the LMs' performance for most tasks except Social IQa. Moreover, using the few-shot/in-context demonstration setting fails to bridge the gap between the LM and current SOTA.</p><p>Finally, we ask: to what extent does the model's zero-shot performance vary depending on certain evaluation design choices, such as the format of the prompt or the score function ( §5)? We find that these design choices -though they have little to do with common sense -can result in large fluctuations in performance (up to 19%). This finding challenges the notion that large LMs are largely able to work well out-of-the-box with minimal taskspecific tuning. Based on these findings, we emphasize the need to carefully select such design choices, explicitly state them to enable fair comparison with prior work, and quantify the robustness of the observed results across different design choices.</p><p>All in all, our findings suggest that acquiring human-level commonsense knowledge, without relying on surface cues or task-specific supervision,</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Choices</head><p>Knowledge Types Questions HellaSwag <ref type="bibr">(Zellers et al., 2019a)</ref> 4 Temporal, Physical 10042 WinoGrande <ref type="bibr" target="#b47">(Sakaguchi et al., 2020)</ref> 2 Social, Physical 1267 Social IQa <ref type="bibr">(Sap et al., 2019b)</ref> 3 Social 1954 PIQA <ref type="bibr">(Bisk et al., 2020b)</ref> 2 Physical 1838 remains beyond the reach of current large LMs.</p><p>Given the marginal improvements from increasing model size, we conjecture that other techniques, such as explicit commonsense supervision, multimodal grounding, or physical embodiment <ref type="bibr">(Bisk et al., 2020a)</ref>, are promising ways forward.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Experimental Setting</head><p>We begin by outlining our experimental setup, and describe the benchmarks, model, baselines, and other relevant experimental settings.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1">Commonsense Benchmarks</head><p>Commonsense knowledge spans many categories, such as physical common sense (e.g., a car is heavier than an apple), social common sense (e.g., a person will feel happy after receiving gifts), and temporal common sense (e.g., cooking an egg takes less time than baking a cake). Given this diverse nature of commonsense knowledge, various benchmarks have been proposed to test these different types of knowledge (e.g., <ref type="bibr">Zellers et al., 2019a;</ref><ref type="bibr" target="#b47">Sakaguchi et al., 2020;</ref><ref type="bibr">Sap et al., 2019b;</ref><ref type="bibr">Bisk et al., 2020b;</ref><ref type="bibr" target="#b30">Lin et al., 2020;</ref><ref type="bibr" target="#b7">Boratko et al., 2020)</ref>.</p><p>Commonsense benchmarks broadly consist of two tasks: (a) multiple-choice evaluation <ref type="bibr" target="#b58">(Zellers et al., 2018</ref><ref type="bibr">(Zellers et al., , 2019a;;</ref><ref type="bibr">Sap et al., 2019b;</ref><ref type="bibr">Bisk et al., 2020b)</ref>, where a model needs to choose the correct answer from a list of plausible answers; (b) generative evaluation <ref type="bibr" target="#b7">(Boratko et al., 2020;</ref><ref type="bibr" target="#b30">Lin et al., 2020</ref><ref type="bibr" target="#b29">Lin et al., , 2021))</ref>, which requires a model to generate an answer given a question and some additional context. Here we focus on multiple-choice benchmarks, since they provide a more reliable automatic metric (i.e., accuracy), whereas automated metrics used to evaluate language generation (e.g., BLEU, <ref type="bibr" target="#b38">Papineni et al., 2002)</ref> do not correlate perfectly with human judgment <ref type="bibr" target="#b31">(Liu et al., 2016;</ref><ref type="bibr" target="#b37">Novikova et al., 2017)</ref>. <ref type="foot" target="#foot_0">1</ref> We use a diverse set of four representative multiple-choice commonsense benchmarks to better understand the extent to which pre-trained LMs are able to acquire different types of commonsense knowledge. We use the validation split of each benchmark, as their test splits are not public. HellaSwag <ref type="bibr">(Zellers et al., 2019a)</ref> is designed to evaluate a model's ability to understand physical, grounded, and temporal common sense. Given a four-sentence story, the model must choose the correct ending from four candidates. The stories are either video captions from AcitivityNet <ref type="bibr" target="#b20">(Heilbron et al., 2015)</ref>, or WikiHow passages <ref type="bibr" target="#b26">(Koupaee and Wang, 2018)</ref>. When evaluating LMs on a similar dataset <ref type="bibr" target="#b58">(Zellers et al., 2018)</ref>, incorrect answers can be easy to distinguish from correct ones; hence in constructing HellaSwag, <ref type="bibr">Zellers et al. (2019a)</ref> removed easy negatives through adversarial filtering.</p><p>WinoGrande <ref type="bibr" target="#b47">(Sakaguchi et al., 2020</ref>) is a coreference resolution benchmark that mainly examines physical and social common sense. Each example consists of a sentence (e.g., "The trophy did not fit the suitcase because it is too big.") and two candidate entities (e.g., "trophy" or "suitcase"). The task is to choose the correct entity for the pronoun, e.g., "it" refers to "trophy" in the example. Social IQa <ref type="bibr">(Sap et al., 2019b)</ref> focuses on evaluating social commonsense, in particular theory of mind -the capacity to reason about others' mental states <ref type="bibr" target="#b16">(Flavell, 2004)</ref>. Given context sentences and a corresponding question, the task is to choose the correct response from three candidates. Annotators use the ATOMIC knowledge base <ref type="bibr">(Sap et al., 2019a)</ref> to create context sentence and questions; the answers are provided by additional annotators. PIQA <ref type="bibr">(Bisk et al., 2020b)</ref>, short for physical interaction question answering, mainly covers the physical aspect of common sense. Each data point consists of a task and two alternative solutions to finish the task; one of which is correct. The tasks are curated from a website 2 with instructions for everyday tasks (e.g., separating egg yolks from eggs); the solutions are provided by human annotators.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.2">Pre-trained Language Model</head><p>We use the pre-trained language model of <ref type="bibr" target="#b44">Rae et al. (2021)</ref>, Gopher, which is an autoregressive Transformer <ref type="bibr" target="#b55">(Vaswani et al., 2017)</ref> language model with 280 billion parameters. We choose Gopher because of its excellent zero-shot and few-shot performance at various benchmarks, in addition to its large model size, which has been shown to improve 2 <ref type="url" target="https://www.instructables.com/">https://www.instructables.com/</ref> language modeling and downstream performance <ref type="bibr" target="#b24">(Kaplan et al., 2020)</ref>. Notably, Gopher is more than 50% larger than GPT3 and as of March 2022, is one of the largest dense LMs developed to date.</p><p>Gopher hyper-parameters. The pre-trained Gopher language model has 80 layers, 128 attention heads, 128-dimensional key/value vectors, and a feedforward layer dimension of 16,384. To better understand the effect of different model sizes ( §3.2), we experiment with five other model sizes: 44M, 117M, 417M, 1.4B, and 7.1B. Similar to Gopher, each of these models was pre-trained by <ref type="bibr" target="#b44">Rae et al. (2021)</ref>; a full list of model hyper-parameters is summarized in Table <ref type="table" target="#tab_0">1</ref> of <ref type="bibr" target="#b44">Rae et al. (2021)</ref>. Each model is trained by subsampling from the Mas-siveText dataset, which consists of more than 2 trillion tokens from various domains including web pages, news, books, and codes <ref type="bibr" target="#b44">(Rae et al., 2021)</ref>. The authors have removed documents that overlap significantly with the evaluation sets from training set including benchmarks used in our work. We use TPUv3 to conduct all evaluations, with an estimated total compute budget of 2 × 10 20 FLOPs. Score function. On the multiple-choice benchmarks, we evaluate the pre-trained LM by calculating the score for each answer choice under the model, and select the highest-scoring answer ŷ:</p><formula xml:id="formula_0">ŷ = arg max y∈Y (x)</formula><p>s θ (y|x); here x denotes the question or prompt, Y (x) the set of answer choices for a given question, and s θ (•) the score of an answer choice y given x, under the pre-trained LM with parameters θ. We provide some examples in Table <ref type="table">2</ref>. <ref type="foot" target="#foot_2">3</ref> For Social IQa, we convert questions to natural text using the rules of <ref type="bibr">Shwartz et al. (2020)</ref>; we find this natural text format to yield better results, as discussed in §5.</p><p>Unless otherwise stated, we use cross-entropy (or token-level log prob) to score each answer:</p><formula xml:id="formula_1">s θ (y|x) = ∥y∥ i=0 log(p θ (y i |x, y 0 ...y i-1 )) ∥y∥ .<label>(1)</label></formula><p>This score function reduces the impact of length; without dividing by ∥y∥, longer answers might have lower probabilities <ref type="bibr" target="#b52">(Stahlberg and Byrne, 2019)</ref>. GPT3 <ref type="bibr" target="#b10">(Brown et al., 2020)</ref> also employs this score function for zero-shot evaluation.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Dataset</head><p>Prompt: x Answer: y HellaSwag A woman is outside with a bucket and a dog. The dog is running around trying to avoid a bath. She gets the dog wet, then it runs away again.</p><p>WinoGrande The GPS and map helped me navigate home. I got lost when the GPS got turned off.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Social IQa</head><p>Jordan was in charge of taking the food on the camping trip and left all the food at home. Jordan felt horrible that he let his friends down on the camping trip.</p><p>PIQA Make Halloween lanterns. Draw ghost faces on empty milk bottles, put a candle in each one.</p><p>Table <ref type="table">2</ref>: Examples of the prompt x and the correct answer y in different benchmarks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.3">Baselines</head><p>We compare the performance of Gopher with two baselines. The first, simple baseline is to randomly select an answer candidate, where the chance of selecting the correct one is 1 number of choices . We henceforth refer to this as the Random Baseline. We experiment with two other baselines: Either choosing the majority label from the training data, or choosing the longest answer. We omit these baselines as they perform similarly to the Random Baseline.</p><p>More importantly, we consider an Answer-only Baseline, where we select the highest-scoring answer choice under the LM, without conditioning on the question. More formally, this baseline considers s θ (y), as opposed to s θ (y|x) in Eq. 1. This baseline reveals the extent to which the pre-trained LM conducts the appropriate reasoning over the context to select the answer, as opposed to relying on potential surface cues or annotation artefacts that make the correct answer a priori more probable than the rest. We illustrate this baseline at the top of Fig. <ref type="figure">1</ref>. For WinoGrande, we calculate the cross-entropy of the text starting by the pronoun replacement, as shown in Table <ref type="table">2</ref>. Ideally, each answer choice should be equally likely if we do not consider the question, and the Answer-only performance should be close to the Random baseline. Similar hypothesis-only baselines are wellstudied for natural language inference datasets <ref type="bibr" target="#b42">(Poliak et al., 2018)</ref>; <ref type="bibr" target="#b54">Trichelair et al. (2019)</ref> further explored such an Answer-only baseline, albeit only on the SWAG benchmark <ref type="bibr" target="#b58">(Zellers et al., 2018)</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Zero-shot Performance</head><p>In Fig. <ref type="figure">2</ref>, we report the zero-shot performance of our pre-trained LM (with 280B parameters, §2.2) on the four commonsense benchmarks, alongside: (i) the Random and Answer-only baselines, and (ii) the current state-of-the-art (SOTA) result. The SOTA results are achieved by the UNI-CORN <ref type="bibr" target="#b33">(Lourie et al., 2021)</ref> model with 11B parameters, which is pre-trained on 6 existing commonsense datasets <ref type="bibr">(Zellers et al., 2019a;</ref><ref type="bibr">Bisk et al., 2020b;</ref><ref type="bibr">Sap et al., 2019b;</ref><ref type="bibr" target="#b47">Sakaguchi et al., 2020;</ref><ref type="bibr" target="#b2">Bhagavatula et al., 2020;</ref><ref type="bibr" target="#b23">Huang et al., 2019)</ref>.</p><p>Zero-shot performance. At first glance, we observe strong zero-shot results, outperforming the Random Baseline in all benchmarks (compare "Rand" and "ZS" in Fig. <ref type="figure">2</ref>). However, the gap between the stronger Answer-only baseline and the zero-shot result is smaller for all benchmarks (compare "Answer" and "ZS"): Whereas this gap is still sizable for HellaSwag and WinoGrande (&gt;20), it is much smaller for Social IQa and PIQA. Finally, in all cases, there is still a large gap between the SOTA and zero-shot performance (&gt;10); this gap is largest for WinoGrande and Social IQa, suggesting that social and physical commonsense is challenging for pre-trained LMs -even a large one with 280B parameters -without task-specific supervision.<ref type="foot" target="#foot_3">foot_3</ref> </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Answer-only bias</head><p>As shown in Fig. <ref type="figure">3</ref>, the performance gap between the Random and Answer-only baselines is notably large for HellaSwag and PIQA, where the Answeronly baseline outperforms the Random baseline by more than 32% and 23%, respectively. This large gap highlights an existing answer-only bias in these benchmarks: the correct answer can, in fact, be selected by the LM without conducting the appropriate commonsense reasoning over the provided context. On the other hand, the Answer-only baseline performs similarly to the random baseline on WinoGrande and Social IQa; hence, the zero-shot performance on these benchmarks is a more reliable estimate of the model's acquisition of  commonsense knowledge. Given the existing (and sometimes inevitable) answer-only biases in some benchmarks, it is important to contextualize the zero-shot results by comparing with strong baselines, although such comparisons are missing from recent work (e.g., <ref type="bibr" target="#b61">Zhou et al., 2020;</ref><ref type="bibr" target="#b10">Brown et al., 2020;</ref><ref type="bibr" target="#b44">Rae et al., 2021)</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Does Increasing Model Size Help?</head><p>Gopher (the largest LM we have access to) achieves a decent zero-shot performance for most commonsense benchmarks, but maintains a notable gap with fine-tuned SOTA results. Can we eventually reach human-level performance on these commonsense benchmarks by increasing model size alone? Since we do not have access to larger language models than Gopher, we examine the extent to which zero-shot performance improves when using Gopher compared to a range of smaller models (i.e., scaling plots). Such scaling plot can help us predict the performance for larger models than Gopher. To that end, we use 6 pre-trained model sizes from 44M to 280B parameters (see §2.2). 5  We present the findings in Table <ref type="table" target="#tab_3">3</ref>. On all four 5 Each model size is trained on the same dataset; hence any performance differences can be attributed to model size.  benchmarks, the LM's zero-shot performance (Table 3, ZS column) consistently gets better as we use increasingly larger models. This finding is also consistent with that of <ref type="bibr" target="#b10">Brown et al. (2020)</ref>, who showed that larger models have better performance at HellaSwag, WinoGrande, and PIQA. But, crucially, we argue that this does not necessarily mean that larger models are better at commonsense reasoning: For HellaSwag and PIQA, the Answer-only baseline also substantially improves with model size (Table <ref type="table" target="#tab_3">3</ref>, Answer column). Hence, for these benchmarks, larger models are also better at exploiting potential surface cues and annotation artefacts to guess the correct answer, without reasoning over the context. To properly assess commonsense reasoning, we should focus on the performance difference between the zero-shot and the Answer-only baseline.  We plot this performance difference with respect to different model sizes in Fig. <ref type="figure" target="#fig_1">4</ref>. We observe that larger models have better performance across benchmarks -when increasing model size, the zero-shot performance gains are more than the performance gains of the Answer-only baseline. Nevertheless, the magnitude of this improvement varies depending on the benchmark: We see a substantial improvement on WinoGrande, but smaller improvements on HellaSwag, Social IQa and PIQA.</p><p>Scaling behavior. Based on these trends, what model size would be required to achieve humanlevel performance on these benchmarks? Through a linear regression analysis (see Appendix B for more details), given the current rate of improvement in performance when gradually increasing the model size from 44M up to 280B, we need a model of at least 1.4T parameters to achieve human performance on HellaSwag, and a model of &gt;100T parameters (∼400x larger than Gopher) for other benchmarks. This result suggests that training everlarger models may not help us reach human performance, at least in the near future. Indeed, given the enormous compute costs for training even larger LMs than the Gopher model with 280B parameters, we conjecture that there are more efficient ways of acquiring commonsense knowledge in an unsupervised fashion, for instance through multi-modal learning and grounding <ref type="bibr">(Bisk et al., 2020a)</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Few-shot Performance</head><p>Recent work has shown that large LMs can perform surprisingly well at various tasks in a fewshot fashion <ref type="bibr" target="#b10">(Brown et al., 2020;</ref><ref type="bibr" target="#b40">Patwary et al., 2021)</ref>. Under this setup, the model is provided with n examples of the downstream task, which are then appended to the prefix. Concretely, for the four commonsense benchmarks, we append n examples that include the question and the correct answer; these examples -which are randomly sampled from the training split of each benchmark -appear before the evaluated question, as shown in Fig. <ref type="figure">1</ref>. This few-shot formulation is appealing as it relies only on a small number of task-specific examples to get the LM accustomed to the task, without any fine-tuning. To what extent can we improve the model performance on commonsense benchmarks, by shifting from the zero-shot to the few-shot evaluation protocol? <ref type="foot" target="#foot_5">6</ref>In Fig. <ref type="figure" target="#fig_2">5</ref>, we compare the performance of Gopher under different evaluation protocols: (i) zeroshot and (ii) few-shot (n) where we use n ∈ {1, 10, 64} examples. We run the few-shot experiments between 5 and 10 times -sampling different examples each time -and report the average performance. The variance across runs is very small and is shown as the error bar in Fig. <ref type="figure" target="#fig_2">5</ref>. <ref type="foot" target="#foot_6">7</ref>Interestingly, model performance with few-shot (1) is sometimes worse than the zero-shot model, but the few-shot (10) and (64) models outperform their zero-shot counterpart (albeit sometimes by small margins). On HellaSwag and PIQA, we do not observe substantial improvement from few-shot evaluation compared to the zero-shot baseline (less than 2%).<ref type="foot" target="#foot_7">foot_7</ref> While few-shot evaluation does not help much for most datasets, the only exception is Social IQa, where the few-shot (64) model outperforms the zero-shot model by a &gt; 7% margin. We attribute this to the less natural text of Social IQa;<ref type="foot" target="#foot_8">foot_8</ref> hence adding task-specific examples provides information about what is expected of the task.  We additionally report the error bars, although the error bars are not always visible due to the very small variance.</p><p>Overall, we observe that the usefulness of the few-shot setting is benchmark dependent. Moreover, using task-specific examples in a few-shot setting does not bridge the gap to SOTA or human performance for any of the benchmarks.</p><p>Knowledge base retrieval. We further examine if adding pre-extracted commonsense knowledge base triplets to the context -as a different form of few-shot/in-context learning -helps improve model performance. (See Appendix D for details.) In contrast to work of <ref type="bibr">Shwartz and Choi (2020)</ref>, we observe no improvements when appending the triplets; we attribute this discrepancy to the strong performance of our base models (see §5).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Robustness of Reported Results</head><p>Different evaluation design choices -such as the format of the prompt or the choice of score functions -can impact the LM's zero-shot performance, and crucially result in different conclusions about a model's commonsense understanding ability. Moreover, the lack of a standardized zeroshot LM evaluation protocol makes direct comparisons between papers difficult <ref type="bibr">(Shwartz et al., 2020;</ref><ref type="bibr" target="#b8">Bosselut et al., 2021)</ref>. To what extent can we attribute variance in the reported results to these evaluation design choices -even though they have little to do with commonsense knowledge?</p><p>Model. Quantifying the robustness of the reported results necessitates scoring a large number of examples under different evaluation design choices, which is infeasible to do with the largest (280B-parameter) model that has a slow inference speed. Hence, we conduct the following experiments using the 7B-parameter model, which is still ∼5 times larger than GPT2 <ref type="bibr" target="#b43">(Radford et al., 2019)</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Score functions.</head><p>Prior work employs different score functions to assess the plausibility of each answer choice given a question <ref type="bibr" target="#b10">(Brown et al., 2020;</ref><ref type="bibr">Shwartz et al., 2020;</ref><ref type="bibr" target="#b8">Bosselut et al., 2021;</ref><ref type="bibr" target="#b22">Holtzman et al., 2021)</ref>, which makes a direct comparison between different results challenging. Here we investigate the impact of different score functions on the reported performance. In addition to crossentropy (defined in §2.2), we experiment with two other score functions. The first is sequence log probability, defined as the log probability of the answer choice y conditional on the question x. Letting y i be the i-th token in the answer y:</p><formula xml:id="formula_2">s(y|x) = ∥y∥ i=0 log(p(y i |x, y 0 ...y i-1 )) (2)</formula><p>Another widely used score function <ref type="bibr" target="#b8">(Bosselut et al., 2021;</ref><ref type="bibr" target="#b22">Holtzman et al., 2021)</ref> is point-wise mutual information. This score function takes into account the probability of the answer choices alone, and the probability of the answer choices conditional on the question. This metric assesses whether the question adds additional information, as commonsense reasoning should be established within the context of the question. As this score function accounts for the prior probability of answer options, it can yield lower accuracy than score functions like cross-entropy that do not account for such factor (Answer-only baseline, §2.3).</p><formula xml:id="formula_3">s(y|x) = P M I(y, x) = log p(y|x) p(y)<label>(3)</label></formula><p>Prompt format. Another important factor is the format of the prompt; here we consider a few such choices. In addition to the concatenation of the question and the answer, we experiment with adding special symbols "[Question]" and "[Answer]" to specify the question and the answer <ref type="bibr" target="#b10">(Brown et al., 2020)</ref>. Moreover, for Social IQa and PIQA, we experiment with a set of predefined rules (taken from <ref type="bibr">Shwartz et al., 2020)</ref> to convert the questions into sentences, which are closer to the LM's pre-training data format. Finally, we find that having the correct lower/upper case and punctuation is important; thus we manually checked all benchmarks to correct for case and punctuation.<ref type="foot" target="#foot_9">foot_9</ref> </p><p>Scored text. The next option is whether to score the entire question-answer pair <ref type="bibr">(Shwartz et al., 2020)</ref>, or only the answer choice (conditional on the given question as prefix) as done by <ref type="bibr" target="#b10">Brown et al. (2020)</ref> i.e., whether to calculate s(x; y) or s(y|x), where ; implies text concatenation.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.1">Do These Design Choices Matter?</head><p>Table <ref type="table" target="#tab_6">4</ref> shows the performance difference of using the worst versus the best design choices, which are independently optimized for each task. To sweep over the above design choices, instead of considering all combinations of parameters, we iterate the options in one category (e.g., score function), while fixing the parameters in the other categories.<ref type="foot" target="#foot_10">foot_10</ref> Overall, we observe a difference between the best and worst settings on all benchmarks; this gap is especially large for HellaSwag and PIQA. This result shows that large language models do not simply work out of the box for some commonsense benchmarks, because for some tasks, these evaluation design choices can account for a large variation in model performance. We find that the score function plays the most important rolecross-entropy yields the highest accuracy values across most benchmarks, but sequence log probability achieves a slightly better performance for WinoGrande. However, when using these scores, we should account for the Answer-only baseline ( §3). Moreover, converting questions to sentences makes the largest difference for Social IQa. We also find that scoring the answer conditional on the question -as opposed to scoring the concatenation of questions and answers -works best, except for WinoGrande, which has no questions. Answer-length bias. Although cross-entropy generally achieves the best reported performance, this score function is sensitive to answer lengths.</p><p>As shown in Appendix C, cross-entropy tends to assign higher scores to longer answers; to varying extent, this pattern holds for PIQA, Social IQa, and WinoGrande. We attribute this to the higher probability assigned to subsequent tokens in the sequence, as such tokens have the most context and thus can be more easily predicted than tokens in the beginning of the answer. As longer answers have more such easier-to-predict tokens, their crossentropy tends to be lower. This pattern is reversed in metrics such as sequence log probability, where shorter sequences often have higher scores <ref type="bibr" target="#b25">(Koehn and Knowles, 2017;</ref><ref type="bibr" target="#b52">Stahlberg and Byrne, 2019)</ref>. Note that this bias does not change the results reported in this work since there is no correlation between answer length and correctness (Appendix C).</p><p>Takeaways. We conclude this section with three concrete recommendations for future work.</p><p>• Although cross-entropy often achieves the best performance, it does not take into account the probability of selecting the correct answer without reasoning over the context ( §3). We recommend future work to either: (i) use cross-entropy and report the gap with the answer-only baseline, or (ii) use the PMI score function, which already takes the probability of the answer into account.</p><p>• In the same way that we search for the best model hyper-parameters, future work should search over certain important evaluation design choices, such as the format of the prompt, and whether to convert the questions into declarative sentences.</p><p>• Lastly, we strongly encourage future work to report the variance of the observed results across different design choices. This can provide an indication of the robustness of the language models' performance on commonsense benchmarks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Related Work</head><p>While recent work evaluates LMs against commonsense benchmarks in a zero-and few-shot fashion, they do not examine the extent to which model performance can be attributed to superficial cues or annotation artefacts in a given dataset (e.g., through strong baselines), nor do they quantify how robust the model performance is under different evaluation design choices. <ref type="bibr" target="#b54">Trichelair et al. (2019)</ref>; <ref type="bibr" target="#b15">Elazar et al. (2021)</ref> investigate the existence of dataset bias in commonsense co-reference resolution benchmarks <ref type="bibr" target="#b27">(Levesque et al., 2012;</ref><ref type="bibr" target="#b47">Sakaguchi et al., 2020)</ref> and SWAG <ref type="bibr" target="#b58">(Zellers et al., 2018)</ref>; here we conduct a more comprehensive investigation on four diverse commonsense benchmarks. Another line of work probe for commonsense knowledge in LMs through knowledge base completion <ref type="bibr" target="#b41">(Petroni et al., 2019;</ref><ref type="bibr" target="#b14">Davison et al., 2019)</ref> or manually-designed probing tasks <ref type="bibr" target="#b56">(Weir et al., 2020;</ref><ref type="bibr">Shwartz and Choi, 2020)</ref>. <ref type="bibr" target="#b61">Zhou et al. (2020)</ref> evaluate pre-trained LMs against commonsense benchmarks and propose a new dataset requiring multi-hop reasoning. In contrast, we focus on zeroand few-shot evaluation of commonsense understanding using the existing benchmarks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="7">Conclusion</head><p>We conduct a systematic and rigorous study of large LM performance on a diverse set of commonsense benchmarks, in a zero-shot and few-shot fashion. While pre-trained LMs can seemingly achieve a good zero-shot performance on these benchmarks, these results can be partially attributed to the LM's ability to exploit potential surface cues and annotation artefacts to guess the correct answer, without reasoning over the provided context. We further observed that substantially increasing model size yields rather small improvements on most commonsense benchmarks: Based on the scaling plots, achieving human-level performance requires much larger model sizes than what is currently feasible. In addition, model performance can be highly sensitive to certain evaluation design choices. Overall, our findings offer valuable insights and best practices for rigorously evaluating large LMs.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Ethical Considerations</head><p>The primary aim of this paper is to conduct a systematic and rigorous commonsense evaluation of a large language model, which -in the case of this work -is achieved by using the pre-trained Gopher language model <ref type="bibr" target="#b44">(Rae et al., 2021)</ref> with 280B parameters. Hence, the same risks stemming from large language model research are also broadly applicable to this work <ref type="bibr" target="#b1">(Bender et al., 2021)</ref>. We briefly discuss these ethical considerations below.</p><p>Training compute. In practice, pre-training large language models like Gopher requires an enormous amount of compute, which may contribute to increased carbon emissions <ref type="bibr" target="#b53">(Strubell et al., 2019;</ref><ref type="bibr" target="#b39">Patterson et al., 2021)</ref>. In this work, we do not pretrain the language model from scratch, although we acknowledge that conducting inference and evaluation with large language models like Gopher still has substantial computational costs. Given the need to construct even-larger language models (&gt;100 trillion parameters) to achieve human-level performance on most of these benchmarks in an unsupervised fashion ( §3.2), we encourage future work to focus on potentially more efficient ways of acquiring commonsense knowledge directly from data, e.g., through multi-modal learning, grounding, and human interaction <ref type="bibr">(Bisk et al., 2020a)</ref>.</p><p>Fairness and bias. Given the enormous size of the pre-training data -about 2 trillion tokens in the case of Gopher pre-training -it is conceivable that the training dataset may inadvertently contain toxic and biased material. Such toxic materialwhich is not always easily identifiable in the large training dataset -can in turn encourage the model to produce biased, harmful, or toxic output, especially when they are prompted with toxic text <ref type="bibr" target="#b17">(Gehman et al., 2020)</ref>. In fact, <ref type="bibr" target="#b44">Rae et al. (2021)</ref> demonstrated that -up to a certain model size -larger language models may respond to toxic prompts with greater toxicity compared to smaller ones. Furthermore, the enormous size of the training data does not necessarily guarantee diversity: We expect the training data to contain a smaller proportion of vernacular or regional English that is used by underrepresented communities <ref type="bibr" target="#b5">(Blodgett et al., 2016;</ref><ref type="bibr" target="#b1">Bender et al., 2021)</ref>. Furthermore, the language model may also acquire harmful biases and stereotypes, e.g., assign lower probabilities to women becoming doctors as opposed to men <ref type="bibr" target="#b45">(Rudinger et al., 2018;</ref><ref type="bibr" target="#b12">Cao and Daumé III, 2021)</ref>.</p><p>Language model misuse. Our work highlights both the success and limitations of large language models at multiple commonsense benchmarks. Nevertheless, the success and expressive power of large language models come at the expense of potential misuse. Given their ability to generate realistic-looking -albeit not necessarily factual -content, large language models can also be used for malicious purposes. For instance, large language models can be used to generate convincing fake news <ref type="bibr">(Zellers et al., 2019b)</ref>, and more powerful generator can in turn generate even more convincing and influential fake news. Given the difficulty of manually distinguishing between humangenerated text and machine-generated ones <ref type="bibr" target="#b13">(Clark et al., 2021)</ref>, how we can better detect and defend against malicious use of large language models is an important and exciting avenue for future work.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Limitations</head><p>There are limitations to this work: first, we only assessed models' performance on multiple-choice questions (and not in a generative setting). Multiple choice problems have a more reliable automatic metric; in contrast, metrics used for generative tasks do not always accurately reflect human judgment <ref type="bibr" target="#b13">(Clark et al., 2021)</ref> Second, we only evaluate the benchmarks on one family of models, the Gopher models and their variants; given the computational cost and also the lack of availability of different large language models (LLM), we cannot run our experiments on different model families than Gopher. However, we include zero-shot results on common-sense benchmarks from existing work on other LLMs in the paper (such as the GPT2 result in Table <ref type="table" target="#tab_7">7</ref>). Moreover, LLMs behave very similarly on various benchmarks, and we expect our results to generalize to other LLMs as well. Last but not least, we only evaluate models that are solely trained on language. Recent multimodal models have shown impressive performance on a range of tasks <ref type="bibr" target="#b46">(Saharia et al., 2022)</ref>. Will models trained on multiple modalities have more commonsense? We aim to answer this question in future work.</p><p>C Cross-entropy vs answer length for all datasets </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>D Commonsense Knowledge Bases</head><p>Given the implicit nature of commonsense knowledge, a language model's pretraining corpora might not contain all of the supporting evidence that is required to answer commonsense understanding questions -a phenomenon widely known as the reporting bias problem <ref type="bibr" target="#b18">(Gordon and Van Durme, 2013)</ref>. Thus, prior work has proposed to use external knowledge bases for improving the zero-shot performance of LMs on commonsense benchmarks <ref type="bibr" target="#b8">(Bosselut et al., 2021;</ref><ref type="bibr" target="#b0">Bauer and Bansal, 2021)</ref>. These approaches are particularly interesting, as the knowledge base augmentation only happens at test time, rendering this approach compatible with any pretrained generative LM. While prior work has shown the effectiveness of this approach over the zero-shot baseline that lacks access to commonsense knowledge bases (CSKBs), we find that the performance of the baseline model is highly sensitive to certain evaluation design choices ( §5). A natural question, therefore, is the following: If we carefully optimize the evaluation design choices of the baseline model, would we still observe similar improvements through CSKB augmentation?</p><p>Setup. To answer this, we replicate prior work by adding commonsense knowledge base entries at test time; such knowledge base triplets can potentially provide the relevant implicit commonsense knowledge that makes the correct answer more likely than the rest. To ensure the generality of our findings, we apply this approach to multiple model sizes that we explored in §3.2. Here we consider the pre-extracted knowledge base triplets that are made publicly available by <ref type="bibr">Shwartz et al. (2020)</ref>.</p><p>We use a similar score function as <ref type="bibr">Shwartz et al. (2020)</ref>, where, for each answer choice y ∈ Y (x), we choose the knowledge base triplet that yields the highest score: 12 s kg (y|x) ≜ t∈T s(y; t|x) ≈ max t∈T s(y; t|x), where s(y; t|x) denotes the cross-entropy of the concatenated answer choice y and the extracted knowledge base triplet t, conditional on the question/context x. Here T denotes the set of all extracted commonsense knowledge triplets, which are generated from Comet <ref type="bibr" target="#b9">(Bosselut et al., 2019)</ref>. 12 We experimented with other score functions, such as appending the extracted knowledge base triplets to the question instead of the answer, although this approach does not yield better results than the one proposed by <ref type="bibr">Shwartz et al. (2020)</ref>  <ref type="bibr">Shwartz et al. (2020)</ref>. ZS: zero-shot performance; CN: ConceptNet. We do not include the Gopher results -with 280B parameters -due to computational considerations and much slower inference.</p><p>One key difference is that we score the answer and knowledge base triplet conditional on the question, whereas <ref type="bibr">Shwartz et al. (2020)</ref> scored the concatenation of question, answer, and triplet instead.</p><p>In Table <ref type="table" target="#tab_7">7</ref>, we summarize our results on Social IQa, which has the highest gap between the zeroshot and SOTA performance (Fig. <ref type="figure">2</ref>). We compare our results with those of <ref type="bibr">Shwartz et al. (2020)</ref>, who used GPT2 as the base model. Our results in Table 7 provide an interesting contrast to the findings of <ref type="bibr">Shwartz et al. (2020)</ref>: Our baseline zeroshot model with 1.3B parameters achieves an accuracy of 47.0% on Social IQa, substantially outperforming the reported GPT2 result of <ref type="bibr">Shwartz et al. (2020)</ref> -which achieves 41.1% -despite the fact that GPT2 has more parameters (1.5B vs our 1.3B). In fact, the same 1.3B zero-shot model -which does not benefit from any commonsense knowledge base triplets -nearly matches the performance of GPT2 augmented with Comet <ref type="bibr" target="#b9">(Bosselut et al., 2019)</ref> (47.0% for our zero-shot 1.3B model vs 47.5% for GPT2 augmented with COMET; Table 7), and also outperforms the GPT2 model that is augmented with self-talk. Nevertheless, we find that adding knowledge base triplets fails to yield substantial improvements for our models; this finding is consistent across three different knowledge bases and five model sizes. On the contrary, adding such knowledge base triplets can occasionally decrease performance compared to the zero-shot baseline.</p><p>We remark on two significant aspects of our findings. First, it is important to compare proposed improvements against strong, well-tuned baselines <ref type="bibr" target="#b21">(Henderson et al., 2018;</ref><ref type="bibr" target="#b35">Melis et al., 2018)</ref>, which can achieve surprisingly competitive performance. We identify the choice of the scored span as a particularly important design choice: Whereas <ref type="bibr">Shwartz et al. (2020)</ref> scored the GPT2 model on the concatenation of both question and answer, we instead calculate the cross-entropy of the answer given the question. Second, certain improvements that are observed under a particular set of evaluation design choices may not necessarily be replicated under a different set. This finding reiterates the importance of explicitly stating the evaluation design choices used in each experiment, and identifying whether or not the observed improvements are robust across different evaluation design choices ( §5).</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Figure 2 :Figure 3 :</head><label>23</label><figDesc>Figure2: Random Baseline (Rand), Answer-only Baseline (Answer), zero-shot (ZS), and the current state-of-the-art (SOTA) for each benchmark, which is achieved by UNICORN<ref type="bibr" target="#b33">(Lourie et al., 2021)</ref>.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Figure 4 :</head><label>4</label><figDesc>Figure 4: The difference between zero-shot performance and Answer-only baseline for different model sizes.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Figure 5 :</head><label>5</label><figDesc>Figure 5: Accuracy on the benchmarks for zero-shot (ZS) and few-shot (FS) settings (with 1, 10, and 64 examples).We additionally report the error bars, although the error bars are not always visible due to the very small variance.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head></head><label></label><figDesc>(a) Answer length vs cross-entropy (average log probability across tokens) for PIQA. (b) Answer length vs cross-entropy (average log probability across tokens) for SocialIQA. (a) Answer length vs cross-entropy (average log probability across tokens) for HellaSWAG. (b) Answer length vs cross-entropy (average log probability across tokens) for Winogrande.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 :</head><label>1</label><figDesc>Benchmark Statistics. Choices: the number of candidate answers for each question; Questions: the number of candidate answers for each question.</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 3 :</head><label>3</label><figDesc></figDesc><table /><note><p>Performance of all models across benchmarks under different experimental settings. Ans: Answeronly Baseline; ZS: zero-shot performance; FS(n): fewshot performance where n is the number of examples.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_6"><head>Table 4 :</head><label>4</label><figDesc>The performance difference between the worst and best design choices for each benchmark.</figDesc><table><row><cell></cell><cell cols="3">Worst Best Difference</cell></row><row><cell>HellaSwag PIQA Social IQa WinoGrande</cell><cell>50.8 62.5 43.9 59.7</cell><cell>70.5 78.7 48.5 62.0</cell><cell>19.7 16.2 4.6 2.3</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_7"><head>Table 7 :</head><label>7</label><figDesc>. Zero-shot performance on Social IQa when using different knowledge bases. GPT2 results are taken from</figDesc><table><row><cell>ZS</cell><cell cols="3">w/t Comet w/t Atomic w/t CN</cell></row><row><cell>44M 117M 43.6 42.3 400M 46.3 1.3B 47.0 7B 48.5</cell><cell>42.9 44.0 46.8 46.8 48.6</cell><cell>42.3 43.6 44.7 46.4 47.5</cell><cell>40.6 42.2 44.1 44.7 46.1</cell></row><row><cell>ZS</cell><cell>w/t Comet</cell><cell>Self-Talk</cell><cell></cell></row><row><cell>GPT2 41.1 13</cell><cell>47.5</cell><cell>46.2</cell><cell></cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>Human judgment of LM output is not only costly to obtain, but also imperfect(Clark et al.,  </p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_1"><p>2021), compounding the difficulty of commonsense evaluation in a generation setup.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_2"><p>For Social IQa, we concatenate the context sentence and question together to form the prompt x.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_3"><p>We remark that the</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_4"><p>530B-parameter LM of<ref type="bibr" target="#b40">Patwary et al. (2021)</ref> achieves slightly better performance than Gopher on HellaSwag (80.2), PIQA (82), and WinoGrande (73), although there remains a large gap with the SOTA performance.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="6" xml:id="foot_5"><p>The ability of large LMs to perform few-shot/in-context learning was first demonstrated by GPT3. Here we use an even-larger model than GPT3, which we expect to be able to leverage in-context learning to a similar extent as GPT3.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="7" xml:id="foot_6"><p>Our findings on the small variance with different few-shot examples is consistent with Min et al. (2022), who found that replacing real examples with random labels can work as well.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="8" xml:id="foot_7"><p>In few-shot experiments (n = 50),<ref type="bibr" target="#b10">Brown et al. (2020)</ref> also found small improvements for PIQA and HellaSwag (&lt;1.5%), with a larger improvement (7.5%) for WinoGrande.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="9" xml:id="foot_8"><p>We found that Gopher has the highest perplexity when predicting Social IQa answers compared to the other datasets.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="10" xml:id="foot_9"><p>Recent work learns the prefix that would maximize performance (e.g.,Li and Liang, 2021). Here we focus on evaluation setups with no parameter updates, and leave this extension to future work. Our findings also indicate that the score function choice -which is not covered by lightweight fine-tuning approaches -is more important than the prompt format ( §5.1).</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="11" xml:id="foot_10"><p>This decision saves compute resources, while offering a lower bound on the performance variations. Our goal here is not to seek the highest achievable performance, but to understand how much performance varies across different settings.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="13" xml:id="foot_11"><p>By similarly tuning the evaluation design choices, we achieved 46.7 when evaluating GPT2 in the zero-shot setting.</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgments</head><p>We would like to thank <rs type="person">Ivana Kajić</rs>, <rs type="person">Laura Rimell</rs> for their detailed comments on our paper. Also, thanks to <rs type="person">Stella Biderman</rs> and the anonymous reviewers for their helpful feedback. We also thank <rs type="person">Jack W. Rae</rs> and the other authors from the Gopher paper for providing efficient evaluation pipelines for models from the Gopher family.</p></div>
+			</div>			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A Appendix Structure</head><p>We begin by quantifying the scaling behavior of the model to predict how performance changes with larger model sizes (Appendix B). We then plot the relationship between cross-entropy and answer length for each of the four datasets (Appendix C). After that, we describe experiments that use knowledge base triplets as a form of in-context learning (Appendix D). Lastly, in Appendix E, we provide qualitative examples that show which examples: (i) all model sizes get right, (ii) all model sizes get wrong, and (iii) only the larger models get right.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B Scaling Behavior</head><p>When we estimate the performance needed to reach human-level performance, we fit a linear model to estimate accuracy from log(params). We derive the human performance from each respective paper and/or leaderboard. For HellaSwag and PIQA, human-level performance is at 95%. For Wino-Grande, it is at 94% and for Social IQa it is at 84%. On HellaSwag, we predict that 1.4T parameters are needed to achieve human-level performance; on PIQA we predict 102T parameters; on Wino-Grande we predict over 2000 Trillion parameters. Social IQa scales particularly poorly, and we estimate over 10 18 parameters being needed. ' answerA ' : ' a v e r y q u i e t p e r s o n ' , ' answerB ' : ' a v e r y p a s s i v e p e r s o n ' , ' answerC ' : ' a v e r y a g g r e s s i v e and t a l k a t i v e p e r s o n ' , ' c o r r e c t ' : 'C' } { ' c o n t e x t ' : ' Sydney went t o o u r f a m i l y farm , t a k i n g t h e t r a s h w i t h h e r , and s e t i t on f i r e on t h e g r o u n d . ' , ' q u e s t i o n ' : 'How would Sydney f e e l a f t e r w a r d s ? ' , ' answerA ' : ' f e e l i n g s t r o n g ' , ' answerB ' : ' b u r n i n g down ' , ' answerC ' : ' u p s e t b e c a u s e t h e f i r e h a s g o t t e n o u t o f c o n t r o l ' , ' c o r r e c t ' : 'C' } { ' c o n t e x t ' : ' Robin a l w a y s g e t s p i z z a on t h e way home from work f o r h e r f a m i l y on F r i d a y s . ' , ' q u e s t i o n ' : ' What w i l l Robin want t o do n e x t ? ' , ' answerA ' : ' p i c k up t h e p i z z a ' , ' answerB ' : ' c o m p l a i n t o t h e o t h e r s ' , ' answerC ' : ' f i n i s h work ' , ' c o r r e c t ' : 'A' } Larger Models Correct The 1.4B, 7.1B, and 280B model all got the following correct: { ' c o n t e x t ' : ' Alex p a i d e x t r a money t o g e t more s e c r e t d e t a i l s a b o u t t h e game s t r a t e g y . ' , ' q u e s t i o n ' : ' What w i l l Alex want t o do n e x t ? ' , ' answerA ' : ' p l a y t h e game more ' , ' answerB ' : ' i g n o r e t h e a d v i c e ' , ' answerC ' : ' s t o p p l a y i n g t h e v i d e o game ' , ' c o r r e c t ' : 'A' } The 417M, 7.1B, and 280B model all got the following correct: { ' c o n t e x t ' : ' Kai and S k y l a r were good f r i e n d s . Kai had f i n a l l y worked up t h e c o u r a g e t o a s k S k y l a r on a d a t e . They g a v e S k y l a r a m e a n i n g f u l g i f t t o t e s t t h e w a t e r s . ' , ' q u e s t i o n ' : ' What w i l l Kai want t o do n e x t ? ' , ' answerA ' : ' s a y t h a n k you f o r t h e g i f t ' , ' answerB ' : ' F i n d o u t w h e t h e r S k y l a r r e c i p r o c a t e s t h e f e e l i n g s ' , ' answerC ' : " T e l l S k y l a r t h e y ' d l i k e t o j u s t be f r i e n d s " , ' c o r r e c t ' : 'B' } </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E Examples</head></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Identify, Align, and Integrate: Matching Knowledge Graphs to Commonsense Reasoning Tasks</title>
+		<author>
+			<persName><forename type="first">Lisa</forename><surname>Bauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohit</forename><surname>Bansal</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.eacl-main.192</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume</title>
+		<meeting>the 16th Conference of the European Chapter of the Association for Computational Linguistics: Main Volume</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page" from="2259" to="2272" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lisa Bauer and Mohit Bansal. 2021. Identify, align, and integrate: Matching knowledge graphs to common- sense reasoning tasks. EACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">On the Dangers of Stochastic Parrots</title>
+		<author>
+			<persName><forename type="first">Emily</forename><forename type="middle">M</forename><surname>Bender</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Timnit</forename><surname>Gebru</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angelina</forename><surname>Mcmillan-Major</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shmargaret</forename><surname>Shmitchell</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3442188.3445922</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 ACM Conference on Fairness, Accountability, and Transparency</title>
+		<meeting>the 2021 ACM Conference on Fairness, Accountability, and Transparency</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2021-03">2021</date>
+			<biblScope unit="page" from="610" to="623" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Emily M. Bender, Timnit Gebru, Angelina McMillan- Major, and Shmargaret Shmitchell. 2021. On the dangers of stochastic parrots: Can language models be too big? . In Proc. of FAccT.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Abductive commonsense reasoning</title>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Ronan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chaitanya</forename><surname>Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keisuke</forename><surname>Malaviya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Sakaguchi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannah</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Doug</forename><surname>Rashkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wen</forename><surname>Downey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Tau Yih</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chandra Bhagavatula, Ronan Le Bras, Chaitanya Malaviya, Keisuke Sakaguchi, Ari Holtzman, Han- nah Rashkin, Doug Downey, Wen tau Yih, and Yejin Choi. 2020. Abductive commonsense reasoning. In International Conference on Learning Representa- tions.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Experience Grounds Language</title>
+		<author>
+			<persName><forename type="first">Yonatan</forename><surname>Bisk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jesse</forename><surname>Thomason</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Andreas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoshua</forename><surname>Bengio</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joyce</forename><surname>Chai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mirella</forename><surname>Lapata</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angeliki</forename><surname>Lazaridou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>May</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aleksandr</forename><surname>Nisnevich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicolas</forename><surname>Pinto</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><surname>Turian</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.703</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yonatan Bisk, Ari Holtzman, Jesse Thomason, Jacob Andreas, Yoshua Bengio, Joyce Chai, Mirella Lap- ata, Angeliki Lazaridou, Jonathan May, Aleksandr Nisnevich, Nicolas Pinto, and Joseph Turian. 2020a. Experience grounds language. In Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP).</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">PIQA: Reasoning about Physical Commonsense in Natural Language</title>
+		<author>
+			<persName><forename type="first">Yonatan</forename><surname>Bisk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rowan</forename><surname>Zellers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ronan</forename><surname>Le Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianfeng</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v34i05.6239</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="issue">05</biblScope>
+			<biblScope unit="page" from="7432" to="7439" />
+			<date type="published" when="2020-04-03">2020</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yonatan Bisk, Rowan Zellers, Jianfeng Gao, Yejin Choi, et al. 2020b. Piqa: Reasoning about physical com- monsense in natural language. In Proceedings of the AAAI Conference on Artificial Intelligence, vol- ume 34, pages 7432-7439.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Demographic dialectal variation in social media: A case study of African-American English</title>
+		<author>
+			<persName><forename type="first">Lin</forename><surname>Su</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lisa</forename><surname>Blodgett</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brendan O'</forename><surname>Green</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Connor</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/D16-1120</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proc. of EMNLP</title>
+		<meeting>of EMNLP</meeting>
+		<imprint>
+			<date type="published" when="2016">2016</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Su Lin Blodgett, Lisa Green, and Brendan O&apos;Connor. 2016. Demographic dialectal variation in social me- dia: A case study of African-American English. In Proc. of EMNLP.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<monogr>
+		<title level="m" type="main">On the opportunities and risks of foundation models</title>
+		<author>
+			<persName><forename type="first">Rishi</forename><surname>Bommasani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Drew</forename><forename type="middle">A</forename><surname>Hudson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ehsan</forename><surname>Adeli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Russ</forename><surname>Altman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Simran</forename><surname>Arora</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><forename type="middle">S</forename><surname>Sydney Von Arx</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeannette</forename><surname>Bernstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Bohg</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emma</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Erik</forename><surname>Brunskill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Brynjolfsson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Buch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rodrigo</forename><surname>Card</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Niladri</forename><forename type="middle">S</forename><surname>Castellon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Annie</forename><surname>Chatterji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kathleen</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jared</forename><surname>Creel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dora</forename><surname>Davis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Demszky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Moussa</forename><surname>Donahue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Esin</forename><surname>Doumbouya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stefano</forename><surname>Durmus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Ermon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kawin</forename><surname>Etchemendy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Li</forename><surname>Ethayarajh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chelsea</forename><surname>Fei-Fei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Trevor</forename><surname>Finn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lauren</forename><forename type="middle">E</forename><surname>Gale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karan</forename><surname>Gillespie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noah</forename><forename type="middle">D</forename><surname>Goel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shelby</forename><surname>Goodman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Neel</forename><surname>Grossman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tatsunori</forename><surname>Guha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Hashimoto</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Henderson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><forename type="middle">E</forename><surname>Hewitt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jenny</forename><surname>Ho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyle</forename><surname>Hong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jing</forename><surname>Hsu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><forename type="middle">F</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saahil</forename><surname>Icard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Jain</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pratyusha</forename><surname>Jurafsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siddharth</forename><surname>Kalluri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Geoff</forename><surname>Karamcheti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fereshte</forename><surname>Keeling</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Khani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pang</forename><forename type="middle">Wei</forename><surname>Khattab</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><forename type="middle">S</forename><surname>Koh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ranjay</forename><surname>Krass</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rohith</forename><surname>Krishna</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ananya</forename><surname>Kuditipudi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Faisal</forename><surname>Kumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mina</forename><surname>Ladhak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tony</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jure</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Isabelle</forename><surname>Leskovec</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Levent</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lisa</forename><surname>Xiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuechen</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tengyu</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ali</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">D</forename><surname>Malik</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Manning</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Suvir</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Mirchandani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zanele</forename><surname>Mitchell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Suraj</forename><surname>Munyikwa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Avanika</forename><surname>Nair</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Deepak</forename><surname>Narayan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Narayanan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Allen</forename><surname>Newman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Juan</forename><forename type="middle">Carlos</forename><surname>Nie</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Niebles</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">F</forename><surname>Hamed Nilforoshan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Giray</forename><surname>Nyarko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Laurel</forename><surname>Ogut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Isabel</forename><surname>Orr</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Papadimitriou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sung</forename><surname>Joon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Park</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eva</forename><surname>Piech</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Portelance</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aditi</forename><surname>Potts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Raghunathan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyu</forename><surname>Reich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Frieda</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Rong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Yusuf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Camilo</forename><surname>Roohani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jackson</forename><forename type="middle">K</forename><surname>Ruiz</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Ryan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dorsa</forename><surname>Christopher R'e</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiori</forename><surname>Sadigh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keshav</forename><surname>Sagawa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andy</forename><surname>Santhanam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krishna</forename><forename type="middle">Parasuram</forename><surname>Shih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Srinivasan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rohan</forename><surname>Tamkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Armin</forename><forename type="middle">W</forename><surname>Taori</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Florian</forename><surname>Thomas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rose</forename><forename type="middle">E</forename><surname>Tramèr</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bohan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiajun</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuhuai</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sang</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michihiro</forename><surname>Michael Xie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiaxuan</forename><surname>Yasunaga</surname></persName>
+		</author>
+		<author>
+			<persName><surname>You</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Matei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Zaharia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianyi</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xikun</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuhui</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lucia</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kaitlyn</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Liang</surname></persName>
+		</author>
+		<idno>ArXiv, abs/2108.07258</idno>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rishi Bommasani, Drew A. Hudson, Ehsan Adeli, Russ Altman, Simran Arora, Sydney von Arx, Michael S. Bernstein, Jeannette Bohg, Antoine Bosselut, Emma Brunskill, Erik Brynjolfsson, S. Buch, D. Card, Ro- drigo Castellon, Niladri S. Chatterji, Annie Chen, Kathleen Creel, Jared Davis, Dora Demszky, Chris Donahue, Moussa Doumbouya, Esin Durmus, Ste- fano Ermon, John Etchemendy, Kawin Ethayarajh, Li Fei-Fei, Chelsea Finn, Trevor Gale, Lauren E. Gillespie, Karan Goel, Noah D. Goodman, Shelby Grossman, Neel Guha, Tatsunori Hashimoto, Peter Henderson, John Hewitt, Daniel E. Ho, Jenny Hong, Kyle Hsu, Jing Huang, Thomas F. Icard, Saahil Jain, Dan Jurafsky, Pratyusha Kalluri, Siddharth Karam- cheti, Geoff Keeling, Fereshte Khani, O. Khattab, Pang Wei Koh, Mark S. Krass, Ranjay Krishna, Ro- hith Kuditipudi, Ananya Kumar, Faisal Ladhak, Mina Lee, Tony Lee, Jure Leskovec, Isabelle Levent, Xi- ang Lisa Li, Xuechen Li, Tengyu Ma, Ali Malik, Christopher D. Manning, Suvir P. Mirchandani, Eric Mitchell, Zanele Munyikwa, Suraj Nair, Avanika Narayan, Deepak Narayanan, Ben Newman, Allen Nie, Juan Carlos Niebles, Hamed Nilforoshan, J. F. Nyarko, Giray Ogut, Laurel Orr, Isabel Papadim- itriou, Joon Sung Park, Chris Piech, Eva Portelance, Christopher Potts, Aditi Raghunathan, Robert Re- ich, Hongyu Ren, Frieda Rong, Yusuf H. Roohani, Camilo Ruiz, Jackson K. Ryan, Christopher R&apos;e, Dorsa Sadigh, Shiori Sagawa, Keshav Santhanam, Andy Shih, Krishna Parasuram Srinivasan, Alex Tamkin, Rohan Taori, Armin W. Thomas, Florian Tramèr, Rose E. Wang, William Wang, Bohan Wu, Jiajun Wu, Yuhuai Wu, Sang Michael Xie, Michihiro Yasunaga, Jiaxuan You, Matei A. Zaharia, Michael Zhang, Tianyi Zhang, Xikun Zhang, Yuhui Zhang, Lucia Zheng, Kaitlyn Zhou, and Percy Liang. 2021. On the opportunities and risks of foundation models. ArXiv, abs/2108.07258.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">ProtoQA: A Question Answering Dataset for Prototypical Common-Sense Reasoning</title>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Boratko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>O’gorman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rajarshi</forename><surname>Das</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Mccallum</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.85</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020. 2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Michael Boratko, Xiang Lorraine Li, Rajarshi Das, Tim O&apos;Gorman, Dan Le, and Andrew McCallum. 2020. Protoqa: A question answering dataset for prototypi- cal common-sense reasoning. EMNLP 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Dynamic Neuro-Symbolic Knowledge Graph Construction for Zero-shot Commonsense Question Answering</title>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ronan</forename><surname>Le Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v35i6.16625</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">6</biblScope>
+			<biblScope unit="page" from="4923" to="4931" />
+			<date type="published" when="2021-05-18">2021</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Antoine Bosselut, Ronan Le Bras, and Yejin Choi. 2021. Dynamic neuro-symbolic knowledge graph construc- tion for zero-shot commonsense question answering. In Proceedings of the 35th AAAI Conference on Arti- ficial Intelligence (AAAI).</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">COMET: Commonsense Transformers for Automatic Knowledge Graph Construction</title>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannah</forename><surname>Rashkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Sap</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chaitanya</forename><surname>Malaviya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Asli</forename><surname>Celikyilmaz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p19-1470</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Antoine Bosselut, Hannah Rashkin, Maarten Sap, Chai- tanya Malaviya, Asli Çelikyilmaz, and Yejin Choi. 2019. Comet: Commonsense transformers for auto- matic knowledge graph construction. In ACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Language models are few-shot learners</title>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nick</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melanie</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jared</forename><forename type="middle">D</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Prafulla</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arvind</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pranav</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Girish</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amanda</forename><surname>Askell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sandhini</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ariel</forename><surname>Herbert-Voss</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gretchen</forename><surname>Krueger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Henighan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rewon</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aditya</forename><surname>Ramesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Ziegler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clemens</forename><surname>Winter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Hesse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Sigler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mateusz</forename><surname>Litwin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Scott</forename><surname>Gray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jack</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Berner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sam</forename><surname>Mccandlish</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alec</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ilya</forename><surname>Sutskever</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dario</forename><surname>Amodei</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="1877" to="1901" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel Ziegler, Jeffrey Wu, Clemens Winter, Chris Hesse, Mark Chen, Eric Sigler, Ma- teusz Litwin, Scott Gray, Benjamin Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and Dario Amodei. 2020. Language models are few-shot learners. In Ad- vances in Neural Information Processing Systems, volume 33, pages 1877-1901.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<title level="m" type="main">Feasibility study for low-head hydropower on the Mill River, Northampton, Massachusetts</title>
+		<idno type="DOI">10.2172/5766688</idno>
+		<imprint>
+			<date type="published" when="1979-01-01" />
+			<publisher>Office of Scientific and Technical Information (OSTI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Curran Associates, Inc.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Toward gender-inclusive coreference resolution: An analysis of gender and bias throughout the machine learning lifecycle</title>
+		<author>
+			<persName><forename type="first">Yang</forename></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Trista</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hal</forename><surname>Daumé</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iii</forename></persName>
+		</author>
+		<idno type="DOI">10.1162/coli_a_00413</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Computational Linguistics</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yang Trista Cao and Hal Daumé III. 2021. Toward gender-inclusive coreference resolution: An analysis of gender and bias throughout the machine learning lifecycle*. Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">All That’s ‘Human’ Is Not Gold: Evaluating Human Evaluation of Generated Text</title>
+		<author>
+			<persName><forename type="first">Elizabeth</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tal</forename><surname>August</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sofia</forename><surname>Serrano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nikita</forename><surname>Haduong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Suchin</forename><surname>Gururangan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noah</forename><forename type="middle">A</forename><surname>Smith</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.acl-long.565</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)</title>
+		<meeting>the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="7282" to="7296" />
+		</imprint>
+	</monogr>
+	<note>: Long Papers)</note>
+	<note type="raw_reference">Elizabeth Clark, Tal August, Sofia Serrano, Nikita Haduong, Suchin Gururangan, and Noah A. Smith. 2021. All that&apos;s &apos;human&apos; is not gold: Evaluating human evaluation of generated text. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers), pages 7282-7296, Online. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Commonsense Knowledge Mining from Pretrained Models</title>
+		<author>
+			<persName><forename type="first">Joe</forename><surname>Davison</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joshua</forename><surname>Feldman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><forename type="middle">M</forename><surname>Rush</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d19-1109</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="1173" to="1178" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Joe Davison, Joshua Feldman, and Alexander M Rush. 2019. Commonsense knowledge mining from pre- trained models. In Proceedings of the 2019 Confer- ence on Empirical Methods in Natural Language Pro- cessing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), pages 1173-1178.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Back to Square One: Artifact Detection, Training and Commonsense Disentanglement in the Winograd Schema</title>
+		<author>
+			<persName><forename type="first">Yanai</forename><surname>Elazar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongming</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoav</forename><surname>Goldberg</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Roth</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.emnlp-main.819</idno>
+		<idno type="arXiv">arXiv:2104.08161</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2021 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page" from="10486" to="10500" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Yanai Elazar, Hongming Zhang, Yoav Goldberg, and Dan Roth. 2021. Back to square one: Bias detection, training and commonsense disentanglement in the winograd schema. arXiv preprint arXiv:2104.08161.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Theory-of-mind development: Retrospect and prospect</title>
+		<author>
+			<persName><forename type="first">H</forename><surname>John</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Flavell</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Merrill-Palmer Quarterly</title>
+		<imprint>
+			<biblScope unit="page" from="274" to="290" />
+			<date type="published" when="1982">2004. 1982</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">John H Flavell. 2004. Theory-of-mind development: Retrospect and prospect. Merrill-Palmer Quarterly (1982-), pages 274-290.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">RealToxi-cityPrompts: Evaluating neural toxic degeneration in language models</title>
+		<author>
+			<persName><forename type="first">Suchin</forename><surname>Samuel Gehman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Gururangan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Sap</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noah</forename><forename type="middle">A</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Smith</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.findings-emnlp.301</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of EMNLP</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Samuel Gehman, Suchin Gururangan, Maarten Sap, Yejin Choi, and Noah A. Smith. 2020. RealToxi- cityPrompts: Evaluating neural toxic degeneration in language models. In Findings of EMNLP.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Reporting bias and knowledge acquisition</title>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>Gordon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Van Durme</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2509558.2509563</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2013 workshop on Automated knowledge base construction</title>
+		<meeting>the 2013 workshop on Automated knowledge base construction</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2013-10-27">2013</date>
+			<biblScope unit="page" from="25" to="30" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jonathan Gordon and Benjamin Van Durme. 2013. Re- porting bias and knowledge acquisition. In Proceed- ings of the 2013 workshop on Automated knowledge base construction, pages 25-30.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<monogr>
+		<author>
+			<persName><forename type="first">David</forename><surname>Gunning</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1810.07528</idno>
+		<title level="m">Machine common sense concept paper</title>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">David Gunning. 2018. Machine common sense concept paper. arXiv preprint arXiv:1810.07528.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Activitynet: A large-scale video benchmark for human activity understanding</title>
+		<author>
+			<persName><forename type="first">Fabian</forename><surname>Caba Heilbron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Victor</forename><surname>Escorcia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bernard</forename><surname>Ghanem</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Juan</forename><forename type="middle">Carlos</forename><surname>Niebles</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/CVPR.2015.7298698</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR)</title>
+		<imprint>
+			<date type="published" when="2015">2015</date>
+			<biblScope unit="page" from="961" to="970" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fabian Caba Heilbron, Victor Escorcia, Bernard Ghanem, and Juan Carlos Niebles. 2015. Activitynet: A large-scale video benchmark for human activity understanding. In 2015 IEEE Conference on Com- puter Vision and Pattern Recognition (CVPR), pages 961-970.</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">Deep Reinforcement Learning That Matters</title>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Henderson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Riashat</forename><surname>Islam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Philip</forename><surname>Bachman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joelle</forename><surname>Pineau</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Doina</forename><surname>Precup</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Meger</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v32i1.11694</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">32</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2018-04-29">2018</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup, and David Meger. 2018. Deep reinforcement learning that matters. In Proc. of AAAI.</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Surface Form Competition: Why the Highest Probability Answer Isn’t Always Right</title>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>West</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vered</forename><surname>Shwartz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.emnlp-main.564</idno>
+		<idno type="arXiv">arXiv:2104.08315</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2021 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page" from="7038" to="7051" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ari Holtzman, Peter West, Vered Schwartz, Yejin Choi, and Luke Zettlemoyer. 2021. Surface form competi- tion: Why the highest probability answer isn&apos;t always right. arXiv preprint arXiv:2104.08315.</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<monogr>
+		<title level="m" type="main">Cosmos qa: Machine reading comprehension with contextual commonsense reasoning</title>
+		<author>
+			<persName><forename type="first">Lifu</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Ronan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Choi</surname></persName>
+		</author>
+		<idno>EMNLP, abs/1909.00277</idno>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lifu Huang, Ronan Le Bras, Chandra Bhagavatula, and Yejin Choi. 2019. Cosmos qa: Machine reading com- prehension with contextual commonsense reasoning. EMNLP, abs/1909.00277.</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<monogr>
+		<title level="m" type="main">Scaling laws for neural language models</title>
+		<author>
+			<persName><forename type="first">Jared</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sam</forename><surname>Mccandlish</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Henighan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><forename type="middle">B</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rewon</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Scott</forename><surname>Gray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alec</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dario</forename><surname>Amodei</surname></persName>
+		</author>
+		<idno>CoRR, abs/2001.08361</idno>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jared Kaplan, Sam McCandlish, Tom Henighan, Tom B. Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, and Dario Amodei. 2020. Scaling laws for neural language models. CoRR, abs/2001.08361.</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Six Challenges for Neural Machine Translation</title>
+		<author>
+			<persName><forename type="first">Philipp</forename><surname>Koehn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rebecca</forename><surname>Knowles</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/w17-3204</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the First Workshop on Neural Machine Translation</title>
+		<meeting>the First Workshop on Neural Machine Translation</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2017">2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Philipp Koehn and Rebecca Knowles. 2017. Six challenges for neural machine translation. In NMT@ACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<monogr>
+		<title level="m" type="main">Wikihow: A large scale text summarization dataset</title>
+		<author>
+			<persName><forename type="first">Mahnaz</forename><surname>Koupaee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wang</forename></persName>
+		</author>
+		<idno type="arXiv">arXiv:1810.09305</idno>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Mahnaz Koupaee and William Yang Wang. 2018. Wiki- how: A large scale text summarization dataset. arXiv preprint arXiv:1810.09305.</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">The winograd schema challenge</title>
+		<author>
+			<persName><forename type="first">Hector</forename><surname>Levesque</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ernest</forename><surname>Davis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Leora</forename><surname>Morgenstern</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Thirteenth International Conference on the Principles of Knowledge Representation and Reasoning</title>
+		<imprint>
+			<date type="published" when="2012">2012</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hector Levesque, Ernest Davis, and Leora Morgenstern. 2012. The winograd schema challenge. In Thir- teenth International Conference on the Principles of Knowledge Representation and Reasoning.</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">Prefix-tuning: Optimizing continuous prompts for generation</title>
+		<author>
+			<persName><forename type="first">Lisa</forename><surname>Xiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Liang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.acl-long.353</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proc. of ACL-IJCNLP. 11848</title>
+		<meeting>of ACL-IJCNLP. 11848</meeting>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xiang Lisa Li and Percy Liang. 2021. Prefix-tuning: Optimizing continuous prompts for generation. In Proc. of ACL-IJCNLP. 11848</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Differentiable open-ended commonsense reasoning</title>
+		<author>
+			<persName><forename type="first">Haitian</forename><surname>Bill Yuchen Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bhuwan</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manzil</forename><surname>Dhingra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Zaheer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><forename type="middle">W</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Cohen</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">NAACL</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bill Yuchen Lin, Haitian Sun, Bhuwan Dhingra, Manzil Zaheer, Xiang Ren, and William W Cohen. 2021. Differentiable open-ended commonsense reasoning. NAACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">CommonGen: A constrained text generation challenge for generative commonsense reasoning</title>
+		<author>
+			<persName><forename type="first">Wangchunshu</forename><surname>Bill Yuchen Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pei</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Ren</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2020</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="1823" to="1840" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bill Yuchen Lin, Wangchunshu Zhou, Ming Shen, Pei Zhou, Chandra Bhagavatula, Yejin Choi, and Xiang Ren. 2020. CommonGen: A constrained text gen- eration challenge for generative commonsense rea- soning. In Findings of the Association for Computa- tional Linguistics: EMNLP 2020, pages 1823-1840, Online. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">How NOT To Evaluate Your Dialogue System: An Empirical Study of Unsupervised Evaluation Metrics for Dialogue Response Generation</title>
+		<author>
+			<persName><forename type="first">Chia-Wei</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Lowe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iulian</forename><surname>Serban</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Noseworthy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Laurent</forename><surname>Charlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joelle</forename><surname>Pineau</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d16-1230</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2016 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2016">2016</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chia-Wei Liu, Ryan Lowe, Iulian Serban, Mike Nose- worthy, Laurent Charlin, and Joelle Pineau. 2016. How NOT to evaluate your dialogue system: An em- pirical study of unsupervised evaluation metrics for dialogue response generation. In Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing.</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">Commonsense reasoning in and over natural language</title>
+		<author>
+			<persName><forename type="first">Hugo</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Push</forename><surname>Singh</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Knowledge-Based and Intelligent Information and Engineering Systems</title>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2004">2004</date>
+			<biblScope unit="page" from="293" to="306" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hugo Liu and Push Singh. 2004. Commonsense rea- soning in and over natural language. In International Conference on Knowledge-Based and Intelligent In- formation and Engineering Systems, pages 293-306. Springer.</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Unicorn on rainbow: A universal commonsense reasoning model on a new multitask benchmark</title>
+		<author>
+			<persName><forename type="first">Nicholas</forename><surname>Lourie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Ronan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">AAAI</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nicholas Lourie, Ronan Le Bras, Chandra Bhagavat- ula, and Yejin Choi. 2021. Unicorn on rainbow: A universal commonsense reasoning model on a new multitask benchmark. In AAAI.</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">Programs with common sense</title>
+		<author>
+			<persName><forename type="first">John</forename><surname>Mccarthy</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">RLE and MIT computation center</title>
+		<imprint>
+			<date type="published" when="1960">1960</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">John McCarthy et al. 1960. Programs with common sense. RLE and MIT computation center.</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">On the state of the art of evaluation in neural language models</title>
+		<author>
+			<persName><forename type="first">Gábor</forename><surname>Melis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Dyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Phil</forename><surname>Blunsom</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proc. of ICLR</title>
+		<meeting>of ICLR</meeting>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gábor Melis, Chris Dyer, and Phil Blunsom. 2018. On the state of the art of evaluation in neural language models. In Proc. of ICLR.</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">Rethinking the Role of Demonstrations: What Makes In-Context Learning Work?</title>
+		<author>
+			<persName><forename type="first">Sewon</forename><surname>Min</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinxi</forename><surname>Lyu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mikel</forename><surname>Artetxe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannaneh</forename><surname>Hajishirzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.emnlp-main.759</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2022 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Sewon Min, Xinxi Lyu, Ari Holtzman, Mikel Artetxe, Mike Lewis, Hannaneh Hajishirzi, and Luke Zettle- moyer. 2022. Rethinking the role of demonstra- tions: What makes in-context learning work? arXiv preprint.</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Why we need new evaluation metrics for NLG</title>
+		<author>
+			<persName><forename type="first">Jekaterina</forename><surname>Novikova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ondřej</forename><surname>Dušek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amanda</forename><forename type="middle">Cercas</forename><surname>Curry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Verena</forename><surname>Rieser</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/D17-1238</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2017 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<date type="published" when="2017">2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jekaterina Novikova, Ondřej Dušek, Amanda Cer- cas Curry, and Verena Rieser. 2017. Why we need new evaluation metrics for NLG. In Proceedings of the 2017 Conference on Empirical Methods in Natu- ral Language Processing.</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">BLEU</title>
+		<author>
+			<persName><forename type="first">Kishore</forename><surname>Papineni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Salim</forename><surname>Roukos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Todd</forename><surname>Ward</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei-Jing</forename><surname>Zhu</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/1073083.1073135</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 40th Annual Meeting on Association for Computational Linguistics - ACL &apos;02</title>
+		<meeting>the 40th Annual Meeting on Association for Computational Linguistics - ACL &apos;02</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2002">2002</date>
+			<biblScope unit="page">311</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kishore Papineni, Salim Roukos, Todd Ward, and Wei- Jing Zhu. 2002. Bleu: a method for automatic evalu- ation of machine translation. In ACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<monogr>
+		<title level="m" type="main">Carbon emissions and large neural network training</title>
+		<author>
+			<persName><forename type="first">David</forename><forename type="middle">A</forename><surname>Patterson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><surname>Gonzalez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quoc</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chen</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lluis-Miquel</forename><surname>Munguia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Rothchild</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><forename type="middle">R</forename><surname>So</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maud</forename><surname>Texier</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>Dean</surname></persName>
+		</author>
+		<idno>CoRR, abs/2104.10350</idno>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">David A. Patterson, Joseph Gonzalez, Quoc V. Le, Chen Liang, Lluis-Miquel Munguia, Daniel Rothchild, David R. So, Maud Texier, and Jeff Dean. 2021. Carbon emissions and large neural network training. CoRR, abs/2104.10350.</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<monogr>
+		<title level="m" type="main">Using deepspeed and megatron to train megatron-turing nlg 530b, the world&apos;s largest and most powerful generative language model</title>
+		<author>
+			<persName><forename type="first">Mostofa</forename><surname>Patwary</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohammad</forename><surname>Shoeybi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Legresley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shrimai</forename><surname>Prabhumoye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jared</forename><surname>Casper</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vijay</forename><surname>Korthikanti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vartika</forename><surname>Singh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julie</forename><surname>Bernauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Houston</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bryan</forename><surname>Catanzaro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shaden</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brandon</forename><surname>Norick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Samyam</forename><surname>Rajbhandari</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhun</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">George</forename><surname>Zerveas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elton</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Reza</forename><surname>Yazdani Aminabadi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xia</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuxiong</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jennifer</forename><surname>Cruzan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Umesh</forename><surname>Madan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luis</forename><surname>Vargas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saurabh</forename><surname>Tiwary</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mostofa Patwary, Mohammad Shoeybi, Patrick LeGres- ley, Shrimai Prabhumoye, Jared Casper, Vijay Ko- rthikanti, Vartika Singh, Julie Bernauer, Michael Houston, Bryan Catanzaro, Shaden Smith, Brandon Norick, Samyam Rajbhandari, Zhun Liu, George Zerveas, Elton Zhang, Reza Yazdani Aminabadi, Xia Song, Yuxiong He, Jeffrey Zhu, Jennifer Cruzan, Umesh Madan, Luis Vargas, and Saurabh Tiwary. 2021. Using deepspeed and megatron to train megatron-turing nlg 530b, the world&apos;s largest and most powerful generative language model.</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">Language models as knowledge bases?</title>
+		<author>
+			<persName><forename type="first">Fabio</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anton</forename><surname>Bakhtin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuxiang</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><forename type="middle">H</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Riedel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">EMNLP</title>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fabio Petroni, Tim Rocktäschel, Patrick Lewis, An- ton Bakhtin, Yuxiang Wu, Alexander H. Miller, and Sebastian Riedel. 2019. Language models as knowl- edge bases? In EMNLP.</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">Hypothesis only baselines for natural language inference</title>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Poliak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Naradowsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aparajita</forename><surname>Haldar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rachel</forename><surname>Rudinger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Van Durme</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Seventh Joint Conference on Lexical and Computational Semantics (*SEM)</title>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Adam Poliak, Jason Naradowsky, Aparajita Haldar, Rachel Rudinger, and Benjamin Van Durme. 2018. Hypothesis only baselines for natural language infer- ence. In The Seventh Joint Conference on Lexical and Computational Semantics (*SEM).</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Language models are unsupervised multitask learners</title>
+		<author>
+			<persName><forename type="first">Alec</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rewon</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Luan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dario</forename><surname>Amodei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ilya</forename><surname>Sutskever</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">OpenAI blog</title>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">8</biblScope>
+			<biblScope unit="page">9</biblScope>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario Amodei, Ilya Sutskever, et al. 2019. Language models are unsupervised multitask learners. OpenAI blog, 1(8):9.</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<monogr>
+		<title level="m" type="main">Scaling language models: Methods, analysis &amp; insights from training gopher</title>
+		<author>
+			<persName><forename type="first">Jack</forename><forename type="middle">W</forename><surname>Rae</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Borgeaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Trevor</forename><surname>Cai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Katie</forename><surname>Millican</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jordan</forename><surname>Hoffmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">Francis</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Aslanides</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sarah</forename><surname>Henderson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roman</forename><surname>Ring</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Susannah</forename><surname>Young</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eliza</forename><surname>Rutherford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Hennigan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Menick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Albin</forename><surname>Cassirer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Powell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">George</forename><surname>Van Den Driessche</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lisa</forename><forename type="middle">Anne</forename><surname>Hendricks</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maribeth</forename><surname>Rauh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Po-Sen</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amelia</forename><surname>Glaese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Johannes</forename><surname>Welbl</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sumanth</forename><surname>Dathathri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saffron</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>Uesato</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Mellor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Irina</forename><surname>Higgins</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Antonia</forename><surname>Creswell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nat</forename><surname>Mcaleese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amy</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Erich</forename><surname>Elsen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Siddhant</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elena</forename><surname>Jayakumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Buchatskaya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Esme</forename><surname>Budden</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karen</forename><surname>Sutherland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michela</forename><surname>Simonyan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Laurent</forename><surname>Paganini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lena</forename><surname>Sifre</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Martens</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lorraine</forename><surname>Xiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adhiguna</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aida</forename><surname>Kuncoro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elena</forename><surname>Nematzadeh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Domenic</forename><surname>Gribovskaya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angeliki</forename><surname>Donato</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arthur</forename><surname>Lazaridou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jean-Baptiste</forename><surname>Mensch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maria</forename><surname>Lespiau</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nikolai</forename><surname>Tsimpoukelli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Doug</forename><surname>Grigorev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thibault</forename><surname>Fritz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mantas</forename><surname>Sottiaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Toby</forename><surname>Pajarskas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhitao</forename><surname>Pohlen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cyprien</forename><surname>Toyama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yujia</forename><surname>De Masson D'autume</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tayfun</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vladimir</forename><surname>Terzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Igor</forename><surname>Mikulik</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aidan</forename><surname>Babuschkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diego</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><surname>De Las</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aurelia</forename><surname>Casas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Guy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Jones</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Bradbury</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Blake</forename><forename type="middle">A</forename><surname>Johnson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Laura</forename><surname>Hechtman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iason</forename><surname>Weidinger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><forename type="middle">S</forename><surname>Gabriel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edward</forename><surname>Isaac</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Simon</forename><surname>Lockhart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Laura</forename><surname>Osindero</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Rimell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oriol</forename><surname>Dyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kareem</forename><surname>Vinyals</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>Ayoub</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lorrayne</forename><surname>Stanway</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Demis</forename><surname>Bennett</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Koray</forename><surname>Hassabis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Geoffrey</forename><surname>Kavukcuoglu</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Irving</surname></persName>
+		</author>
+		<idno>CoRR, abs/2112.11446</idno>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jack W. Rae, Sebastian Borgeaud, Trevor Cai, Katie Millican, Jordan Hoffmann, H. Francis Song, John Aslanides, Sarah Henderson, Roman Ring, Susan- nah Young, Eliza Rutherford, Tom Hennigan, Ja- cob Menick, Albin Cassirer, Richard Powell, George van den Driessche, Lisa Anne Hendricks, Mari- beth Rauh, Po-Sen Huang, Amelia Glaese, Jo- hannes Welbl, Sumanth Dathathri, Saffron Huang, Jonathan Uesato, John Mellor, Irina Higgins, Antonia Creswell, Nat McAleese, Amy Wu, Erich Elsen, Sid- dhant M. Jayakumar, Elena Buchatskaya, David Bud- den, Esme Sutherland, Karen Simonyan, Michela Pa- ganini, Laurent Sifre, Lena Martens, Xiang Lorraine Li, Adhiguna Kuncoro, Aida Nematzadeh, Elena Gribovskaya, Domenic Donato, Angeliki Lazaridou, Arthur Mensch, Jean-Baptiste Lespiau, Maria Tsim- poukelli, Nikolai Grigorev, Doug Fritz, Thibault Sot- tiaux, Mantas Pajarskas, Toby Pohlen, Zhitao Gong, Daniel Toyama, Cyprien de Masson d&apos;Autume, Yujia Li, Tayfun Terzi, Vladimir Mikulik, Igor Babuschkin, Aidan Clark, Diego de Las Casas, Aurelia Guy, Chris Jones, James Bradbury, Matthew Johnson, Blake A. Hechtman, Laura Weidinger, Iason Gabriel, William S. Isaac, Edward Lockhart, Simon Osindero, Laura Rimell, Chris Dyer, Oriol Vinyals, Kareem Ayoub, Jeff Stanway, Lorrayne Bennett, Demis Hass- abis, Koray Kavukcuoglu, and Geoffrey Irving. 2021. Scaling language models: Methods, analysis &amp; in- sights from training gopher. CoRR, abs/2112.11446.</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">Gender bias in coreference resolution</title>
+		<author>
+			<persName><forename type="first">Rachel</forename><surname>Rudinger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Naradowsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brian</forename><surname>Leonard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Van Durme</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/N18-2002</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proc. of NAACL-HLT</title>
+		<meeting>of NAACL-HLT</meeting>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rachel Rudinger, Jason Naradowsky, Brian Leonard, and Benjamin Van Durme. 2018. Gender bias in coreference resolution. In Proc. of NAACL-HLT.</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<monogr>
+		<author>
+			<persName><forename type="first">Chitwan</forename><surname>Saharia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Chan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saurabh</forename><surname>Saxena</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lala</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jay</forename><surname>Whang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emily</forename><surname>Denton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Seyed</forename><surname>Kamyar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Seyed</forename><surname>Ghasemipour</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Burcu</forename><surname>Karagol Ayan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sara</forename><surname>Mahdavi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rapha</forename><surname>Gontijo Lopes</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2205.11487</idno>
+		<title level="m">Photorealistic text-to-image diffusion models with deep language understanding</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Chitwan Saharia, William Chan, Saurabh Saxena, Lala Li, Jay Whang, Emily Denton, Seyed Kamyar Seyed Ghasemipour, Burcu Karagol Ayan, S Sara Mahdavi, Rapha Gontijo Lopes, et al. 2022. Photorealistic text-to-image diffusion models with deep language understanding. arXiv preprint arXiv:2205.11487.</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<analytic>
+		<title level="a" type="main">Winogrande: An adversarial winograd schema challenge at scale</title>
+		<author>
+			<persName><forename type="first">Keisuke</forename><surname>Sakaguchi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Ronan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<meeting>the AAAI Conference on Artificial Intelligence</meeting>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="page" from="8732" to="8740" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Keisuke Sakaguchi, Ronan Le Bras, Chandra Bhaga- vatula, and Yejin Choi. 2020. Winogrande: An ad- versarial winograd schema challenge at scale. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 34, pages 8732-8740.</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<analytic>
+		<title level="a" type="main">Atomic: An atlas of machine commonsense for ifthen reasoning</title>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Sap</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Ronan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emily</forename><surname>Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Allaway</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicholas</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannah</forename><surname>Lourie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brendan</forename><surname>Rashkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noah</forename><forename type="middle">A</forename><surname>Roof</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<meeting>the AAAI Conference on Artificial Intelligence</meeting>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="3027" to="3035" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Maarten Sap, Ronan Le Bras, Emily Allaway, Chan- dra Bhagavatula, Nicholas Lourie, Hannah Rashkin, Brendan Roof, Noah A Smith, and Yejin Choi. 2019a. Atomic: An atlas of machine commonsense for if- then reasoning. In Proceedings of the AAAI Con- ference on Artificial Intelligence, volume 33, pages 3027-3035.</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<analytic>
+		<title level="a" type="main">Socialiqa: Commonsense reasoning about social interactions</title>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Sap</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannah</forename><surname>Rashkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Derek</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ronan</forename><surname>Lebras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Maarten Sap, Hannah Rashkin, Derek Chen, Ronan LeBras, and Yejin Choi. 2019b. Socialiqa: Common- sense reasoning about social interactions. Proceed- ings of the 2019 Conference on Empirical Methods in Natural Language Processing.</note>
+</biblStruct>
+
+<biblStruct xml:id="b50">
+	<analytic>
+		<title level="a" type="main">Do neural language models overcome reporting bias?</title>
+		<author>
+			<persName><forename type="first">Vered</forename><surname>Shwartz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">COLING</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Vered Shwartz and Yejin Choi. 2020. Do neural lan- guage models overcome reporting bias? In COLING.</note>
+</biblStruct>
+
+<biblStruct xml:id="b51">
+	<analytic>
+		<title level="a" type="main">Unsupervised commonsense question answering with self-talk</title>
+		<author>
+			<persName><forename type="first">Vered</forename><surname>Shwartz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>West</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Ronan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">EMNLP</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Vered Shwartz, Peter West, Ronan Le Bras, Chandra Bhagavatula, , and Yejin Choi. 2020. Unsupervised commonsense question answering with self-talk. In EMNLP.</note>
+</biblStruct>
+
+<biblStruct xml:id="b52">
+	<analytic>
+		<title level="a" type="main">On NMT search errors and model errors: Cat got your tongue?</title>
+		<author>
+			<persName><forename type="first">Felix</forename><surname>Stahlberg</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bill</forename><surname>Byrne</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/D19-1331</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)<address><addrLine>Hong Kong, China</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="3354" to="3360" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Felix Stahlberg and Bill Byrne. 2019. On NMT search errors and model errors: Cat got your tongue? In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Lan- guage Processing (EMNLP-IJCNLP), pages 3354- 3360, Hong Kong, China. Association for Computa- tional Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b53">
+	<analytic>
+		<title level="a" type="main">Energy and policy considerations for deep learning in NLP</title>
+		<author>
+			<persName><forename type="first">Emma</forename><surname>Strubell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ananya</forename><surname>Ganesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Mccallum</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/P19-1355</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proc. of ACL</title>
+		<meeting>of ACL</meeting>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Emma Strubell, Ananya Ganesh, and Andrew McCal- lum. 2019. Energy and policy considerations for deep learning in NLP. In Proc. of ACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b54">
+	<analytic>
+		<title level="a" type="main">How reasonable are common-sense reasoning tasks: A case-study on the Winograd schema challenge and SWAG</title>
+		<author>
+			<persName><forename type="first">Paul</forename><surname>Trichelair</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ali</forename><surname>Emami</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Trischler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kaheer</forename><surname>Suleman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jackie</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kit</forename><surname>Cheung</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/D19-1335</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)<address><addrLine>Hong Kong, China</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="3382" to="3387" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Paul Trichelair, Ali Emami, Adam Trischler, Kaheer Suleman, and Jackie Chi Kit Cheung. 2019. How reasonable are common-sense reasoning tasks: A case-study on the Winograd schema challenge and SWAG. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natu- ral Language Processing (EMNLP-IJCNLP), pages 3382-3387, Hong Kong, China. Association for Com- putational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b55">
+	<analytic>
+		<title level="a" type="main">Attention is all you need</title>
+		<author>
+			<persName><forename type="first">Ashish</forename><surname>Vaswani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noam</forename><surname>Shazeer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Niki</forename><surname>Parmar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jakob</forename><surname>Uszkoreit</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Llion</forename><surname>Jones</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aidan</forename><forename type="middle">N</forename><surname>Gomez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Łukasz</forename><surname>Kaiser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Illia</forename><surname>Polosukhin</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Advances in neural information processing systems</title>
+		<imprint>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="5998" to="6008" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. 2017. Attention is all you need. In Advances in neural information pro- cessing systems, pages 5998-6008.</note>
+</biblStruct>
+
+<biblStruct xml:id="b56">
+	<analytic>
+		<title level="a" type="main">Probing neural language models for human tacit assumptions</title>
+		<author>
+			<persName><forename type="first">Nathaniel</forename><surname>Weir</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Poliak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Van Durme</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">arXiv: Computation and Language</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nathaniel Weir, Adam Poliak, and Benjamin Van Durme. 2020. Probing neural language models for human tacit assumptions. arXiv: Computation and Language.</note>
+</biblStruct>
+
+<biblStruct xml:id="b57">
+	<monogr>
+		<title level="m" type="main">Learning and evaluating general linguistic intelligence</title>
+		<author>
+			<persName><forename type="first">Dani</forename><surname>Yogatama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cyprien</forename><surname>De Masson D'autume</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jerome</forename><surname>Connor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tomas</forename><surname>Kocisky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Chrzanowski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lingpeng</forename><surname>Kong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angeliki</forename><surname>Lazaridou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wang</forename><surname>Ling</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lei</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Dyer</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1901.11373</idno>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Dani Yogatama, Cyprien de Masson d&apos;Autume, Jerome Connor, Tomas Kocisky, Mike Chrzanowski, Ling- peng Kong, Angeliki Lazaridou, Wang Ling, Lei Yu, Chris Dyer, et al. 2019. Learning and evaluat- ing general linguistic intelligence. arXiv preprint arXiv:1901.11373.</note>
+</biblStruct>
+
+<biblStruct xml:id="b58">
+	<analytic>
+		<title level="a" type="main">Swag: A large-scale adversarial dataset for grounded commonsense inference</title>
+		<author>
+			<persName><forename type="first">Rowan</forename><surname>Zellers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yonatan</forename><surname>Bisk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roy</forename><surname>Schwartz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">EMNLP</title>
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rowan Zellers, Yonatan Bisk, Roy Schwartz, and Yejin Choi. 2018. Swag: A large-scale adversarial dataset for grounded commonsense inference. EMNLP.</note>
+</biblStruct>
+
+<biblStruct xml:id="b59">
+	<analytic>
+		<title level="a" type="main">Hellaswag: Can a machine really finish your sentence?</title>
+		<author>
+			<persName><forename type="first">Rowan</forename><surname>Zellers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yonatan</forename><surname>Bisk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ali</forename><surname>Farhadi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">;</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali Farhadi, and Yejin Choi. 2019a. Hellaswag: Can a machine really finish your sentence? In Proceed- ings of the 57th Annual Meeting of the Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b60">
+	<monogr>
+		<title level="m" type="main">Defending against Neural Fake News</title>
+		<author>
+			<persName><forename type="first">Rowan</forename><surname>Zellers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ari</forename><surname>Holtzman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannah</forename><surname>Rashkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yonatan</forename><surname>Bisk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ali</forename><surname>Farhadi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Franziska</forename><surname>Roesner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rowan Zellers, Ari Holtzman, Hannah Rashkin, Yonatan Bisk, Ali Farhadi, Franziska Roesner, and Yejin Choi. 2019b. Defending against Neural Fake News.</note>
+</biblStruct>
+
+<biblStruct xml:id="b61">
+	<analytic>
+		<title level="a" type="main">Evaluating Commonsense in Pre-Trained Language Models</title>
+		<author>
+			<persName><forename type="first">Xuhui</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yue</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Leyang</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dandan</forename><surname>Huang</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v34i05.6523</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="issue">05</biblScope>
+			<biblScope unit="page" from="9733" to="9740" />
+			<date type="published" when="2020-04-03">2020</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xuhui Zhou, Yue Zhang, Leyang Cui, and Dandan Huang. 2020. Evaluating commonsense in pre- trained language models. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 34, pages 9733-9740.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

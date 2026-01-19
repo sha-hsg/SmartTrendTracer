@@ -1,0 +1,2462 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Accelerating Knowledge Graph and Ontology Engineering with Large Language Models</title>
+				<funder ref="#_zGznd2B">
+					<orgName type="full">National Science Foundation</orgName>
+				</funder>
+				<funder>
+					<orgName type="full">&quot; (EduGate)</orgName>
+				</funder>
+				<funder ref="#_rVYzMJ3">
+					<orgName type="full">An Education Gateway</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2024-11-14">14 Nov 2024</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Cogan</forename><surname>Shimizu</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>a</label> Department of Computer Science and Engineering , Wright State University , USA</note>
+								<orgName type="department">Department of Computer Science and Engineering</orgName>
+								<orgName type="institution">Wright State University</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Pascal</forename><surname>Hitzler</surname></persName>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>b</label> Department of Computer Science , Kansas State University , USA</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Kansas State University</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Accelerating Knowledge Graph and Ontology Engineering with Large Language Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2024-11-14">14 Nov 2024</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">4936C507615FDCC686055E596DDF2EA8</idno>
+					<idno type="arXiv">arXiv:2411.09601v1[cs.AI]</idno>
+					<note type="submission">Preprint submitted to Elsevier November 15, 2024</note>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-21T17:40+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Knowledge Graph Engineering</term>
+					<term>Ontology Engineering</term>
+					<term>Large Language Models</term>
+					<term>Modular Ontologies</term>
+					<term>Ontology Modeling</term>
+					<term>Ontology Population</term>
+					<term>Ontology Alignment</term>
+					<term>Entity Disambiguation</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Large Language Models bear the promise of significant acceleration of key Knowledge Graph and Ontology Engineering tasks, including ontology modeling, extension, modification, population, alignment, as well as entity disambiguation. We lay out LLMbased Knowledge Graph and Ontology Engineering as a new and coming area of research, and argue that modular approaches to ontologies will be of central importance.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1.">Introduction</head><p>Knowledge Graph and Ontology Engineering (KGOE, in short) refers to a (vaguely defined) set of tasks that are of central relevance to the life cycle of knowledge graphs, and of ontologies, 1 as data artifacts used in data management and applications. 2 These include, for example, ontology modeling (i.e., construction), ontology population (i.e., creating a knowledge graph with the given ontology as schema), ontology extension and modification, ontology alignment, entity disambiguation (sometimes called co-reference resolution).</p><p>All of the just mentioned tasks have in common that they are hard, in the sense that even after more than a quarter century of Semantic Web research, they still defy attempts to automate them at reasonable quality levels and scale. The state of the art on all of these is that they require significant human expert labor, at times (such as for entity disambiguation) together with detailed scripting of algorithms that solve the problem at scale but only for a specific problem instance, i.e., for a very specific knowledge graph and/or ontology.</p><p>At the same time, knowledge graphs and ontologies are ever more important for applications in data integration and data management, and more recently also as ground truth to escape from Large Language Model (LLM) hallucinations <ref type="bibr" target="#b28">[29]</ref> and as components of other neurosymbolic approaches <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b22">23,</ref><ref type="bibr" target="#b23">24]</ref>. As a consequence, improved processes and methods for automating or even semi-automating core KGOE tasks remains a key challenge for the research community.</p><p>Email addresses: cogan.shimizu@wright.edu (Cogan Shimizu), hitzler@ksu.edu (Pascal Hitzler) 1 We mostly understand ontologies as a type of schema for knowledge graphs in the sense of <ref type="bibr" target="#b44">[45]</ref>, and as such the ontology can in fact also be understood to be part of the knowledge graph. We acknowledge other uses, to which our discussion also applies. 2 For background on this and the more general Semantic Web field, see, e.g., <ref type="bibr" target="#b19">[20]</ref> and the references given therein.</p><p>LLMs enter the scene, and the public perception of Artificial Intelligence (AI), with force in 2022 at the launch of OpenAI's ChatGPT, 3 with rapid developments since then. Their humanstyle conversation capabilities, which include a profound mastery of expression in written language, as well as solid production of more structured information, are as stunning as their sometimes wildly confabulated responses (usually termed hallucinations). Perhaps most important for our discussion herein, LLMs appear to capture, and to have the ability to recall in different formats and contexts, a wide swath of human knowledge, both commonsense and specialized, provided it is reflected well enough in the training data. While at this point in time, their reliability in terms of accuracy of content in their responses remains problematic, it is quite apparent and widely reported that working with an LLM can save significant time and effort provided there is a (human) topic expert available as a check on factual accuracy.</p><p>The promise of LLMs for KGOE is thus: by using LLMs as approximate natural language knowledge bases that can be approximately queried, plus LLM capabilities to understand and produce information in ways structured for KGOE use, it should be possible to design semi-automatic methods, or human-LLM interactive methods, that can produce at least draft solutions for key KGOE problems at a level of quality that will significantly reduce human expert time and effort. Work on this line of research has of course already been started by the Semantic Web community. With this paper, we intend to begin to consolidate the discussion, and -in particular -contribute observations and discussions related to our own research on modular ontologies, which we believe to be highly relevant, for reasons that we will lay out below.</p><p>The plan of this paper is as follows. In Section 2 we motivate the need for (a certain type of) modularity for LLM-based 3 <ref type="url" target="https://openai.com/index/hello-gpt-4o/">https://openai.com/index/hello-gpt-4o/</ref> KGOE. In Section 3 we discuss our notion of modularity and its research context. In Section 4 we briefly look, in turn, at the key KGOE tasks identified in the introduction. In Section 5 we will list some concrete research challenges that can drive LLM-based KGOE forward, and in Section 6 we will conclude.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.">Divide and Conquer</head><p>Useful ontologies and knowledge graphs often tend to be large, or even very large. The ENVO ontology <ref type="bibr" target="#b5">[6]</ref> has over 2, 100 classes; the Gene Ontology <ref type="bibr" target="#b6">[7]</ref> has over 40, 000 classes; a Wikipedia-derived class hierarchy used for explainable deep learning analysis has over 2 • 10 6 classes <ref type="bibr" target="#b40">[41]</ref>; DBpedia Core<ref type="foot" target="#foot_0">foot_0</ref> has about 9 • 10 8 triples with an ontology of about 800 classes, KnowWhereGraph <ref type="bibr" target="#b47">[48]</ref> has over 28 • 10 9 triples with an ontology of about 300 classes. The size -in particular of the ontology underlying a knowledge graph -is one of the obstacles facing humans in KGOE tasks, as even an ontology with a "mere" 300 classes (and corresponding comprehensive OWL axiomatization) is simply too big for a human to keep an overview of as a whole, or to understand well from scratch within a reasonable amount of time.</p><p>Even before the advent of LLMs, therefore, Semantic Web researchers have looked into the use of ontology modules in order to segment large ontologies into pieces of a size that are more workable for the human brain. These efforts include this paper's authors and their collaborators, in a line of work that has developed out of Ontology Design Patterns (ODPs <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b13">14]</ref>) research and practice, using an approach that we believe to be particularly suited for LLM-based KGOE, and that we will focus on further below: If an ontology is split into (even possibly overlapping) pieces that make conceptual sense (as a type of mini-ontology) for the domain experts, then KGOE tasks can often focus on one or a few coherent pieces (modules) of the ontology, thus simplifying the task significantly. And given the frequent difficulties (and expense) of LLMs to deal with substantial size prompts and with more open-ended and less common scenarios, it is a reasonable expectation that similar benefits will apply to LLM-based KGOE.</p><p>Let us provide a case in point from the context of ontology alignment, reported in <ref type="bibr" target="#b0">[1]</ref>. The setting is the creation of complex ontology mapping rules between two ontologies in the OAEI GeoLink complex ontology alignment benchmark <ref type="bibr" target="#b51">[52]</ref>. The benchmark is of moderate size, with 40 classes, 149 object properties and 49 data properties in one of the ontology, and 156 classes, 124 object properties and 46 data properties in the other ontology. It is a natural rather than synthetic benchmark in that the ontologies were originally developed for an application purpose, and were only cast into a benchmark later. The benchmark (like all complex ontology alignment benchmarks) had defied automation for years, the only approaches that were able to create reasonably good results assumed a shared ABox As reported in <ref type="bibr" target="#b0">[1]</ref>, an LLM was prompted to produce a body of an alignment rule, given a rule head together with the two ontologies as part of the prompt. This essentially completely failed, i.e., the LLM produced output that was essentially unusable. But then we made use of the modular structure of the body-side ontology, for which 20 named modules (such as "Organization" or "Physical Sample") had already been provided at original deployment of the ontology <ref type="bibr" target="#b26">[27]</ref>. We thus prompted in two stages: given an alignment rule head and the list of 20 module names, we first asked for the module(s) that would be required to create the rule. Then we prompted for the rule body by providing the modules previously identified. The results we obtained were really good in terms of high precision and recall. The availability and principled use of modules made the difference between an almost complete failure and a reasonably accurate system response.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.">Modules</head><p>The term module has been used for different things in the Semantic Web context. <ref type="foot" target="#foot_1">5</ref> Our approach, as in <ref type="bibr" target="#b44">[45]</ref>, comes out of the tradition of ODPs <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b13">14]</ref>, which are partial ontologies that address commonly occurring, domain invariant ontology design issues. Later, related notions with similar underlying ideas, but generally different objectives (and implementations), include <ref type="bibr" target="#b34">[35,</ref><ref type="bibr" target="#b49">50]</ref>.</p><p>For us, and this is laid out in <ref type="bibr" target="#b24">[25,</ref><ref type="bibr" target="#b44">45]</ref>, a module is a part of an ontology that consists of the classes, properties, and axioms within that ontology that are relevant to a key notion, as considered by a domain expert, for the ontology use case. For example, the above mentioned GeoLink ontologies that focus on oceanographic cruises and data, such key notions (and corresponding modules) include Trajectory, Cruise, Physical Sample, Organization. The Enslaved.org ontology about historic person and events data on the transatlantic slave trade <ref type="bibr" target="#b46">[47]</ref> has modules such as Event, Place, Provenance, PersonRecord, AgeRecord, etc. Modules can overlap or even be nested, and there are, on purpose, no precise rules which ontology pieces should be thought of as being part of a specific module. Rather, it has to make sense from several perspectives, including the domain experts' perspectives, the use case perspectives, and the perspectives of the available data relevant for the use case and ontology. As such, the modules provide conceptual bridges between human expert conceptualization and data reality <ref type="bibr" target="#b24">[25]</ref>.</p><p>Our approach called MOMo for Modular Ontology Modeling, also includes a step-by-step ontology design methodology geared towards humans, a module (and pattern) description language OPLa expressed in OWL <ref type="bibr" target="#b21">[22]</ref>, ontology design pattern libraries <ref type="bibr" target="#b45">[46]</ref>, and a Protégé plug-in for ontology development <ref type="bibr" target="#b42">[43,</ref><ref type="bibr" target="#b43">44]</ref> -we mention these just in passing, and details can be found in <ref type="bibr" target="#b44">[45]</ref>; for this paper, the modular structure of the resulting ontologies themselves plus the fact that modules in OPLa annotated modular ontologies be easily be identified programmatically, are really the most important.</p><p>Knowledge graphs whose schema is given as a MOMo modular ontology then naturally inherit the modular structure from the ontology: The corresponding graph (ABox) module consists of all those ABox statements that are fully within a given ontology module.</p><p>MOMo was designed before the advent of LLMs, geared primarily towards human ontology engineers. However it has also always been on our minds that it should also be helpful for working towards (semi-)automation of hard KGOE tasks. LLMs may now provide the opportunity for the Semantic Web community to close the remaining gaps.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.">Modular LLM-based KGOE</head><p>We will now look, in turn, at the key KGOE tasks identified in the introduction and discuss each of them from the perspective of modularity-driven LLM-based KGOE. Specifically, we address the different tasks in essentially in order of abstraction, i.e., from knowledge to data. We note of course that inroads made in any tasks easily have the capacity to impact and improve outcomes in the others.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1.">Ontology Modeling, Extension and Modification</head><p>Automated ontology design -often referred to as Ontology Learning -has been investigated primarily from a traditional (i.e., pre-LLM) Natural Language Processing (NLP) perspective, as a possible way to address the knowledge acquisition bottleneck with much of the methods established in the early aughts; see, e.g., <ref type="bibr" target="#b29">[30,</ref><ref type="bibr" target="#b30">31,</ref><ref type="bibr" target="#b9">10,</ref><ref type="bibr" target="#b11">12,</ref><ref type="bibr" target="#b4">5,</ref><ref type="bibr" target="#b10">11]</ref>. However, as the proliferation of early ODP-based methodologies (e.g., eXtreme Design <ref type="bibr" target="#b39">[40]</ref>) grew, newer attempts to accomplish ontology learning emerged, leveraging identification of candidate patterns and subsequent human intervention <ref type="bibr" target="#b3">[4]</ref>.</p><p>In remaining pre-LLM years, ontology learning incrementally advanced from these early achievements and established techniques, generally through incremental evolution, inductive logic programming and both linguistic-and statistical-focused NLP <ref type="bibr" target="#b1">[2,</ref><ref type="bibr" target="#b50">51]</ref>. <ref type="foot" target="#foot_2">6</ref> However, results to date have been rather mixed, with resulting ontologies far from being able to compare with carefully crafted ontologies by domain and ontology engineering experts. The promise of LLMs now in this context comes from the fact that they are very powerful NLP tools that approximately capture a wide swath of human (expert) knowledge and can be coaxed by good prompting to even provide this knowledge in a structured form, such as expressed in a formal language over a given vocabulary. Indeed, some attempts have already been made for LLMs, with some middling success <ref type="bibr" target="#b41">[42,</ref><ref type="bibr" target="#b14">15]</ref>. At this stage, LLMs are too limited in commonsense and reasoning power to in a fully automated fashion. Yet, we can thus expect that LLMs should enable a human ontology engineers and domain experts to first draft and then finalize suitable ontologies much more quickly than before.</p><p>It appears to us that specific aspects of the MOMo methodology, and generally the modularity idea, should further an LLMbased approach even more:</p><p>1. MOMo is based on a principled use of (high-quality) ontology design patterns (ODPs). Developing ODPs is arguably easier than developing full-fledged ontologies, i.e. in a first step LLMs can be used to develop ODP libraries, which then in turn can be made use of in LLM-based ontology design. As a first step, we have used an LLM to generate hundreds of simple "commonsense" patterns for common concepts <ref type="bibr" target="#b12">[13]</ref>. These micropatterns -so called due to their shallow semantics and, even for ODPs, simple structure -have been organized into a design library <ref type="bibr" target="#b45">[46]</ref>, which allows for programmatic access, such as through a RAG <ref type="bibr" target="#b28">[29]</ref> system. Due to their simplicity, they are easily instantiated into modules <ref type="bibr" target="#b16">[17]</ref> and connected together in a modular fashion.</p><p>2. MOMo provides a step-by-step ontology design process that breaks down the complex ontology modeling task into clearly delineated pieces, each of which should be easier to automate than going one-shot from base data (or texts) to an ontology.</p><p>The situation for extension and modification of a MOMo ontology is rather similar -in the MOMo approach an ontology is designed module-by-module (with possible modification of earlier developed modules while progressing), i.e. extension and modification are already part of the modeling process.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2.">Ontology Alignment</head><p>Our experience with LLM-based modular ontology alignment was already conveyed above, in Section 2. Ontology Alignment is a core task for ontology-based data integration with a long-standing corresponding research community, benchmarks and annual performance competitions. <ref type="foot" target="#foot_3">7</ref> The community has mostly focused on full automation (as opposed to human-inthe-loop semi-automation) and on so-called simple alignment tasks, i.e. the creation of one-to-one class mappings (and, with much less emphasis, one-to-one property mappings). The need for complex ontology alignment -i.e., the creation of mapping rules that go beyond one-to-one mapping -has long been recognized, but it has only come into more focus in the community about 10 years ago, with very limited results (as pointed out in Section 2, see also <ref type="bibr" target="#b38">[39,</ref><ref type="bibr" target="#b37">38]</ref>. Regretfully (we think), since the advent of LLMs focus has mostly shifted back to simple alignments, just now with the support of LLMs. Indeed, LLM-based simple ontology alignment has already been investigated with good results <ref type="bibr" target="#b32">[33,</ref><ref type="bibr" target="#b18">19]</ref>.</p><p>We would be negligent to not point out that we also observe issues with some of the established current benchmarks and methods. For example, in <ref type="bibr" target="#b8">[9]</ref> a simple alignment benchmark was re-evaluated, finding that even humans disagree on a significant part of the benchmark, essentially demonstrating that the benchmark ontologies simply do not carry enough information such that even humans can solve it perfectly. In <ref type="bibr" target="#b7">[8]</ref>, it was demonstrated that most of the functionality of simple alignment systems can be obtained by using only string similarity metrics. At the same time, when submitting papers for publication that described complex alignment benchmarks that came out of real data integration work <ref type="bibr" target="#b52">[53,</ref><ref type="bibr" target="#b53">54]</ref>, some reviewers dismissively pointed out that they would not be good as benchmarks because they would be far beyond anything that could currently be done. 8   For some years, progress on the complex alignment task stalled <ref type="bibr" target="#b33">[34]</ref>, even as new benchmarks were released <ref type="bibr" target="#b54">[55]</ref>. However, some new techniques, even incorporating LLMs have shown some promise. For example, the composition of (geometric) language embeddings cast from a KG or sourced from an LLM, can be shown to have correspondences in the latent space <ref type="bibr" target="#b48">[49]</ref>. Yet, the performance is still relatively low, ranging from 0.49-0.69 for Semantic F1-score, depending on the ontologies. As described above in Section 2, it was demonstrated in <ref type="bibr" target="#b0">[1]</ref> that modularity provides significant performance improvements to LLM-based complex alignment, in this case with 104 out of 109 (i.e., 95%) target alignment mappings correctly identified on the GeoLink benchmark when taking modularity into account.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3.">Ontology Population</head><p>In some sense, ontology population and entity co-reference resolution/disambiguation are not substantially different. On one hand there is a theoretical or unknown entity which satisfies, or otherwise conforms to, a portion of an ontology (i.e., it should populate the ontology). On the other hand, there is a known entity described, or otherwise named, in the natural language corpus. Now the system needs to determine if those two entities match to move forward in populating the ontology.</p><p>In this case, we can leverage two aspects of modularity for ontology population with LLMs: conceptual consistency and tight scope. That is, the conceptual consistency of a module -based on our definition, of course -means that the constituent classes and properties of a module somehow belong together, especially from a human perspective. This in turn provides a tighter cluster of "sentiment" (for lack of a better term), priming an LLM in the prompt.</p><p>On the other hand, we have seen that LLMs tend to be better at following patterns, rather than instructions, and it correlates as well to the length of the prompt <ref type="bibr" target="#b27">[28]</ref>. Thus, we posited that 8 One of the reasons for creating these benchmarks was precisely to point out that the state of the art is way behind practical needs.</p><p>attempting ontology population on a per-module basis would succeed where other attempts had poorer results. Indeed, in a recent set of experiments, we obtained rather excellent results <ref type="bibr" target="#b31">[32]</ref>. Using prompts constructed with a simple schematic representations of modules and a corresponding extraction example, an LLM was able to achieve 90% extraction of related triples from text, as compared to ground truth. While additional experiments are of course required, especially examining appropriate modeling characteristics for modules, we take this as an excellent indicator that modularity is of significant added value to the process.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.4.">Entity Disambiguation</head><p>As above, we note that ontology population and entity disambiguation are tightly intertwined. While ontology population focuses on the extraction of an entity and (ostensibly) comparing it to a theoretical candidate, entity disambiguation compares two known, or otherwise named, entities and must produce a value corresponding to the degree to which they are the same entity.</p><p>However, we also note that it is difficult to assess the current capabilities of LLMs to produce correct entity disambiguation due to the possibility for data leakage (i.e., the appearance of existing and gold-standard benchmarks in the testing data). For example, some benchmarks (after prompt-tuning) achieve upwards of F 1 = 91.</p><p>As successful co-reference resolution correlates with available context, per improved ability to resolve matching context (i.e., complex ontology alignment) we see immediate benefit in this parallel task of entity disambiguation. We thus posit that the added context from a tight, conceptual description, i.e., a module, will significantly improve outcomes for this KGOE task.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.">Concrete Research Challenges</head><p>Throughout this paper so far, we have largely discussed a specific type of module, which we have been calling a conceptual module and distinct from other uses in the literature for both ontologies <ref type="bibr" target="#b36">[37,</ref><ref type="bibr" target="#b25">26]</ref> and KGs <ref type="bibr" target="#b17">[18]</ref>. We are not aware of any work on the capabilities of LLMs for integrating for these other definitions of module. We suspect that due to their (in general) rigorous approach to the partitioning of knowledge in a logically consistent way, we may see similar benefits as when using our notion of modularity. That is to say, by somehow limiting the scope, we achieve a more human-like approach -and one more capable of being expressed succinctly in language, and thus more appropriate for LLM-based assistance in the task.</p><p>Of course, it is important to not altogether neglect further research on non-modular, LLM-based KGOE; we need to understand its limitations, as well as its capabilities. Indeed, additional focus on modular or pattern-based techniques for KGOE can inform these other lines of research.</p><p>From a broader perspective, the added value of modularity that seems to become apparent for LLM-based KGOE prompts the question what other improvements to established ontology and knowledge graph paradigms would be similarly easy to make and could also provide major benefits. It is the task of the Semantic Web, Knowledge Graphs, and Ontologies research communities to look into this very question.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6.">Conclusion</head><p>Knowledge Graphs and Ontologies have seen new resurgence in the era of LLMs, for example in structuring data for RAG systems <ref type="bibr" target="#b35">[36]</ref> or providing guide-rails to limit or prevent confabulation in textual output <ref type="bibr" target="#b15">[16]</ref>. Yet, for all their established and growing importance, many of the tasks pertaining to their development, maintenance, extension, and population (to name a few) are still very difficult. It seems somehow appropriate that we incorporate LLMs into improving KGOE tasks. LLMs have shown some initial success in simple tasks, such as the generation of simple schemas or topic extraction.</p><p>To tackle the hard tasks, we have proposed the use of modulesconceptual, human-centric partitions of an ontology or schema -that provide internal structure. These conceptual boundaries assist LLMs in a variety of tasks, seeing already success in ontology construction, (complex) alignment, and population. It seems obvious now that modularity is a missing link for bridging human conceptualization and machine interoperability. We thus fully believe that modularity must be incorporated from the start, both structurally and in documentation, so as to further enable the various improvements to KGOE tasks we have outlined above.</p></div>			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_0"><p>https://www.dbpedia.org/resources/latest-core/ (i.e. a shared data graph)<ref type="bibr" target="#b38">[39,</ref><ref type="bibr" target="#b37">38]</ref>, which is of course a very unrealistic assumption for data management practice.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="5" xml:id="foot_1"><p>See, e.g., the proceedings of the WoMO -Workshops on Modular Ontologies, details at https://iaoa.org/womo/history.html.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="6" xml:id="foot_2"><p>Indeed, the capacity of modern hardware allowed some techniques to newly shine.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="7" xml:id="foot_3"><p>See https://om.ontologymatching.org/ for pointers.</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><p>Acknowledgment. This work was supported by the <rs type="funder">National Science Foundation</rs> under award <rs type="grantNumber">2333532</rs> "<rs type="grantNumber">Proto-OKN Theme 3</rs>: <rs type="funder">An Education Gateway</rs> for the <rs type="projectName">Proto-OKN</rs><rs type="funder">" (EduGate)</rs>.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funding" xml:id="_zGznd2B">
+					<idno type="grant-number">2333532</idno>
+				</org>
+				<org type="funded-project" xml:id="_rVYzMJ3">
+					<idno type="grant-number">Proto-OKN Theme 3</idno>
+					<orgName type="project" subtype="full">Proto-OKN</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Towards Complex Ontology Alignment Using Large Language Models</title>
+		<author>
+			<persName><forename type="first">Reihaneh</forename><surname>Amini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sanaz</forename><forename type="middle">Saki</forename><surname>Norouzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pascal</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Reza</forename><surname>Amini</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-81221-7_2</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="17" to="31" />
+		</imprint>
+	</monogr>
+	<note>to appear</note>
+	<note type="raw_reference">R. Amini, S. S. Norouzi, P. Hitzler, and R. Amini. Towards complex ontology alignment using large language models. In Proceedings KGSWC 2024, to appear, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">A survey of ontology learning techniques and applications</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">N</forename><surname>Asim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Wasim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">U G</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Mahmood</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">M</forename><surname>Abbasi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Database J. Biol. Databases Curation</title>
+		<imprint>
+			<biblScope unit="page">101</biblScope>
+			<date type="published" when="2018">2018. 2018</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. N. Asim, M. Wasim, M. U. G. Khan, W. Mahmood, and H. M. Abbasi. A survey of ontology learning techniques and applications. Database J. Biol. Databases Curation, 2018:bay101, 2018.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<monogr>
+		<title level="m" type="main">Semi-automatic Ontology Construction based on Patterns</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Blomqvist</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2009">2009</date>
+		</imprint>
+		<respStmt>
+			<orgName>Linköping University</orgName>
+		</respStmt>
+	</monogr>
+	<note type="report_type">PhD thesis</note>
+	<note type="raw_reference">E. Blomqvist. Semi-automatic Ontology Construction based on Patterns. PhD thesis, Linköping University, 2009.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Pattern ranking for semi-automatic ontology construction</title>
+		<author>
+			<persName><forename type="first">Eva</forename><surname>Blomqvist</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/1363686.1364224</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2008 ACM symposium on Applied computing</title>
+		<meeting>the 2008 ACM symposium on Applied computing<address><addrLine>Sweden</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2009">2009</date>
+			<biblScope unit="page" from="2248" to="2255" />
+		</imprint>
+		<respStmt>
+			<orgName>Linköping University</orgName>
+		</respStmt>
+	</monogr>
+	<note type="report_type">PhD thesis</note>
+	<note type="raw_reference">E. Blomqvist. Semi-automatic Ontology Construction based on Patterns. PhD thesis, Linköping University, Sweden, 2009.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">Ontology Learning and Population: Bridging the Gap between Text and Knowledge</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Buitelaar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Cimiano</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Frontiers in Artificial Intelligence and Applications</title>
+		<imprint>
+			<biblScope unit="volume">167</biblScope>
+			<date type="published" when="2008">2008</date>
+			<publisher>IOS Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Buitelaar and P. Cimiano, editors. Ontology Learning and Population: Bridging the Gap between Text and Knowledge, volume 167 of Frontiers in Artificial Intelligence and Applications. IOS Press, 2008.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">The environment ontology in 2016: bridging domains with increased scope, semantic density, and interoperation</title>
+		<author>
+			<persName><forename type="first">Pier</forename><forename type="middle">Luigi</forename><surname>Buttigieg</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evangelos</forename><surname>Pafilis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Suzanna</forename><forename type="middle">E</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><forename type="middle">P</forename><surname>Schildhauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ramona</forename><forename type="middle">L</forename><surname>Walls</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+		</author>
+		<idno type="DOI">10.1186/s13326-016-0097-6</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Biomedical Semantics</title>
+		<title level="j" type="abbrev">J Biomed Semant</title>
+		<idno type="ISSNe">2041-1480</idno>
+		<imprint>
+			<biblScope unit="volume">7</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page">57</biblScope>
+			<date type="published" when="2016-09-23">2016</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. L. Buttigieg, E. Pafilis, S. E. Lewis, M. P. Schildhauer, R. L. Walls, and C. J. Mungall. The environment ontology in 2016: bridging domains with increased scope, semantic density, and interoperation. J. Biomed. Semant., 7:57, 2016.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">The gene ontology resource: enriching a gold mine</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Carbon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Douglass</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">M</forename><surname>Good</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">R</forename><surname>Unni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Res</title>
+		<imprint>
+			<biblScope unit="volume">49</biblScope>
+			<biblScope unit="page" from="325" to="D334" />
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note>Database-Issue</note>
+	<note type="raw_reference">S. Carbon, E. Douglass, B. M. Good, D. R. Unni, N. L. Harris, C. J. Mungall, et al. The gene ontology resource: enriching a gold mine. Nu- cleic Acids Res., 49(Database-Issue):D325-D334, 2021.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">String similarity metrics for ontology alignment</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cheatham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2013 -12th International Semantic Web Conference</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Alani</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Kagal</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Fokoue</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Groth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Biemann</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">X</forename><surname>Parreira</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Aroyo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><forename type="middle">F</forename><surname>Noy</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Welty</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Sydney, NSW, Australia</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2013">October 21-25, 2013. 2013</date>
+			<biblScope unit="volume">8219</biblScope>
+			<biblScope unit="page" from="294" to="309" />
+		</imprint>
+	</monogr>
+	<note>Proceedings, Part II</note>
+	<note type="raw_reference">M. Cheatham and P. Hitzler. String similarity metrics for ontology align- ment. In H. Alani, L. Kagal, A. Fokoue, P. Groth, C. Biemann, J. X. Parreira, L. Aroyo, N. F. Noy, C. Welty, and K. Janowicz, editors, The Semantic Web -ISWC 2013 -12th International Semantic Web Confer- ence, Sydney, NSW, Australia, October 21-25, 2013, Proceedings, Part II, volume 8219 of Lecture Notes in Computer Science, pages 294-309. Springer, 2013.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Conference v2.0: An uncertain version of the OAEI conference benchmark</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cheatham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2014 -13th International Semantic Web Conference</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Mika</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Tudorache</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Bernstein</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Welty</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><forename type="middle">A</forename><surname>Knoblock</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Vrandecic</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Groth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><forename type="middle">F</forename><surname>Noy</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><forename type="middle">A</forename><surname>Goble</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Riva del Garda, Italy</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2014">October 19-23, 2014. 2014</date>
+			<biblScope unit="volume">8797</biblScope>
+			<biblScope unit="page" from="33" to="48" />
+		</imprint>
+	</monogr>
+	<note>Proceedings, Part II</note>
+	<note type="raw_reference">M. Cheatham and P. Hitzler. Conference v2.0: An uncertain version of the OAEI conference benchmark. In P. Mika, T. Tudorache, A. Bernstein, C. Welty, C. A. Knoblock, D. Vrandecic, P. Groth, N. F. Noy, K. Janowicz, and C. A. Goble, editors, The Semantic Web -ISWC 2014 -13th Interna- tional Semantic Web Conference, Riva del Garda, Italy, October 19-23, 2014. Proceedings, Part II, volume 8797 of Lecture Notes in Computer Science, pages 33-48. Springer, 2014.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">Learning concept hierarchies from text corpora using formal concept analysis</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Cimiano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Hotho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">J. Artif. Intell. Res</title>
+		<imprint>
+			<biblScope unit="volume">24</biblScope>
+			<biblScope unit="page" from="305" to="339" />
+			<date type="published" when="2005">2005</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Cimiano, A. Hotho, and S. Staab. Learning concept hierarchies from text corpora using formal concept analysis. J. Artif. Intell. Res., 24:305- 339, 2005.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Ontology learning</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Cimiano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Mädche</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Völker</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Handbook on Ontologies, International Handbooks on Information Systems</title>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">R</forename><surname>Studer</surname></persName>
+		</editor>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2009">2009</date>
+			<biblScope unit="page" from="245" to="267" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Cimiano, A. Mädche, S. Staab, and J. Völker. Ontology learning. In S. Staab and R. Studer, editors, Handbook on Ontologies, International Handbooks on Information Systems, pages 245-267. Springer, 2009.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">Text2onto</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Cimiano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Völker</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Natural Language Processing and Information Systems</title>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Montoyo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">R</forename><surname>Muńoz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Métais</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Berlin, Heidelberg; Berlin Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2005">2005</date>
+			<biblScope unit="page" from="227" to="238" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Cimiano and J. Völker. Text2onto. In A. Montoyo, R. Muńoz, and E. Métais, editors, Natural Language Processing and Information Sys- tems, pages 227-238, Berlin, Heidelberg, 2005. Springer Berlin Heidel- berg.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Commonsense Ontology Micropatterns</title>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Eells</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brandon</forename><surname>Dave</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pascal</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cogan</forename><surname>Shimizu</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-71170-1_6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">T</forename><forename type="middle">R</forename><surname>Besold</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Garcez</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">R</forename><surname>Confalonieri</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Madhyastha</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Wagner</surname></persName>
+		</editor>
+		<meeting><address><addrLine>NeSy; Barcelona, Spain</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2024-09-09">2024. September 9-12, 2024. 2024</date>
+			<biblScope unit="volume">14980</biblScope>
+			<biblScope unit="page" from="51" to="59" />
+		</imprint>
+	</monogr>
+	<note>Proceedings, Part II</note>
+	<note type="raw_reference">A. Eells, B. Dave, P. Hitzler, and C. Shimizu. Commonsense ontology micropatterns. In T. R. Besold, A. d&apos;Avila Garcez, E. Jiménez-Ruiz, R. Confalonieri, P. Madhyastha, and B. Wagner, editors, Neural-Symbolic Learning and Reasoning -18th International Conference, NeSy 2024, Barcelona, Spain, September 9-12, 2024, Proceedings, Part II, volume 14980 of Lecture Notes in Computer Science, pages 51-59. Springer, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Ontology design patterns for semantic web content</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gangemi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2005, 4th International Semantic Web Conference, ISWC 2005</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">Y</forename><surname>Gil</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Motta</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><forename type="middle">R</forename><surname>Benjamins</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Musen</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Galway, Ireland</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2005">November 6-10, 2005. 2005</date>
+			<biblScope unit="volume">3729</biblScope>
+			<biblScope unit="page" from="262" to="276" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Gangemi. Ontology design patterns for semantic web content. In Y. Gil, E. Motta, V. R. Benjamins, and M. A. Musen, editors, The Seman- tic Web -ISWC 2005, 4th International Semantic Web Conference, ISWC 2005, Galway, Ireland, November 6-10, 2005, Proceedings, volume 3729 of Lecture Notes in Computer Science, pages 262-276. Springer, 2005.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Llms4ol: Large language models for ontology learning</title>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">B</forename><surname>Giglou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Souza</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Auer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">R</forename><surname>Payne</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2023 -22nd International Semantic Web Conference</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Qi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Poveda-Villalón</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Stoilos</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Hollink</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Z</forename><surname>Kaoudi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Cheng</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Li</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Athens, Greece</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2023">November 6-10, 2023. 2023</date>
+			<biblScope unit="volume">14265</biblScope>
+			<biblScope unit="page" from="408" to="427" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">H. B. Giglou, J. D&apos;Souza, and S. Auer. Llms4ol: Large language models for ontology learning. In T. R. Payne, V. Presutti, G. Qi, M. Poveda- Villalón, G. Stoilos, L. Hollink, Z. Kaoudi, G. Cheng, and J. Li, edi- tors, The Semantic Web -ISWC 2023 -22nd International Semantic Web Conference, Athens, Greece, November 6-10, 2023, Proceedings, Part I, volume 14265 of Lecture Notes in Computer Science, pages 408-427. Springer, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Explaining multimodal errors in autonomous vehicles</title>
+		<author>
+			<persName><forename type="first">L</forename><forename type="middle">H</forename><surname>Gilpin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Penubarthi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Kagal</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">8th IEEE International Conference on Data Science and Advanced Analytics, DSAA 2021</title>
+		<meeting><address><addrLine>Porto, Portugal</addrLine></address></meeting>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2021">October 6-9, 2021. 2021</date>
+			<biblScope unit="page" from="1" to="10" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">L. H. Gilpin, V. Penubarthi, and L. Kagal. Explaining multimodal errors in autonomous vehicles. In 8th IEEE International Conference on Data Science and Advanced Analytics, DSAA 2021, Porto, Portugal, October 6-9, 2021, pages 1-10. IEEE, 2021.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Template-based content ODP instantiation</title>
+		<author>
+			<persName><forename type="first">K</forename><surname>Hammar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Advances in Ontology Design and Patterns</title>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Hammar</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Krisnadhi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Lawrynowicz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">G</forename><surname>Nuzzolese</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Solanki</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Kobe, Japan</addrLine></address></meeting>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2016-10-18">18th October 2016. 2016</date>
+			<biblScope unit="volume">32</biblScope>
+			<biblScope unit="page" from="1" to="13" />
+		</imprint>
+	</monogr>
+	<note>Studies on the Semantic Web</note>
+	<note type="raw_reference">K. Hammar and V. Presutti. Template-based content ODP instantiation. In K. Hammar, P. Hitzler, A. Krisnadhi, A. Lawrynowicz, A. G. Nuzzolese, and M. Solanki, editors, Advances in Ontology Design and Patterns [re- vised and extended versions of the papers presented at the 7th edition of the Workshop on Ontology and Semantic Web Patterns, WOP@ISWC 2016, Kobe, Japan, 18th October 2016], volume 32 of Studies on the Semantic Web, pages 1-13. IOS Press, 2016.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Formal Ontology in Information Systems</title>
+		<author>
+			<persName><forename type="first">F</forename><surname>Hannou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Charpenay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lefrançois</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Roussey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Zimmermann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Gandon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Toyoshima</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Katsumi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Righetti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">D</forename><surname>Giorgis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">M</forename><surname>Hedblom</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Kutz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Brodaric</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Grüninger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Hahmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">D</forename><surname>Simon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lange</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küçük-Mcginty</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">S</forename><surname>Simon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Cameron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Gajderowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Rosu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Hastings</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Audrito</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><forename type="middle">D</forename><surname>Caro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Grasso</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Nai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Sulis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Bozzato</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Zimmermann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Baratella</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Borgo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>De Cesare</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">P</forename><surname>Sales</surname></persName>
+		</author>
+		<idno type="DOI">10.3233/faia377</idno>
+		<ptr target="-WS.org" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Joint Ontology Workshops 2023 Episode IX: The Quebec Summer of Ontology co-located with the 13th International Conference on Formal Ontology in Information Systems (FOIS 2023)</title>
+		<title level="s">CEUR Workshop Proceedings. CEUR</title>
+		<meeting>the Joint Ontology Workshops 2023 Episode IX: The Quebec Summer of Ontology co-located with the 13th International Conference on Formal Ontology in Information Systems (FOIS 2023)<address><addrLine>Sherbrooke, Québec, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2023-12-21">July 19-20, 2023. 2023</date>
+			<biblScope unit="volume">3637</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">F. Hannou, V. Charpenay, M. Lefrançois, C. Roussey, A. Zimmermann, and F. Gandon. The ACIMOV methodology: Agile and continuous in- tegration for modular ontologies and vocabularies. In F. Toyoshima, M. Katsumi, G. Righetti, S. D. Giorgis, M. M. Hedblom, O. Kutz, B. Bro- daric, M. Grüninger, T. Hahmann, D. D. Simon, M. Lange, H. Küçük- McGinty, A. S. Simon, R. Cameron, B. Gajderowicz, D. Rosu, J. Hast- ings, D. Audrito, L. D. Caro, F. Grasso, R. Nai, E. Sulis, L. Bozzato, C. Shimizu, A. Zimmermann, R. Baratella, S. Borgo, S. de Cesare, and T. P. Sales, editors, Proceedings of the Joint Ontology Workshops 2023 Episode IX: The Quebec Summer of Ontology co-located with the 13th International Conference on Formal Ontology in Information Systems (FOIS 2023), Sherbrooke, Québec, Canada, July 19-20, 2023, volume 3637 of CEUR Workshop Proceedings. CEUR-WS.org, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Olala: Ontology matching with large language models</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Hertling</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 12th Knowledge Capture Conference 2023, K-CAP 2023</title>
+		<editor>
+			<persName><forename type="first">K</forename><forename type="middle">B</forename><surname>Venable</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Garijo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Jalaian</surname></persName>
+		</editor>
+		<meeting>the 12th Knowledge Capture Conference 2023, K-CAP 2023<address><addrLine>Pensacola, FL, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2023">December 5-7, 2023. 2023</date>
+			<biblScope unit="page" from="131" to="139" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Hertling and H. Paulheim. Olala: Ontology matching with large lan- guage models. In K. B. Venable, D. Garijo, and B. Jalaian, editors, Pro- ceedings of the 12th Knowledge Capture Conference 2023, K-CAP 2023, Pensacola, FL, USA, December 5-7, 2023, pages 131-139. ACM, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">A review of the semantic web field</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Commun. ACM</title>
+		<imprint>
+			<biblScope unit="volume">64</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="76" to="83" />
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Hitzler. A review of the semantic web field. Commun. ACM, 64(2):76- 83, 2021.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Neurosymbolic Artificial Intelligence and Knowledge Graphs</title>
+	</analytic>
+	<monogr>
+		<title level="m">Frontiers in Artificial Intelligence and Applications</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Dalal</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">S</forename><surname>Mahdavinejad</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Norouzi</surname></persName>
+		</editor>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2025">2025</date>
+		</imprint>
+	</monogr>
+	<note>tentative title. In preparation</note>
+	<note type="raw_reference">P. Hitzler, A. Dalal, M. S. Mahdavinejad, and S. S. Norouzi, editors. Neu- rosymbolic Artificial Intelligence and Knowledge Graphs (tentative title). Frontiers in Artificial Intelligence and Applications. IOS Press, 2025. In preparation.</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">Towards a simple but useful ontology design pattern representation language</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gangemi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">A</forename><surname>Krisnadhi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</author>
+		<ptr target="-WS.org" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 8th Workshop on Ontology Design and Patterns (WOP 2017) co-located with the 16th International Semantic Web Conference (ISWC 2017)</title>
+		<title level="s">CEUR Workshop Proceedings. CEUR</title>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Blomqvist</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Ó</forename><surname>Corcho</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Horridge</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Carral</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">R</forename><surname>Hoekstra</surname></persName>
+		</editor>
+		<meeting>the 8th Workshop on Ontology Design and Patterns (WOP 2017) co-located with the 16th International Semantic Web Conference (ISWC 2017)<address><addrLine>Vienna, Austria</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2017-10-21">October 21, 2017. 2017</date>
+			<biblScope unit="volume">2043</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Hitzler, A. Gangemi, K. Janowicz, A. A. Krisnadhi, and V. Presutti. Towards a simple but useful ontology design pattern representation lan- guage. In E. Blomqvist, Ó. Corcho, M. Horridge, D. Carral, and R. Hoek- stra, editors, Proceedings of the 8th Workshop on Ontology Design and Patterns (WOP 2017) co-located with the 16th International Semantic Web Conference (ISWC 2017), Vienna, Austria, October 21, 2017., vol- ume 2043 of CEUR Workshop Proceedings. CEUR-WS.org, 2017.</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Neuro-Symbolic Artificial Intelligence: The State of the Art</title>
+	</analytic>
+	<monogr>
+		<title level="s">Frontiers in Artificial Intelligence and Applications</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">K</forename><surname>Sarker</surname></persName>
+		</editor>
+		<imprint>
+			<biblScope unit="volume">342</biblScope>
+			<date type="published" when="2021">2021</date>
+			<publisher>IOS Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Hitzler and M. K. Sarker, editors. Neuro-Symbolic Artificial Intelli- gence: The State of the Art, volume 342 of Frontiers in Artificial Intelli- gence and Applications. IOS Press, 2021.</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Compendium of Neurosmbolic Artificial Intelligence</title>
+	</analytic>
+	<monogr>
+		<title level="m">Frontiers in Artificial Intelligence and Applications</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">K</forename><surname>Sarker</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Eberhart</surname></persName>
+		</editor>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="volume">369</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Hitzler, M. K. Sarker, and A. Eberhart, editors. Compendium of Neu- rosmbolic Artificial Intelligence, volume 369 of Frontiers in Artificial In- telligence and Applications. IOS Press, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Modular ontologies as a bridge between human conceptualization and data</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Graph-Based Representation and Reasoning -23rd International Conference on Conceptual Structures, ICCS 2018</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Chapman</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Endres</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Pernelle</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Edinburgh, UK</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2018">June 20-22, 2018. 2018</date>
+			<biblScope unit="volume">10872</biblScope>
+			<biblScope unit="page" from="3" to="6" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Hitzler and C. Shimizu. Modular ontologies as a bridge between human conceptualization and data. In P. Chapman, D. Endres, and N. Pernelle, editors, Graph-Based Representation and Reasoning -23rd International Conference on Conceptual Structures, ICCS 2018, Edinburgh, UK, June 20-22, 2018, Proceedings, volume 10872 of Lecture Notes in Computer Science, pages 3-6. Springer, 2018.</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Deductive module extraction for expressive description logics</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Koopmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Chen</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Twenty-Ninth International Joint Conference on Artificial Intelligence, IJCAI-20</title>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Bessiere</surname></persName>
+		</editor>
+		<meeting>the Twenty-Ninth International Joint Conference on Artificial Intelligence, IJCAI-20</meeting>
+		<imprint>
+			<date type="published" when="2020">7 2020</date>
+			<biblScope unit="page" from="1636" to="1643" />
+		</imprint>
+	</monogr>
+	<note>International Joint Conferences on Artificial Intelligence Organization. Main track</note>
+	<note type="raw_reference">P. Koopmann and J. Chen. Deductive module extraction for expressive de- scription logics. In C. Bessiere, editor, Proceedings of the Twenty-Ninth International Joint Conference on Artificial Intelligence, IJCAI-20, pages 1636-1643. International Joint Conferences on Artificial Intelligence Or- ganization, 7 2020. Main track.</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">The GeoLink Modular Oceanography Ontology</title>
+		<author>
+			<persName><forename type="first">Adila</forename><surname>Krisnadhi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yingjie</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krzysztof</forename><surname>Janowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pascal</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Arko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Suzanne</forename><surname>Carbotte</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cynthia</forename><surname>Chandler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michelle</forename><surname>Cheatham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Douglas</forename><surname>Fils</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Timothy</forename><surname>Finin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Jones</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nazifa</forename><surname>Karima</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kerstin</forename><surname>Lehnert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Audrey</forename><surname>Mickle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><surname>Narock</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Margaret</forename><surname>O’brien</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lisa</forename><surname>Raymond</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Shepherd</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Schildhauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Wiebe</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-25010-6_19</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Arenas</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Ó</forename><surname>Corcho</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Simperl</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Strohmaier</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>D'aquin</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Srinivas</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><forename type="middle">T</forename><surname>Groth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Dumontier</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Heflin</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Thirunarayan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Bethlehem, PA, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2015">October 11-15, 2015. 2015</date>
+			<biblScope unit="volume">9367</biblScope>
+			<biblScope unit="page" from="301" to="309" />
+		</imprint>
+	</monogr>
+	<note>Proceedings, Part II</note>
+	<note type="raw_reference">A. Krisnadhi, Y. Hu, K. Janowicz, P. Hitzler, R. A. Arko, S. Carbotte, C. Chandler, M. Cheatham, D. Fils, T. W. Finin, P. Ji, M. B. Jones, N. Karima, K. A. Lehnert, A. Mickle, T. W. Narock, M. O&apos;Brien, L. Ray- mond, A. Shepherd, M. Schildhauer, and P. Wiebe. The geolink mod- ular oceanography ontology. In M. Arenas, Ó. Corcho, E. Simperl, M. Strohmaier, M. d&apos;Aquin, K. Srinivas, P. T. Groth, M. Dumontier, J. Heflin, K. Thirunarayan, and S. Staab, editors, The Semantic Web - ISWC 2015 -14th International Semantic Web Conference, Bethlehem, PA, USA, October 11-15, 2015, Proceedings, Part II, volume 9367 of Lecture Notes in Computer Science, pages 301-309. Springer, 2015.</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Same Task, More Tokens: the Impact of Input Length on the Reasoning Performance of Large Language Models</title>
+		<author>
+			<persName><forename type="first">Mosh</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alon</forename><surname>Jacoby</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoav</forename><surname>Goldberg</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.818</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="15339" to="15353" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Levy, A. Jacoby, and Y. Goldberg. Same task, more tokens: the impact of input length on the reasoning performance of large language models, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledge-intensive nlp tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>-T. Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="9459" to="9474" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küt- tler, M. Lewis, W.-t. Yih, T. Rocktäschel, et al. Retrieval-augmented gen- eration for knowledge-intensive nlp tasks. Advances in Neural Informa- tion Processing Systems, 33:9459-9474, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Discovering conceptual relations from text</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Maedche</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 14th European Conference on Artificial Intelligence, ECAI&apos;00</title>
+		<meeting>the 14th European Conference on Artificial Intelligence, ECAI&apos;00<address><addrLine>NLD</addrLine></address></meeting>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2000">2000</date>
+			<biblScope unit="page" from="321" to="325" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Maedche and S. Staab. Discovering conceptual relations from text. In Proceedings of the 14th European Conference on Artificial Intelligence, ECAI&apos;00, page 321-325, NLD, 2000. IOS Press.</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">Ontology learning for the semantic web</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Maedche</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Intell. Syst</title>
+		<imprint>
+			<biblScope unit="volume">16</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="72" to="79" />
+			<date type="published" when="2001">2001</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Maedche and S. Staab. Ontology learning for the semantic web. IEEE Intell. Syst., 16(2):72-79, 2001.</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<monogr>
+		<title level="m" type="main">Ontology population using LLMs</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Norouzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Barua</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Christou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Gautam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Eells</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. S. Norouzi, A. Barua, A. Christou, N. Gautam, A. Eells, P. Hitzler, and C. Shimizu. Ontology population using LLMs, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">Conversational ontology alignment with chatgpt</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Norouzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">S</forename><surname>Mahdavinejad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 18th International Workshop on Ontology Matching co-located with the 22nd International Semantic Web Conference (ISWC 2023)</title>
+		<title level="s">CEUR Workshop Proceedings</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Shvaiko</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Euzenat</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><surname>Hassanzadeh</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Trojahn</surname></persName>
+		</editor>
+		<meeting>the 18th International Workshop on Ontology Matching co-located with the 22nd International Semantic Web Conference (ISWC 2023)<address><addrLine>Athens, Greece</addrLine></address></meeting>
+		<imprint>
+			<publisher>CEUR-WS.org</publisher>
+			<date type="published" when="2023-11-07">November 7, 2023. 2023</date>
+			<biblScope unit="volume">3591</biblScope>
+			<biblScope unit="page" from="61" to="66" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. S. Norouzi, M. S. Mahdavinejad, and P. Hitzler. Conversational on- tology alignment with chatgpt. In P. Shvaiko, J. Euzenat, E. Jiménez- Ruiz, O. Hassanzadeh, and C. Trojahn, editors, Proceedings of the 18th International Workshop on Ontology Matching co-located with the 22nd International Semantic Web Conference (ISWC 2023), Athens, Greece, November 7, 2023, volume 3591 of CEUR Workshop Proceedings, pages 61-66. CEUR-WS.org, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Ontology Matching Using Neural Networks: Evaluation for OAEI Tracks</title>
+		<author>
+			<persName><forename type="first">Meriem</forename><surname>Ali Khoudja</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Messaouda</forename><surname>Fareh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hafida</forename><surname>Bouarfa</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-030-58861-8_19</idno>
+		<ptr target="http://oaei.ontologymatching.org/2020/results/complex/index.html" />
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Networks and Systems</title>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2020-11-18">November 18, 2020</date>
+			<biblScope unit="page" from="262" to="276" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">OAEI 2020 complex track results. http://oaei.ontologymatching.org/2020/results/complex/index.html. Retrieved November 18, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">Dead simple OWL design patterns</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Osumi-Sutherland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Courtot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">P</forename><surname>Balhoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">J. Biomed. Semant</title>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="18" />
+			<date type="published" when="2017">2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Osumi-Sutherland, M. Courtot, J. P. Balhoff, and C. J. Mungall. Dead simple OWL design patterns. J. Biomed. Semant., 8(1):18:1-18:7, 2017.</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">Unifying large language models and knowledge graphs: A roadmap</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Knowledge and Data Engineering</title>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="3580" to="3599" />
+			<date type="published" when="2024-07">July 2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Pan, L. Luo, Y. Wang, C. Chen, J. Wang, and X. Wu. Unifying large language models and knowledge graphs: A roadmap. IEEE Transactions on Knowledge and Data Engineering, 36(7):3580-3599, July 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">An overview of modularity</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Parent</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Spaccapietra</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Modular Ontologies: Concepts, Theories and Techniques for Knowledge Modularization</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Stuckenschmidt</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Parent</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Spaccapietra</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Berlin Heidelberg, Berlin, Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2009">2009</date>
+			<biblScope unit="page" from="5" to="23" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Parent and S. Spaccapietra. An overview of modularity. In H. Stuck- enschmidt, C. Parent, and S. Spaccapietra, editors, Modular Ontologies: Concepts, Theories and Techniques for Knowledge Modularization, pages 5-23. Springer Berlin Heidelberg, Berlin, Heidelberg, 2009.</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Results of the ontology alignment evaluation initiative</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A N</forename><surname>Pour</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Algergawy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Amardeilh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Amini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Fallatah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Faria</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Fundulaki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Harrow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Hertling</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Huschka</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Ibanescu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Karam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Laadhar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lambrix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Michel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Nasr</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Pesquita</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Portisch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Roussey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Saveta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shvaiko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Splendiani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Trojahn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Vatascinová</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Yaman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Zamazal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 16th International Workshop on Ontology Matching co-located with the 20th International Semantic Web Conference (ISWC 2021), Virtual conference</title>
+		<title level="s">CEUR Workshop Proceedings</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Shvaiko</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Euzenat</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><surname>Hassanzadeh</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Trojahn</surname></persName>
+		</editor>
+		<meeting>the 16th International Workshop on Ontology Matching co-located with the 20th International Semantic Web Conference (ISWC 2021), Virtual conference</meeting>
+		<imprint>
+			<publisher>CEUR-WS.org</publisher>
+			<date type="published" when="2021-10-25">2021. October 25, 2021. 2021</date>
+			<biblScope unit="volume">3063</biblScope>
+			<biblScope unit="page" from="62" to="108" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. A. N. Pour, A. Algergawy, F. Amardeilh, R. Amini, O. Fallatah, D. Faria, I. Fundulaki, I. Harrow, S. Hertling, P. Hitzler, M. Huschka, L. Ibanescu, E. Jiménez-Ruiz, N. Karam, A. Laadhar, P. Lambrix, H. Li, Y. Li, F. Michel, E. Nasr, H. Paulheim, C. Pesquita, J. Portisch, C. Roussey, T. Saveta, P. Shvaiko, A. Splendiani, C. Trojahn, J. Vatasci- nová, B. Yaman, O. Zamazal, and L. Zhou. Results of the ontology align- ment evaluation initiative 2021. In P. Shvaiko, J. Euzenat, E. Jiménez- Ruiz, O. Hassanzadeh, and C. Trojahn, editors, Proceedings of the 16th International Workshop on Ontology Matching co-located with the 20th International Semantic Web Conference (ISWC 2021), Virtual conference, October 25, 2021, volume 3063 of CEUR Workshop Proceedings, pages 62-108. CEUR-WS.org, 2021.</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">Results of the ontology alignment evaluation initiative</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A N</forename><surname>Pour</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Algergawy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Amini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Faria</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Fundulaki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Harrow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Hertling</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Jonquet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Karam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Khiat</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Laadhar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lambrix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Pesquita</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Saveta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shvaiko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Splendiani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">É</forename><surname>Thiéblin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Trojahn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Vatascinová</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Yaman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Zamazal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 15th International Workshop on Ontology Matching co-located with the 19th International Semantic Web Conference (ISWC 2020), Virtual conference</title>
+		<title level="s">CEUR Workshop Proceedings</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Shvaiko</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Euzenat</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><surname>Hassanzadeh</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Trojahn</surname></persName>
+		</editor>
+		<meeting>the 15th International Workshop on Ontology Matching co-located with the 19th International Semantic Web Conference (ISWC 2020), Virtual conference<address><addrLine>Athens, Greece)</addrLine></address></meeting>
+		<imprint>
+			<publisher>CEUR-WS.org</publisher>
+			<date type="published" when="2020-11-02">2020. November 2, 2020. 2020</date>
+			<biblScope unit="volume">2788</biblScope>
+			<biblScope unit="page" from="92" to="138" />
+		</imprint>
+	</monogr>
+	<note>originally planned to be in</note>
+	<note type="raw_reference">M. A. N. Pour, A. Algergawy, R. Amini, D. Faria, I. Fundulaki, I. Har- row, S. Hertling, E. Jiménez-Ruiz, C. Jonquet, N. Karam, A. Khiat, A. Laadhar, P. Lambrix, H. Li, Y. Li, P. Hitzler, H. Paulheim, C. Pesquita, T. Saveta, P. Shvaiko, A. Splendiani, É. Thiéblin, C. Trojahn, J. Vatasci- nová, B. Yaman, O. Zamazal, and L. Zhou. Results of the ontology align- ment evaluation initiative 2020. In P. Shvaiko, J. Euzenat, E. Jiménez- Ruiz, O. Hassanzadeh, and C. Trojahn, editors, Proceedings of the 15th International Workshop on Ontology Matching co-located with the 19th International Semantic Web Conference (ISWC 2020), Virtual conference (originally planned to be in Athens, Greece), November 2, 2020, volume 2788 of CEUR Workshop Proceedings, pages 92-138. CEUR-WS.org, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">eXtreme Design with content ontology design patterns</title>
+		<author>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Daga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gangemi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Blomqvist</surname></persName>
+		</author>
+		<ptr target="-WS.org" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Workshop on Ontology Patterns (WOP 2009) , collocated with the 8th International Semantic Web Conference ( ISWC-2009 )</title>
+		<title level="s">CEUR Workshop Proceedings. CEUR</title>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Blomqvist</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Sandkuhl</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><surname>Scharffe</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Svátek</surname></persName>
+		</editor>
+		<meeting>the Workshop on Ontology Patterns (WOP 2009) , collocated with the 8th International Semantic Web Conference ( ISWC-2009 )<address><addrLine>Washington D.C., USA</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2009-10-25">25 October, 2009. 2009</date>
+			<biblScope unit="volume">516</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">V. Presutti, E. Daga, A. Gangemi, and E. Blomqvist. eXtreme Design with content ontology design patterns. In E. Blomqvist, K. Sandkuhl, F. Scharffe, and V. Svátek, editors, Proceedings of the Workshop on On- tology Patterns (WOP 2009) , collocated with the 8th International Se- mantic Web Conference ( ISWC-2009 ), Washington D.C., USA, 25 Octo- ber, 2009., volume 516 of CEUR Workshop Proceedings. CEUR-WS.org, 2009.</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Wikipedia knowledge graph for explainable AI</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">K</forename><surname>Sarker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Schwartz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Nadella</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">S</forename><surname>Minnery</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Juvina</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">L</forename><surname>Raymer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">R</forename><surname>Aue</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Knowledge Graphs and Semantic Web -Second Iberoamerican Conference and First Indo-American Conference, KGSWC 2020</title>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Villazón-Terrazas</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><surname>Ortiz-Rodríguez</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><forename type="middle">M</forename><surname>Tiwari</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><forename type="middle">K</forename><surname>Shandilya</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Mérida, Mexico</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2020">November 26-27, 2020. 2020</date>
+			<biblScope unit="volume">1232</biblScope>
+			<biblScope unit="page" from="72" to="87" />
+		</imprint>
+	</monogr>
+	<note>Proceedings</note>
+	<note type="raw_reference">M. K. Sarker, J. Schwartz, P. Hitzler, L. Zhou, S. Nadella, B. S. Minnery, I. Juvina, M. L. Raymer, and W. R. Aue. Wikipedia knowledge graph for explainable AI. In B. Villazón-Terrazas, F. Ortiz-Rodríguez, S. M. Tiwari, and S. K. Shandilya, editors, Knowledge Graphs and Semantic Web -Second Iberoamerican Conference and First Indo-American Con- ference, KGSWC 2020, Mérida, Mexico, November 26-27, 2020, Pro- ceedings, volume 1232 of Communications in Computer and Information Science, pages 72-87. Springer, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">An ontology learning applied framework</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Schaeffer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Sesboã¼ã©</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J.-P</forename><surname>Kotowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Delestre</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Zanni-Merk</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Olaf</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Knowledge Based and Intelligent Information and Engineering Sytems (KES 2023)</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="volume">225</biblScope>
+			<biblScope unit="page" from="2106" to="2115" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Schaeffer, M. SesboÃ¼Ã©, J.-P. Kotowicz, N. Delestre, and C. Zanni-Merk. Olaf: An ontology learning applied framework. Procedia Computer Science, 225:2106-2115, 2023. 27th International Conference on Knowledge Based and Intelligent Information and Engineering Sytems (KES 2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">CoModIDE -the Comprehensive Modular Ontology Engineering IDE</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Hammar</surname></persName>
+		</author>
+		<ptr target="CEUR-WS.org" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the ISWC 2019 Satellite Tracks (Posters &amp; Demonstrations, Industry, and Outrageous Ideas) co-located with 18th International Semantic Web Conference (ISWC 2019)</title>
+		<title level="s">CEUR Workshop Proceedings</title>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">C</forename><surname>Suárez-Figueroa</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Cheng</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">L</forename><surname>Gentile</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Guéret</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><forename type="middle">M</forename><surname>Keet</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Bernstein</surname></persName>
+		</editor>
+		<meeting>the ISWC 2019 Satellite Tracks (Posters &amp; Demonstrations, Industry, and Outrageous Ideas) co-located with 18th International Semantic Web Conference (ISWC 2019)<address><addrLine>Auckland, New Zealand</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2019">October 26-30, 2019. 2019</date>
+			<biblScope unit="volume">2456</biblScope>
+			<biblScope unit="page" from="249" to="252" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Shimizu and K. Hammar. CoModIDE -the Comprehensive Modular Ontology Engineering IDE. In M. C. Suárez-Figueroa, G. Cheng, A. L. Gentile, C. Guéret, C. M. Keet, and A. Bernstein, editors, Proceedings of the ISWC 2019 Satellite Tracks (Posters &amp; Demonstrations, Industry, and Outrageous Ideas) co-located with 18th International Semantic Web Conference (ISWC 2019), Auckland, New Zealand, October 26-30, 2019, volume 2456 of CEUR Workshop Proceedings, pages 249-252. CEUR- WS.org, 2019.</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Modular graphical ontology engineering evaluated</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Hammar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -17th International Conference, ESWC 2020</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Harth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Kirrane</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">N</forename><surname>Ngomo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Rula</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">L</forename><surname>Gentile</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Haase</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Cochez</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Heraklion, Crete, Greece</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2020-06-04">May 31-June 4, 2020. 2020</date>
+			<biblScope unit="volume">12123</biblScope>
+			<biblScope unit="page" from="20" to="35" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Shimizu, K. Hammar, and P. Hitzler. Modular graphical ontology en- gineering evaluated. In A. Harth, S. Kirrane, A. N. Ngomo, H. Paulheim, A. Rula, A. L. Gentile, P. Haase, and M. Cochez, editors, The Seman- tic Web -17th International Conference, ESWC 2020, Heraklion, Crete, Greece, May 31-June 4, 2020, Proceedings, volume 12123 of Lecture Notes in Computer Science, pages 20-35. Springer, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">Modular ontology modeling</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Hammar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Semantic Web</title>
+		<imprint>
+			<biblScope unit="volume">14</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="459" to="489" />
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Shimizu, K. Hammar, and P. Hitzler. Modular ontology modeling. Semantic Web, 14(3):459-489, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">MODL: A modular ontology design library</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Hirt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 10th Workshop on Ontology Design and Patterns (WOP 2019) co-located with 18th International Semantic Web Conference (ISWC 2019)</title>
+		<title level="s">CEUR Workshop Proceedings</title>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">A</forename><surname>Krisnadhi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">P</forename><surname>Villalón</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Hammar</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</editor>
+		<meeting>the 10th Workshop on Ontology Design and Patterns (WOP 2019) co-located with 18th International Semantic Web Conference (ISWC 2019)<address><addrLine>Auckland, New Zealand</addrLine></address></meeting>
+		<imprint>
+			<publisher>CEUR-WS.org</publisher>
+			<date type="published" when="2019-10-27">October 27, 2019. 2019</date>
+			<biblScope unit="volume">2459</biblScope>
+			<biblScope unit="page" from="47" to="58" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Shimizu, Q. Hirt, and P. Hitzler. MODL: A modular ontology design library. In K. Janowicz, A. A. Krisnadhi, M. P. Villalón, K. Hammar, and C. Shimizu, editors, Proceedings of the 10th Workshop on Ontology Design and Patterns (WOP 2019) co-located with 18th International Se- mantic Web Conference (ISWC 2019), Auckland, New Zealand, October 27, 2019, volume 2459 of CEUR Workshop Proceedings, pages 47-58. CEUR-WS.org, 2019.</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<analytic>
+		<title level="a" type="main">The enslaved ontology: Peoples of the historic slave trade</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Hirt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Rehberger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">G</forename><surname>Estrecha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Foley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Sheill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Hawthorne</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Mixter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Watrall</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Carty</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Tarr</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">J. Web Semant</title>
+		<imprint>
+			<biblScope unit="volume">63</biblScope>
+			<biblScope unit="page">100567</biblScope>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Shimizu, P. Hitzler, Q. Hirt, D. Rehberger, S. G. Estrecha, C. Foley, A. M. Sheill, W. Hawthorne, J. Mixter, E. Watrall, R. Carty, and D. Tarr. The enslaved ontology: Peoples of the historic slave trade. J. Web Se- mant., 63:100567, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<monogr>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Stephe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Barua</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Cai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Christou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Currier</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Dalal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">K</forename><surname>Fisher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">S</forename><surname>Mahdavinejad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Mai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Rehberger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Schildhauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Shi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Norouzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Zalewski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Zhu</surname></persName>
+		</author>
+		<idno>arXiv 2410.13948</idno>
+		<title level="m">The KnowWhere-Graph ontology</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">C. Shimizu, S. Stephe, A. Barua, L. Cai, A. Christou, K. Currier, A. Dalal, C. K. Fisher, P. Hitzler, K. Janowicz, W. Li, Z. Liu, M. S. Mahdavinejad, G. Mai, D. Rehberger, M. Schildhauer, M. Shi, S. S. Norouzi, Y. Tian, S. Wang, Z. Wang, J. Zalewski, L. Zhou, and R. Zhu. The KnowWhere- Graph ontology, 2024. arXiv 2410.13948.</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<analytic>
+		<title level="a" type="main">Complex multi-ontology alignment through geometric operations on language embeddings</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">C</forename><surname>Silva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Faria</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Pesquita</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Conference on Prestigious Applications of Intelligent Systems (PAIS 2024)</title>
+		<title level="s">Frontiers in Artificial Intelligence and Applications</title>
+		<editor>
+			<persName><forename type="first">U</forename><surname>Endriss</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><forename type="middle">S</forename><surname>Melo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Bach</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">J B</forename><surname>Diz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">M</forename><surname>Alonso-Moral</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Barro</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><surname>Heintz</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Santiago de Compostela, Spain -</addrLine></address></meeting>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2024-10-24">19-24 October 2024. 13th. 2024</date>
+			<biblScope unit="volume">392</biblScope>
+			<biblScope unit="page" from="1333" to="1340" />
+		</imprint>
+	</monogr>
+	<note>ECAI 2024 -27th European Conference on Artificial Intelligence</note>
+	<note type="raw_reference">M. C. Silva, D. Faria, and C. Pesquita. Complex multi-ontology align- ment through geometric operations on language embeddings. In U. En- driss, F. S. Melo, K. Bach, A. J. B. Diz, J. M. Alonso-Moral, S. Barro, and F. Heintz, editors, ECAI 2024 -27th European Conference on Artifi- cial Intelligence, 19-24 October 2024, Santiago de Compostela, Spain - Including 13th Conference on Prestigious Applications of Intelligent Sys- tems (PAIS 2024), volume 392 of Frontiers in Artificial Intelligence and Applications, pages 1333-1340. IOS Press, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<analytic>
+		<title level="a" type="main">Practical ontology pattern instantiation, discovery, and maintenance with reasonable ontology templates</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">G</forename><surname>Skjaeveland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">P</forename><surname>Lupp</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><forename type="middle">H</forename><surname>Karlsen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Forssell</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2018 -17th International Semantic Web Conference</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Vrandecic</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Bontcheva</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">C</forename><surname>Suárez-Figueroa</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">I</forename><surname>Celino</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Sabou</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Kaffee</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Simperl</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Monterey, CA, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2018">October 8-12, 2018. 2018</date>
+			<biblScope unit="volume">11136</biblScope>
+			<biblScope unit="page" from="477" to="494" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. G. Skjaeveland, D. P. Lupp, L. H. Karlsen, and H. Forssell. Practical ontology pattern instantiation, discovery, and maintenance with reason- able ontology templates. In D. Vrandecic, K. Bontcheva, M. C. Suárez- Figueroa, V. Presutti, I. Celino, M. Sabou, L. Kaffee, and E. Simperl, ed- itors, The Semantic Web -ISWC 2018 -17th International Semantic Web Conference, Monterey, CA, USA, October 8-12, 2018, Proceedings, Part I, volume 11136 of Lecture Notes in Computer Science, pages 477-494. Springer, 2018.</note>
+</biblStruct>
+
+<biblStruct xml:id="b50">
+	<analytic>
+		<title level="a" type="main">Ontology learning methods from text -an extensive knowledge-based approach</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wotrobski</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 24th International Conference KES</title>
+		<meeting>the 24th International Conference KES</meeting>
+		<imprint>
+			<date type="published" when="2020">2020. 2020</date>
+			<biblScope unit="volume">176</biblScope>
+			<biblScope unit="page" from="3356" to="3368" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">J. Wotrobski. Ontology learning methods from text -an extensive knowledge-based approach. Procedia Computer Science, 176:3356- 3368, 2020. Knowledge-Based and Intelligent Information &amp; Engineer- ing Systems: Proceedings of the 24th International Conference KES2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b51">
+	<analytic>
+		<title level="a" type="main">A complex alignment benchmark: Geolink dataset</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cheatham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Krisnadhi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2018 -17th International Semantic Web Conference</title>
+		<title level="s">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Vrandecic</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Bontcheva</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><forename type="middle">C</forename><surname>Suárez-Figueroa</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">I</forename><surname>Celino</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Sabou</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Kaffee</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Simperl</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Monterey, CA, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2018">October 8-12, 2018. 2018</date>
+			<biblScope unit="volume">11137</biblScope>
+			<biblScope unit="page" from="273" to="288" />
+		</imprint>
+	</monogr>
+	<note>Proceedings, Part II</note>
+	<note type="raw_reference">L. Zhou, M. Cheatham, A. Krisnadhi, and P. Hitzler. A complex align- ment benchmark: Geolink dataset. In D. Vrandecic, K. Bontcheva, M. C. Suárez-Figueroa, V. Presutti, I. Celino, M. Sabou, L. Kaffee, and E. Sim- perl, editors, The Semantic Web -ISWC 2018 -17th International Seman- tic Web Conference, Monterey, CA, USA, October 8-12, 2018, Proceed- ings, Part II, volume 11137 of Lecture Notes in Computer Science, pages 273-288. Springer, 2018.</note>
+</biblStruct>
+
+<biblStruct xml:id="b52">
+	<analytic>
+		<title level="a" type="main">Geolink data set: A complex alignment benchmark from real-world ontology</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cheatham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Krisnadhi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Data Intell</title>
+		<imprint>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="353" to="378" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">L. Zhou, M. Cheatham, A. Krisnadhi, and P. Hitzler. Geolink data set: A complex alignment benchmark from real-world ontology. Data Intell., 2(3):353-378, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b53">
+	<analytic>
+		<title level="a" type="main">The enslaved dataset: A real-world complex ontology alignment benchmark using wikibase</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Shimizu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Hitzler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Sheill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">G</forename><surname>Estrecha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Foley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Tarr</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Rehberger</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">CIKM &apos;20: The 29th ACM International Conference on Information and Knowledge Management</title>
+		<editor>
+			<persName><forename type="first">M</forename><surname>D'aquin</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Dietze</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Hauff</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Curry</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Cudré-Mauroux</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Virtual Event, Ireland</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2020">October 19-23, 2020. 2020</date>
+			<biblScope unit="page" from="3197" to="3204" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">L. Zhou, C. Shimizu, P. Hitzler, A. M. Sheill, S. G. Estrecha, C. Foley, D. Tarr, and D. Rehberger. The enslaved dataset: A real-world complex ontology alignment benchmark using wikibase. In M. d&apos;Aquin, S. Di- etze, C. Hauff, E. Curry, and P. Cudré-Mauroux, editors, CIKM &apos;20: The 29th ACM International Conference on Information and Knowledge Man- agement, Virtual Event, Ireland, October 19-23, 2020, pages 3197-3204. ACM, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b54">
+	<analytic>
+		<title level="a" type="main">Towards evaluating complex ontology alignments</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">É</forename><surname>Thiéblin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cheatham</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Faria</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Pesquita</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">T</forename><surname>Santos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Zamazal</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Knowl. Eng. Rev</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page">e21</biblScope>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">L. Zhou, É. Thiéblin, M. Cheatham, D. Faria, C. Pesquita, C. T. dos San- tos, and O. Zamazal. Towards evaluating complex ontology alignments. Knowl. Eng. Rev., 35:e21, 2020.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

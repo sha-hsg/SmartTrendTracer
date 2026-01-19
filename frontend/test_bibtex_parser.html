@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BibTeX Parser Test Suite</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-case {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 10px;
+        }
+        .bibtex-input {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .result-box {
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .expected {
+            background: #e8f5e9;
+            border: 1px solid #4CAF50;
+        }
+        .actual {
+            background: #fff3e0;
+            border: 1px solid #FF9800;
+        }
+        .result-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .field-item {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .pass {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .fail {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .summary {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .formatted-view {
+            background: #f0f7ff;
+            border: 1px solid #2196F3;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>BibTeX Parser Test Suite</h1>
+    <div class="summary">
+        <h2>Test Summary</h2>
+        <div id="summary-content">Running tests...</div>
+    </div>
+    <div id="test-results"></div>
+
+    <script>
+        // BibTeX parser implementation from BibTeXViewer.tsx
+        function parseBibTeX(bibtex) {
+            try {
+                // Extract entry type and citation key
+                const typeMatch = bibtex.match(/@(\w+)\s*\{([^,]+),/);
+                if (!typeMatch) return null;
+
+                const type = typeMatch[1];
+                const key = typeMatch[2];
+                const fields = {};
+
+                // Find where fields start
+                const fieldsStart = bibtex.indexOf(',', bibtex.indexOf('{')) + 1;
+                const fieldsSection = bibtex.substring(fieldsStart);
+                
+                // Advanced regex that properly handles nested braces
+                // This pattern handles multiple levels of nesting by recursively matching brace pairs
+                const fieldPattern = /(\w+)\s*=\s*\{((?:[^{}]|\{(?:[^{}]|\{[^}]*\})*\})*)\}/g;
+                let match;
+                
+                while ((match = fieldPattern.exec(fieldsSection)) !== null) {
+                    const fieldName = match[1].toLowerCase();
+                    const fieldValue = match[2].trim();
+                    fields[fieldName] = fieldValue;
+                }
+
+                // Handle quoted strings as well
+                const quotedFieldPattern = /(\w+)\s*=\s*"([^"]*)"/g;
+                while ((match = quotedFieldPattern.exec(fieldsSection)) !== null) {
+                    const fieldName = match[1].toLowerCase();
+                    if (!fields[fieldName]) {
+                        fields[fieldName] = match[2].trim();
+                    }
+                }
+
+                return { type, key, fields };
+            } catch (error) {
+                console.error('Error parsing BibTeX:', error);
+                return null;
+            }
+        }
+
+        function formatFieldValue(value) {
+            let formatted = value.replace(/\s+/g, ' ').trim();
+            
+            // Remove protective braces around single words
+            formatted = formatted.replace(/\{([A-Z]+)\}/g, '$1');
+            
+            // Remove outer braces if they wrap the entire value
+            if (formatted.startsWith('{') && formatted.endsWith('}')) {
+                let depth = 0;
+                let isOuter = true;
+                for (let i = 0; i < formatted.length - 1; i++) {
+                    if (formatted[i] === '{') depth++;
+                    else if (formatted[i] === '}') depth--;
+                    if (depth === 0 && i < formatted.length - 1) {
+                        isOuter = false;
+                        break;
+                    }
+                }
+                if (isOuter) {
+                    formatted = formatted.slice(1, -1).trim();
+                }
+            }
+            
+            return formatted;
+        }
+
+        // Test cases
+        const testCases = [
+            {
+                name: "Double Braces for Acronym Protection",
+                input: `@article{DBLP:journals/tkde/PanLWCWW24,
+  author = {Shirui Pan and Linhao Luo},
+  title = {Unifying Large Language Models and Knowledge Graphs},
+  journal = {{IEEE} Trans. Knowl. Data Eng.},
+  year = {2024}
+}`,
+                expected: {
+                    type: 'article',
+                    key: 'DBLP:journals/tkde/PanLWCWW24',
+                    fields: {
+                        author: 'Shirui Pan and Linhao Luo',
+                        title: 'Unifying Large Language Models and Knowledge Graphs',
+                        journal: '{IEEE} Trans. Knowl. Data Eng.',
+                        year: '2024'
+                    },
+                    formatted: {
+                        journal: 'IEEE Trans. Knowl. Data Eng.'
+                    }
+                }
+            },
+            {
+                name: "Multiple Nested Braces in Title",
+                input: `@inproceedings{example2025,
+  title = {Understanding {BERT}: A {Deep} Dive into {Transformer} Models},
+  booktitle = {Proceedings of the {ACL} Conference},
+  author = {John Doe},
+  year = {2025}
+}`,
+                expected: {
+                    type: 'inproceedings',
+                    key: 'example2025',
+                    fields: {
+                        title: 'Understanding {BERT}: A {Deep} Dive into {Transformer} Models',
+                        booktitle: 'Proceedings of the {ACL} Conference',
+                        author: 'John Doe',
+                        year: '2025'
+                    },
+                    formatted: {
+                        title: 'Understanding BERT: A Deep Dive into Transformer Models',
+                        booktitle: 'Proceedings of the ACL Conference'
+                    }
+                }
+            },
+            {
+                name: "Complex Conference Name with Multiple Organizations",
+                input: `@inproceedings{cvpr2024,
+  title = {Vision Transformers for Dense Prediction},
+  booktitle = {Proceedings of the {IEEE/CVF} Conference on {Computer Vision} and {Pattern Recognition}},
+  pages = {1234--1245},
+  year = {2024}
+}`,
+                expected: {
+                    type: 'inproceedings',
+                    key: 'cvpr2024',
+                    fields: {
+                        title: 'Vision Transformers for Dense Prediction',
+                        booktitle: 'Proceedings of the {IEEE/CVF} Conference on {Computer Vision} and {Pattern Recognition}',
+                        pages: '1234--1245',
+                        year: '2024'
+                    },
+                    formatted: {
+                        booktitle: 'Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition'
+                    }
+                }
+            },
+            {
+                name: "LaTeX Special Characters and Math Mode",
+                input: `@article{math2024,
+  title = {On the Complexity of $O(n^2)$ Algorithms},
+  author = {M\\"uller, Hans and Erd\\H{o}s, Paul},
+  journal = {{SIAM} J. Comput.},
+  year = {2024}
+}`,
+                expected: {
+                    type: 'article',
+                    key: 'math2024',
+                    fields: {
+                        title: 'On the Complexity of $O(n^2)$ Algorithms',
+                        author: 'M\\"uller, Hans and Erd\\H{o}s, Paul',
+                        journal: '{SIAM} J. Comput.',
+                        year: '2024'
+                    },
+                    formatted: {
+                        journal: 'SIAM J. Comput.'
+                    }
+                }
+            },
+            {
+                name: "Mixed Quoted and Braced Fields",
+                input: `@book{knuth1997,
+  author = "Donald E. Knuth",
+  title = {The Art of Computer Programming},
+  volume = "1",
+  publisher = {{Addison-Wesley}},
+  year = {1997}
+}`,
+                expected: {
+                    type: 'book',
+                    key: 'knuth1997',
+                    fields: {
+                        author: 'Donald E. Knuth',
+                        title: 'The Art of Computer Programming',
+                        volume: '1',
+                        publisher: '{Addison-Wesley}',
+                        year: '1997'
+                    },
+                    formatted: {
+                        publisher: 'Addison-Wesley'
+                    }
+                }
+            },
+            {
+                name: "URL with Special Characters",
+                input: `@misc{arxiv2024,
+  title = {{GPT-4} Technical Report},
+  author = {{OpenAI}},
+  url = {https://arxiv.org/abs/2303.08774},
+  note = {arXiv:2303.08774 [cs.CL]},
+  year = {2024}
+}`,
+                expected: {
+                    type: 'misc',
+                    key: 'arxiv2024',
+                    fields: {
+                        title: '{GPT-4} Technical Report',
+                        author: '{OpenAI}',
+                        url: 'https://arxiv.org/abs/2303.08774',
+                        note: 'arXiv:2303.08774 [cs.CL]',
+                        year: '2024'
+                    },
+                    formatted: {
+                        title: 'GPT-4 Technical Report',
+                        author: 'OpenAI'
+                    }
+                }
+            },
+            {
+                name: "Deeply Nested Braces",
+                input: `@article{nested2025,
+  title = {Analysis of {{DNA} Sequences} in {Biology}},
+  journal = {{{Nature} Biotechnology}},
+  year = {2025}
+}`,
+                expected: {
+                    type: 'article',
+                    key: 'nested2025',
+                    fields: {
+                        title: 'Analysis of {{DNA} Sequences} in {Biology}',
+                        journal: '{{Nature} Biotechnology}',
+                        year: '2025'
+                    },
+                    formatted: {
+                        title: 'Analysis of {DNA Sequences} in Biology',
+                        journal: '{Nature} Biotechnology'
+                    }
+                }
+            },
+            {
+                name: "Multiline Fields",
+                input: `@article{multiline2024,
+  author = {Alice Smith and
+            Bob Johnson and
+            Charlie Brown},
+  title = {A Very Long Title That
+           Spans Multiple Lines
+           in the BibTeX Entry},
+  journal = {{ACM} Computing Surveys},
+  year = {2024}
+}`,
+                expected: {
+                    type: 'article',
+                    key: 'multiline2024',
+                    fields: {
+                        author: 'Alice Smith and Bob Johnson and Charlie Brown',
+                        title: 'A Very Long Title That Spans Multiple Lines in the BibTeX Entry',
+                        journal: '{ACM} Computing Surveys',
+                        year: '2024'
+                    },
+                    formatted: {
+                        journal: 'ACM Computing Surveys'
+                    }
+                }
+            }
+        ];
+
+        // Run tests
+        function runTests() {
+            const results = document.getElementById('test-results');
+            let passCount = 0;
+            let failCount = 0;
+
+            testCases.forEach((testCase, index) => {
+                const parsed = parseBibTeX(testCase.input);
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-case';
+                
+                let testPassed = true;
+                let html = `<div class="test-title">Test ${index + 1}: ${testCase.name}</div>`;
+                
+                html += `<div class="bibtex-input">${testCase.input}</div>`;
+                
+                // Check parsing results
+                if (!parsed) {
+                    testPassed = false;
+                    html += `<div class="fail">❌ Failed to parse BibTeX</div>`;
+                } else {
+                    html += '<div class="results">';
+                    
+                    // Expected results
+                    html += '<div class="result-box expected">';
+                    html += '<div class="result-label">Expected:</div>';
+                    html += `<div class="field-item">Type: ${testCase.expected.type}</div>`;
+                    html += `<div class="field-item">Key: ${testCase.expected.key}</div>`;
+                    for (const [field, value] of Object.entries(testCase.expected.fields)) {
+                        html += `<div class="field-item">${field}: "${value}"</div>`;
+                    }
+                    html += '</div>';
+                    
+                    // Actual results
+                    html += '<div class="result-box actual">';
+                    html += '<div class="result-label">Actual:</div>';
+                    html += `<div class="field-item">Type: ${parsed.type}</div>`;
+                    html += `<div class="field-item">Key: ${parsed.key}</div>`;
+                    for (const [field, value] of Object.entries(parsed.fields)) {
+                        html += `<div class="field-item">${field}: "${value}"</div>`;
+                    }
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    // Check each field
+                    if (parsed.type !== testCase.expected.type) testPassed = false;
+                    if (parsed.key !== testCase.expected.key) testPassed = false;
+                    
+                    for (const [field, expectedValue] of Object.entries(testCase.expected.fields)) {
+                        if (parsed.fields[field] !== expectedValue) {
+                            testPassed = false;
+                            html += `<div class="fail">❌ Field "${field}" mismatch</div>`;
+                        }
+                    }
+                    
+                    // Test formatting if specified
+                    if (testCase.expected.formatted) {
+                        html += '<div class="formatted-view">';
+                        html += '<div class="result-label">Formatted Values:</div>';
+                        for (const [field, expectedFormatted] of Object.entries(testCase.expected.formatted)) {
+                            const actualFormatted = formatFieldValue(parsed.fields[field] || '');
+                            html += `<div class="field-item">${field}: "${actualFormatted}"</div>`;
+                            if (actualFormatted !== expectedFormatted) {
+                                testPassed = false;
+                                html += `<div class="fail">❌ Expected formatted: "${expectedFormatted}"</div>`;
+                            }
+                        }
+                        html += '</div>';
+                    }
+                }
+                
+                html += testPassed ? 
+                    '<div class="pass">✅ Test Passed</div>' : 
+                    '<div class="fail">❌ Test Failed</div>';
+                
+                testDiv.innerHTML = html;
+                results.appendChild(testDiv);
+                
+                if (testPassed) passCount++;
+                else failCount++;
+            });
+            
+            // Update summary
+            const summaryDiv = document.getElementById('summary-content');
+            const totalTests = testCases.length;
+            const passRate = ((passCount / totalTests) * 100).toFixed(1);
+            
+            summaryDiv.innerHTML = `
+                <h3 style="color: ${passCount === totalTests ? '#4CAF50' : '#f44336'}">
+                    ${passCount} / ${totalTests} Tests Passed (${passRate}%)
+                </h3>
+                <p>✅ Passed: ${passCount} | ❌ Failed: ${failCount}</p>
+            `;
+        }
+
+        // Run tests when page loads
+        window.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

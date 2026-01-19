@@ -5,15 +5,11 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timedelta
 from collections import defaultdict, Counter
 import numpy as np
-from sqlalchemy import func, desc, and_, or_
-from sqlalchemy.orm import Session
 import logging
 import re
 import requests
 from urllib.parse import quote
 
-from ..models import Paper, PaperTag, PaperAuthor, PaperReference, PaperSnippet, PaperSection
-from ..models import Tweet, SubstackArticle
 from .llm_service import LLMService
 from .paper_rag_service import PaperRAGService
 

@@ -3,18 +3,14 @@ API endpoints for RAG (Retrieval-Augmented Generation) system
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
 from typing import Dict, List, Optional
 from pydantic import BaseModel
 import json
 import asyncio
 
-from app.models import get_db
 from app.services.rag_service_fast import get_rag_service, FastRAGService
 
-
 router = APIRouter()
-
 
 class RAGQuery(BaseModel):
     """Model for RAG query request"""
@@ -22,25 +18,20 @@ class RAGQuery(BaseModel):
     k: int = 5  # Number of sources to retrieve
     filter_type: Optional[str] = None  # 'tweet', 'article', 'snippet', or None for all
 
-
 class SearchQuery(BaseModel):
     """Model for search query request"""
     query: str
     k: int = 10
     filter_type: Optional[str] = None
 
-
 @router.get("/status")
-async def get_index_status(db: Session = Depends(get_db)):
     """Get current RAG index status"""
     service = get_rag_service(db)
     return service.get_status()
 
-
 @router.post("/build")
 async def build_index(
     force: bool = Query(False, description="Force rebuild even if index exists"),
-    db: Session = Depends(get_db)
 ):
     """Build or rebuild the RAG index"""
     service = get_rag_service(db)
@@ -57,9 +48,7 @@ async def build_index(
     result = service.build_index_async()
     return result
 
-
 @router.get("/build/progress")
-async def build_progress_stream(db: Session = Depends(get_db)):
     """Stream build progress updates via Server-Sent Events"""
     async def generate():
         service = get_rag_service(db)
@@ -92,11 +81,9 @@ async def build_progress_stream(db: Session = Depends(get_db)):
         }
     )
 
-
 @router.post("/ask")
 async def ask_question(
     query: RAGQuery,
-    db: Session = Depends(get_db)
 ):
     """
     Ask a question and get an AI-generated answer with sources.
@@ -198,11 +185,9 @@ async def ask_question(
         print(f"Error in ask_question: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/search")
 async def search_documents(
     query: SearchQuery,
-    db: Session = Depends(get_db)
 ):
     """
     Search documents without generating an answer.
@@ -267,9 +252,7 @@ async def search_documents(
         print(f"Error in search_documents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/stats")
-def get_index_stats(db: Session = Depends(get_db)):
     """Get statistics about the RAG index"""
     try:
         rag_service = get_rag_service(db)
@@ -289,7 +272,6 @@ def get_index_stats(db: Session = Depends(get_db)):
         print(f"Error in get_index_stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/sample-questions")
 def get_sample_questions():
     """Get sample questions for the RAG interface"""
@@ -308,9 +290,7 @@ def get_sample_questions():
         "Show me content about AI consciousness debates"
     ]
 
-
 @router.post("/rebuild")
-async def rebuild_index(db: Session = Depends(get_db)):
     """Force rebuild the entire index from scratch"""
     try:
         rag_service = get_rag_service(db)

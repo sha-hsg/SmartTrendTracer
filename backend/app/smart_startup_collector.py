@@ -4,11 +4,9 @@ Smart startup collection that respects Twitter rate limits
 from datetime import datetime, timedelta, timezone
 import logging
 import time
-from app.models import get_db, CollectionState, Tweet
 from app.collectors.twitter_collector import TwitterCollector
 from app.rate_limiter import get_rate_limiter
 from app.config import ACCOUNTS_TO_FOLLOW
-from sqlalchemy import func
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +16,6 @@ def smart_collect_on_startup():
     For Twitter Basic tier: 10 requests per 15 minutes
     With 7 accounts, we need to be careful
     """
-    db = next(get_db())
     
     try:
         print("\n" + "="*60)

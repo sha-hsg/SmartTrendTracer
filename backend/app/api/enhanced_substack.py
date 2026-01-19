@@ -2,13 +2,9 @@
 Enhanced Substack API with tag suggestions and faceted browsing
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, func, and_, or_
 from typing import List, Optional, Dict
 from pydantic import BaseModel
 
-from app.models import get_db
-from app.models.substack import (
     SubstackAuthor, 
     SubstackArticle, 
     ArticleTag,
@@ -43,7 +39,6 @@ class FacetedSearchResponse(BaseModel):
     page_size: int
 
 @router.post("/articles/{article_id}/suggest-tags")
-def suggest_tags_for_article(article_id: int, db: Session = Depends(get_db)):
     """Get AI-suggested tags for a Substack article using both similarity search and LLM"""
     
     # Get the article
@@ -175,7 +170,6 @@ def suggest_tags_for_article(article_id: int, db: Session = Depends(get_db)):
 def add_tag_to_article(
     article_id: int, 
     tag_data: ArticleTagCreate,
-    db: Session = Depends(get_db)
 ):
     """Add a tag to a Substack article with normalization"""
     
@@ -188,13 +182,13 @@ def add_tag_to_article(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
     
-    # For manual tags, preserve the capitalization provided by the user
-    # For other types (llm, auto), normalize the tag
-    if tag_data.tag_type == 'manual':
-        # Just clean spaces and keep user's capitalization
+    # For manual and AI-suggested tags, preserve the capitalization
+    # Only normalize for other types (auto)
+    if tag_data.tag_type in ['manual', 'llm', 'ai']:
+        # Just clean spaces and keep the capitalization
         final_tag = tag_data.tag.strip()
     else:
-        # Normalize the tag for non-manual sources
+        # Normalize the tag for auto-generated sources
         normalizer = get_tag_normalizer(db)
         final_tag = normalizer.normalize_tag(tag_data.tag)
     
@@ -226,7 +220,6 @@ def add_tag_to_article(
 def remove_tag_from_article(
     article_id: int, 
     tag: str,
-    db: Session = Depends(get_db)
 ):
     """Remove a tag from a Substack article"""
     
@@ -250,7 +243,8 @@ def faceted_search_articles(
     author_ids: Optional[List[int]] = Query(None),
     tags: Optional[List[str]] = Query(None),
     search: Optional[str] = None,
-    db: Session = Depends(get_db)
+    has_summary: Optional[bool] = None,
+    has_snippets: Optional[bool] = None,
 ):
     """
     Faceted search for Substack articles
@@ -285,8 +279,47 @@ def faceted_search_articles(
             )
         )
     
+    # Apply has_summary filter
+    if has_summary is not None:
+        print(f"DEBUG: Applying has_summary filter: {has_summary}")
+        if has_summary:
+            # Filter for articles WITH summaries
+            query = query.filter(
+                SubstackArticle.summary.isnot(None),
+                SubstackArticle.summary != ''
+            )
+            print("DEBUG: Filtering for articles WITH summaries")
+        else:
+            # Filter for articles WITHOUT summaries
+            query = query.filter(
+                or_(
+                    SubstackArticle.summary.is_(None),
+                    SubstackArticle.summary == ''
+                )
+            )
+            print("DEBUG: Filtering for articles WITHOUT summaries")
+    
+    # Apply has_snippets filter
+    if has_snippets is not None:
+        print(f"DEBUG: Applying has_snippets filter: {has_snippets}")
+        # Need to check if article has snippets
+        
+        if has_snippets:
+            # Filter for articles WITH snippets
+            # Use a subquery to find articles with at least one snippet
+            subq = db.query(ArticleSnippet.article_id).subquery()
+            query = query.filter(SubstackArticle.id.in_(subq))
+            print("DEBUG: Filtering for articles WITH snippets")
+        else:
+            # Filter for articles WITHOUT snippets
+            # Use a subquery to find articles with no snippets
+            subq = db.query(ArticleSnippet.article_id).subquery()
+            query = query.filter(~SubstackArticle.id.in_(subq))
+            print("DEBUG: Filtering for articles WITHOUT snippets")
+    
     # Get total count before pagination
     total = query.count()
+    print(f"DEBUG: Total articles after filters: {total}")
     
     # Apply pagination
     skip = (page - 1) * page_size
@@ -294,6 +327,16 @@ def faceted_search_articles(
                    .offset(skip)\
                    .limit(page_size)\
                    .all()
+    
+    # Debug: Show what we got
+    print(f"DEBUG: Retrieved {len(articles)} articles for page {page}")
+    if has_summary is not None or has_snippets is not None:
+        for idx, article in enumerate(articles[:5]):  # Show first 5 for debugging
+            has_sum = bool(article.summary and article.summary.strip())
+            snippet_count = db.query(ArticleSnippet).filter(ArticleSnippet.article_id == article.id).count()
+            print(f"  Article {idx+1}: '{article.title[:50]}...'")
+            print(f"    - Has summary: {has_sum} (length: {len(article.summary) if article.summary else 0})")
+            print(f"    - Has snippets: {snippet_count > 0} (count: {snippet_count})")
     
     # Get facet counts
     # Author facets (exclude deleted articles)
@@ -365,7 +408,6 @@ def faceted_search_articles(
     )
 
 @router.get("/articles/{article_id}")
-def get_article(article_id: int, db: Session = Depends(get_db)):
     """Get full article content with markdown"""
     article = db.query(SubstackArticle).options(
         joinedload(SubstackArticle.author),
@@ -416,10 +458,44 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
         ]
     }
 
+@router.delete("/articles/{article_id}")
+    """Delete a Substack article and all its related data"""
+    
+    # Get the article
+    article = db.query(SubstackArticle).filter(SubstackArticle.id == article_id).first()
+    
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+    
+    # Delete related tags
+    db.query(ArticleTag).filter(ArticleTag.article_id == article_id).delete()
+    
+    # Delete related snippets
+    db.query(ArticleSnippet).filter(ArticleSnippet.article_id == article_id).delete()
+    
+    # Delete the article
+    db.delete(article)
+    db.commit()
+    
+    return {"message": f"Article '{article.title}' deleted successfully"}
+
+@router.get("/authors")
+    """Get all Substack authors"""
+    authors = db.query(SubstackAuthor).order_by(SubstackAuthor.name).all()
+    return [
+        {
+            "id": author.id,
+            "name": author.name,
+            "email": author.email,
+            "subdomain": author.subdomain,
+            "url": author.url
+        }
+        for author in authors
+    ]
+
 @router.get("/tags/popular")
 def get_popular_article_tags(
     limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db)
 ):
     """Get most popular tags for Substack articles"""
     
@@ -445,7 +521,6 @@ class SnippetCreate(BaseModel):
 def create_snippet(
     article_id: int,
     snippet_data: SnippetCreate,
-    db: Session = Depends(get_db)
 ):
     """Create a new snippet for an article"""
     
@@ -479,8 +554,28 @@ def create_snippet(
         "created_at": snippet.created_at.isoformat()
     }
 
+@router.delete("/articles/{article_id}/snippets/{snippet_id}")
+def delete_snippet(
+    article_id: int,
+    snippet_id: int,
+):
+    """Delete a snippet from an article"""
+    
+    # Check if snippet exists and belongs to the article
+    snippet = db.query(ArticleSnippet).filter(
+        ArticleSnippet.id == snippet_id,
+        ArticleSnippet.article_id == article_id
+    ).first()
+    
+    if not snippet:
+        raise HTTPException(status_code=404, detail="Snippet not found")
+    
+    db.delete(snippet)
+    db.commit()
+    
+    return {"message": "Snippet deleted successfully"}
+
 @router.post("/articles/{article_id}/summarize")
-def summarize_article(article_id: int, db: Session = Depends(get_db)):
     """Generate AI summary for an article"""
     try:
         summarizer = ArticleSummarizer()
@@ -500,12 +595,14 @@ class ArticleUpdate(BaseModel):
     title: Optional[str] = None
     content_markdown: Optional[str] = None
     subtitle: Optional[str] = None
+    published_at: Optional[datetime] = None
+    author_id: Optional[int] = None
+    url: Optional[str] = None
 
 @router.patch("/articles/{article_id}")
 def update_article(
     article_id: int,
     update_data: ArticleUpdate,
-    db: Session = Depends(get_db)
 ):
     """Update article title, content, or subtitle"""
     article = db.query(SubstackArticle).filter(SubstackArticle.id == article_id).first()
@@ -523,6 +620,16 @@ def update_article(
         article.reading_time_minutes = max(1, article.word_count // 200)
     if update_data.subtitle is not None:
         article.subtitle = update_data.subtitle
+    if update_data.published_at is not None:
+        article.published_at = update_data.published_at
+    if update_data.author_id is not None:
+        # Verify the author exists
+        author = db.query(SubstackAuthor).filter(SubstackAuthor.id == update_data.author_id).first()
+        if not author:
+            raise HTTPException(status_code=400, detail="Author not found")
+        article.author_id = update_data.author_id
+    if update_data.url is not None:
+        article.url = update_data.url
     
     db.commit()
     db.refresh(article)

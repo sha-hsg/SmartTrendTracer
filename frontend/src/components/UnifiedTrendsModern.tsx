@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import {
   Chart as ChartJS,
@@ -23,23 +21,14 @@ import {
   Filler,
   ChartOptions
 } from 'chart.js'
-import { Line, Bar, Radar } from 'react-chartjs-2'
+import { Bar, Radar } from 'react-chartjs-2'
 import {
   TrendingUp,
   TrendingDown,
   Clock,
-  BarChart3,
-  Activity,
   RefreshCw,
   Loader2,
-  AlertCircle,
-  Sparkles,
-  Hash,
-  Calendar,
-  ArrowUp,
-  ArrowDown,
   ArrowRight,
-  Zap,
   Target,
   Link2,
   GitBranch,
@@ -47,8 +36,7 @@ import {
   FileText,
   Layers,
   Shuffle,
-  CircleDot,
-  ChevronRight
+  CircleDot
 } from 'lucide-react'
 
 // Register ChartJS components

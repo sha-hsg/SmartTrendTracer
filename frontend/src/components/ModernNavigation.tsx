@@ -29,33 +29,51 @@ import {
   Settings,
   Activity,
   BookOpen,
-  Upload,
-  Filter
+  GitBranch,
+  MessageSquare
 } from 'lucide-react'
 
-export type ViewType = 
+export type ViewType =
   | 'dashboard'
   | 'statistics'
   | 'rag-search'
   // Twitter views
-  | 'twitter-faceted' 
-  | 'twitter-media' 
+  | 'twitter-faceted'
+  | 'twitter-media'
   | 'twitter-trends'
-  | 'twitter-users' 
-  | 'twitter-charts' 
+  | 'twitter-users'
+  | 'twitter-charts'
   | 'twitter-summary'
+  | 'twitter-accounts'
   // Article views
-  | 'articles-faceted' 
+  | 'articles-faceted'
   | 'articles-trends'
   | 'articles-charts'
+  | 'articles-clustering'
+  // Author views
+  | 'author-management'
+  | 'author-analytics'
+  | 'author-merge'
+  // Reddit views
+  | 'reddit-faceted'
+  | 'reddit-trends'
   // Papers views
   | 'papers-dashboard'
+  | 'papers-references'
+  // Books views
+  | 'books-dashboard'
+  | 'books-analysis'
   // Analysis views
   | 'analysis-unified'
   | 'analysis-compare'
   | 'analysis-clustering'
-  // Tag management
+  | 'topic-explorer'
+  // Concept management
+  | 'concept-management'
+  | 'concept-graph'
+  // Legacy (to be removed)
   | 'tags-organisation'
+  | 'concept-organizer'
 
 interface ModernNavigationProps {
   activeView: ViewType
@@ -73,13 +91,25 @@ const navigationItems = [
     title: 'Statistics',
     icon: BarChart3,
     view: 'statistics' as ViewType,
-    description: 'System metrics and analytics'
+    description: 'Comprehensive system metrics and analytics'
   },
   {
-    title: 'AI Search',
-    icon: Search,
-    view: 'rag-search' as ViewType,
-    description: 'Search across all content'
+    title: 'AI Insights',
+    icon: Brain,
+    items: [
+      { 
+        title: 'AI Search', 
+        view: 'rag-search' as ViewType, 
+        icon: Search,
+        description: 'Search across all content'
+      },
+      { 
+        title: 'AI Summarization', 
+        view: 'twitter-summary' as ViewType, 
+        icon: ScrollText,
+        description: 'Generate intelligent summaries'
+      }
+    ]
   },
   {
     title: 'Twitter/X',
@@ -109,17 +139,17 @@ const navigationItems = [
         icon: Users,
         description: 'Per-user insights'
       },
-      { 
-        title: 'Visualizations', 
-        view: 'twitter-charts' as ViewType, 
+      {
+        title: 'Visualizations',
+        view: 'twitter-charts' as ViewType,
         icon: PieChart,
         description: 'Charts and graphs'
       },
-      { 
-        title: 'AI Summaries', 
-        view: 'twitter-summary' as ViewType, 
-        icon: ScrollText,
-        description: 'Generated summaries'
+      {
+        title: 'Account Manager',
+        view: 'twitter-accounts' as ViewType,
+        icon: Users,
+        description: 'Manage monitored accounts'
       }
     ]
   },
@@ -127,31 +157,109 @@ const navigationItems = [
     title: 'Articles',
     icon: FileText,
     items: [
-      { 
-        title: 'Browse Articles', 
-        view: 'articles-faceted' as ViewType, 
+      {
+        title: 'Browse Articles',
+        view: 'articles-faceted' as ViewType,
         icon: FileText,
         description: 'Explore newsletters'
       },
-      { 
-        title: 'Article Trends', 
-        view: 'articles-trends' as ViewType, 
+      {
+        title: 'Article Trends',
+        view: 'articles-trends' as ViewType,
         icon: Flame,
         description: 'Hot topics in articles'
       },
-      { 
-        title: 'Article Analytics', 
-        view: 'articles-charts' as ViewType, 
+      {
+        title: 'Article Analytics',
+        view: 'articles-charts' as ViewType,
         icon: BarChart3,
         description: 'Article statistics'
+      },
+      {
+        title: 'Topic Clustering',
+        view: 'articles-clustering' as ViewType,
+        icon: Layers,
+        description: 'Cluster articles by tags'
       }
     ]
   },
   {
-    title: 'Papers',
+    title: 'Authors',
+    icon: Users,
+    items: [
+      {
+        title: 'Manage Authors',
+        view: 'author-management' as ViewType,
+        icon: Users,
+        description: 'View and organize article authors'
+      },
+      {
+        title: 'Author Analytics',
+        view: 'author-analytics' as ViewType,
+        icon: BarChart3,
+        description: 'Publishing statistics and insights'
+      },
+      {
+        title: 'Merge Duplicates',
+        view: 'author-merge' as ViewType,
+        icon: GitCompare,
+        description: 'Find and merge duplicate authors'
+      }
+    ]
+  },
+  {
+    title: 'Reddit Posts',
+    icon: MessageSquare,
+    items: [
+      { 
+        title: 'Browse Posts', 
+        view: 'reddit-faceted' as ViewType, 
+        icon: FileText,
+        description: 'Filter and explore Reddit posts'
+      },
+      { 
+        title: 'Reddit Trends', 
+        view: 'reddit-trends' as ViewType, 
+        icon: TrendingUp,
+        description: 'Trending topics on Reddit'
+      }
+    ]
+  },
+  {
+    title: 'Research Papers',
     icon: BookOpen,
-    view: 'papers-dashboard' as ViewType,
-    description: 'Research papers analysis'
+    items: [
+      {
+        title: 'Browse Papers',
+        view: 'papers-dashboard' as ViewType,
+        icon: BookOpen,
+        description: 'Research papers analysis'
+      },
+      {
+        title: 'References',
+        view: 'papers-references' as ViewType,
+        icon: Database,
+        description: 'Manage paper references'
+      }
+    ]
+  },
+  {
+    title: 'Book Library',
+    icon: BookOpen,
+    items: [
+      {
+        title: 'Browse Books',
+        view: 'books-dashboard' as ViewType,
+        icon: BookOpen,
+        description: 'Personal book collection'
+      },
+      {
+        title: 'Book Analytics',
+        view: 'books-analysis' as ViewType,
+        icon: BarChart3,
+        description: 'Reading statistics and insights'
+      }
+    ]
   },
   {
     title: 'Analysis',
@@ -169,19 +277,37 @@ const navigationItems = [
         icon: GitCompare,
         description: 'Twitter vs Articles'
       },
-      { 
-        title: 'Topic Clustering', 
-        view: 'analysis-clustering' as ViewType, 
+      {
+        title: 'Topic Clustering',
+        view: 'analysis-clustering' as ViewType,
         icon: Layers,
         description: 'Related topics'
+      },
+      {
+        title: 'Topic Explorer',
+        view: 'topic-explorer' as ViewType,
+        icon: TrendingUp,
+        description: 'Analyze topic trends and correlations'
       }
     ]
   },
   {
-    title: 'Tags',
+    title: 'Concepts',
     icon: Tags,
-    view: 'tags-organisation' as ViewType,
-    description: 'Manage tag ontology'
+    items: [
+      { 
+        title: 'Concept Management', 
+        view: 'concept-management' as ViewType, 
+        icon: GitBranch,
+        description: 'Manage hierarchy and organize concepts'
+      },
+      { 
+        title: 'Concept Graph', 
+        view: 'concept-graph' as ViewType, 
+        icon: Layers,
+        description: 'Interactive concept visualization'
+      }
+    ]
   }
 ]
 
@@ -198,7 +324,7 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
           </a>
         </div>
         
-        <NavigationMenu className="mx-6">
+        <NavigationMenu className="mx-6 [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!top-full">
           <NavigationMenuList>
             {navigationItems.map((item) => {
               if (item.items) {

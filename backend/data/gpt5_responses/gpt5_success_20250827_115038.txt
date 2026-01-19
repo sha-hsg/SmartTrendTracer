@@ -1,0 +1,98 @@
+Timestamp: 2025-08-27T11:50:38.450127
+Type: success
+Model: gpt-5-2025-08-07
+--------------------------------------------------------------------------------
+{
+  "concepts": [
+    {
+      "id": "c_0001",
+      "slug": "large_language_models",
+      "display_name": "Large Language Models (LLMs)",
+      "description": "Autoregressive or seq2seq Transformer models trained on large text corpora for general-purpose language tasks.",
+      "status": "active",
+      "parents": ["c_models_and_architectures", "c_fundamentals"],
+      "usage_count": 50,
+      "entity_type": "model",
+      "icon": "🤖",
+      "color": null
+    },
+    {
+      "id": "c_org_hugging_face",
+      "slug": "hugging_face",
+      "display_name": "Hugging Face",
+      "description": "AI company providing the Hub, Transformers library, Datasets, and related open-source tools and services.",
+      "status": "active",
+      "parents": ["c_ecosystem_and_industry"],
+      "usage_count": 31,
+      "entity_type": "organisation",
+      "icon": "🏢",
+      "color": null
+    }
+  ],
+  "aliases": [
+    { "alias_text": "LLM", "kind": "abbreviation", "alias_of": "c_0001" },
+    { "alias_text": "LLMs", "kind": "abbreviation", "alias_of": "c_0001" },
+    { "alias_text": "large language model", "kind": "synonym", "alias_of": "c_0001" },
+    { "alias_text": "large-language models", "kind": "variant", "alias_of": "c_0001" },
+    { "alias_text": "HuggingFace", "kind": "variant", "alias_of": "c_org_hugging_face" },
+    { "alias_text": "🤗 Hugging Face", "kind": "variant", "alias_of": "c_org_hugging_face" },
+    { "alias_text": "HF", "kind": "abbreviation", "alias_of": "c_org_hugging_face" },
+    { "alias_text": "huggingface", "kind": "variant", "alias_of": "c_org_hugging_face" }
+  ],
+  "relations": [
+    { "source": "c_org_hugging_face", "target": "c_0001", "type": "related" }
+  ],
+  "entity_type_map": {
+    "person": {"color":"#10B981","icon":"👤"},
+    "organisation": {"color":"#8B5CF6","icon":"🏢"},
+    "location": {"color":"#EF4444","icon":"📍"},
+    "event": {"color":"#F59E0B","icon":"📅"},
+    "model": {"color":"#EC4899","icon":"🤖"},
+    "method": {"color":"#FB923C","icon":"⚙️"},
+    "dataset": {"color":"#84CC16","icon":"📊"},
+    "benchmark": {"color":"#FBBF24","icon":"📈"},
+    "metric": {"color":"#A78BFA","icon":"📏"},
+    "research-topic": {"color":"#06B6D4","icon":"🔬"},
+    "paper": {"color":"#0EA5E9","icon":"📜"},
+    "tool": {"color":"#22C55E","icon":"🔧"},
+    "concept": {"color":"#D946EF","icon":"💭"}
+  },
+  "root_categories": [
+    "c_fundamentals",
+    "c_models_and_architectures",
+    "c_techniques_and_methods",
+    "c_data",
+    "c_applications",
+    "c_evaluation",
+    "c_ecosystem_and_industry",
+    "c_responsible_ai"
+  ],
+  "merge_proposals": [
+    {
+      "primary": "large_language_models",
+      "merge_into": ["LLM","LLMs","llm"],
+      "reason": "Common abbreviations and casing variants referring to the same concept."
+    }
+  ],
+  "new_categories_suggested": [
+    {
+      "name": "ai_companies",
+      "display_name": "AI Companies",
+      "description": "Companies building or hosting AI models, datasets, and open-source tooling."
+    }
+  ],
+  "governance": {
+    "hierarchy_policy": "POLY_HIERARCHY",
+    "slug_style": "lower_snake_case",
+    "alias_types": ["synonym","variant","misspelling","deprecated_redirect"],
+    "lints": ["no_alias_in_children","ascii_slug","no_orphans","no_cycles","entity_type_valid"]
+  },
+  "validation": {
+    "coverage_total_legacy_tags": 2,
+    "coverage_mapped_percent": 100.0,
+    "warnings": [],
+    "notes": "Both legacy tags are promoted to canonical concepts with appropriate entity types. Common synonyms/abbreviations captured as aliases."
+  },
+  "confidence_score": 0.9,
+  "reasoning": "Mapped 'large_language_models' to entity_type=model under Models & Architectures (also Fundamentals) and 'hugging_face' to entity_type=organisation under Ecosystem & Industry. Added common aliases (LLM/LLMs, HuggingFace/HF). Preserved core schema and avoided synonym children. Provided a generic related relation between the organisation and LLMs."
+}

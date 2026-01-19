@@ -1,8 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
-
-from app.models import get_db, TweetMedia, Tweet
 
 router = APIRouter()
 
@@ -10,7 +7,6 @@ router = APIRouter()
 def get_media(
     limit: int = Query(50, ge=1, le=200),
     media_type: Optional[str] = None,
-    db: Session = Depends(get_db)
 ):
     """Get recent media with tweet context"""
     query = db.query(TweetMedia).join(Tweet).options(
@@ -41,7 +37,7 @@ def get_media(
     return result
 
 @router.get("/stats")
-def get_media_stats(db: Session = Depends(get_db)):
+def get_media_stats():
     """Get media statistics"""
     total = db.query(TweetMedia).count()
     photos = db.query(TweetMedia).filter(TweetMedia.type == "photo").count()

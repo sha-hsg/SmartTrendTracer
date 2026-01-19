@@ -1,21 +1,33 @@
 """
-Unified Tag Service - Provides consistent tag handling across all content types
-This fixes the critical filtering and compatibility issues
+DEPRECATED: Unified Tag Service - SQLite-based tag handling
+
+⚠️  DEPRECATED AS OF JANUARY 24, 2025 ⚠️
+This service is deprecated after the complete MongoDB migration.
+
+REPLACEMENT: Use ConceptOnlyTagService instead
+- Location: app/services/concept_only_tag_service.py  
+- Reason: Full system migration to MongoDB eliminated SQLite dependencies
+- Status: All MongoDB APIs use ConceptOnlyTagService
+
+DO NOT USE in new code. This file is preserved for reference only.
+Legacy usage found in:
+- app/api/tweets.py (SQLite backup)
+- app/api/papers.py (SQLite backup)  
+- app/api/substack.py (SQLite backup)
+
+Migration completed: January 24, 2025
 """
 from typing import List, Optional, Set, Dict, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import func, or_, and_
 import logging
 
-from ..models import (
     Tag, Tweet, 
     ArticleTag, SubstackArticle,
     PaperTag, Paper,
     TagConcept, TagSynonym, TagMapping, TagOntologyService
 )
+from .slug_normalizer import to_snake_case, to_display_name, normalize
 
 logger = logging.getLogger(__name__)
-
 
 class UnifiedTagService:
     """
@@ -45,8 +57,8 @@ class UnifiedTagService:
         if concept:
             return concept
         
-        # 2. Check slugified version
-        slugified = tag_text.lower().replace(' ', '-').replace('&', 'and')
+        # 2. Check snake_case slugified version
+        slugified = to_snake_case(tag_text)
         concept = self.db.query(TagConcept).filter(
             TagConcept.tag == slugified
         ).first()
@@ -84,10 +96,12 @@ class UnifiedTagService:
         variations.add(tag_text.upper())
         variations.add(tag_text.title())
         
-        # Add slugified versions
-        slugified = tag_text.lower().replace(' ', '-')
+        # Add snake_case slugified versions
+        slugified = to_snake_case(tag_text)
         variations.add(slugified)
-        variations.add(slugified.replace('-', '_'))
+        # Also add the old kebab-case for backwards compatibility
+        kebab = tag_text.lower().replace(' ', '-')
+        variations.add(kebab)
         variations.add(tag_text.replace(' ', '-'))
         variations.add(tag_text.replace(' ', '_'))
         
@@ -254,18 +268,17 @@ class UnifiedTagService:
     def normalize_tag_for_storage(self, tag_text: str, preserve_case: bool = False) -> str:
         """
         Normalize a tag for storage while maintaining consistency.
+        Returns the display name for UI presentation.
         """
         if not tag_text:
             return tag_text
         
         tag_text = tag_text.strip()
         
-        # If preserving case (for manual tags), just clean up spaces
+        # If preserving case (for manual tags), still generate a display name
         if preserve_case:
-            # Replace multiple spaces with single dash
+            # Clean up spaces but keep the original capitalization
             tag_text = ' '.join(tag_text.split())
-            # Optionally replace spaces with dashes for consistency
-            # tag_text = tag_text.replace(' ', '-')
             return tag_text
         
         # Check if this tag exists in a concept
@@ -274,10 +287,9 @@ class UnifiedTagService:
             # Use the concept's display name for consistency
             return concept.display_name
         
-        # For new tags, use smart capitalization
-        from ..services.tag_normalizer import TagNormalizer
-        normalizer = TagNormalizer(self.db)
-        return normalizer.normalize_tag(tag_text)
+        # For new tags, generate a proper display name
+        display_name = to_display_name(tag_text)
+        return display_name
     
     def ensure_tag_consistency(self):
         """

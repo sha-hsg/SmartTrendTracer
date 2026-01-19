@@ -1,0 +1,758 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">A New Pair of GloVes</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2025-07-24">24 Jul 2025</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Riley</forename><surname>Carlson</surname></persName>
+							<email>rileydc@stanford.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Stanford NLP Group Stanford University 353 Jane Stanford Way , Stanford CA 94305-9035 , U.S.A.</note>
+								<orgName type="institution">Stanford NLP Group Stanford University</orgName>
+								<address>
+									<addrLine>353 Jane Stanford Way</addrLine>
+									<postCode>94305-9035</postCode>
+									<settlement>Stanford</settlement>
+									<region>CA</region>
+									<country key="US">U.S.A</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">John</forename><surname>Bauer</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Stanford NLP Group Stanford University 353 Jane Stanford Way , Stanford CA 94305-9035 , U.S.A.</note>
+								<orgName type="institution">Stanford NLP Group Stanford University</orgName>
+								<address>
+									<addrLine>353 Jane Stanford Way</addrLine>
+									<postCode>94305-9035</postCode>
+									<settlement>Stanford</settlement>
+									<region>CA</region>
+									<country key="US">U.S.A</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Christopher</forename><forename type="middle">D</forename><surname>Manning</surname></persName>
+							<email>manning@stanford.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Stanford NLP Group Stanford University 353 Jane Stanford Way , Stanford CA 94305-9035 , U.S.A.</note>
+								<orgName type="institution">Stanford NLP Group Stanford University</orgName>
+								<address>
+									<addrLine>353 Jane Stanford Way</addrLine>
+									<postCode>94305-9035</postCode>
+									<settlement>Stanford</settlement>
+									<region>CA</region>
+									<country key="US">U.S.A</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">A New Pair of GloVes</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2025-07-24">24 Jul 2025</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">B31524C89120BD03DA24604D710CBCB5</idno>
+					<idno type="arXiv">arXiv:2507.18103v1[cs.CL]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T16:56+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>This report documents, describes, and evaluates new 2024 English GloVe (Global Vectors for Word Representation) models. While the original GloVe models built in 2014 have been widely used and found useful, languages and the world continue to evolve and we thought that current usage could benefit from updated models. Moreover, the 2014 models were not carefully documented as to the exact data versions and preprocessing that were used, and we rectify this by documenting these new models. We trained two sets of word embeddings using Wikipedia, Gigaword, and a subset of Dolma. Evaluation through vocabulary comparison, direct testing, and NER tasks shows that the 2024 vectors incorporate new culturally and linguistically relevant words, perform comparably on structural tasks like analogy and similarity, and demonstrate improved performance on recent, temporally dependent NER datasets such as non-Western newswire data.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Neural semantic word vector space models represent each word with a real-valued vector called a word embedding. One widely used set of word embeddings are the GloVe word embeddings introduced by <ref type="bibr" target="#b12">Pennington et al. (2014)</ref>. This algorithm leverages a global cooccurrence matrix built with a focus on local context. The GloVe model trains on this global matrix with the resulting weights being the word embeddings in which similar words are grouped closer together in the vector space. The resulting word embeddings encode semantic relationships in a dense vector space, making them useful for various NLP tasks. Despite the rise of transformer-based models, pre-trained static embeddings like GloVe remain valuable for low-resource settings, computationally effi-cient models, and interpretability-focused applications.</p><p>Our motivations for updating the word embeddings with more recent data are that new words have emerged and existing words have shifted semantic meaning since the original training in 2014. For example, 'covid' does not have a representation in the 2014 embeddings. Embeddings with this updated lexicon have many benefits when used in downstream tasks such as reducing out-of-vocabulary issues. In order to reflect the current usage of English words, new embeddings trained on recent language are needed.</p><p>In this work, we incorporate a Minimum Frequency Threshold (MFT) into the vocabulary selection process for training updated word embeddings, building on insights from the work on GloVe-V <ref type="bibr" target="#b18">(Vallebueno et al., 2024)</ref>. The use of an MFT allows us to strike a balance between filtering out excessively rare and noisy words while retaining less frequent but contextually important terms. The GloVe-V framework extends this approach by introducing statistical uncertainty estimates, which account for variability in embedding positions due to data sparsity. This enables training word vectors that are not only robust and expressive but also better suited for downstream tasks where rare words often hold critical importance, ensuring adaptability to modern language usage <ref type="bibr" target="#b18">(Vallebueno et al., 2024)</ref>.</p><p>Through this paper, we detail the exact training procedures and demonstrate that the 2024 word embeddings have an updated lexicon reflecting today's language usage and cultural trends. They perform comparably to the 2014 embeddings on word analogy and similarity tasks, indicating similar structural and core semantic expressiveness. Furthermore, the 2024 embeddings show improved performance on temporally dependent Named Entity Recognition (NER) datasets.</p><p>In this report, we first describe the training data used to create two different sets of word embeddings, including the chosen corpora and preprocessing steps. Then, we outline the training process for easy reproducibility. Finally, we present evaluation metrics for the embeddings, including new vocabulary coverage, direct evaluation, and performance in downstream tasks. For the 2024 embeddings, we use 3 corpora to train 2 sets of embeddings: Wikipedia, Gigaword, and Dolma. For ample comparison to the 2014 Wikipedia and Gigaword embeddings, we adopt the same corpora with an updated Wikipedia dump. The Wikipedia corpus, a dataset of Wikipedia articles, is a useful source for word definitions in a more naturally occurring environment than, say, a dictionary. Along with Wikipedia, Gigaword <ref type="bibr" target="#b11">(Parker et al., 2011)</ref> was used. Specifically for the 2024 vectors, we used the 5th edition of Gigaword. This corpus consists of English newswire from 4 to 7 distinct international news outlets (depending on the year) between 1994-2010. Since 2014, the Wikipedia dumps have roughly doubled in the number of tokens. To rebalance this growth, we put two copies of Gigaword in the training corpus.</p><p>In addition to the aforementioned corpora, we also utilize Dolma v1.6 <ref type="bibr" target="#b16">(Soldaini et al., 2024)</ref>. This corpus, which was released in January of 2024, consists of 3 trillion tokens from books, programming scripts, reference materials, scholarly articles, and online content. We take a subset of over 1TB from Dolma. Table 2 shows the subsets of Dolma taken and the  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Methods</head><p>First, we will describe the three corpora used to train the different embeddings in more detail, in addition to any preprocessing steps taken.</p><p>Next, we will describe the training process used for all embeddings. Then, the different evaluation experiments will be presented.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Corpus #1: Wikipedia and Gigaword</head><p>The Wikipedia part of the training corpus for the 2024 vectors was downloaded from the Wikipedia dump at <ref type="url" target="https://dumps.wikimedia.org/enwiki/20240720/">https: //dumps.wikimedia.org/enwiki/20240720/</ref> enwiki-20240720-pages-meta-current. xml.bz2. The data was then extracted using WikiExtractor <ref type="bibr">(Attardi, 2015)</ref>. The Wikipedia data was cleaned by removing tags such as &lt;doc&gt; and &lt;unk&gt; tokens.</p><p>The data was preprocessed using Stanford's CoreNLP tokenizer (version 4.4.1)<ref type="foot" target="#foot_0">foot_0</ref> using lowercase letters. The Wikipedia and Gigaword corpora were then merged with Gigaword being included twice. Together, this corpus is about 60GB with Gigaword accounting for about 74% and Wikipedia accounting for the rest.</p><p>The vocabulary size for the Wiki/Giga vectors was selected following the methodology outlined by <ref type="bibr" target="#b18">Vallebueno et al. (2024)</ref>. Specifically, the size of the vocabulary was determined by setting a MFT for words to be included in the corpus. Through experiments with vectors trained using different MFTs, it was observed that an MFT of 20 yielded the highest average cosine similarity between the trained vectors and their Weighted Least Squares (WLS) vectors. A high cosine similarity with the WLS vectors indicates that the trained embeddings closely align with the statistically optimal solution derived from the cooccurrence matrix, reflecting robust and accurate word representations <ref type="bibr" target="#b18">(Vallebueno et al., 2024)</ref>. For this corpus, using an MFT of 20 resulted in a vocabulary size of 1,291,146 words.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Corpus #2: Dolma</head><p>Like the other corpora, we preprocessed using Stanford's CoreNLP tokenizer in the same manner. After preprocessing, we removed &lt;unk&gt; tokens. A maximum vocabulary size of 1.2 million was used. The vocabulary building process was done independently on the different subsets of Dolma and merged at the end to have 1.2 million vocabulary size. Further, the cooccurrence matrix was created by merging the cooccurrence matrices on the merged vocabulary.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3">Training</head><p>The training process was consistent across all embeddings and corpora. For each embedding, the vocabulary and cooccurrence matrix were first constructed. The vocabulary size was set to over 1.2 million for the Wikipedia and Gigaword corpus and 1.2 million for the Dolma corpus. A symmetric context window of size 10 was used to define cooccurrences. Once the cooccurrence matrix was built, it was shuffled with a fixed seed of 123 for the Wiki/Giga matrix and 2024 for Dolma matrix.</p><p>Embeddings of dimensions 50, 100, 200, and 300 were trained for the Wikipedia and Gigaword corpus, and 300-dimensional embeddings were trained for the Dolma corpus. The embeddings were optimized using GloVe's original optimizer, AdaGrad. The training process was executed using the demo.sh script provided in the GloVe repository with more documentation in the Training README.md file. The hyperparameters used during training are summarized in Table <ref type="table" target="#tab_3">3</ref> </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.5">Evaluation: Direct Evaluation</head><p>We performed direct evaluation tasks on the embeddings, comparing them with the 2014 embeddings. The evaluation focused on two primary tasks: word analogy and word similarity.</p><p>For the word analogy task, the goal is to predict a fourth word in the analogy format word 1 : word 2 :: word 3 : ? and compare it against a gold-standard labeled word to calculate accuracy. We use two benchmark datasets:</p><p>• Google Analogy dataset <ref type="bibr">(Mikolov et al., 2013a)</ref>, which comprises 8,869 semantic and 10,675 syntactic word pairs.</p><p>• MSR Analogy dataset <ref type="bibr">(Mikolov et al., 2013b)</ref>, containing 8,000 syntactic word pairs.</p><p>For the word similarity task, embeddings were evaluated by assigning similarity scores to word pairs and comparing these scores to human-annotated benchmarks. We use three benchmark datasets:</p><p>• WordSim353 <ref type="bibr" target="#b5">(Finkelstein et al., 2001)</ref>, which contains 353 word pairs classified as highly similar, less similar but related, or unrelated.</p><p>• SimLex999 <ref type="bibr" target="#b6">(Hill et al., 2015)</ref>, comprising 999 word pairs annotated with semantic similarity scores.</p><p>• MEN <ref type="bibr" target="#b3">(Bruni et al., 2014)</ref>, which includes 3,000 word pairs annotated with humanjudged relatedness scores.</p><p>To perform these evaluations, we utilized the embedding evaluation package developed by Jastrzebski et al. ( <ref type="formula">2017</ref>), which supports analysis on both word analogy and word similarity datasets.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.6">Evaluation: NER</head><p>To further assess the performance of the new embeddings, we evaluate on the downstream task Named Entity Recognition (NER). In this task, tokens in a sentence are tagged with predefined entity categories such as persons, locations, organizations, and other proper nouns, enabling structured information extraction from text. For this evaluation, we use Stanford's Stanza NER<ref type="foot" target="#foot_1">foot_1</ref> model <ref type="bibr" target="#b13">(Qi et al., 2020)</ref>, modified to replace the default word embeddings with the ones we trained. We train a model for each word embedding and dataset.</p><p>For NER evaluation, we trained and tested models using three datasets, separately for the 2014 and 2024 embeddings: The training subsets of these datasets were used to train the models with default parameters and no embedding finetuning or character language modeling, and the dev and test subsets were used for evaluation. We report F1 scores per entity and per token.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Results</head><p>We present results for the three evaluation metrics: updated lexicon, direct evaluation, and downstream evaluation.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Updated Lexicon</head><p>Here, we show qualitatively words that are present in the new 2024 embeddings and not in the 2014 embeddings. The new Wikipedia and Gigaword vectors provide a much larger vocabulary. Between the 2024 Wikipedia and double Gigaword and the 2014 Wikipedia and Gigaword embeddings, there were over 700K new words (not including numbers and words containing non-Latin alphabetical letters). Between the 2024 Dolma embeddings and the 2014 Common Crawl 840B embeddings, there are over 500K new words (not including numbers and words containing non-Latin alphabetical letters). In Tables <ref type="table">5</ref> and<ref type="table">6</ref>, we report 39 newly present words chosen by the authors that are of a cultural, political, and technological nature.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Word Embedding Evaluation</head><p>We report the results of the 2014 and 2024 embeddings on word analogy and similarity datasets in For the analogy tasks, the 2024 embeddings perform roughly similarly to the 2014 embeddings on the Google dataset, but have a slightly lower performance on the MSR dataset. Further, across both datasets, accuracy improves consistently as the dimension size increases for both 2014 and 2024 embeddings.</p><p>For the word similarity tasks, the 2024 embeddings perform competitively with the 2014 embeddings across most datasets and dimensions. Both 2024 300-dimensional embeddings show a drop in rank correlation compared to the 2014 embeddings, particularly on Sim-Lex999. This decline is addressed in the Discussion section.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">NER</head><p>We evaluated the 2014 and 2024 embeddings on NER tasks using four datasets: CoNLL-03, CoNLL-PP, Worldwide, and WNUT 17. For these datasets, we report test F1 scores on a per-entity and per-token basis. The results are summarized in Tables <ref type="table" target="#tab_8">7, 8,</ref> and<ref type="table">9</ref>.</p><p>The results across the four NER datasets demonstrate that the 2024 embeddings generally outperform their 2014 counterparts, with particularly notable improvements on temporally dependent datasets. For the CoNLL datasets in Across all three datasets, the 2024 embeddings demonstrate the most pronounced gains in lower dimensions, particularly at 50d, where the differences between 2024 and 2014 embeddings are the largest. While higher dimensions (200d and 300d) achieve the best absolute F1 scores, the relative gains between 2024 and 2014 embeddings are less pronounced at these dimensions. These trends suggest that the 2024 embeddings perform as well as or better than the 2014 embeddings on datasets that align temporally with their training data, while showing marked improvements on modern, linguistically diverse datasets that better reflect contemporary language usage and cultural trends.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Discussion</head><p>The 2024 word embeddings introduce a diverse range of new vocabulary that reflects cultural, technological, and linguistic shifts over the past decade, including words associated with globally significant events <ref type="bibr">('covid' and 'brexit'), modern slang ('brainrot' and 'periodt'), emerging technologies ('chatgpt' and 'blockchain')</ref>, and popular products ('airpods'). While many slang terms are absent from the Wikipedia &amp; Gigaword training data because modern slang takes time to transition from social media to Wikipedia, the diverse Dolma dataset compensates by capturing informal and conversational language. The inclusion of acronyms ('idk'), linguistic blends ('absofreakinglutely'), and derivations ('retweet') reveals evolving patterns in word formation driven by digital communication and social media. By capturing these shifts, the 2024 embeddings align with current vernacular and offer practical benefits for downstream tasks, such as reducing outof-vocabulary issues in modern datasets, while further exploration of these new words provides opportunities for linguistic and sociological research.</p><p>In the analogy tasks reported in Table <ref type="table" target="#tab_5">4</ref>, the 2014 embeddings performed slightly better, with minimal differences on the Google dataset (within 0.01-0.03 accuracy) but larger gaps on the MSR dataset, particularly for lower dimensions where differences reached 0.07 for 100d and 0.03 for 50d embeddings. There were about 1100 instances that the 2014 50d predicted correctly, but the 2024 50d predicted incorrectly. About half of these errors were <ref type="bibr">geography-based (e.g., cairo, egypt : bern, )</ref>. The other half is mainly instances in which 2024 embeddings predicted a synonym of the golden answer. For example in simple, simpler: cold, , the 2024 embeddings predicted 'cooler' instead of 'colder'. Although the 2024 50d embeddings made these mistakes, the 2014 embeddings made these common mistakes as well. There were about 900 instances that the 2024 50d predicted correctly, but the 2014 50d predicted incorrectly. These errors were roughly half geography-based and the other using synonyms (using 'knows' instead of 'thinks' in write, writes : think, ). In the errors of the geography-based ones, the 2024 embeddings do "know" the right answer, but the closest neighbor wasn't the right answer. For example, the 2024 embeddings do know that Bern is in Switzerland, although sometimes the closest neighbor is not Switzerland. This can be seen in 2024 embeddings not getting kabul, afghanistan : bern, right, but getting cairo, egypt : bern, correct. The same phenomenon was seen in the 2014 embeddings. The MSR dataset errors saw more instances of using a synonym in the syntactic word analogies.</p><p>With this, the 2024 and 2014 embeddings perform roughly the same on the analogy tasks. This equal performance is expected as these tasks primarily rely on syntactic structures and commonly used words, which have remained relatively stable over the past decade.</p><p>For the word similarity tasks, there were differences in the Spearman's Rank Correlation coefficients between the embeddings. To put these difference in perspective, we looked at the word pairs for which there was a difference of 0.3 between the embedding's prediction and the human evaluation (which was scaled to -1 -1, instead of 0-10). For the MEN dataset, there are 70 word pairs where the 2024 300d embedding's predictions fall within the threshold while the 2014 300d embeddings diverge. Conversely, there are 197 word pairs where the 2024 embeddings diverge while the 2014 embeddings remain within the threshold. For the SimLex999 dataset, these numbers are 14 and 43, respectively, and for the WS353 dataset, they are 10 and 24.</p><p>Comparing the two embedding models on MEN, the 2024 embeddings excel at capturing close synonyms and hypernym-hyponym relations (e.g., cemetery -graveyard, stairstaircase, ice -snow, sea -water). In these instances, the 2024 model aligns closely with the high similarity ratings in the dataset, while the 2014 embeddings tend to underestimate their similarity. This suggests that the 2024 embeddings may do a more precise job at clustering terms that share core, near-equivalent meanings or clear part-whole relationships.</p><p>However, there are also cases where 2014 outperforms 2024. These often involve looser thematic or distributional associations, such as color words (blue -red, purple -yellow) or common everyday items that the dataset treats as reasonably similar by virtue of category or context (e.g., daffodil -tulip, puddlesplash, chicken -lamb, potato -tomato). In these scenarios, the 2024 model either overestimates or underestimates similarity, whereas 2014 captures these broader relationships more accurately.</p><p>On the WS353 dataset, we observe a similar pattern to what emerged in previous comparisons. The 2024 embeddings tend to capture near-synonyms and clearly related category pairs more precisely. For instance, pairs such as gem -jewel or coast -shore have high groundtruth similarity that 2024 aligns with closely, whereas the 2014 embeddings underestimate these tight connections. The same holds for other near-synonym or hypernym-hyponym examples like magician -wizard or lobsterfood, suggesting that 2024 more reliably encodes strong, direct lexical relationships.</p><p>Conversely, 2014 excels with looser or more contextual associations, where the concepts are functionally or thematically related rather than strictly synonymous. For example, plane -car or energy -laboratory receive moderately high similarity ratings in WS353, reflecting that they share an overarching category or context (transportation, scientific research). The 2024 model underestimates these relationships, implying it is not capturing certain broad or looser conceptual links as well.</p><p>On SimLex-999, we again see the two models excelling in different areas. The 2024 embeddings struggle with some pairs that share a domain or have moderate conceptual overlap, such as disease -infection or river -sea. Although these pairs are not synonyms, SimLex-999 rates them fairly high in similarity, which 2024 underestimates more than 2014 does. Similarly, 2024 sometimes undervalues nearsynonymous verbs (e.g., deserve -earn, remain -retain, replace -restore), suggesting it can lose track of subtle lexical overlaps even though those pairs have a significant degree of semantic closeness.</p><p>Furthermore, in the top ten deviations for the 2024 Dolma 300-dimensional embeddings and the human annotations, all ten examples were the model having a high similarity between antonyms (e.g., agree -argue). For the 2024 Wiki/Giga 300-dimensional vectors, six out of the 10 were highly similar antonyms with the other 4 being synonyms not being given a high enough similarity (e.g., creator -maker).</p><p>Overall, across MEN, WS353, and SimLex-999, a consistent pattern emerges: the 2024 embeddings are especially good at capturing strong, direct relationships (near-synonyms, hypernym-hyponym links, and part-whole connections) while sometimes underestimating more contextual associations. In contrast, the 2014 embeddings tend to do better on looser thematic or distributional relationships (e.g., color words, shared domains, functional overlaps) but occasionally fail on the most obvious, high-similarity pairs like strict synonyms.</p><p>In contrast to the direct evaluation results where it was not clear which embedding performed better, the NER evaluations reveal the 2024 embeddings outperforming the 2014 embeddings on newer and out-of-domain datasets. On the classic 2003 CoNLL dataset, the results are nearly identical, suggesting that 2014 embeddings remain sufficient for corpora that mirror their original training domain and era. However, on CoNLL-PP and the newer Worldwide and WNUT-17 datasets, the 2024 embeddings show consistent improvements.</p><p>An inspection of the confusion matrices helps illuminate why 2024 embeddings perform better on more recent data. For example, Table <ref type="table" target="#tab_11">12</ref> highlights how the 2024-based model reduces misclassifications of newly prominent entities into the O (no entity) category or the wrong type (e.g., labeling 'COVID-19' as O). Instead, the updated embeddings capture contemporary terms and are thus more likely to assign them correct tags, often MISC, rather than leaving them unlabeled or confusing them with LOC, ORG, or PER. Similarly, in   shift that reflects more exposure to or better representation of such entities in the newer corpus. These patterns are evident in the example sentences in Table <ref type="table" target="#tab_10">11</ref>. In the first sentence, coming from Worldwide, the 2024 embeddings were able to tag 'Bolsonaro' as a person, whereas 2014 tagged it as a location.</p><p>The second example, coming from CoNLL-PP shows 2024 correctly labeling COVID-19, while the 2014 embeddings did not label it. This is a case in which a word that is part of recent usage should be correctly tagged. The  Overall, we see that the 2024 embeddings better represent current language usage, compared to the 2014 embeddings. In situations where there is temporal dependency (e.g., chatbots, NER taggers, etc.), the 2024 embeddings should be used.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Conclusion</head><p>We presented new GloVe word embeddings, introducing two sets of vectors trained on updated corpora from Wikipedia, Gigaword, and a subset of Dolma. These embeddings provide valuable new vocabulary, reflecting cultural and technological shifts over the last decade and offering linguists rich data to analyze the evolution of English, particularly in the context of social media's rising influence.</p><p>On word analogy, the new embeddings perform comparably to the 2014 embeddings, demonstrating equal structural and core semantic expressiveness. For word similarity tasks, the higher dimension 2024 embeddings occasionally overestimate the semantic similarity between antonyms. Nonetheless, the 2024 embeddings show clear advantages in temporally dependent NER datasets, such as non-Westernoriented newswire data.</p><p>These findings underline the importance of updating word embeddings to keep pace with linguistic and cultural change. The 2024 embeddings represent a meaningful advancement for modern language modeling, offering tools that are better aligned with contemporary usage. Their ability to capture recent cultural, technological, and linguistic shifts makes them particularly valuable for human-centered NLP applications, such as improving chatbot interactions and designing systems that adapt to diverse and evolving user needs.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 :</head><label>1</label><figDesc>Comparison of the data sources used to train word embeddings in 2014 and 2024, including corpus sizes (in billions of tokens).</figDesc><table><row><cell cols="2">2 Data: 2014 vs. 2024</cell></row><row><cell>2014 Data</cell><cell>2024 Data</cell></row><row><cell>Wikipedia &amp; Giga-</cell><cell>Wikipedia (2024) &amp;</cell></row><row><cell>word -6 billion to-</cell><cell>Gigaword (5th edi-</cell></row><row><cell>kens)</cell><cell>tion) -11.9 billion</cell></row><row><cell>Common Crawl -</cell><cell>Dolma subset -</cell></row><row><cell>42 and 840 billion</cell><cell>220 billion</cell></row><row><cell>Twitter -27 billion</cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 2</head><label>2</label><figDesc></figDesc><table><row><cell>: Dolma Training Subset</cell></row><row><cell>number of tokens used. Specifically, we have</cell></row><row><cell>web pages from Common Crawl and C4 (Raffel</cell></row><row><cell>et al., 2020), books from Project Gutenberg,</cell></row><row><cell>and social media from Reddit. C4 consists of</cell></row><row><cell>data up to 2019 while the others are up to</cell></row><row><cell>2023.</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 3 :</head><label>3</label><figDesc>. Training hyperparameter summary for 50d, 100d, 200d, and 300d word embeddings trained on Wiki/Giga and 300d trained on Dolma</figDesc><table><row><cell cols="2">Hyperparameter Value</cell></row><row><cell>Learning Rate</cell><cell>0.05  *</cell></row><row><cell>Alpha</cell><cell>0.75</cell></row><row><cell>XMax</cell><cell>100</cell></row><row><cell>Seed</cell><cell>2024  *</cell></row><row><cell>Epochs: (50d, 100d)</cell><cell>50</cell></row><row><cell>Epochs: (200d, 300d)</cell><cell>100</cell></row></table><note><p><p><p>* 0.075 learning rate and 123 seed used for 50d Wiki/Giga vectors</p>3.4 Evaluation: Updated Lexicon</p>To assess the quality of the embeddings, we examine the words present in the 2024 embeddings but absent from the 2014 embeddings to determine if new commonly used words are reflected in the updated embeddings. The 2014 and 2024 embedding vocabularies from the Wikipedia and Gigaword corpora were compared, as well as the 2024 Dolma embedding vocabularies with those from the 2014 840B vectors trained on Common Crawl. By representing the vocabularies as sets, we compute the difference by subtracting the 2014 set from the 2024 set. From this resulting set, we select 39 representative examples for each training corpus to illustrate our findings.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head>Table 4 :</head><label>4</label><figDesc>Accuracy of 2014 and 2024 embeddings on word analogy datasets Google and MSR and Spearman's Rank Correlation on word similarities datasets WordSim353, SimLex999, and MEN.</figDesc><table><row><cell></cell><cell></cell><cell cols="4">Direct Evaluation: Analogy &amp; Similarity</cell></row><row><cell></cell><cell></cell><cell></cell><cell cols="2">Analogy</cell><cell>Word Similarity</cell></row><row><cell></cell><cell>Embedding</cell><cell></cell><cell cols="3">Google MSR WordSim353 SimLex999 MEN</cell></row><row><cell cols="3">2014 50d Wiki/Giga</cell><cell>0.462</cell><cell>0.355 0.448</cell><cell>0.265</cell><cell>0.652</cell></row><row><cell cols="3">2024 50d Wiki/Giga</cell><cell>0.455</cell><cell>0.329 0.431</cell><cell>0.256</cell><cell>0.637</cell></row><row><cell cols="4">2014 100d Wiki/Giga 0.631</cell><cell>0.550 0.477</cell><cell>0.298</cell><cell>0.681</cell></row><row><cell cols="4">2024 100d Wiki/Giga 0.601</cell><cell>0.486 0.455</cell><cell>0.291</cell><cell>0.672</cell></row><row><cell cols="4">2014 200d Wiki/Giga 0.698</cell><cell>0.595 0.515</cell><cell>0.340</cell><cell>0.710</cell></row><row><cell cols="4">2024 200d Wiki/Giga 0.696</cell><cell>0.574 0.480</cell><cell>0.326</cell><cell>0.688</cell></row><row><cell cols="4">2014 300d Wiki/Giga 0.717</cell><cell>0.614 0.544</cell><cell>0.371</cell><cell>0.737</cell></row><row><cell cols="4">2024 300d Wiki/Giga 0.718</cell><cell>0.594 0.486</cell><cell>0.338</cell><cell>0.690</cell></row><row><cell cols="2">2024 300d Dolma</cell><cell></cell><cell>0.708</cell><cell>0.623 0.470</cell><cell>0.270</cell><cell>0.651</cell></row><row><cell cols="4">2024 Updated Lexicon (Wikipedia)</cell><cell></cell></row><row><cell>afrobeats</cell><cell cols="3">antiracism asmr</cell><cell></cell></row><row><cell>binance</cell><cell>bipoc</cell><cell cols="2">blockchain</cell><cell></cell></row><row><cell>brexit</cell><cell>chatbot</cell><cell cols="2">clickbait</cell><cell></cell></row><row><cell>covid</cell><cell>fyp</cell><cell cols="3">cryptocurrency</cell></row><row><cell>deepfake</cell><cell cols="2">docuseries doja</cell><cell></cell><cell></cell></row><row><cell>doordash</cell><cell cols="2">draftkings rizz</cell><cell></cell><cell></cell></row><row><cell>nonbinary</cell><cell>fintech</cell><cell cols="2">fortnite</cell><cell></cell></row><row><cell>skibidi  *</cell><cell>idk</cell><cell cols="2">jungkook</cell><cell></cell></row><row><cell>latinx</cell><cell>lgbtqia</cell><cell cols="3">microaggression</cell></row><row><cell>lstm</cell><cell>metoo</cell><cell cols="2">microplastic</cell><cell></cell></row><row><cell>pickleball</cell><cell>retweet</cell><cell cols="2">zelenskyy</cell><cell></cell></row><row><cell>teladoc</cell><cell>web3</cell><cell cols="2">tiktok</cell><cell></cell></row><row><cell cols="2">transwoman girlboss</cell><cell cols="2">viserys</cell><cell></cell></row><row><cell cols="5">Table 5: 39 word samples of new words included</cell></row><row><cell cols="5">in Wiki/ Giga embeddings compared to the 2014</cell></row><row><cell cols="2">Wiki/Giga vectors.</cell><cell></cell><cell></cell><cell></cell></row><row><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell></row></table><note><p>* Not in Dolma vectors</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_6"><head>Table 4 .</head><label>4</label><figDesc>Analogy tasks are assessed using the Google and MSR datasets, with accuracy as the metric. Word similarity tasks</figDesc><table><row><cell cols="3">2024 Updated Lexicon (Dolma)</cell></row><row><cell>dinkies</cell><cell cols="2">profeminist  † theranos  †</cell></row><row><cell>chatgpt  †</cell><cell>adagrad</cell><cell>databricks  †</cell></row><row><cell cols="2">huggingface tarboosh  †</cell><cell>gamestonk</cell></row><row><cell>badbunny</cell><cell>yeet  †</cell><cell>patreon  †</cell></row><row><cell>brainrot</cell><cell>xgboost  †</cell><cell>bytedance  †</cell></row><row><cell>fakenews</cell><cell>periodt</cell><cell>duolingo  †</cell></row><row><cell cols="2">mansplains pytorch  †</cell><cell>absofreakinglutely</cell></row><row><cell>squidgame</cell><cell>trumpism  †</cell><cell>clapback</cell></row><row><cell>highkey</cell><cell>bffr</cell><cell>situationship</cell></row><row><cell cols="2">cybertruck  † boujee  †</cell><cell>alphafold  †</cell></row><row><cell>glowup</cell><cell>openai  †</cell><cell>scikit</cell></row><row><cell cols="2">bingewatch tensorflow  †</cell><cell>kubernetes  †</cell></row><row><cell>aapi  †</cell><cell>airpods  †</cell><cell>deeplearning</cell></row><row><cell cols="3">Table 6: 39 word samples of new words included in</cell></row><row><cell cols="3">the Dolma embeddings compared to the 2014 840B</cell></row><row><cell cols="2">Common Crawl vectors.</cell><cell></cell></row><row><cell cols="2">† Also in Wiki/Giga vectors</cell><cell></cell></row><row><cell cols="3">are evaluated on WordSim353, SimLex999, and</cell></row><row><cell cols="3">MEN using Spearman's Rank Correlation co-</cell></row><row><cell>efficient (𝜌).</cell><cell></cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_7"><head>Table 8 :</head><label>8</label><figDesc>Average Test F1 scores per entity and per token for 2014 and 2024 embeddings on Worldwide dataset<ref type="bibr" target="#b15">(Shan et al., 2023)</ref>. We used Stanford's Stanza NER model with no embedding finetuning trained on Worldwide dataset.</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_8"><head>Table 7</head><label>7</label><figDesc></figDesc><table><row><cell>, the 2024 embeddings per-</cell></row><row><cell>form comparably on CoNLL-03 but show clear</cell></row><row><cell>advantages on the modernized CoNLL-PP ver-</cell></row><row><cell>sion, with the 2024 50d Wiki/Giga embed-</cell></row><row><cell>dings achieving the highest relative improve-</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_9"><head></head><label></label><figDesc>Table 13, we see that the 2024 model is less likely to confuse non-Western person names with locations, a His repeated questioning of the system has prompted the Supreme Court to open an investigation into Bolsonaro. (Worldwide)</figDesc><table><row><cell></cell><cell></cell><cell cols="3">NER WNUT-17 Confusion Matrix</cell><cell></cell><cell></cell><cell></cell></row><row><cell>t\p</cell><cell cols="7">O CORP CREATIVE-WRK GROUP LOC PER PROD</cell></row><row><cell>O</cell><cell>58</cell><cell>8</cell><cell>-61</cell><cell>-1</cell><cell>-18</cell><cell>8</cell><cell>6</cell></row><row><cell>CORP</cell><cell>0</cell><cell>5</cell><cell>0</cell><cell>2</cell><cell>-6</cell><cell>-1</cell><cell>0</cell></row><row><cell cols="2">CREATIVE-WRK 26</cell><cell>-3</cell><cell>-39</cell><cell>7</cell><cell>8</cell><cell>-2</cell><cell>3</cell></row><row><cell>GROUP</cell><cell>1</cell><cell>1</cell><cell>-2</cell><cell>4</cell><cell>1</cell><cell>-3</cell><cell>-2</cell></row><row><cell>LOC</cell><cell>-1</cell><cell>1</cell><cell>-7</cell><cell>-4</cell><cell>16</cell><cell>-4</cell><cell>-1</cell></row><row><cell>PER</cell><cell>2</cell><cell>5</cell><cell>-7</cell><cell>15</cell><cell>-5</cell><cell>-10</cell><cell>0</cell></row><row><cell>PROD</cell><cell>186</cell><cell>10</cell><cell>1</cell><cell>7</cell><cell>3</cell><cell>11</cell><cell>35</cell></row><row><cell cols="8">Table 10: 2024/2014 300d Wiki/Giga confusion matrix differences on the WNUT-17 test set</cell></row><row><cell></cell><cell></cell><cell></cell><cell>Example NER Tagging</cell><cell></cell><cell></cell><cell></cell><cell></cell></row><row><cell>Sentence</cell><cell></cell><cell></cell><cell></cell><cell></cell><cell>2024</cell><cell></cell><cell>2014</cell></row></table><note><p>PER LOC Nationwide, COVID-19 infections in United States are at their peak with an average of 193,863 new cases reported each day over the past week . . . (CoNLL-PP) MISC O Man Finna bring me a up to my job. 3 (WNUT-17) O PER</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_10"><head>Table 11 :</head><label>11</label><figDesc>Example sentences from NER datasets with the correct tagging of the bolded word from the 2024 model is shown compared against 2014 model's tagging.</figDesc><table><row><cell cols="5">NER CoNLL-PP Confusion Matrix</cell><cell></cell></row><row><cell>t \ p</cell><cell>O</cell><cell cols="4">LOC MISC ORG PER</cell></row><row><cell>O</cell><cell>-17</cell><cell>-3</cell><cell>5</cell><cell>18</cell><cell>-3</cell></row><row><cell>LOC</cell><cell>-3</cell><cell>-19</cell><cell>2</cell><cell>21</cell><cell>-1</cell></row><row><cell cols="2">MISC 12</cell><cell>-8</cell><cell>8</cell><cell>1</cell><cell>-12</cell></row><row><cell>ORG</cell><cell>13</cell><cell>-21</cell><cell>13</cell><cell>2</cell><cell>-7</cell></row><row><cell>PER</cell><cell>22</cell><cell>-3</cell><cell>-4</cell><cell>-12</cell><cell>-3</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_11"><head>Table 12</head><label>12</label><figDesc></figDesc><table><row><cell>: 2024/2014 300d Wiki/Giga confusion</cell></row><row><cell>matrix differences on the CoNLL-PP test set</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_12"><head>3</head><label></label><figDesc>Thank you Twemoji for the emojis!</figDesc><table><row><cell cols="5">NER Worldwide Confusion Matrix</cell><cell></cell></row><row><cell>t \ p</cell><cell>O</cell><cell cols="4">LOC MISC ORG PER</cell></row><row><cell>O</cell><cell>-19</cell><cell>24</cell><cell>68</cell><cell>-52</cell><cell>-21</cell></row><row><cell>LOC</cell><cell>14</cell><cell>-29</cell><cell>24</cell><cell>-2</cell><cell>-7</cell></row><row><cell>MISC</cell><cell>6</cell><cell>-48</cell><cell>138</cell><cell>-70</cell><cell>-26</cell></row><row><cell>ORG</cell><cell>32</cell><cell>-36</cell><cell>63</cell><cell>-30</cell><cell>-29</cell></row><row><cell>PER</cell><cell>23</cell><cell>1</cell><cell>-6</cell><cell>-2</cell><cell>-16</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_13"><head>Table 13 :</head><label>13</label><figDesc>2024/2014 300d Wiki/Giga confusion matrix differences on the Worldwide test set last example from WNUT-17 shows how difficult the dataset is for tagging. Despite this, the 2024 model was able to see that 'finna' is slang and did not tag it, although the 2014 model tagged it as a person. This is an example of the 2024 embeddings better capturing colloquial vernacular.</figDesc><table /></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>https://nlp.stanford.edu/software/ tokenizer.html</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_1"><p>https://stanfordnlp.github.io/stanza/ner. html</p></note>
+		</body>
+		<back>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Digitális tartalmak könyvtári felhasználása A Cselekvő Közösségek Wiki fejlesztése az Országos Széchényi Könyvtárban</title>
+		<author>
+			<persName><forename type="first">Andor</forename><surname>Nagy</surname></persName>
+		</author>
+		<idno type="DOI">10.31915/nws.2018.12</idno>
+		<idno>90.72 84.06 90.50 82.74 2024 300d Dolma 90.05 85.14 90.12</idno>
+	</analytic>
+	<monogr>
+		<title level="m">NETWORKSHOP 2018 konferenciakiadvány</title>
+		<imprint>
+			<publisher>HUNGARNET Egyesület</publisher>
+			<date type="published" when="2003">2003. 2003. 2014. 2024</date>
+			<biblScope unit="volume">89</biblScope>
+			<biblScope unit="page" from="84" to="90" />
+		</imprint>
+	</monogr>
+	<note>Per Token (PP</note>
+	<note type="raw_reference">NER Scores: CoNLL Embedding Per Entity (2003) Per Entity (PP) Per Token (2003) Per Token (PP) 2014 50d Wiki/Giga 89.52 81.58 89.30 80.77 2024 50d Wiki/Giga 89.74 83.64 89.43 82.23 2014 100d Wiki/Giga 90.62 84.40 90.41 82.73 2024 100d Wiki/Giga 90.34 83.53 90.16 82.04 2014 200d Wiki/Giga 90.88 84.21 90.91 82.89 2024 200d Wiki/Giga 90.69 84.36 90.46 82.75 2014 300d Wiki/Giga 90.60 84.25 90.43 82.70 2024 300d Wiki/Giga 90.72 84.06 90.50 82.74 2024 300d Dolma 90.05 85.14 90.12</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Figure 6: Boxplot of the average token length per word.</title>
+		<idno type="DOI">10.7717/peerj-cs.2465/fig-6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Table 7: Average Test F1 scores per entity and per token on CoNLL-03</title>
+		<imprint>
+			<publisher>PeerJ</publisher>
+			<date>null</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Table 7: Average Test F1 scores per entity and per token on CoNLL-03 (</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">CoNLL-PP (Liu and Ritter, 2023) for 2014 and 2024 embeddings. We used Stanford&apos;s Stanza NER model with no embedding finetuning trained</title>
+		<author>
+			<persName><forename type="first">Tjong</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sang</forename></persName>
+		</author>
+		<author>
+			<persName><forename type="first">De</forename><surname>Meulder</surname></persName>
+		</author>
+		<idno>84.89 84.11 2024 300d Dolma 86.23 85.27 References Giusepppe Attardi. 2015</idno>
+		<ptr target="https://github.com/attardi/wikiextractor" />
+	</analytic>
+	<monogr>
+		<title level="m">CoNLL-03. NER Scores: Worldwide Embedding Per Entity Per Token 2014 50d Wiki/Giga 82</title>
+		<imprint>
+			<date type="published" when="0181-04">2003. 1 81.04 2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tjong Kim Sang and De Meulder, 2003) and CoNLL-PP (Liu and Ritter, 2023) for 2014 and 2024 embeddings. We used Stanford&apos;s Stanza NER model with no embedding finetuning trained on CoNLL-03. NER Scores: Worldwide Embedding Per Entity Per Token 2014 50d Wiki/Giga 82.1 81.04 2024 50d Wiki/Giga 84.64 83.88 2014 100d Wiki/Giga 85.29 84.58 2024 100d Wiki/Giga 85.55 84.25 2014 200d Wiki/Giga 84.41 83.53 2024 200d Wiki/Giga 85.68 84.92 2014 300d Wiki/Giga 84.53 83.89 2024 300d Wiki/Giga 84.89 84.11 2024 300d Dolma 86.23 85.27 References Giusepppe Attardi. 2015. WikiExtractor. https: //github.com/attardi/wikiextractor.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Multimodal Distributional Semantics</title>
+		<author>
+			<persName><forename type="first">Elia</forename><surname>Bruni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><forename type="middle">K</forename><surname>Tran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marco</forename><surname>Baroni</surname></persName>
+		</author>
+		<idno type="DOI">10.1613/jair.4135</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Artificial Intelligence Research</title>
+		<title level="j" type="abbrev">jair</title>
+		<idno type="ISSNe">1076-9757</idno>
+		<imprint>
+			<biblScope unit="volume">49</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="47" />
+			<date type="published" when="2014-01-23">2014</date>
+			<publisher>AI Access Foundation</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Elia Bruni, Nam Khanh Tran, and Marco Baroni. 2014. Multimodal distributional semantics. J. Artif. Int. Res., 49(1):1-47.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">Results of the WNUT2017 Shared Task on Novel and Emerging Entity Recognition</title>
+		<author>
+			<persName><forename type="first">Leon</forename><surname>Derczynski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Nichols</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marieke</forename><surname>Van Erp</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nut</forename><surname>Limsopatham</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/w17-4418</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 3rd Workshop on Noisy User-generated Text</title>
+		<meeting>the 3rd Workshop on Noisy User-generated Text<address><addrLine>Copenhagen, Denmark</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="140" to="147" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Leon Derczynski, Eric Nichols, Marieke van Erp, and Nut Limsopatham. 2017. Results of the WNUT2017 shared task on novel and emerging entity recognition. In Proceedings of the 3rd Workshop on Noisy User-generated Text, pages 140-147, Copenhagen, Denmark. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Placing search in context</title>
+		<author>
+			<persName><forename type="first">Lev</forename><surname>Finkelstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evgeniy</forename><surname>Gabrilovich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yossi</forename><surname>Matias</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ehud</forename><surname>Rivlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zach</forename><surname>Solan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gadi</forename><surname>Wolfman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eytan</forename><surname>Ruppin</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/503104.503110</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Transactions on Information Systems</title>
+		<title level="j" type="abbrev">ACM Trans. Inf. Syst.</title>
+		<idno type="ISSN">1046-8188</idno>
+		<idno type="ISSNe">1558-2868</idno>
+		<imprint>
+			<biblScope unit="volume">20</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="116" to="131" />
+			<date type="published" when="2001">2001</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lev Finkelstein, Evgeniy Gabrilovich, Yossi Matias, Ehud Rivlin, Zach Solan, Gadi Wolfman, and Eytan Ruppin. 2001. Placing search in context: The concept revisited. ACM Transactions on Information Systems -TOIS, 20:406-414.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">SimLex-999: Evaluating Semantic Models With (Genuine) Similarity Estimation</title>
+		<author>
+			<persName><forename type="first">Felix</forename><surname>Hill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roi</forename><surname>Reichart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anna</forename><surname>Korhonen</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/coli_a_00237</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Computational Linguistics</title>
+		<title level="j" type="abbrev">Computational Linguistics</title>
+		<idno type="ISSN">0891-2017</idno>
+		<idno type="ISSNe">1530-9312</idno>
+		<imprint>
+			<biblScope unit="volume">41</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="665" to="695" />
+			<date type="published" when="2015-12">2015</date>
+			<publisher>MIT Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Felix Hill, Roi Reichart, and Anna Korhonen. 2015. SimLex-999: Evaluating semantic models with (genuine) similarity estimation. Computational Linguistics, 41(4):665-695.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<monogr>
+		<author>
+			<persName><forename type="first">Damian</forename><surname>Stanis Law Jastrzebski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wojciech</forename><forename type="middle">Marian</forename><surname>Leśniak</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Czarnecki</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/ARXIV.1702.02170</idno>
+		<idno type="arXiv">arXiv:1702.02170</idno>
+		<title level="m">How to evaluate word embeddings? On importance of data efficiency and simple supervised tasks</title>
+		<imprint>
+			<date type="published" when="2017">2017</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">ArXiv preprint</note>
+	<note type="raw_reference">Stanis law Jastrzebski, Damian Leśniak, and Wo- jciech Marian Czarnecki. 2017. How to evalu- ate word embeddings? On importance of data efficiency and simple supervised tasks. ArXiv preprint arXiv:1702.02170.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Do CoNLL-2003 Named Entity Taggers Still Work Well in 2023?</title>
+		<author>
+			<persName><forename type="first">Shuheng</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alan</forename><surname>Ritter</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.459</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="8254" to="8271" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shuheng Liu and Alan Ritter. 2023. Do CoNLL- 2003 named entity taggers still work well in 2023? In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Vol- ume 1: Long Papers), pages 8254-8271, Toronto, Canada. Association for Computational Linguis- tics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Efficient estimation of word representations in vector space</title>
+		<author>
+			<persName><forename type="first">Tomas</forename><surname>Mikolov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Corrado</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Dean</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1301.3781</idno>
+		<imprint>
+			<date type="published" when="2013">2013</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">ArXiv preprint</note>
+	<note type="raw_reference">Tomas Mikolov, Kai Chen, Greg Corrado, and Jef- frey Dean. 2013a. Efficient estimation of word representations in vector space. ArXiv preprint arXiv:1301.3781.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Linguistic regularities in continuous space word representations</title>
+		<author>
+			<persName><forename type="first">Tomas</forename><surname>Mikolov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wen-Tau</forename><surname>Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Geoffrey</forename><surname>Zweig</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2013 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2013 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>Atlanta, Georgia</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2013">2013</date>
+			<biblScope unit="page" from="746" to="751" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tomas Mikolov, Wen-tau Yih, and Geoffrey Zweig. 2013b. Linguistic regularities in continuous space word representations. In Proceedings of the 2013 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, pages 746-751, Atlanta, Georgia. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">English Gigaword Fifth Edition</title>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Parker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Graff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Junbo</forename><surname>Kong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ke</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kazuaki</forename><surname>Maeda</surname></persName>
+		</author>
+		<idno type="DOI">10.35111/wk4f-qt80</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Linguistic Data Consortium</title>
+		<meeting><address><addrLine>Philadelphia, PA</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2011">2011</date>
+		</imprint>
+	</monogr>
+	<note>LDC2011T07</note>
+	<note type="raw_reference">Robert Parker, David Graff, Junbo Kong, Ke Chen, and Kazuaki Maeda. 2011. English Gigaword Fifth Edition. Linguistic Data Consortium, Philadelphia, PA. LDC2011T07.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Glove: Global Vectors for Word Representation</title>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Pennington</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Socher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Manning</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/v1/d14-1162</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP)<address><addrLine>Doha, Qatar</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2014">2014</date>
+			<biblScope unit="page" from="1532" to="1543" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jeffrey Pennington, Richard Socher, and Christo- pher Manning. 2014. GloVe: Global vectors for word representation. In Proceedings of the 2014 Conference on Empirical Methods in Natural Lan- guage Processing (EMNLP), pages 1532-1543, Doha, Qatar. Association for Computational Lin- guistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Stanza: A Python Natural Language Processing Toolkit for Many Human Languages</title>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Qi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuhao</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuhui</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Bolton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">D</forename><surname>Manning</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.acl-demos.14</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations</title>
+		<meeting>the 58th Annual Meeting of the Association for Computational Linguistics: System Demonstrations</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="101" to="108" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Peng Qi, Yuhao Zhang, Yuhui Zhang, Jason Bolton, and Christopher D. Manning. 2020. Stanza: A python natural language processing toolkit for many human languages. In Proceedings of the 58th Annual Meeting of the Association for Com- putational Linguistics: System Demonstrations, pages 101-108, Online. Association for Compu- tational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Exploring the limits of transfer learning with a unified text-to-text transformer</title>
+		<author>
+			<persName><forename type="first">Colin</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noam</forename><surname>Shazeer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Katherine</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sharan</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Matena</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanqi</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><forename type="middle">J</forename><surname>Liu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Machine Learning Research</title>
+		<imprint>
+			<biblScope unit="volume">21</biblScope>
+			<biblScope unit="issue">140</biblScope>
+			<biblScope unit="page" from="1" to="67" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Colin Raffel, Noam Shazeer, Adam Roberts, Kather- ine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. 2020. Explor- ing the limits of transfer learning with a unified text-to-text transformer. Journal of Machine Learning Research, 21(140):1-67.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Do “English” Named Entity Recognizers Work Well on Global Englishes?</title>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Shan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Bauer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Riley</forename><surname>Carlson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Manning</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.findings-emnlp.788</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2023</title>
+		<meeting><address><addrLine>Singapore</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="11778" to="11791" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Alexander Shan, John Bauer, Riley Carlson, and Christopher Manning. 2023. Do &quot;English&quot; named entity recognizers work well on global Englishes? In Findings of the Association for Computational Linguistics: EMNLP 2023, pages 11778-11791, Singapore. Association for Compu- tational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Dolma: an Open Corpus of Three Trillion Tokens for Language Model Pretraining Research</title>
+		<author>
+			<persName><forename type="first">Luca</forename><surname>Soldaini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rodney</forename><surname>Kinney</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Akshita</forename><surname>Bhagia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dustin</forename><surname>Schwenk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Atkinson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Russell</forename><surname>Authur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Bogin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Khyathi</forename><surname>Chandu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jennifer</forename><surname>Dumas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanai</forename><surname>Elazar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Valentin</forename><surname>Hofmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ananya</forename><surname>Jha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sachin</forename><surname>Kumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Li</forename><surname>Lucy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinxi</forename><surname>Lyu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nathan</forename><surname>Lambert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ian</forename><surname>Magnusson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Morrison</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Niklas</forename><surname>Muennighoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aakanksha</forename><surname>Naik</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Crystal</forename><surname>Nam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><forename type="middle">E</forename><surname>Peters</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhilasha</forename><surname>Ravichander</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyle</forename><surname>Richardson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zejiang</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emma</forename><surname>Strubell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nishant</forename><surname>Subramani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oyvind</forename><surname>Tafjord</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evan</forename><surname>Walsh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noah</forename><forename type="middle">A</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannaneh</forename><surname>Hajishirzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iz</forename><surname>Beltagy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dirk</forename><surname>Groeneveld</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jesse</forename><surname>Dodge</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyle</forename><surname>Lo</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.840</idno>
+		<idno type="arXiv">arXiv:2402.00159</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="15725" to="15788" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Luca Soldaini, Rodney Kinney, Akshita Bha- gia, Dustin Schwenk, David Atkinson, Rus- sell Authur, Ben Bogin, Khyathi Chandu, Jen- nifer Dumas, Yanai Elazar, Valentin Hofmann, Ananya Harsh Jha, Sachin Kumar, Li Lucy, Xinxi Lyu, Nathan Lambert, Ian Magnusson, Jacob Morrison, Niklas Muennighoff, Aakanksha Naik, Crystal Nam, Matthew E. Peters, Abhilasha Ravichander, Kyle Richardson, Zejiang Shen, Emma Strubell, Nishant Subramani, Oyvind Tafjord, Pete Walsh, Luke Zettlemoyer, Noah A. Smith, Hannaneh Hajishirzi, Iz Beltagy, Dirk Groeneveld, Jesse Dodge, and Kyle Lo. 2024. Dolma: An Open Corpus of Three Trillion To- kens for Language Model Pretraining Research. arXiv preprint arXiv:2402.00159.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Introduction to the CoNLL-2003 shared task: Language-independent named entity recognition</title>
+		<author>
+			<persName><forename type="first">Erik</forename><forename type="middle">F</forename><surname>Tjong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kim</forename><surname>Sang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fien</forename><surname>De</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Meulder</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Seventh Conference on Natural Language Learning at HLT-NAACL 2003</title>
+		<meeting>the Seventh Conference on Natural Language Learning at HLT-NAACL 2003</meeting>
+		<imprint>
+			<date type="published" when="2003">2003</date>
+			<biblScope unit="page" from="142" to="147" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Erik F. Tjong Kim Sang and Fien De Meulder. 2003. Introduction to the CoNLL-2003 shared task: Language-independent named entity recog- nition. In Proceedings of the Seventh Conference on Natural Language Learning at HLT-NAACL 2003, pages 142-147.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Statistical Uncertainty in Word Embeddings: GloVe-V</title>
+		<author>
+			<persName><forename type="first">Andrea</forename><surname>Vallebueno</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cassandra</forename><surname>Handan-Nader</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">D</forename><surname>Manning</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><forename type="middle">E</forename><surname>Ho</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.emnlp-main.510</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2024 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Miami, Florida, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="9032" to="9047" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Andrea Vallebueno, Cassandra Handan-Nader, Christopher D Manning, and Daniel E. Ho. 2024. Statistical uncertainty in word embeddings: GloVe-V. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Pro- cessing, pages 9032-9047, Miami, Florida, USA. Association for Computational Linguistics.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

@@ -6,15 +6,10 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from collections import defaultdict, Counter
-from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
 import re
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
-
-from app.models.substack import SubstackArticle, ArticleTag, ArticleSnippet, SubstackAuthor
-from app.models import get_db
 
 class SubstackTrendAnalyzer:
     """Analyzes trends and topics from Substack articles"""
@@ -499,7 +494,6 @@ class SubstackTrendAnalyzer:
 
 def analyze_substack_trends(days: int = 7) -> Dict[str, Any]:
     """Main entry point for Substack trend analysis"""
-    db = next(get_db())
     try:
         analyzer = SubstackTrendAnalyzer(db)
         return analyzer.analyze_trends(days)

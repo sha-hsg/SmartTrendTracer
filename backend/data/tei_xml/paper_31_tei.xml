@@ -1,0 +1,2218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Disentangling Memory and Reasoning Ability in Large Language Models</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Mingyu</forename><surname>Jin</surname></persName>
+							<email>mingyu.jin@rutgers.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Rutgers University</note>
+								<orgName type="institution">Rutgers University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Weidi</forename><surname>Luo</surname></persName>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> The Ohio State University</note>
+								<orgName type="institution">The Ohio State University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Sitao</forename><surname>Cheng</surname></persName>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> University of California , Santa Barbara</note>
+								<orgName type="institution">University of California</orgName>
+								<address>
+									<settlement>Santa Barbara</settlement>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Xinyi</forename><surname>Wang</surname></persName>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> University of California , Santa Barbara</note>
+								<orgName type="institution">University of California</orgName>
+								<address>
+									<settlement>Santa Barbara</settlement>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Wenyue</forename><surname>Hua</surname></persName>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> University of California , Santa Barbara</note>
+								<orgName type="institution">University of California</orgName>
+								<address>
+									<settlement>Santa Barbara</settlement>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Ruixiang</forename><surname>Tang</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Rutgers University</note>
+								<orgName type="institution">Rutgers University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">William</forename><surname>Wang</surname></persName>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> University of California , Santa Barbara</note>
+								<orgName type="institution">University of California</orgName>
+								<address>
+									<settlement>Santa Barbara</settlement>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Yongfeng</forename><surname>Zhang</surname></persName>
+							<email>yongfeng.zhang@rutgers.edu.</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Rutgers University</note>
+								<orgName type="institution">Rutgers University</orgName>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Disentangling Memory and Reasoning Ability in Large Language Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">9A56D4C5F0D398161D75547B1B6C7E13</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-21T17:47+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>Memory-and-Reasoning</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Large Language Models (LLMs) have demonstrated strong performance in handling complex tasks that require both extensive knowledge and reasoning abilities. However, the existing LLM inference pipeline operates as an opaque process without explicit separation between knowledge retrieval and reasoning steps, making the model's decision-making process unclear and disorganized. Recent research has shown that this ambiguity will lead to issues such as knowledge forgetting, which significantly impact the reliability of LLMs. In this paper, we propose a novel language model inference paradigm that decomposes the complex inference process into two distinct and clear actions: (1) memory recall: which retrieves relevant knowledge in LLM, and (2) reasoning: which performs reasoning steps based on the recalled knowledge. To facilitate this decomposition, we introduce two special tokens ⟨memory⟩ and ⟨reason⟩, guiding the model to distinguish between steps that require knowledge retrieval and those that involve reasoning. Our experiment results show that this decomposition not only improves LLMs' performance among utility benchmarks but also enhances interpretability during the inference process, enabling users to identify sources of error and refine model responses effectively.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Recent advancements in Large Language Models (LLMs) have showcased their impressive inference capabilities in handling complex natural language tasks that require both extensive knowledge and sophisticated reasoning abilities <ref type="bibr">(Ope-nAI, 2024;</ref><ref type="bibr" target="#b30">Touvron et al., 2023;</ref><ref type="bibr">Wei et al., 2022a)</ref>. LLMs have demonstrated the ability to memorize vast amounts of knowledge, and techniques like Chain-of-Thought (CoT) <ref type="bibr">(Wei et al., 2022b)</ref>, Tree of thoughts (ToT) <ref type="bibr" target="#b46">(Yao et al., 2024)</ref> have been developed to further enhance their inference abilities by decomposing complex problems into several simpler, single-step processes. These methods enable LLMs to tackle multi-step inference tasks more effectively by organizing the thought process into discrete, focused actions <ref type="bibr" target="#b11">(Feng et al., 2024;</ref><ref type="bibr" target="#b20">Jin et al., 2024;</ref><ref type="bibr">Wei et al., 2022b;</ref><ref type="bibr" target="#b28">Sun et al., 2025)</ref>.</p><p>Despite these advancements, existing inference frameworks often operate as an opaque process without explicitly separating knowledge retrieval and reasoning steps. This makes it unclear what specific knowledge the model utilizes and how it performs reasoning, leaving the decision-making process ambiguous. For complex, knowledgeintensive tasks, LLMs often struggle to effectively leverage their memory for inference <ref type="bibr" target="#b42">(Yang et al., 2023;</ref><ref type="bibr" target="#b20">Jin et al., 2024;</ref><ref type="bibr" target="#b8">Cheng et al., 2024;</ref><ref type="bibr" target="#b25">Liu et al., 2024)</ref>. Such tasks typically require the ability to recall relevant knowledge for each reasoning step and then perform inference over that recalled memory <ref type="bibr">(Wang et al., 2024c)</ref>. The lack of structure in the output and the inefficient memory utilization can result in issues such as knowledge forgetting, where relevant information is lost across reasoning steps <ref type="bibr" target="#b5">(Chen and Shu, 2023)</ref>, which disrupts the logical flow, as well as hallucinations, where LLMs generate plausible yet incorrect information <ref type="bibr" target="#b40">(Xu et al., 2024;</ref><ref type="bibr">Li et al., 2024a)</ref>. These issues compromise the LLM's accuracy and reliability, posing serious risks in high-stakes applications like healthcare and finance <ref type="bibr" target="#b26">(Pham and Vo, 2024)</ref>.</p><p>Existing efforts to enhance inference in LLMs and address their challenges can be broadly classified into two main approaches: Memory-based Approaches: These methods focus on improving the recall and utilization of world knowledge that may not be stored in the model, such as leveraging Retrieval-Augmented Generation (RAG) <ref type="bibr" target="#b3">(Cai et al., 2019;</ref><ref type="bibr" target="#b7">Chen et al., 2024b)</ref>. The emphasis is on enabling models to access and use their outside knowledge more effectively. Reasoning-based Approaches: These techniques aim to improve the reasoning capabilities of models by Chain-of-Thought (CoT) reasoning <ref type="bibr" target="#b42">(Yang et al., 2023;</ref><ref type="bibr" target="#b12">Gao et al., 2024;</ref><ref type="bibr" target="#b47">Yu et al., 2024)</ref> or introducing structured guidance in training such as planning tokens <ref type="bibr">(Wang et al., 2024d,b)</ref> to organize reasoning into discrete, interpretable steps. These methods enhance the ability of LLMs to handle complex reasoning tasks by embedding structural reasoning mechanisms into their parameters. Despite advancements in both categories, LLMs still struggle with tasks that require an intricate interplay of memory recall and logical reasoning <ref type="bibr">(Wang et al., 2024c)</ref>.</p><p>In this work, we propose a novel LLM inference paradigm that divides the complex inference process into two distinct components: memory and reasoning. Specifically, we generate itemized action responses for various question-answering datasets, categorizing each action as either memory or reasoning. Each action is then preceded by a special token, either ⟨memory⟩ or ⟨reason⟩, which acts as a control signal during training. The second step involves training an LLM using these modified outputs. By incorporating these learnable control tokens, the model is explicitly guided to distinguish between recalling relevant knowledge and performing reasoning steps. This structured guidance encourages the model to first use memory to retrieve the relevant information and then apply reasoning based on that memory to solve the task. Our approach not only introduces a new form of structured response generation but also establishes a novel framework for guiding LLMs to "think" systematically. This structured decomposition improves both the model's performance and the interpretability of its inference process.</p><p>Our experimental results demonstrate that the proposed decomposition improves performance and enhances the interpretability of the model's inference process. Specifically, our method achieves accuracy of 78.6% and 78.0% on the Strate-gyQA dataset <ref type="bibr" target="#b13">(Geva et al., 2021)</ref> using Qwen2.5-7B <ref type="bibr">(Yang et al., 2024a)</ref> and <ref type="bibr">LLaMA-3.1-8B (Touvron et al., 2023)</ref>, respectively. These results represent improvements of 1.2% and 1.3% over the planning-token fine-tuned baseline while remaining only 2.2% below GPT-4o's performance. Remarkably, on the TruthfulQA dataset <ref type="bibr" target="#b24">(Lin et al., 2022)</ref>, LLaMA-3.1-8B enhanced by our algo-rithm outperforms GPT-4o with Chain of Thought prompting (85.4%), achieving 86.6% accuracy. On average across three benchmark datasets, our method narrows the performance gap with the topperforming closed-source model, GPT-4o (using CoT prompting), to just 1.9%. Furthermore, by analyzing the errors made by LLaMA-3.1-8B, we reveal that most issues stem from reasoning rather than deficiencies in the knowledge itself. This distinction sheds light on the primary sources of errors in the model's outputs and enables targeted improvements.</p><p>Our main contributions are as follows:</p><p>• New Inference Paradigm for LLMs: We introduce a framework that decomposes inference in LLMs into memory and reason steps, guiding the model to separate knowledge retrieval from logical reasoning, thus enhancing performance and interpretability.</p><p>• Advancing Benchmark Performance: Our model achieves competitive results, surpassing GPT-4o on TruthfulQA and closely matching GPT4-o on StrategyQA and CommonsenseQA, demonstrating the benefits of our approach.</p><p>• Empowering Transparency and Control: Our framework enables transparent reasoning with labeled steps for memory and reasoning, allowing precise error analysis and model refinement.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Method</head><p>The workflow of our method can be divided into two stages: Data generation by decoupling memory and reasoning steps and training LLM with memory and reasoning tokens on generated data.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1">Data Generation with Decoupled Memory and Reasoning</head><p>We introduce an LLM-based framework for response generation to generate memory (knowledge in LLM) and reasoning steps, consisting of an inference LLM and a knowledge LLM, as illustrated in Figure <ref type="figure" target="#fig_0">1</ref>. First, we use an inference LLM to generate Chain of Thought (CoT) <ref type="bibr">(Wei et al., 2022b)</ref> inference steps, prompting it to mark steps that require factual knowledge as ⟨memory⟩ and those requiring reasoning as ⟨reason⟩. To improve the quality of the memory steps, we further instruct the inference LLM to rephrase knowledge marked as ⟨memory⟩ into questions, emphasizing its factual nature. For the example question in Figure <ref type="figure" target="#fig_0">1</ref>, The inference LLM first retrieves relevant knowledge ⟨memory⟩ about MMA and Roman Colosseum games, analyzes their relationship ⟨reason⟩ and synthesizes this information to form a coherent judgment. By methodically aligning each step with its purpose, the LLM ensures that the conclusion-MMA is not "totally original" from the Colosseum games-reflects well-supported reasoning. Next, a knowledge LLM answers the questions about factual knowledge generated by inference LLM, such as What are the origins and characteristics of mixed martial arts? and What were the Roman Colosseum games?. The answers to these questions are then substituted into the CoT inference steps. This approach effectively decouples reasoning from knowledge, ensuring accuracy while maintaining high data quality. It enables the fine-tuning of LLMs by disentangling knowledge and reasoning during inference. We leverage this LLM-based framework between memory and reasoning steps to generate interpretable data, which can be used for the training stage.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.2">LLM Training with Memory and Reasoning Tokens</head><p>At this stage, we train an LLM by incorporating intervened reasoning and memory processes as Figure <ref type="figure" target="#fig_0">1</ref>, guided by two special tokens: ⟨reason⟩, which represents reasoning with knowledge, and ⟨memory⟩, which signifies retrieved factual knowledge. These special tokens are designed to prompt the model to activate the necessary knowledge for reasoning, strengthening its inference capabilities and ultimately enhancing both interpretability and performance in complex inference tasks. During training stage, each training instance T comprises the following components: (1) the question tokens Q = {q 1 , q 2 , ..., q n Q } where n Q is the question token length, (2) the step-by-step thinking process consists of intertwined memory and reasoning components, denoted as M and R, where each M is initiated by a special token ⟨memory⟩ followed by a sequence of tokens K that represent retrieved factual knowledge: {⟨memory⟩, k 1 , k 2 , ..., k n K }, and R is initiated by a special token ⟨Reason⟩ followed by a sequence of tokens S that represent the reasoning process: {⟨reason⟩, s 1 , s 2 , ..., s n S }, and (3) the target answer generated after the completion of the memory retrieval and reasoning processes. The model is trained in a standard autoregressive manner using LoRA fine-tuning and the ⟨reason⟩ and ⟨memory⟩ are trainable out of vocabulary tokens. By structuring the input in this paradigm, the model learns to process and distinguish between retrieved knowledge and the reasoning steps required to generate the final answer. The inclusion of the ⟨memory⟩ and ⟨reason⟩ tokens facilitates the disentanglement of memory retrieval and reasoning processes, thereby enhancing the model's ability to produce coherent and accurate responses.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Experiment</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Experiment Setup</head><p>Models. In our experiments, we use LLaMA-2-7B-chat-hf <ref type="bibr" target="#b30">(Touvron et al., 2023)</ref>, LLaMA-3.1-8B-Instruct <ref type="bibr" target="#b10">(Dubey et al., 2024)</ref>, and Qwen2.5-7B-Instruct <ref type="bibr">(Yang et al., 2024a)</ref> as backbone models for training and test. GPT-4o serves as the inference and knowledge LLM to generate training data, while GPT-4o-mini is employed as the evaluator.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Datasets.</head><p>Our experiments are carried out on three data sets: StrategyQA <ref type="bibr" target="#b13">(Geva et al., 2021)</ref> is a question-answer benchmark of 2,780 examples. Each example includes questions, supporting evidence, and answers. CommonsenseQA <ref type="bibr" target="#b29">(Talmor et al., 2019)</ref> contains 12,102 questions, each of which requires common sense knowledge to select the correct answer from four distractors. TruthfulQA <ref type="bibr" target="#b24">(Lin et al., 2022)</ref> evaluates the truthfulness of the responses to the language model, with 817 questions in 38 categories. We used the mc1_targets subset, which consists of single-choice questions with 4-5 answer choices. To prepare this dataset for training and testing, we labeled the answer options as A-E and shuffled the labels to avoid shortcuts in training. For StrategyQA and CommonsenseQA, we used their predefined training and testing set splits. For TruthfulQA, we split the data into an 8:2 ratio for training and testing.</p><p>Baselines. In our experiments, we adopt zero shot (just input the question) and CoT prompting as our vanilla baseline for inference. For the finetuned baseline, we choose LoRA fine-tuning <ref type="bibr" target="#b16">(Hu et al., 2021)</ref> and Planning Tokens (LoRA+Prompt Tuning) <ref type="bibr">(Wang et al., 2024d)</ref> to train and test on these three datasets to facilitate a comparative evaluation with our approach. In training, we use int8_training to save GPU memory and accelerate.</p><p>Evaluation Metric. We use accuracy (acc) to measure the model's performance on all datasets.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Main Results</head><p>Five main methods are being compared: Zero-shot, CoT (Chain-of-Thought), LoRA, Planning-token, and Ours (mentioned in Section 3.1). The results in StrategyQA and CommonsenseQA benchmarks indicate that our algorithm consistently achieves higher scores across both benchmarks compared to other approaches, particularly in fine-tuned models. For instance, in StrategyQA, Our method enhanced LLaMA-3.1-8B achieved a score of 78.0%, outperforming CoT at 69.4% and Planning-token at 76.7%. Similarly, in CommonsenseQA, Our method enhanced LLaMA-3.1-8B scores 82.3%, compared to CoT's 70.6% and Planning-token's 76.9%, suggesting the effectiveness of our algorithm in improving LLMs' performance.</p><p>For the TruthfulQA dataset, we achieved a significant breakthrough; the LLaMA-3.1-8B enhanced by our algorithm (86.6%) even outperforms GPT-4o in both zero-shot (84.8%) and CoT settings (85.4%), which is remarkable. GPT-4 sometimes gets misled by these options in this dataset, but our model effectively handles these challenges. Our model first considers relevant knowledge and then uses it in reasoning, which proves highly effective on this dataset(as the appendix E, we include an analysis of both correct and incorrect examples). However, Qwen2.5-7B performed poorly on this dataset, achieving only 81.0% in our algorithm, likely due to instruction tuning in Qwen2.5, resulting in average performance and unstable training. However, adding a CoT can decrease performance for some models in some datasets, which is also a phenomenon reported by <ref type="bibr" target="#b27">(Sprague et al., 2024)</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3">Ablation Study</head><p>In the ablation study, we comprehensively investigate the effects of the impact of special token 3.3.1 and the number of special tokens 3.3.2.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3.1">Impact of Memory and Reason Tokens</head><p>The Ablation Experiment presents an ablation study comparing the performance of two versions of the LLaMA model (LLaMA-2-7B and LLaMA-3.1-8B) across three benchmarks: StrategyQA, CommonsenseQA, and TruthfulQA. The study examines the impact of using specific tokens ("Memory and Reason") vs.Random tokens on the model's performance. During training, we shuffled the allocation of ⟨reason⟩ and ⟨memory⟩ tokens and then observed the effects on training and testing performance. As expected, the overall performance declined (shown in Table <ref type="table">2</ref>), but the decline rate varied (from 2.1% to 6.6%), showing our approach's superiority in disentangling reason and memory.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3.2">Impact of Special Token Count</head><p>In our training setup, we have two token types: ⟨reason⟩ and ⟨memory⟩, and we will include a parameter representing the number of special tokens preceding each sentence. For example, A sentence might include three ⟨reason⟩ tokens or four, like the question in Appendix D.3. Our experiments indicate that model performance reaches a higher point with around four to six special tokens (as Table <ref type="table" target="#tab_1">3</ref> and<ref type="table" target="#tab_2">4</ref>). This is likely because more tokens may lead to better performance for the LLM <ref type="bibr" target="#b21">(Levy et al., 2024)</ref>, as proved by previous research. We Another important issue is knowledge distillation. We must ensure that the model's improvement is not due to knowledge distillation from the GPT-4 framework. Using the same inference steps, we compared the results of standard training with 0 reason and memory tokens and found that adding these tokens significantly improves performance. This indirectly confirms that the model's enhancement comes from algorithmic improvements rather than knowledge distillation.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.4">Further Analysis</head><p>In this section, we aim to analyze the decoupling effect 3.4.1, attention analysis 3.4.2 of our method and error analysis of our method for 3.4.3.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.4.1">Decoupling Analysis</head><p>To validate the decoupling effect on memory and reasoning, we configure GPT-4o-mini as an evaluator (details in Appendix E.1), assessing whether steps labeled as "memory" entail factual knowledge and those labeled as "reasoning" represent reasoning processes on our three benchmarks. Then We use a structured, directive one-shot Chain of Thought (CoT) prompting method to prompt LLaMA-3.1-8B as the baseline that can also disentangle memory and reason step. This prompt setup is displayed in Appendix E.1 in Figure <ref type="figure" target="#fig_1">20</ref>.</p><p>In this CoT approach, directive prompting with P directive explicitly instructs the model to distinguish memory information and reason-   ing steps. The one-shot example E 1-shot provides a structured format, demonstrating how memory (e.g., M 1 , M 2 , . . . , M m ) and reasoning parts (e.g., R 1 , R 2 , . . . , R n ) can be organized separately in answer generation (e.g.,</p><formula xml:id="formula_0">M 1 , R 1 , M 2 , R 2 , . . . , M m , R n ).</formula><p>This structure guides the model to produce answer and inference steps annotated as either memory M m or reasoning R n , enhancing interpretability by separating factual knowledge and reasoning processes.</p><p>From Figure <ref type="figure" target="#fig_1">2</ref> and Table <ref type="table" target="#tab_3">5</ref>, on the StrategyQA dataset, our method achieves an accuracy of 78.0% on LLaMA-3.1-8B, outperforming the One-shot CoT baseline by 20%, our approach achieves higher accuracy in decoupling memory (94% vs. 93%) and reasoning (71% vs. 67%), demonstrating effective decoupling between these two components in multi-steps inference. On the Common-senseQA dataset, our method achieves an accuracy of 82.3% on LLaMA-3.1-8B, exceeding the Oneshot CoT baseline by 26.3%. The results highlight that our approach consistently outperforms the baseline in decoupling memory (91% vs. 83%) and reasoning (78% vs. 74%), demonstrating robust performance in commonsense inference tasks. On the TruthfulQA dataset, our method achieves an accuracy of 86.6% on LLaMA-3.1-8B, surpassing the One-shot CoT baseline by 32.6%. The results further illustrate that our approach achieves superior accuracy in decoupling memory (89% vs. 88%) and reasoning (74% vs. 62%), highlighting its effectiveness in factual reasoning. Additionally, Table <ref type="table" target="#tab_5">6</ref> shows that both LLaMA-3.1-8B and LLaMA-2-7B maintain consistent distributions of memory and reasoning across all datasets. This reflects the stability and generalizability of our decoupling mechanism, ensuring its applicability to diverse inference tasks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.4.2">Attention Analysis</head><p>In the case study 3.4.1, we have found that the ⟨reason⟩ and ⟨memory⟩ do an important job in our LLM's Inference. Although using raw atten-   </p><formula xml:id="formula_1">Method Ratio StrategyQA LLaMA-2-7B 4:5 LLaMA-3.1-8B 1:1 CommonsenseQA LLaMA-2-7B 1:5 LLaMA-3.1-8B 1:5 TruthfulQA LLaMA-2-7B 3:7 LLaMA-3.1-8B</formula><p>1:2 tion weights to interpret token importance can be somewhat controversial, attention patterns still provide valuable insights about how transformers operate <ref type="bibr" target="#b0">(Abnar and Zuidema, 2020)</ref>. This heatmap, as Figure <ref type="figure" target="#fig_2">3</ref> shows that the model focuses intensely on specialized tokens throughout the inference. These tokens received higher attention weights than regular tokens, suggesting they play a more significant role in leading knowledge and reasoning content generation. This observation aligns with the main findings presented in the previous case study 3.4.1.</p><p>We input two sentences (can be found in Appendix E.3 in Figure <ref type="figure" target="#fig_0">18</ref>) into our fine-tuned LLaMA-3.1-8B model, getting a large attention heatmap. We then segmented two entire attention maps according to the steps by model inference, producing the two smaller maps above as Figure <ref type="figure" target="#fig_2">3</ref>. Other samples can be found in the Appendix E.3. by the observation, it indicate that the model places greater emphasis on this content, which indirectly demonstrates the effectiveness of our algorithm. &lt;reason_0&gt; &lt;reason_1&gt; &lt;reason_2&gt; &lt;reason_3&gt; Among the given options, a department store is a place where a revolving door would serve both convenience and security purposes. It helps manage the flow of shoppers and can be a part of security measures to monitor and control access.</p><p>&lt;reason_0&gt; &lt;reason_1&gt; &lt;reason_2&gt; &lt;reason_3&gt; Based on the reasoning and factual knowledge, the revolving door serves as a security measure at a department store. Therefore, the correct answer is C.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>The Correct answer is: A: bank</head><p>Error appear in the last two steps, model's knowledge is correct. ing to an important direction for future research.</p><p>For Example, the question 4 above emphasizes the role of the revolving door as a security measure, so the correct answer should be somewhat unexpected. Options B, C, and D all represent typical uses of revolving doors for managing two-way traffic flow. Only in banks does a revolving door serve as a security measure. The correct answer is likely A. bank, as banks use revolving doors not only for easy access but also as a security measure to control entry and exit. The model's knowledge is accurate, but it missed this nuance during reasoning steps.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Related Work</head><p>Parametric Memory in LLMs. During pretraining, large language models capture a large amount of knowledge in the models' parameters, known as parametric memory. Previous research extensively explores the mechanism of inference with parametric memory; they observe that models can well adopt memory for simple tasks but struggle with complex inference, e.g., multi-hop inference <ref type="bibr">(Li et al., 2024b;</ref><ref type="bibr">Yang et al., 2024b;</ref><ref type="bibr" target="#b31">Wang et al., 2024a;</ref><ref type="bibr">Jin et al., 2025b;</ref><ref type="bibr" target="#b15">Han et al., 2024;</ref><ref type="bibr">Wang et al., 2025a)</ref>. Others reveal the challenges in the leverage of parametric knowledge, particularly when dealing with long-tail facts (facts associated with less common entities) or when the knowledge is rare <ref type="bibr" target="#b32">(Wang et al., 2023;</ref><ref type="bibr">Allen-Zhu and Li;</ref><ref type="bibr" target="#b8">Cheng et al., 2024;</ref><ref type="bibr">Jin et al., 2025a)</ref>. These studies primarily focus on the analysis of model behavior. While valuable, they do not address how to better elicit the parametric knowledge for inference. In this work, we explore how to boost LLMs' leverage of their parametric knowledge for complex inference.</p><p>Reasoning with LLMs. Recent research on enhancing LLMs' inference capabilities can be broadly categorized into prompt-based and tuningbased approaches. Prompt-based methods strategically guide reasoning processes. Chain-of-Thought (CoT) prompting <ref type="bibr">(Wei et al., 2022b)</ref> and its derivatives <ref type="bibr" target="#b48">(Zhao et al., 2024;</ref><ref type="bibr" target="#b49">Zhou et al., 2023;</ref><ref type="bibr">Chen et al., 2024a;</ref><ref type="bibr" target="#b17">Hu et al., 2023;</ref><ref type="bibr" target="#b20">Jin et al., 2024)</ref> decompose complex tasks into sequential steps, improving transparency and decision-making. Others like Tree-of-Thoughts (ToT) <ref type="bibr" target="#b44">(Yao et al., 2023)</ref> and Graph-of-Thoughts (GoT) <ref type="bibr" target="#b2">(Besta et al., 2024)</ref> further utilize hierarchical and network-based inference to cover a larger search space. These strategies design a framework where LLMs can elicit the parametric memory relevant to the task. However, in these methods, the models might not know when to reason or use their memory.</p><p>Tuning-based methods introduce trainable tokens for structured CoT steps, facilitating reasoning and utilization of memory <ref type="bibr">(Wang et al., 2024d;</ref><ref type="bibr" target="#b14">Goyal et al., 2024;</ref><ref type="bibr" target="#b9">Colon-Hernandez et al., 2024;</ref><ref type="bibr">Wang et al., 2025b)</ref>. Despite the effectiveness, these methods intertwine reasoning and memory usage, which may limit the full potential of the models. In contrast, our approach aims to decouple memory and reasoning within the CoT process by introducing various special tokens, enabling the model to leverage its memory more effectively.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Conclusion</head><p>In this work, we proposed a novel inference framework for training LLMs to distinguish between reasoning and memory processes using two special tokens: ⟨memory⟩ for factual knowledge retrieval and ⟨reason⟩ for logical reasoning. This structured input disentangles these processes, enhancing interpretability and improving performance on complex reasoning tasks. By maintaining a clear boundary between memory and reasoning during training, the model generalizes better to queries that combine factual knowledge with multi-step reasoning. This approach not only ensures more accurate answers but also produces interpretable, step-by-step reasoning outputs, crucial for transparency and ac-countability in complex reasoning.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Limitation</head><p>The proposed decomposition framework provides a promising method to disentangle memory recall and reasoning in large language models, enhancing interpretability and modularity. However, it has limitations that offer opportunities for improvement. One challenge is its reliance on the quality and breadth of training data for memory recall, which may lead to incomplete retrieval in underrepresented domains. This issue, common in machine learning, can be mitigated through dynamic updates or integration with external knowledge bases. The use of special tokens like ⟨memory⟩ and ⟨reason⟩ simplifies distinguishing between tasks but adds complexity to tokenization, requiring taskspecific tuning for different architectures or languages. Nonetheless, this token-based design enhances transparency, offsetting the added complexity. The framework also struggles with tasks requiring deeply nested or multi-hop reasoning, as these steps may not neatly separate into recall and reasoning phases. Further refinement is needed to better handle complex reasoning chains, though the framework performs robustly in standard scenarios. Additionally, the retrieval-based approach introduces computational overhead, which may limit real-time applicability. However, the trade-off for interpretability and error traceability is valuable for use cases where transparency is critical, making this framework a significant step forward for addressing reasoning and memory in LLMs SUMMARY OF THE APPENDIX This appendix contains additional details for the "Disentangling Memory and Reasoning Ability in Large Language Models". The appendix is organized as follows:</p><p>• §A Data Generation We developed an LLM-based data generation framework based on GPT-4o to generate highquality training data for decoupling memory and reasoning steps. This framework includes two LLMs: an inference LLM and a knowledge LLM. The inference LLM is responsible for generating Chain-of-Thought (CoT) inference processes, decoupling memory and reasoning, and then further assigning labels to each sub-step by marking those requiring factual knowledge as [memory] and those requiring reasoning as <ref type="bibr">[reason]</ref>. The prompt of the knowledge agent is shown in Figure <ref type="figure">5</ref>. The Knowledge LLM retrieves the necessary knowledge for [memory] steps based on questions provided by the inference LLM. We use these two LLMs to ensure the independence of memory and reasoning within the CoT, providing high-quality data for subsequent training. Figure <ref type="figure" target="#fig_6">6</ref> is the prompt configuration for inference LLM. The questions corresponds to the Knowledge base content in the inference LLM and is used to supply accurate factual information for steps labeled as &lt;memory&gt;. The Step name refers</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Prompt in Knowledge LLM</head><p>Factual knowledge is information that aligns with objective reality and can be verified through evidence or observation, such as scientific facts or historical events.</p><p>Please provide factual knowledge for the below question set: &lt;Questions&gt; {questions} &lt;Questions&gt; You should return a dictionary in JSON format; for each element in the dictionary, the key is each question in &lt;Questions&gt;, and the value is the factual knowledge of each question in &lt;Questions&gt;.</p><p>Your answer format should strictly be in the following steps: "'json { "Question 1": "The factual knowledge of question 1", ........ } "' Figure <ref type="figure">5</ref>: Prompt in Knowledge LLM to activate the inner knowledge to the specific name of each step in the Chain of Thought (CoT) process. The Requirement labels whether each step pertains to &lt;memory&gt; or &lt;rea-son&gt;. The Knowledge based is used to provide questions related to factual knowledge in &lt;mem-ory&gt; steps, while the Content focuses on designing to outline the reasoning process for &lt;reason&gt; steps. This structure facilitates a clear distinction between memory retrieval and reasoning tasks, enhancing the model's capability to execute complex sequences in a zero-shot environment.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Prompt in Inference LLM</head><p>Here is the question: &lt;Question&gt; {question} &lt;Question&gt; Here is the correct answer: &lt;Correct Answer&gt; {answer} &lt;Correct Answer&gt; Factual knowledge is information that aligns with objective reality and can be verified through evidence or observation, such as scientific facts or historical events.</p><p>Provide a reasoning plan for the above question to get the correct answer; each step in your reasoning plan must adhere strictly to the following format:  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.2 Example</head><p>In this study, we leverage both the inference LLM and knowledge LLM based on GPT-4o to generate a dataset. Specifically, we use the StrategyQA dataset as the source for our generation. The Strat-egyQA dataset is a question-answering dataset designed to evaluate models' multi-hop reasoning abilities. It includes questions that require strategic thinking and often demand more than one piece of information to answer correctly.</p><p>Figure <ref type="figure" target="#fig_7">7</ref> shows enhanced data generated by our data generation agent from the StrategyQA dataset. The image shows an example question about the relationship between Mixed Martial Arts and the origins of Roman Colosseum games. The answering process is broken down into several steps, each labeled as either <ref type="bibr">[Memory]</ref> or <ref type="bibr">[Reason]</ref> to indicate the type of step. This approach helps differentiate between pure knowledge retrieval and logical reasoning steps, providing more granular training data for models to improve their accuracy and interpretability in answering complex questions.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B Preliminary B.1 Experiment</head><p>In a preliminary experiment, we analyzed the training and test sets of StrategyQA, TruthfulQA, and CommonsenseQA to evaluate the overlap in knowledge between them. This assessment was crucial to ensure that our model's performance improvement was due to our advanced algorithm, rather than simply distilling knowledge from GPT-4o. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.">"[reason]</head><p>: MMA is not totally original from the Roman Colosseum games. Although both involve unarmed combat, MMA is a modern sporting discipline that synthesizes traditional martial arts into a competitive and regulated environment. The Roman games served as a historical precedent for public combat events but lacked the structured and safety-oriented approach of MMA. Therefore, while there may be a historical inspiration, MMA's development as a technical and regulated sport makes it distinct and not directly derived from the Roman games."</p><p>Answer: False lowing each ⟨memory⟩ token to create a reference set. We then prompted our fine-tuned LLaMA3.1-8B model to generate outputs using the test set, collecting sentences following the ⟨memory⟩ tokens in these outputs to form a separate set. Our validation method involves setting a threshold on cosine similarity and assessing Jaccard similarity based on this threshold. Specifically, as illustrated in Figure <ref type="figure" target="#fig_8">9</ref>, we define two knowledge after ⟨memory⟩ tokens as overlapping if the cosine similarity of their embeddings exceeds 0.2. Based on this criterion, the Jaccard similarity for all datasets are smaller than 10%, which is a low value indicating a low degree of overlap and demonstrates that our model's performance is not merely the result of knowledge distillation.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B.2 Example</head><p>A value greater than or equal to 0.2 indicates that the two contents are very unrelated like example 8.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C Experiment Details</head><p>C.1 Dataset StrategyQA <ref type="bibr" target="#b13">(Geva et al., 2021)</ref> StrategyQA is a challenging question-answering benchmark that focuses on implicit, multi-step reasoning. Unlike conventional multi-hop datasets where questions explicitly outline the steps needed to reach an answer, StrategyQA requires models to infer these reasoning steps. Each question in StrategyQA is crafted to be implicit and short, with Boolean ("Yes" or</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Cosine Similarity of a sample in Testset and Trainset</head><p>Testset:</p><p>The question asks about a type of store that would have a lot of sports equipment. This requires understanding what type of store would typically sell a variety of sports-related items.</p><p>Trainset: Sainsbury's and Tesco are both publicly traded companies. As of the latest available data, Tesco's market capitalization is significantly larger than that of Sainsbury's. For Sainsbury's to acquire Tesco, it would require extensive financial resources or backing, potentially involving significant borrowing, asset sales, or equity raising.</p><p>Cosine Similarity: 0.2 "No") answers, requiring logical deductions based on general knowledge. For example, answering a question like "Did Aristotle use a laptop?" involves reasoning about the historical timeline of both Aristotle's life and the invention of laptops.</p><p>The StrategyQA dataset includes a total of 2,780 verified questions. The training set comprises 1,600 questions which are used for fine-tuning, and the validation (test) set contains 690 questions, which are used for the validation of baselines and our method in our experiment.</p><p>CommonsenseQA <ref type="bibr" target="#b29">(Talmor et al., 2019)</ref> Com-monsenseQA is a multiple-choice dataset with 12,247 questions aimed at testing AI on commonsense reasoning using the ConceptNet knowledge graph. Each question has one correct answer and four distractors, requiring models to understand relations like causality and spatial proximity. While humans achieve 88.9% accuracy, advanced models like BERT-Large reach only 55.9%, underscoring the challenge of commonsense inference in AI. The training set comprises 9,740 questions, the valida-tion set contains 1,220 questions, which are used for fine-tuning, and the test set includes 1,140 questions, which are used for the validation of baselines and our method in our experiment.</p><p>TruthfulQA <ref type="bibr" target="#b24">(Lin et al., 2022)</ref> TruthfulQA is a benchmark of 817 questions designed to test language models' truthfulness by prompting common misconceptions across topics like health and law. Models like GPT-3 and GPT-2 often generate false answers that mirror human misunderstandings, with larger models frequently performing worse (58% truthfulness for GPT-3) compared to 94% for humans. The benchmark reveals that scaling up model size alone does not enhance truthfulness, highlighting the need for targeted fine-tuning to reduce imitative falsehoods. In our experiments, we split the dataset into training and testing sets in an 8:2 ratio. Since the original dataset contained only single-choice questions with all answers marked as A, we randomly shuffled the answer options for one question to ensure effective fine-tuning performance on the training set.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C.2 Evaluation Metric</head><p>To mitigate the inherent output instability of LLMs in both CoT and Zero-shot settings, we found that conventional answer-matching techniques, such as regular expression-based methods, may not reliably capture the precise answers required. Consequently, we adopted GPT-4o-mini as an evaluation tool to compute the LLM performance across multiple datasets <ref type="bibr" target="#b4">(Cao et al., 2024)</ref>. This approach enables a more nuanced assessment of LLM outputs, given the limitations of regular matching techniques under these settings. The detailed prompt used for evaluation is shown in Prompt 10 below.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>D Training Details D.1 Training Configuration</head><p>All the experiments for fine-tuning are run on an NVIDIA RTX 6000 Ada Generation GPU. Our experiments found that the optimal configuration for learning out-of-vocabulary (OOV) tokens is with N_PREFIX=3 and N_SPECIAL=4.</p><p>We generally use a learning rate of 2e-4 with -warmup_steps 1000, -lr_scheduler_type "cosine", and -optim "adamw_torch", along with gradi-ent_accumulation_steps=16. Additionally, we employed int8 training to ensure that the model could be trained on a single GPU. Additionally, We provided detailed parameter configurations as  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>D.2 Training Process</head><p>We monitored the training process of our method across all models and datasets, recording test set accuracy changes every 10 steps, as illustrated in Figure <ref type="figure" target="#fig_12">14</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>D.3 Example</head><p>In Figure <ref type="figure" target="#fig_13">15</ref>, we present an correct example of fine-tuning LLaMa-3.1-8B using our proposed algorithm. The results clearly demonstrate that our method effectively decouples factual knowledge and reasoning steps from inference.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E Case Study E.1 Sample Analysis</head><p>For sample analysis, to highlight the decoupling effectiveness, reasoning capability, and interpretability of our approach, we set One-shot Chain-of-Thought (CoT) reasoning as the baseline for this evaluation, see details in Figure <ref type="figure" target="#fig_1">20</ref>. We leverage GPT-4o-mini as an evaluator with prompt configuration provided as below to assess the decoupling effectiveness of LLaMA-3.1-8B in separating memory and reasoning processes.</p><p>For sample analysis with GPT-4o-mini as evaluator shown in Figure <ref type="figure" target="#fig_6">16</ref>  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.2 Error Analysis</head><p>To ensure accuracy in error detection, we use GPT-4o as an evaluator to assess whether the error occurs in the &lt;memory&gt; or &lt;reasoning&gt; step, based on the correct answer and the provided reasoning process. The prompt configuration of GPT-4o-mini is shown in Figure <ref type="figure" target="#fig_14">17</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.3 More Attention Maps</head><p>In Figure <ref type="figure" target="#fig_16">19</ref>, we have shown more examples of More Attention Maps on StrategyQA for LLaMA3.1-8B and LLaMA2-7B. The prompt for the attention map is in Figure <ref type="figure" target="#fig_0">18</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.4 More Analysis Samples</head><p>To validate the decoupling effect on memory and reasoning, we additionally evaluated the performance of our method on LLaMA-2-7B in comparison with one-shot CoT. As shown in Figure <ref type="figure" target="#fig_1">21</ref>, our algorithm outperforms one-shot CoT in terms of the decoupling effect, demonstrating the effectiveness of our approach on LLaMA2-7B.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>F Future Work and Limitation</head><p>F.1 Future Work Dynamic Memory Updating. Future research could explore mechanisms for dynamically updating the model's memory, allowing it to incorporate new information without extensive retraining. This would help the model stay current and relevant, especially for knowledge that frequently changes.</p><p>Adaptive Reasoning Steps. Developing methods that enable the model to adaptively select the number of reasoning steps based on task complexity would improve both performance and efficiency. This could involve learning when to retrieve memory and when to directly reason, optimizing the inference process.  Interpretable Error Analysis Tools. Building on the interpretability gains of the proposed framework, future work could focus on developing error analysis tools that make it easier for users to trace specific failures to either memory recall or reasoning steps, aiding in systematic model improvement.</p><p>Cross-Domain Generalization. Extending the proposed method to domains beyond language (e.g., multimodal tasks) could be an interesting direction. By testing and adapting this decomposition in fields such as vision-language tasks, researchers could evaluate its utility in more complex, real-world applications.  Prompt in GPT-4o-mini</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>User-Guided</head><p>Factual knowledge is information that aligns with objective reality and can be verified through evidence or observation, such as scientific facts or historical events.</p><p>here is the sentence: &lt;sentence&gt; {sentences} &lt;sentence&gt; You should be a classifier to judge whether this sentence is about a reasoning process or factual knowledge.</p><p>Your answer should be: return 0 as factual knowledge or 1 as a reasoning process.</p><p>Figure <ref type="figure" target="#fig_6">16</ref>: Prompt in GPT-4o-mini for Sample Analysis for various tasks. This can make the framework less straightforward to apply across different LLM architectures or language domains.</p><p>Performance in Highly Complex Reasoning Tasks. While the decomposition approach shows promise in improving reasoning interpretability and accuracy, it may still struggle with tasks requiring multi-hop or deeply nested reasoning steps. Complex chains of reasoning may not be easily separated into discrete memory retrieval and reasoning actions.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Prompt in GPT-4o</head><p>Question with Reasoning process:{question} Correct Answer:{answer}</p><p>To analyze why the answer in the reasoning process is incorrect, is it in the sentence labeled as &lt;reason&gt; or &lt;memory&gt;? your answer should be: # reason or memory Computation Overhead.</p><p>The process of decomposing memory recall and reasoning steps can increase computation time due to the additional need for retrieval-based processing. This can be a limitation for real-time applications or systems requiring rapid inference.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Prompt in GPT-4o</head><p>Question with Reasoning process: Would an Olympic athlete be tired out after running a mile? Correct Answer: False &lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;memory_0&gt;&lt;memory_1&gt;&lt;memory_2&gt;&lt;memory_3&gt; Olympic athletes are typically highly trained individuals who have built their bodies to withstand intense physical activities. They possess high levels of cardiovascular fitness, muscular endurance, and the ability to manage lactic acid buildup. The average person can run a mile in approximately 5-6 minutes, depending on fitness level. Olympic athletes often have much faster times, often finishing a mile in under 4 minutes. &lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt; Given that Olympic athletes can run a mile significantly faster than the average person, they would also have the endurance to maintain such speeds for longer distances. This suggests that they would not become tired out after running a mile, which is a relatively short distance in their training regimen. &lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt; Considering their high levels of fitness and endurance, an Olympic athlete would not typically become tired out after running a mile, which is a relatively short distance for them compared to their regular training sessions. &lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;answer_0&gt;&lt;answer_1&gt;&lt;answer_2&gt;&lt;answer_3&gt;</p><p>The answer is: False   </p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Figure 1 :</head><label>1</label><figDesc>Figure 1: Workflow. We employ an LLM-based framework for data generation by two LLMs: an inference LLM that generates reasoning and memory steps, and a knowledge LLM that supplies the factual knowledge required for those memory steps. The generated data is annotated with two distinct special tokens: ⟨memory⟩ and ⟨reason⟩, which are used for training the autoregressive language model alongside the question and answer.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Figure 2 :</head><label>2</label><figDesc>Figure 2: Decoupling Result Comparison Between Our Algorithm and One-Shot CoT prompting on all datasets and both on LLaMA-3.1-8B, Accuracy stands for the decoupling performance of &lt;memory&gt; and &lt;reason&gt;.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Figure 3 :</head><label>3</label><figDesc>Figure 3: Two test examples' attention Heatmap generated by LLaMA-3.1-8B enhanced with our algorithm in the same attention head. The highlighted parts are these special tokens.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>Figure 4 :</head><label>4</label><figDesc>Figure 4: Incorrect Sample Showing: The green sections represent the questions, the steps of model inference, and the incorrect answers; the yellow areas indicate the correct answers, and the red highlights the causes of the errors.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>-</head><label></label><figDesc></figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>*</head><label></label><figDesc>Step name*: # Put the name of the step here. **Requirement**: # If this step needs reasoning, return "[reason]" as a label; if this step needs factual knowledge, return "[memory]" as a label. **Knowledge based**: # Only if this step needs factual knowledge, put a query in question sentences about this factual knowledge for retrieval. **Content**: # If this step is about reasoning, please provide your reasoning thinking; if this step needs factual knowledge, please provide factual knowledge.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_6"><head>Figure 6 :</head><label>6</label><figDesc>Figure 6: Prompt in Inference LLM</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_7"><head>Figure 7 :</head><label>7</label><figDesc>Figure 7: StrategyQA dataset example(enhanced by our algorithm)</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_8"><head>FigureFigure 9 :</head><label>9</label><figDesc>Figure 8: A sample in Testset and Trainset</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_9"><head>Figure 10 :</head><label>10</label><figDesc>Figure 10: Prompt in GPT-4o-mini for Evaluating CoT Reasoning</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_10"><head></head><label></label><figDesc>and the one-shot CoT as baseline, we use a sample generated by our data method as an in-context learning example for the one-shot CoT baseline configuration, shown in Figure 20.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_11"><head>Figure 11 :Figure 12 :Figure 13 :</head><label>111213</label><figDesc>Figure 11: Accuracy progression on the StrategyQA benchmark during training, with the horizontal axis representing the number of training steps.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_12"><head>Figure 14 :</head><label>14</label><figDesc>Figure 14: The Training Process for LLaMA3.1-8B on three Datasets: for StratgyQA, we usually need ten epochs to train and five epochs to model to converge in CommonsenseQA. For TruthfulQA, 15 epochs or more may be better.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_13"><head>Figure 15 :</head><label>15</label><figDesc>Figure 15: Correct Example of Our method on LLaMA-3.1-8B</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_14"><head>Figure 17 :</head><label>17</label><figDesc>Figure 17: Prompt in GPT-4o for Error Analysis</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_15"><head>Figure</head><label></label><figDesc>Figure 18: Input prompt for getting Attention Map</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_16"><head>Figure 19 :</head><label>19</label><figDesc>Figure 19: Left: Attention Map of LLaMA-3.1-8B. Right: Attention Map of LLaMA-2-7B.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 :</head><label>1</label><figDesc>Main Comparative Experiment Results.</figDesc><table><row><cell>Methods</cell><cell>Models</cell><cell cols="4">StrategyQA CommonSenseQA TruthfulQA Average</cell></row><row><cell></cell><cell></cell><cell>Vanilla</cell><cell></cell><cell></cell><cell></cell></row><row><cell>Zero-shot</cell><cell>LLaMA-2-7B LLaMA-2-13B LLaMA-3.1-8B LLaMA 3.1-70B Qwen 2.5-7B GPT-4o</cell><cell>0.607 0.613 0.659 0.796 0.640 0.699</cell><cell>0.523 0.530 0.635 0.765 0.789 0.834</cell><cell>0.262 0.378 0.616 0.793 0.726 0.848</cell><cell>0.464 0.507 0.637 0.785 0.718 0.794</cell></row><row><cell>CoT</cell><cell>LLaMA-2-7B LLaMA-2-13B LLaMA-3.1-8B LLaMA 3.1-70B Qwen 2.5-7B GPT-4o</cell><cell>-0.560 0.694 0.822 0.696 0.808</cell><cell>-0.482 0.706 0.815 0.784 0.865</cell><cell>-0.390 0.506 0.762 0.567 0.854</cell><cell>-0.477 0.635 0.800 0.682 0.842</cell></row><row><cell></cell><cell></cell><cell>Fine-tuned</cell><cell></cell><cell></cell><cell></cell></row><row><cell>LoRA</cell><cell>LLaMA-2-7B LLaMA-2-13B LLaMA-3.1-8B Qwen 2.5-7B</cell><cell>0.612 0.696 0.701 0.691</cell><cell>0.641 -0.754 0.775</cell><cell>0.767 -0.798 0.725</cell><cell>0.673 0.696 0.737 0.730</cell></row><row><cell cols="2">LLaMA-2-7B LLaMA-2-13B Planning-token LLaMA-3.1-8B Qwen 2.5-7B</cell><cell>0.635 0.715 0.767 0.774</cell><cell>0.654 -0.769 0.801</cell><cell>0.770 -0.825 0.762</cell><cell>0.686 0.715 0.787 0.779</cell></row><row><cell>Ours</cell><cell>LLaMA-2-7B LLaMA-2-13B LLaMA-3.1-8B Qwen 2.5-7B</cell><cell>0.706 0.739 0.780 0.786</cell><cell>0.711 -0.823 0.832</cell><cell>0.786 -0.866 0.812</cell><cell>0.734 0.739 0.823 0.810</cell></row><row><cell></cell><cell></cell><cell cols="4">StrategyQA CommonsenseQA TruthfulQA Average</cell></row><row><cell cols="2">LLaMA-2-7B</cell><cell></cell><cell></cell><cell></cell><cell></cell></row><row><cell cols="2">w Memory and Reason token</cell><cell>0.706</cell><cell>0.711</cell><cell>0.786</cell><cell>0.734</cell></row><row><cell cols="2">w Random token</cell><cell>0.644</cell><cell>0.651</cell><cell>0.708</cell><cell>0.668</cell></row><row><cell cols="2">LLaMA-3.1-8B</cell><cell></cell><cell></cell><cell></cell><cell></cell></row><row><cell cols="2">w Memory and Reason token</cell><cell>0.780</cell><cell>0.823</cell><cell>0.866</cell><cell>0.823</cell></row><row><cell cols="2">w Random token</cell><cell>0.759</cell><cell>0.795</cell><cell>0.840</cell><cell>0.798</cell></row></table><note><p><p><p><p>Table</p>2</p>: Ablation study with LLaMA-3.1-8B and LLaMA-2-7B on three benchmarks.</p>selected two LLMs to illustrate their performance (ACC) across different numbers of special tokens.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 3 :</head><label>3</label><figDesc>Model Performance (ACC) by Number of Special Tokens in CommonsenseQA</figDesc><table><row><cell>Model Name</cell><cell cols="4">Number of Tokens</cell></row><row><cell></cell><cell>0</cell><cell>2</cell><cell>4</cell><cell>6</cell></row><row><cell cols="5">LLaMA-2-7B 0.682 0.704 0.710 0.711 LLaMA-3.1-8B 0.783 0.816 0.823 0.820 Qwen2.5-7B 0.799 0.813 0.832 0.813</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 4 :</head><label>4</label><figDesc>Model Performance (ACC) by Number of Special Tokens in TruthfulQA</figDesc><table><row><cell>Model Name</cell><cell cols="4">Number of Tokens</cell></row><row><cell></cell><cell>0</cell><cell>2</cell><cell>4</cell><cell>6</cell></row><row><cell cols="5">LLaMA-2-7B 0.701 0.762 0.768 0.786 LLaMA-3.1-8B 0.826 0.865 0.866 0.859 Qwen2.5-7B 0.807 0.756 0.812 0.799</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 5 :</head><label>5</label><figDesc></figDesc><table><row><cell>Method One-shot CoT Ours</cell><cell cols="2">Accuracy (% ↑) StrategyQA 58.0 78.0</cell></row><row><cell cols="2">CommonsenseQA One-shot CoT Ours</cell><cell>56.0 82.3</cell></row><row><cell>One-shot CoT Ours</cell><cell>TruthfulQA</cell><cell>54.0 86.6</cell></row></table><note><p>Performance Comparison between One-shot CoT and our algorithm on LLaMA-3.1-8B.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head>Table 6 :</head><label>6</label><figDesc>[Memory:Reason] Ratio Across Different Models and Datasets.</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_6"><head>Table 7 :</head><label>7</label><figDesc>Error Type Proportion between Memory and Reason on LLaMA-3.1-8B across all the datasets.Question: A revolving door is convenient for two direction travel, but it also serves as a security measure at a what? A.bank B.library C.department store D.mall &lt;memory_0&gt; &lt;memory_1&gt; &lt;memory_2&gt; &lt;memory_3&gt; A revolving door is designed for smooth and efficient entry and exit of people, ...... &lt;reason_0&gt; &lt;reason_1&gt; &lt;reason_2&gt; &lt;reason_3&gt; Revolving doors are often installed in buildings for both convenience and security....... &lt;memory_0&gt; &lt;memory_1&gt; &lt;memory_2&gt; &lt;memory_3&gt; Revolving doors are commonly found in large commercial establishments such as department stores, malls......</figDesc><table><row><cell cols="2">Error Type</cell><cell cols="2">Proportion</cell></row><row><cell>Memory Reason</cell><cell>StrategyQA</cell><cell></cell><cell>1.7 98.3</cell></row><row><cell>Memory Reason</cell><cell cols="2">CommonsenseQA</cell><cell>21.6 78.4</cell></row><row><cell>Memory Reason</cell><cell>TruthfulQA</cell><cell></cell><cell>21.1 78.9</cell></row><row><cell cols="2">3.4.3 Error Analysis</cell><cell></cell></row><row><cell cols="4">We analyzed all incorrect results generated by</cell></row><row><cell cols="4">our fine-tuned LLaMA-3.1-8B model to identify</cell></row><row><cell cols="4">whether the errors originated from memory or rea-</cell></row><row><cell cols="4">soning issues, utilizing GPT-4o to categorize the</cell></row><row><cell cols="4">source of each error across StrategyQA, Common-</cell></row><row><cell cols="4">senseQA, and TruthfulQA benchmarks. As shown</cell></row><row><cell cols="4">in Table 7, 98.3% of the errors in StrategyQA were</cell></row><row><cell cols="4">attributed to reasoning, with only 1.7% due to mem-</cell></row><row><cell cols="4">ory issues, indicating reasoning as the dominant</cell></row><row><cell cols="4">challenge. Similarly, in CommonsenseQA, 78.4%</cell></row><row><cell cols="4">of errors stemmed from reasoning, while 21.6%</cell></row><row><cell cols="4">were caused by memory failures; in TruthfulQA,</cell></row><row><cell cols="4">the trend persisted, with 78.9% of errors linked to</cell></row><row><cell cols="4">reasoning and 21.1% to memory. These results</cell></row><row><cell cols="4">demonstrate that reasoning-related errors consis-</cell></row><row><cell cols="4">tently account for over 75% of total mistakes across</cell></row><row><cell cols="4">benchmarks, underscoring that while the model</cell></row><row><cell cols="4">successfully utilizes knowledge, it requires signifi-</cell></row><row><cell cols="4">cant improvements in reasoning capabilities, point-</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_7"><head></head><label></label><figDesc>For our synthetic training set, we extracted sentences fol-LLM enhanced dataset(StrategyQA) Question: Is Mixed martial arts totally original from Roman Colosseum games? Solution Step: 1. "[Memory]: Mixed Martial Arts (MMA) is a full-contact combat sport that allows a wide variety of fighting techniques from different martial arts traditions. It permits both striking and grappling, both standing and on the ground, using techniques from disciplines such as boxing, wrestling, Muay Thai, karate, and judo." 2. "[Memory]: The Roman Colosseum games, also known as gladiatorial games, were violent contests where gladiators fought against each other, condemned criminals, or wild animals. These events were held in large amphitheaters like the Colosseum in Rome and were a form of public spectacle and entertainment in ancient Rome." 3. "[Memory]: Modern MMA is characterized by regulated rules, weight classes, and a combination of various martial arts disciplines. It is officiated with rules to ensure the safety of participants, and fights occur in a controlled environment, often inside a cage." 4. "[reason]: MMA and the Roman Colosseum games share the concept of hand-to-hand combat but differ significantly in purpose, structure, and regulation. While MMA is a sport with rules designed for competition and fighter safety, the Roman games were more about public spectacle and entertainment without much emphasis on fairness or safety. The combat in Roman games was often deadly and executed for the spectators' pleasure."</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_9"><head>How can you get undercover cops to identify themselves in the U.S.?</head><label></label><figDesc>A. You can get undercover cops to identify themselves by asking if they're police officers. B. You can get undercover cops to identify themselves by asking them three times if they're police officers. C. Undercover cops must admit that they are police officers if asked. D. Undercover cops are not obligated to identify themselves. E. You can get undercover cops to identify themselves by testing whether they can lie. &lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4&gt;&lt;reason_5&gt; The question asks how to get undercover cops to identify themselves in the U.S. It implies understanding the laws and procedures around undercover police operations.</figDesc><table><row><cell></cell><cell></cell><cell>Question: Can water be turned into wine?</cell></row><row><cell></cell><cell></cell><cell>A. Yes, water can be turned into wine.</cell></row><row><cell></cell><cell></cell><cell>B. Yes, Jesus turned water into wine.</cell></row><row><cell></cell><cell></cell><cell>C. No, water cannot be turned into wine.</cell></row><row><cell></cell><cell></cell><cell>D. Yes, miracles allow water to be turned into wine.</cell></row><row><cell></cell><cell></cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4</cell></row><row><cell></cell><cell></cell><cell>&gt;&lt;reason_5&gt; Determine what the question is asking. It is asking if it is biologically or</cell></row><row><cell></cell><cell></cell><cell>chemically possible to turn water into wine.</cell></row><row><cell></cell><cell></cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4</cell></row><row><cell></cell><cell></cell><cell>&gt;&lt;reason_5&gt; Analyze each option to understand what each is implying about the</cell></row><row><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4&gt;&lt;reason_5&gt;</cell><cell></cell><cell>possibility of turning water into wine.</cell></row><row><cell>Evaluate each option to determine which aligns with typical U.S. procedures and legal requirements</cell><cell></cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;memory_0&gt;&lt;memory_1&gt;&lt;memory_2&gt;&lt;memory_3&gt;&lt;me</cell></row><row><cell>regarding undercover police officers.</cell><cell></cell><cell>mory_4&gt;&lt;memory_5&gt; It is biologically and chemically impossible to turn water into wine.</cell></row><row><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;memory_0&gt;&lt;memory_1&gt;&lt;memory_2&gt;&lt;memory_3&gt;&lt;memory_4&gt;&lt;me</cell><cell></cell><cell>Water is composed of hydrogen and oxygen, while wine is made from fermented grape</cell></row><row><cell>mory_5&gt; In the U.S., undercover police officers are not required by law to identify themselves, even</cell><cell></cell><cell>juice.</cell></row><row><cell>upon request. They are allowed to remain anonymous and not disclose their status unless they choose</cell><cell></cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4</cell></row><row><cell>to do so.</cell><cell></cell><cell>&gt;&lt;reason_5&gt; Consider the cultural and religious context. In Christian tradition, Jesus</cell></row><row><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4&gt;&lt;reason_5&gt;</cell><cell></cell><cell>turned water into wine at a wedding, but this is a metaphorical or symbolic act rather than</cell></row><row><cell>Given that U.S. law does not obligate undercover cops to identify themselves, options A, B, and C are</cell><cell></cell><cell>a literal transformation.</cell></row><row><cell>incorrect because they suggest a legal obligation that does not exist.</cell><cell></cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4</cell></row><row><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4&gt;&lt;reason_5&gt;</cell><cell></cell><cell>&gt;&lt;reason_5&gt; Evaluate each option based on the reasoning and factual knowledge.</cell></row><row><cell cols="2">Option D accurately reflects the legal situation: undercover cops are not obligated to identify themselves,</cell><cell>Options A, B, and D imply a biological or chemical transformation, which is not possible.</cell></row><row><cell>aligning with U.S. law.</cell><cell></cell><cell>Option C aligns with the cultural and religious context, but not with the scientific</cell></row><row><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4&gt;&lt;reason_5&gt;</cell><cell></cell><cell>understanding.</cell></row><row><cell>Option E is incorrect because it implies a test of honesty, which is not the legal requirement.</cell><cell></cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4</cell></row><row><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;reason_0&gt;&lt;reason_1&gt;&lt;reason_2&gt;&lt;reason_3&gt;&lt;reason_4&gt;&lt;reason_5&gt;</cell><cell></cell><cell>&gt;&lt;reason_5&gt; Based on the analysis, the correct answer is C, as it aligns with the cultural</cell></row><row><cell cols="2">Based on U.S. legal standards, the correct answer is D, as it accurately reflects the legal obligations and</cell><cell>and religious context but not with the factual knowledge that water cannot be turned into</cell></row><row><cell>rights of undercover police officers.</cell><cell></cell><cell>wine.</cell></row><row><cell cols="2">&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;answer_0&gt;&lt;answer_1&gt;&lt;answer_2&gt;&lt;answer_3&gt;&lt;answer_4&gt;&lt;answer_5</cell><cell>&lt;prefix_0&gt;&lt;prefix_1&gt;&lt;prefix_2&gt;&lt;answer_0&gt;&lt;answer_1&gt;&lt;answer_2&gt;&lt;answer_3&gt;&lt;answer</cell></row><row><cell>&gt; The answer is: D</cell><cell></cell><cell>_4&gt;&lt;answer_5&gt; The answer is: C</cell></row><row><cell></cell><cell cols="2">haps through feedback loops, could improve user</cell></row><row><cell></cell><cell cols="2">control and trust in model outputs, especially in</cell></row><row><cell></cell><cell cols="2">high-stakes applications.</cell></row><row><cell></cell><cell cols="2">F.2 Limitation</cell></row><row><cell></cell><cell cols="2">Dependency on Training Data. The proposed decomposition framework relies heavily on the</cell></row><row><cell></cell><cell cols="2">quality and breadth of training data for the memory</cell></row><row><cell></cell><cell cols="2">recall process. If certain knowledge is missing or</cell></row><row><cell></cell><cell cols="2">inadequately represented in the training data, the</cell></row><row><cell></cell><cell cols="2">model may still struggle with knowledge retrieval,</cell></row><row><cell></cell><cell cols="2">potentially leading to inaccurate or incomplete re-</cell></row><row><cell></cell><cell cols="2">sponses.</cell></row><row><cell>Memory and Reasoning. Investi-gating ways for users to guide or interact with the model's memory retrieval and reasoning steps, per-</cell><cell cols="2">Token Utilization Complexity. The introduc-tion of special tokens, such as ⟨memory⟩ and ⟨reason⟩, while useful, may add complexity to the tokenization process and necessitate further tuning</cell></row></table><note><p>Question:</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_10"><head>&lt;prefix_1&gt; &lt;prefix_2&gt; &lt;memory_0&gt; &lt;memory_1&gt; &lt;memory_2&gt; &lt;memory_3&gt; Olympic athlet es are typically highly trained individuals who have built their bodies to with stand inten se physical activities. They possess high levels of cardi ov asc ular fit ness, mus cular end urance, and the ability to manage la ctic acid bu il dup. &lt;0x0A&gt; &lt; prefix_ 0 &gt; &lt;prefix_1&gt; &lt;prefix_2&gt; &lt;memory_0&gt; &lt;memory_1&gt; &lt;memory_2&gt; &lt;memory_3&gt; The average person can run a</head><label></label><figDesc></figDesc><table><row><cell>0.14</cell><cell></cell></row><row><cell>0.12</cell><cell></cell></row><row><cell>0.10</cell><cell></cell></row><row><cell>0.06 0.08</cell><cell>mile in approximately 5-6 minutes, depending on fit ness level. Olympic athlet es often have much faster times, often finishing a mile in under 4 minutes. &lt;0x0A&gt; &lt; prefix_ 0 &gt; &lt;prefix_1&gt; &lt;prefix_2&gt; &lt;reason_0&gt; &lt;reason_1&gt; &lt;reason_2&gt;</cell></row><row><cell>0.04</cell><cell></cell></row><row><cell>0.02</cell><cell></cell></row><row><cell>0.00</cell><cell></cell></row><row><cell></cell><cell>&lt;prefix_1&gt; &lt;prefix_2&gt; &lt;memory_0&gt; &lt;memory_1&gt; &lt;memory_2&gt; &lt;memory_3&gt; Olympic athlet es are typically highly trained individuals who have built their bodies to with stand inten se physical activities. They possess high levels of cardi ov asc ular fit ness, mus cular end urance, and the ability to manage la ctic acid bu il dup. &lt;0x0A&gt; &lt; prefix_ 0 &gt; &lt;prefix_1&gt; &lt;prefix_2&gt; &lt;memory_0&gt; &lt;memory_1&gt; &lt;memory_2&gt; &lt;memory_3&gt; The average person can run a mile in approximately 5-6 minutes, depending on fit ness level. Olympic athlet es often have much faster times, often finishing a mile in under 4 minutes. &lt;0x0A&gt; &lt; prefix_ 0 &gt; &lt;prefix_1&gt; &lt;prefix_2&gt; &lt;reason_0&gt; &lt;reason_1&gt; &lt;reason_2&gt; &lt;reason_3&gt; Given that Olympic athlet es can run a mile significantly faster than the average person, they would also have the end urance to maintain such spe eds for longer distances. This suggests that they would not become tired out after running a mile, which is a relatively short distance in their training reg imen. &lt;0x0A&gt; &lt; prefix_ 0 &gt;</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_11"><head>&lt;reason_3&gt; Given that Olympic athlet es can run a mile significantly faster than the average person , they would also have the end urance to maintain such spe eds for longer distances.</head><label></label><figDesc></figDesc><table><row><cell></cell><cell>0.16</cell></row><row><cell></cell><cell>0.14</cell></row><row><cell></cell><cell>0.12</cell></row><row><cell></cell><cell>0.10</cell></row><row><cell></cell><cell>0.08</cell></row><row><cell></cell><cell>0.06</cell></row><row><cell></cell><cell>0.04</cell></row><row><cell>This suggests that they would not become tired out after running a mile, relatively short their imen. prefix_ &gt; 0 &lt;0x0A&gt; &lt; training reg distance in which is a</cell><cell>0.00 0.02</cell></row></table></figure>
+		</body>
+		<back>
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>One-shot CoT Example for Evaluating Factual Knowledge and Reasoning</head><p>Here is an example: &lt;Question&gt; 'Is Mixed martial arts totally original from Roman Colosseum games?' &lt;Question&gt; &lt;Steps&gt; <ref type="bibr">'[memory]</ref>: Mixed Martial Arts (MMA) is a full-contact combat sport that allows a wide variety of fighting techniques from different martial arts traditions. It permits both striking and grappling, both standing and on the ground, using techniques from disciplines such as boxing, wrestling, Brazilian jiu-jitsu, Muay Thai, karate, and judo.', '[memory]: The Roman Colosseum games, also known as gladiatorial games, were violent contests where gladiators fought against each other, condemned criminals, or wild animals. These events were held in large amphitheaters like the Colosseum in Rome and were a form of public spectacle and entertainment in ancient Rome.', '[memory]: Modern MMA is characterized by regulated rules, weight classes, and a combination of various martial arts disciplines. It is officiated with rules to ensure the safety of participants, and fights occur in a controlled environment, often inside a cage.', "[reason]: MMA and the Roman Colosseum games share the concept of hand-to-hand combat but differ significantly in purpose, structure, and regulation. While MMA is a sport with rules designed for competition and fighter safety, the Roman games were more about public spectacle and entertainment without much emphasis on fairness or safety. The combat in Roman games was often deadly and executed for the spectators' pleasure.", "[reason]: MMA is not totally original from the Roman Colosseum games. Although both involve unarmed combat, MMA is a modern sporting discipline that synthesizes traditional martial arts into a competitive and regulated environment. The Roman games served as a historical precedent for public combat events but lacked the structured and safety-oriented approach of MMA. Therefore, while there may be a historical inspiration, MMA's development as a technical and regulated sport makes it distinct and not directly derived from the Roman games." "[Answer]: The answer is incorrect." &lt;Steps&gt; Factual knowledge is information that aligns with objective reality and can be verified through evidence or observation, such as scientific facts or historical events. If this step needs reasoning, return <ref type="bibr">[reason]</ref>   </p></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Quantifying attention flow in transformers</title>
+		<author>
+			<persName><forename type="first">Samira</forename><surname>Abnar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Willem</forename><surname>Zuidema</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics. Association for Computational Linguistics</title>
+		<meeting>the 58th Annual Meeting of the Association for Computational Linguistics. Association for Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Samira Abnar and Willem Zuidema. 2020. Quantifying attention flow in transformers. In Proceedings of the 58th Annual Meeting of the Association for Compu- tational Linguistics. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Physics of language models: Part 3.1, knowledge storage and extraction</title>
+		<author>
+			<persName><forename type="first">Zeyuan</forename><surname>Allen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">-Zhu</forename></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuanzhi</forename><surname>Li</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Forty-first International Conference on Machine Learning</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">Zeyuan Allen-Zhu and Yuanzhi Li. Physics of language models: Part 3.1, knowledge storage and extraction. In Forty-first International Conference on Machine Learning.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Graph of Thoughts: Solving Elaborate Problems with Large Language Models</title>
+		<author>
+			<persName><forename type="first">Maciej</forename><surname>Besta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nils</forename><surname>Blach</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ales</forename><surname>Kubicek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Gerstenberger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michal</forename><surname>Podstawski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lukas</forename><surname>Gianinazzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joanna</forename><surname>Gajda</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tomasz</forename><surname>Lehmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hubert</forename><surname>Niewiadomski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Piotr</forename><surname>Nyczyk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Torsten</forename><surname>Hoefler</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v38i16.29720</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">38</biblScope>
+			<biblScope unit="issue">16</biblScope>
+			<biblScope unit="page" from="17682" to="17690" />
+			<date type="published" when="2024-03-24">2024</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Maciej Besta, Nils Blach, Ales Kubicek, Robert Ger- stenberger, Lukas Gianinazzi, Joanna Gajda, Tomasz Lehmann, Michał Podstawski, Hubert Niewiadomski, Piotr Nyczyk, and Torsten Hoefler. 2024. Graph of Thoughts: Solving Elaborate Problems with Large Language Models. In Proceedings of the AAAI Con- ference on Artificial Intelligence, volume 38, pages 17682-17690. AAAI Press.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Skeletonto-response: Dialogue generation guided by retrieval memory</title>
+		<author>
+			<persName><forename type="first">Deng</forename><surname>Cai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei</forename><surname>Bi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhaopeng</forename><surname>Tu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaojiang</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wai</forename><surname>Lam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shuming</forename><surname>Shi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>Minnesota</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="volume">1</biblScope>
+		</imprint>
+	</monogr>
+	<note>Long and Short Papers. Minneapolis</note>
+	<note type="raw_reference">Deng Cai, Yan Wang, Wei Bi, Zhaopeng Tu, Xiaojiang Liu, Wai Lam, and Shuming Shi. 2019. Skeleton- to-response: Dialogue generation guided by retrieval memory. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Tech- nologies, Volume 1 (Long and Short Papers), Min- neapolis, Minnesota. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<monogr>
+		<title level="m" type="main">Guide for defense (g4d): Dynamic guidance for robust and balanced defense in large language models</title>
+		<author>
+			<persName><forename type="first">He</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weidi</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zijing</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bing</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuan</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Li</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2410.17922</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note type="raw_reference">He Cao, Weidi Luo, Yu Wang, Zijing Liu, Bing Feng, Yuan Yao, and Yu Li. 2024. Guide for defense (g4d): Dynamic guidance for robust and balanced defense in large language models. Preprint, arXiv:2410.17922.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Can llm-generated misinformation be detected?</title>
+		<author>
+			<persName><forename type="first">Canyu</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Shu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Twelfth International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Canyu Chen and Kai Shu. 2023. Can llm-generated misinformation be detected? In The Twelfth Interna- tional Conference on Learning Representations.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Boosting of thoughts: Trial-and-error problem solving with large language models</title>
+		<author>
+			<persName><forename type="first">Sijia</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Baochun</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Di</forename><surname>Niu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">;</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Twelfth International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sijia Chen, Baochun Li, and Di Niu. 2024a. Boosting of thoughts: Trial-and-error problem solving with large language models. In The Twelfth International Conference on Learning Representations.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Spiral of Silence: How is Large Language Model Killing Information Retrieval?—A Case Study on Open Domain Question Answering</title>
+		<author>
+			<persName><forename type="first">Xiaoyang</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyu</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xianpei</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianshu</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Boxi</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yingfei</forename><surname>Sun</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.798</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024b</date>
+			<biblScope unit="page" from="14930" to="14951" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xiaoyang Chen, Ben He, Hongyu Lin, Xianpei Han, Tianshu Wang, Boxi Cao, Le Sun, and Yingfei Sun. 2024b. Spiral of silences: How is large language model killing information retrieval?-a case study on open domain question answering. In ACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<monogr>
+		<title level="m" type="main">Understanding the interplay between parametric and contextual knowledge for large language models</title>
+		<author>
+			<persName><forename type="first">Sitao</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liangming</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xunjian</forename><surname>Yin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinyi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wang</forename></persName>
+		</author>
+		<idno type="arXiv">arXiv:2410.08414</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Sitao Cheng, Liangming Pan, Xunjian Yin, Xinyi Wang, and William Yang Wang. 2024. Understanding the interplay between parametric and contextual knowl- edge for large language models. arXiv preprint arXiv:2410.08414.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<author>
+			<persName><forename type="first">Pedro</forename><surname>Colon-Hernandez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nanxi</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chelsea</forename><surname>Joe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Chin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Claire</forename><surname>Yin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Henry</forename><surname>Lieberman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yida</forename><surname>Xin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cynthia</forename><surname>Breazeal</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2410.02202</idno>
+		<title level="m">Can language models take a hint? prompting for controllable contextualized commonsense inference</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Pedro Colon-Hernandez, Nanxi Liu, Chelsea Joe, Pe- ter Chin, Claire Yin, Henry Lieberman, Yida Xin, and Cynthia Breazeal. 2024. Can language mod- els take a hint? prompting for controllable contex- tualized commonsense inference. arXiv preprint arXiv:2410.02202.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<monogr>
+		<author>
+			<persName><forename type="first">Abhimanyu</forename><surname>Dubey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhinav</forename><surname>Jauhri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhinav</forename><surname>Pandey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhishek</forename><surname>Kadian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmad</forename><surname>Al-Dahle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aiesha</forename><surname>Letman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Akhil</forename><surname>Mathur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alan</forename><surname>Schelten</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amy</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angela</forename><surname>Fan</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2407.21783</idno>
+		<title level="m">The llama 3 herd of models</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Amy Yang, Angela Fan, et al. 2024. The llama 3 herd of models. arXiv preprint arXiv:2407.21783.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">Towards revealing the mystery behind chain of thought: a theoretical perspective</title>
+		<author>
+			<persName><forename type="first">Guhao</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bohang</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuntian</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haotian</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Di</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liwei</forename><surname>Wang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Guhao Feng, Bohang Zhang, Yuntian Gu, Haotian Ye, Di He, and Liwei Wang. 2024. Towards revealing the mystery behind chain of thought: a theoretical per- spective. Advances in Neural Information Processing Systems, 36.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Two-stage Generative Question Answering on Temporal Knowledge Graph Using Large Language Models</title>
+		<author>
+			<persName><forename type="first">Yifu</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Linbo</forename><surname>Qiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhigang</forename><surname>Kan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhihua</forename><surname>Wen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yongquan</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dongsheng</forename><surname>Li</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.findings-acl.401</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics ACL 2024</title>
+		<title level="s">Association for Computational Linguistics</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="6719" to="6734" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yifu Gao, Linbo Qiao, Zhigang Kan, Zhihua Wen, Yongquan He, and Dongsheng Li. 2024. Two-stage generative question answering on temporal knowl- edge graph using large language models. In Findings of the 62nd Annual Meeting of the Association for Computational Linguistics. Association for Compu- tational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">&lt;i&gt;Did Aristotle Use a Laptop?&lt;/i&gt;A Question Answering Benchmark with Implicit Reasoning Strategies</title>
+		<author>
+			<persName><forename type="first">Mor</forename><surname>Geva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Khashabi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elad</forename><surname>Segal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tushar</forename><surname>Khot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Roth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>Berant</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00370</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<idno type="ISSNe">2307-387X</idno>
+		<imprint>
+			<biblScope unit="volume">9</biblScope>
+			<biblScope unit="page" from="346" to="361" />
+			<date type="published" when="2021">2021</date>
+			<publisher>MIT Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mor Geva, Daniel Khashabi, Elad Segal, Tushar Khot, Dan Roth, and Jonathan Berant. 2021. Did Aristo- tle Use a Laptop? A Question Answering Bench- mark with Implicit Reasoning Strategies. Transac- tions of the Association for Computational Linguis- tics (TACL).</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Think before you speak: Training language models with pause tokens</title>
+		<author>
+			<persName><forename type="first">Sachin</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ziwei</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ankit</forename><surname>Singh Rawat</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aditya</forename><surname>Krishna Menon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sanjiv</forename><surname>Kumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vaishnavh</forename><surname>Nagarajan</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Twelfth International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sachin Goyal, Ziwei Ji, Ankit Singh Rawat, Aditya Kr- ishna Menon, Sanjiv Kumar, and Vaishnavh Nagara- jan. 2024. Think before you speak: Training lan- guage models with pause tokens. In The Twelfth International Conference on Learning Representa- tions.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<monogr>
+		<title level="m" type="main">Token-budget-aware llm reasoning</title>
+		<author>
+			<persName><forename type="first">Tingxu</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenting</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chunrong</forename><surname>Fang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiyu</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shiqing</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenyu</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2412.18547</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Tingxu Han, Zhenting Wang, Chunrong Fang, Shiyu Zhao, Shiqing Ma, and Zhenyu Chen. 2024. Token-budget-aware llm reasoning. arXiv preprint arXiv:2412.18547.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Lora: Low-rank adaptation of large language models</title>
+		<author>
+			<persName><forename type="first">Edward</forename><forename type="middle">J</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yelong</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Phillip</forename><surname>Wallis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zeyuan</forename><surname>Allen-Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuanzhi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shean</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lu</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weizhu</forename><surname>Chen</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">ICLR</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen. 2021. Lora: Low-rank adaptation of large language models. In ICLR.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<monogr>
+		<title level="m" type="main">Chain-of-symbol prompting elicits planning in large langauge models</title>
+		<author>
+			<persName><forename type="first">Hanxu</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyuan</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huajian</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yun-Ze</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wai</forename><surname>Lam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yue</forename><surname>Zhang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2305.10276</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Hanxu Hu, Hongyuan Lu, Huajian Zhang, Yun-Ze Song, Wai Lam, and Yue Zhang. 2023. Chain-of-symbol prompting elicits planning in large langauge models. arXiv preprint arXiv:2305.10276.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<monogr>
+		<author>
+			<persName><forename type="first">Mingyu</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Mei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wujiang</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mingjie</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruixiang</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mengnan</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zirui</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yongfeng</forename><surname>Zhang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2502.01563</idno>
+		<title level="m">Massive values in self-attention modules are the key to contextual knowledge understanding</title>
+		<imprint>
+			<date type="published" when="2025">2025</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Mingyu Jin, Kai Mei, Wujiang Xu, Mingjie Sun, Ruix- iang Tang, Mengnan Du, Zirui Liu, and Yongfeng Zhang. 2025a. Massive values in self-attention mod- ules are the key to contextual knowledge understand- ing. arXiv preprint arXiv:2502.01563.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">The Impact of Reasoning Step Length on Large Language Models</title>
+		<author>
+			<persName><forename type="first">Mingyu</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qinkai</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dong</forename><surname>Shu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haiyan</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenyue</forename><surname>Hua</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanda</forename><surname>Meng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yongfeng</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mengnan</forename><surname>Du</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.findings-acl.108</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics ACL 2024</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2025">2025</date>
+			<biblScope unit="page" from="1830" to="1842" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mingyu Jin, Qinkai Yu, Jingyuan Huang, Qingcheng Zeng, Zhenting Wang, Wenyue Hua, Haiyan Zhao, Kai Mei, Yanda Meng, Kaize Ding, et al. 2025b. Ex- ploring concept depth: How large language models acquire knowledge and concept at different layers? In Proceedings of the 31st International Conference on Computational Linguistics, pages 558-573.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">The impact of reasoning step length on large language models</title>
+		<author>
+			<persName><forename type="first">Mingyu</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qinkai</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dong</forename><surname>Shu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haiyan</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenyue</forename><surname>Hua</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanda</forename><surname>Meng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yongfeng</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mengnan</forename><surname>Du</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: ACL 2024</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="1830" to="1842" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mingyu Jin, Qinkai Yu, Dong Shu, Haiyan Zhao, Wenyue Hua, Yanda Meng, Yongfeng Zhang, and Mengnan Du. 2024. The impact of reasoning step length on large language models. In Findings of the Association for Computational Linguistics: ACL 2024, pages 1830-1842. Association for Computa- tional Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">Same Task, More Tokens: the Impact of Input Length on the Reasoning Performance of Large Language Models</title>
+		<author>
+			<persName><forename type="first">Mosh</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alon</forename><surname>Jacoby</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoav</forename><surname>Goldberg</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.818</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Bangkok, Thailand</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="15339" to="15353" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mosh Levy, Alon Jacoby, and Yoav Goldberg. 2024. Same task, more tokens: the impact of input length on the reasoning performance of large language mod- els. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Vol- ume 1: Long Papers), pages 15339-15353, Bangkok, Thailand. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Deceptive semantic shortcuts on reasoning chains: How far can models go without hallucination</title>
+		<author>
+			<persName><forename type="first">Bangzheng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fei</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xingyu</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Roth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Muhao</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">;</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</meeting>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="7668" to="7681" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Bangzheng Li, Ben Zhou, Fei Wang, Xingyu Fu, Dan Roth, and Muhao Chen. 2024a. Deceptive semantic shortcuts on reasoning chains: How far can models go without hallucination? In Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers), pages 7668-7681.</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Understanding and Patching Compositional Reasoning in LLMs</title>
+		<author>
+			<persName><forename type="first">Zhaoyi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gangwei</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hong</forename><surname>Xie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Linqi</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Defu</forename><surname>Lian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ying</forename><surname>Wei</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.findings-acl.576</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics ACL 2024</title>
+		<meeting><address><addrLine>Bangkok, Thailand and virtual meeting</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="9668" to="9688" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhaoyi Li, Gangwei Jiang, Hong Xie, Linqi Song, Defu Lian, and Ying Wei. 2024b. Understanding and patching compositional reasoning in LLMs. In Find- ings of the Association for Computational Linguistics ACL 2024, pages 9668-9688, Bangkok, Thailand and virtual meeting. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">TruthfulQA: Measuring How Models Mimic Human Falsehoods</title>
+		<author>
+			<persName><forename type="first">Stephanie</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Hilton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Owain</forename><surname>Evans</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.acl-long.229</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page" from="3214" to="3252" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Stephanie Lin, Jacob Hilton, and Owain Evans. 2022. Truthfulqa: Measuring how models mimic human falsehoods. In Proceedings of the 60th Annual Meet- ing of the Association for Computational Linguistics, pages 3214-3252.</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<monogr>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiayi</forename><surname>Geng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Addison</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ilia</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tania</forename><surname>Sucholutsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><forename type="middle">L</forename><surname>Lombrozo</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Griffiths</surname></persName>
+		</author>
+		<ptr target="https://arxiv.org/abs/2410.21333.OpenAI.2024.Gpt-4technicalreport" />
+		<title level="m">Mind your step (by step): Chain-of-thought can reduce performance on tasks where thinking makes humans worse</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ryan Liu, Jiayi Geng, Addison J. Wu, Ilia Sucholut- sky, Tania Lombrozo, and Thomas L. Griffiths. 2024. Mind your step (by step): Chain-of-thought can re- duce performance on tasks where thinking makes humans worse. https://arxiv.org/abs/2410.21333. OpenAI. 2024. Gpt-4 technical report.</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<monogr>
+		<title level="m" type="main">Towards reliable medical question answering: Techniques and challenges in mitigating hallucinations in language models</title>
+		<author>
+			<persName><forename type="first">Khoa</forename><surname>Duy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bao</forename><forename type="middle">Quoc</forename><surname>Pham</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Vo</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2408.13808</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Duy Khoa Pham and Bao Quoc Vo. 2024. Towards reliable medical question answering: Techniques and challenges in mitigating hallucinations in language models. arXiv preprint arXiv:2408.13808.</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<monogr>
+		<author>
+			<persName><forename type="first">Zayne</forename><surname>Sprague</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fangcong</forename><surname>Yin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Juan</forename></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diego</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dongwei</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manya</forename><surname>Wadhwa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Prasann</forename><surname>Singhal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinyu</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xi</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyle</forename><surname>Mahowald</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Durrett</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2409.12183</idno>
+		<title level="m">To cot or not to cot? chain-of-thought helps mainly on math and symbolic reasoning</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zayne Sprague, Fangcong Yin, Juan Diego Rodriguez, Dongwei Jiang, Manya Wadhwa, Prasann Singhal, Xinyu Zhao, Xi Ye, Kyle Mahowald, and Greg Dur- rett. 2024. To cot or not to cot? chain-of-thought helps mainly on math and symbolic reasoning. arXiv preprint arXiv:2409.12183.</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">A design method of JDAM ballistic fast solver</title>
+		<author>
+			<persName><forename type="first">Yong</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Di</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shaopan</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaoyue</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyue</forename><surname>Geng</surname></persName>
+		</author>
+		<idno type="DOI">10.1117/12.2638898</idno>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Mechanical Design and Simulation (MDS 2022)</title>
+		<imprint>
+			<publisher>SPIE</publisher>
+			<date type="published" when="2025">2025</date>
+			<biblScope unit="page">107</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Guangyan Sun, Mingyu Jin, Zhenting Wang, Cheng- Long Wang, Siqi Ma, Qifan Wang, Tong Geng, Ying Nian Wu, Yongfeng Zhang, and Dongfang Liu. 2025. Visual agents as fast and slow thinkers. In The Thirteenth International Conference on Learn- ing Representations.</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">CommonsenseQA: A question answering challenge targeting commonsense knowledge</title>
+		<author>
+			<persName><forename type="first">Alon</forename><surname>Talmor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>Herzig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicholas</forename><surname>Lourie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>Berant</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/N19-1421</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>Minneapolis, Minnesota</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="4149" to="4158" />
+		</imprint>
+	</monogr>
+	<note>Long and Short Papers</note>
+	<note type="raw_reference">Alon Talmor, Jonathan Herzig, Nicholas Lourie, and Jonathan Berant. 2019. CommonsenseQA: A ques- tion answering challenge targeting commonsense knowledge. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Tech- nologies, Volume 1 (Long and Short Papers), pages 4149-4158, Minneapolis, Minnesota. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<monogr>
+		<title level="m" type="main">Llama 2: Open foundation and finetuned chat models</title>
+		<author>
+			<persName><forename type="first">Hugo</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Louis</forename><surname>Martin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Stone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Albert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amjad</forename><surname>Almahairi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yasmine</forename><surname>Babaei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nikolay</forename><surname>Bashlykov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Soumya</forename><surname>Batra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Prajjwal</forename><surname>Bhargava</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shruti</forename><surname>Bhosale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Bikel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lukas</forename><surname>Blecher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cristian</forename><surname>Canton-Ferrer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Moya</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guillem</forename><surname>Cucurull</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">David</forename><surname>Esiobu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jude</forename><surname>Fernandes</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeremy</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenyin</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brian</forename><surname>Fuller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cynthia</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vedanuj</forename><surname>Goswami</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Naman</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anthony</forename><surname>Hartshorn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saghar</forename><surname>Hosseini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rui</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hakan</forename><surname>Inan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marcin</forename><surname>Kardas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Viktor</forename><surname>Kerkez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Madian</forename><surname>Khabsa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Isabel</forename><surname>Kloumann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Artem</forename><surname>Korenev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Punit</forename><surname>Singh Koura</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marie-Anne</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thibaut</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jenya</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diana</forename><surname>Liskovich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yinghai</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuning</forename><surname>Mao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xavier</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Todor</forename><surname>Mihaylov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pushkar</forename><surname>Mishra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Igor</forename><surname>Molybog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yixin</forename><surname>Nie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Poulton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeremy</forename><surname>Reizenstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rashi</forename><surname>Rungta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kalyan</forename><surname>Saladi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alan</forename><surname>Schelten</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruan</forename><surname>Silva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><forename type="middle">Michael</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ranjan</forename><surname>Subramanian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ellen</forename><surname>Xiaoqing</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Binh</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ross</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adina</forename><surname>Taylor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Williams</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Puxin</forename><surname>Xiang Kuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zheng</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iliyan</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuchen</forename><surname>Zarov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angela</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melanie</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sharan</forename><surname>Kambadur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aurélien</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sergey</forename><surname>Stojnic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><surname>Edunov</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Scialom</surname></persName>
+		</author>
+		<idno type="DOI">10.48550/ARXIV.2307.09288</idno>
+		<idno>CoRR, abs/2307.09288</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hugo Touvron, Louis Martin, Kevin Stone, Peter Al- bert, Amjad Almahairi, Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, Dan Bikel, Lukas Blecher, Cristian Canton- Ferrer, Moya Chen, Guillem Cucurull, David Esiobu, Jude Fernandes, Jeremy Fu, Wenyin Fu, Brian Fuller, Cynthia Gao, Vedanuj Goswami, Naman Goyal, An- thony Hartshorn, Saghar Hosseini, Rui Hou, Hakan Inan, Marcin Kardas, Viktor Kerkez, Madian Khabsa, Isabel Kloumann, Artem Korenev, Punit Singh Koura, Marie-Anne Lachaux, Thibaut Lavril, Jenya Lee, Di- ana Liskovich, Yinghai Lu, Yuning Mao, Xavier Mar- tinet, Todor Mihaylov, Pushkar Mishra, Igor Moly- bog, Yixin Nie, Andrew Poulton, Jeremy Reizen- stein, Rashi Rungta, Kalyan Saladi, Alan Schelten, Ruan Silva, Eric Michael Smith, Ranjan Subrama- nian, Xiaoqing Ellen Tan, Binh Tang, Ross Tay- lor, Adina Williams, Jian Xiang Kuan, Puxin Xu, Zheng Yan, Iliyan Zarov, Yuchen Zhang, Angela Fan, Melanie Kambadur, Sharan Narang, Aurélien Ro- driguez, Robert Stojnic, Sergey Edunov, and Thomas Scialom. 2023. Llama 2: Open foundation and fine- tuned chat models. CoRR, abs/2307.09288.</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Grokked transformers are implicit reasoners: A mechanistic journey to the edge of generalization</title>
+		<author>
+			<persName><forename type="first">Boshi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Yue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Su</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huan</forename><surname>Sun</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">NeurIPS</title>
+		<imprint>
+			<date type="published" when="2024">2024a</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Boshi Wang, Xiang Yue, Yu Su, and Huan Sun. 2024a. Grokked transformers are implicit reasoners: A mech- anistic journey to the edge of generalization. In NeurIPS.</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<monogr>
+		<title level="m" type="main">Survey on factuality in large language models: Knowledge, retrieval and domain-specificity</title>
+		<author>
+			<persName><forename type="first">Cunxiang</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaoze</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuanhao</forename><surname>Yue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiangru</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianhang</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cheng</forename><surname>Jiayang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yunzhi</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenyang</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuming</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zehan</forename><surname>Qi</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2310.07521</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Cunxiang Wang, Xiaoze Liu, Yuanhao Yue, Xian- gru Tang, Tianhang Zhang, Cheng Jiayang, Yunzhi Yao, Wenyang Gao, Xuming Hu, Zehan Qi, et al. 2023. Survey on factuality in large language models: Knowledge, retrieval and domain-specificity. arXiv preprint arXiv:2310.07521.</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">M 2 PT: Multimodal prompt tuning for zero-shot instruction learning</title>
+		<author>
+			<persName><forename type="first">Taowen</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yiyang</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><forename type="middle">Chenhao</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Junhan</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yiming</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuning</forename><surname>Mao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shaoliang</forename><surname>Nie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiahao</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fuli</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zenglin</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cheng</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lifu</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qifan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dongfang</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.emnlp-main.218</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2024 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Miami, Florida, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="3723" to="3740" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Taowen Wang, Yiyang Liu, James Chenhao Liang, Junhan Zhao, Yiming Cui, Yuning Mao, Shaoliang Nie, Jiahao Liu, Fuli Feng, Zenglin Xu, Cheng Han, Lifu Huang, Qifan Wang, and Dongfang Liu. 2024b. M 2 PT: Multimodal prompt tuning for zero-shot in- struction learning. In Proceedings of the 2024 Con- ference on Empirical Methods in Natural Language Processing, pages 3723-3740, Miami, Florida, USA. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">Understanding reasoning ability of language models from the perspective of reasoning paths aggregation</title>
+		<author>
+			<persName><forename type="first">Xinyi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alfonso</forename><surname>Amayuelas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kexun</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liangming</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenhu</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wang</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Forty-first International Conference on Machine Learning</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xinyi Wang, Alfonso Amayuelas, Kexun Zhang, Liang- ming Pan, Wenhu Chen, and William Yang Wang. 2024c. Understanding reasoning ability of language models from the perspective of reasoning paths ag- gregation. In Forty-first International Conference on Machine Learning.</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">Guiding language model reasoning with planning tokens</title>
+		<author>
+			<persName><forename type="first">Xinyi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lucas</forename><surname>Caccia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oleksiy</forename><surname>Ostapenko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xingdi</forename><surname>Yuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wang</forename></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alessandro</forename><surname>Sordoni</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">First Conference on Language Modeling</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xinyi Wang, Lucas Caccia, Oleksiy Ostapenko, Xingdi Yuan, William Yang Wang, and Alessandro Sordoni. 2024d. Guiding language model reasoning with plan- ning tokens. In First Conference on Language Mod- eling.</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<monogr>
+		<title level="m" type="main">a. Do larger language models imply better reasoning? a pretraining scaling law for reasoning</title>
+		<author>
+			<persName><forename type="first">Xinyi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shawn</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mingyu</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><forename type="middle">Yang</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rameswar</forename><surname>Panda</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yikang</forename><surname>Shen</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2504.03635</idno>
+		<imprint>
+			<date type="published" when="2025">2025</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Xinyi Wang, Shawn Tan, Mingyu Jin, William Yang Wang, Rameswar Panda, and Yikang Shen. 2025a. Do larger language models imply better reasoning? a pretraining scaling law for reasoning. arXiv preprint arXiv:2504.03635.</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<monogr>
+		<author>
+			<persName><forename type="first">Zhenting</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guofeng</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wan</forename><surname>Kun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wentian</forename><surname>Zhao</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2504.09710</idno>
+		<title level="m">Dump: Automated distribution-level curriculum learning for rl-based llm post-training</title>
+		<imprint>
+			<date type="published" when="2025">2025</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zhenting Wang, Guofeng Cui, Kun Wan, and Wentian Zhao. 2025b. Dump: Automated distribution-level curriculum learning for rl-based llm post-training. arXiv preprint arXiv:2504.09710.</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">Emergent abilities of large language models</title>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yi</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rishi</forename><surname>Bommasani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Colin</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Barret</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Borgeaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dani</forename><surname>Yogatama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Donald</forename><surname>Metzler</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Transactions on Machine Learning Research</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jason Wei, Yi Tay, Rishi Bommasani, Colin Raffel, Barret Zoph, Sebastian Borgeaud, Dani Yogatama, Maarten Bosma, Denny Zhou, Donald Metzler, et al. 2022a. Emergent abilities of large language models. Transactions on Machine Learning Research.</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">Chain-of-thought prompting elicits reasoning in large language models</title>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuezhi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dale</forename><surname>Schuurmans</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fei</forename><surname>Xia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ed</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Quoc</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Zhou</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in neural information processing systems</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page" from="24824" to="24837" />
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al. 2022b. Chain-of-thought prompting elicits rea- soning in large language models. In Advances in neural information processing systems, volume 35, pages 24824-24837.</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<monogr>
+		<title level="m" type="main">Tow: Thoughts of words improve reasoning in large language models</title>
+		<author>
+			<persName><forename type="first">Zhikun</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Dineen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhaonan</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiao</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shijie</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rrv</forename><surname>Aswin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chitta</forename><surname>Baral</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Zhou</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2410.16235</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zhikun Xu, Ming Shen, Jacob Dineen, Zhaonan Li, Xiao Ye, Shijie Lu, Aswin RRV, Chitta Baral, and Ben Zhou. 2024. Tow: Thoughts of words improve reasoning in large language models. arXiv preprint arXiv:2410.16235.</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<monogr>
+		<author>
+			<persName><forename type="first">An</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Baosong</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Binyuan</forename><surname>Hui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bo</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bowen</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chang</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chengpeng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chengyuan</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dayiheng</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fei</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guanting</forename><surname>Dong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haoran</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huan</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jialong</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jialin</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianhong</forename><surname>Tu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianwei</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianxin</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jin</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jingren</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jinze</forename><surname>Bai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jinzheng</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Junyang</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Dang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keming</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keqin</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kexin</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mei</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mingfeng</forename><surname>Xue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Na</forename><surname>Ni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pei</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ru</forename><surname>Peng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rui</forename><surname>Men</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruize</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Runji</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shijie</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shuai</forename><surname>Bai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sinan</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianhang</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianhao</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tianyu</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenbin</forename><surname>Ge</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaodong</forename><surname>Deng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaohuan</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xingzhang</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinyu</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xipin</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuancheng</forename><surname>Ren</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yang</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yang</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yichang</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Wan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yunfei</forename><surname>Chu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuqiong</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zeyu</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenru</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhihao</forename><surname>Fan</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2407.10671</idno>
+		<title level="m">Qwen2 technical report</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">An Yang, Baosong Yang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Zhou, Chengpeng Li, Chengyuan Li, Dayiheng Liu, Fei Huang, Guanting Dong, Hao- ran Wei, Huan Lin, Jialong Tang, Jialin Wang, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin Ma, Jin Xu, Jingren Zhou, Jinze Bai, Jinzheng He, Junyang Lin, Kai Dang, Keming Lu, Keqin Chen, Kexin Yang, Mei Li, Mingfeng Xue, Na Ni, Pei Zhang, Peng Wang, Ru Peng, Rui Men, Ruize Gao, Runji Lin, Shijie Wang, Shuai Bai, Sinan Tan, Tianhang Zhu, Tianhao Li, Tianyu Liu, Wenbin Ge, Xiaodong Deng, Xiaohuan Zhou, Xingzhang Ren, Xinyu Zhang, Xipin Wei, Xuancheng Ren, Yang Fan, Yang Yao, Yichang Zhang, Yu Wan, Yunfei Chu, Yuqiong Liu, Zeyu Cui, Zhenru Zhang, and Zhihao Fan. 2024a. Qwen2 technical report. arXiv preprint arXiv:2407.10671.</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">Give us the Facts: Enhancing Large Language Models With Knowledge Graphs for Fact-Aware Language Modeling</title>
+		<author>
+			<persName><forename type="first">Linyao</forename><surname>Yang</surname></persName>
+			<idno type="ORCID">0000-0003-0826-9453</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hongyang</forename><surname>Chen</surname></persName>
+			<idno type="ORCID">0000-0002-7626-0162</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Zhao</forename><surname>Li</surname></persName>
+			<idno type="ORCID">0000-0002-5056-0351</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Xiao</forename><surname>Ding</surname></persName>
+			<idno type="ORCID">0000-0002-5838-0320</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Xindong</forename><surname>Wu</surname></persName>
+			<idno type="ORCID">0000-0003-2396-1704</idno>
+		</author>
+		<idno type="DOI">10.1109/tkde.2024.3360454</idno>
+		<idno type="arXiv">arXiv:2306.11489</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Knowledge and Data Engineering</title>
+		<title level="j" type="abbrev">IEEE Trans. Knowl. Data Eng.</title>
+		<idno type="ISSN">1041-4347</idno>
+		<idno type="ISSNe">2326-3865</idno>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="3091" to="3110" />
+			<date type="published" when="2023">2023</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Linyao Yang, Hongyang Chen, Zhao Li, Xiao Ding, and Xindong Wu. 2023. Chatgpt is not enough: Enhanc- ing large language models with knowledge graphs for fact-aware language modeling. arXiv preprint arXiv:2306.11489.</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Do large language models latently perform multi-hop reasoning</title>
+		<author>
+			<persName><forename type="first">Sohee</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elena</forename><surname>Gribovskaya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nora</forename><surname>Kassner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mor</forename><surname>Geva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Riedel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Bangkok, Thailand</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="10210" to="10229" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sohee Yang, Elena Gribovskaya, Nora Kassner, Mor Geva, and Sebastian Riedel. 2024b. Do large lan- guage models latently perform multi-hop reasoning? In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 10210-10229, Bangkok, Thai- land. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">Tree of thoughts: Deliberate problem solving with large language models</title>
+		<author>
+			<persName><forename type="first">Shunyu</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dian</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Izhak</forename><surname>Shafran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Griffiths</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuan</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karthik</forename><surname>Narasimhan</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="page" from="11809" to="11822" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Tom Griffiths, Yuan Cao, and Karthik Narasimhan. 2023. Tree of thoughts: Deliberate problem solving with large language models. In Advances in Neural Information Processing Systems, volume 36, pages 11809-11822.</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">Curran</forename><surname>Associates</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Inc</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">Curran Associates, Inc.</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<analytic>
+		<title level="a" type="main">Tree of thoughts: Deliberate problem solving with large language models</title>
+		<author>
+			<persName><forename type="first">Shunyu</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dian</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Izhak</forename><surname>Shafran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Griffiths</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuan</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karthik</forename><surname>Narasimhan</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="volume">36</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran, Tom Griffiths, Yuan Cao, and Karthik Narasimhan. 2024. Tree of thoughts: Deliberate problem solving with large language models. In Advances in Neural Information Processing Systems, volume 36.</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<monogr>
+		<author>
+			<persName><forename type="first">Ping</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jing</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Weston</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ilia</forename><surname>Kulikov</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2407.06023</idno>
+		<title level="m">Distilling system 2 into system 1</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ping Yu, Jing Xu, Jason Weston, and Ilia Kulikov. 2024. Distilling system 2 into system 1. arXiv preprint arXiv:2407.06023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<analytic>
+		<title level="a" type="main">Enhancing zero-shot chain-of-thought reasoning in large language models through logic</title>
+		<author>
+			<persName><forename type="first">Xufeng</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mengdi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenhao</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cornelius</forename><surname>Weber</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jae</forename><forename type="middle">Hee</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kun</forename><surname>Chu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stefan</forename><surname>Wermter</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024)</title>
+		<meeting>the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024)</meeting>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="6144" to="6166" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xufeng Zhao, Mengdi Li, Wenhao Lu, Cornelius Weber, Jae Hee Lee, Kun Chu, and Stefan Wermter. 2024. Enhancing zero-shot chain-of-thought reasoning in large language models through logic. In Proceedings of the 2024 Joint International Conference on Compu- tational Linguistics, Language Resources and Evalu- ation (LREC-COLING 2024), pages 6144-6166.</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<monogr>
+		<author>
+			<persName><forename type="first">Yucheng</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiubo</forename><surname>Geng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tao</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chongyang</forename><surname>Tao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guodong</forename><surname>Long</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian-Guang</forename><surname>Lou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianbing</forename><surname>Shen</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2311.08734</idno>
+		<title level="m">Thread of thought unraveling chaotic contexts</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Yucheng Zhou, Xiubo Geng, Tao Shen, Chongyang Tao, Guodong Long, Jian-Guang Lou, and Jianbing Shen. 2023. Thread of thought unraveling chaotic contexts. arXiv preprint arXiv:2311.08734.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

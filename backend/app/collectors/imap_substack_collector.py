@@ -13,11 +13,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 import html2text
-from sqlalchemy.orm import Session
 from dotenv import load_dotenv
-
-from app.models import get_db
-from app.models.substack import SubstackAuthor, SubstackArticle, SubstackCollection
 
 load_dotenv()
 
@@ -25,7 +21,6 @@ class IMAPSubstackCollector:
     """Collect Substack newsletters via IMAP"""
     
     def __init__(self, db_session: Session = None):
-        self.db = db_session or next(get_db())
         self.imap = None
         
         # HTML to Markdown converter
@@ -419,7 +414,6 @@ def main():
         articles = collector.collect_newsletters(args.max)
         
         # Show summary
-        db = next(get_db())
         total = db.query(SubstackArticle).count()
         authors = db.query(SubstackAuthor).count()
         

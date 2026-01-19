@@ -10,14 +10,25 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   Tabs,
   TabsContent,
@@ -34,7 +45,6 @@ import {
   X,
   Search,
   RefreshCw,
-  Download,
   Upload,
   Sparkles,
   Bot,
@@ -47,14 +57,21 @@ import {
   Loader2,
   Link2,
   Twitter,
-  FileText
+  FileText,
+  GitBranch,
+  FileJson,
+  FileDown,
+  FileUp,
+  CheckSquare
 } from 'lucide-react'
+import OntologyGraph from './OntologyGraph'
+import { OrphanTagAssigner } from './OrphanTagAssigner'
 import OntologyAISuggestions from './OntologyAISuggestions'
-import TagReorganizer from './TagReorganizer'
+import TagReorganizerPersistent from './TagReorganizerPersistent'
 import { cn } from "@/lib/utils"
 
 interface TagConcept {
-  id: number
+  id: string  // v2 uses string IDs like "c_0001"
   tag: string
   display_name: string
   description: string | null
@@ -62,33 +79,49 @@ interface TagConcept {
   descendant_count: number
   synonyms: string[]
   children?: TagConcept[]
+  entity_type?: string  // Added for v2
+  icon?: string  // Added for v2
+  color?: string  // Added for v2
 }
 
 interface ConceptDetails {
-  id: number
+  id: string  // v2 uses string IDs
   tag: string
   display_name: string
   description: string | null
-  parent_id: number | null
-  parent?: {
-    id: number
+  parent_id: string | null  // v2 uses string IDs - first parent for compatibility
+  parent?: {  // Single parent for backward compatibility
+    id: string
     tag: string
     display_name: string
   }
+  parent_details?: Array<{  // All parents for poly-hierarchy
+    id: string
+    tag: string
+    display_name: string
+    icon?: string
+    color?: string
+  }>
   children?: Array<{
-    id: number
+    id: string  // v2 uses string IDs
     tag: string
     display_name: string
     child_count: number
+    icon?: string
+    color?: string
   }>
   level: number
   child_count: number
   descendant_count: number
   synonyms: string[]
+  entity_type?: string
+  icon?: string
+  color?: string
   path: string
   usage_stats?: {
     tweet_count: number
     article_count: number
+    paper_count: number
     total_count: number
   }
 }
@@ -108,7 +141,7 @@ export default function TagOntologyModern() {
     tag: '',
     display_name: '',
     description: '',
-    parent_id: null as number | null
+    parent_id: '' as string
   })
   
   const [newSynonym, setNewSynonym] = useState('')
@@ -146,10 +179,18 @@ export default function TagOntologyModern() {
     }
   }
 
-  const fetchConceptDetails = async (conceptId: number) => {
+  const fetchConceptDetails = async (conceptId: string) => {
     try {
       const response = await axios.get(`http://localhost:8000/api/ontology/concept/${conceptId}`)
-      setSelectedConcept(response.data)
+      // Ensure all fields have default values to prevent controlled/uncontrolled warnings
+      setSelectedConcept({
+        ...response.data,
+        tag: response.data.tag || '',
+        display_name: response.data.display_name || '',
+        description: response.data.description || '',
+        level: response.data.level || 0,
+        path: response.data.path || ''
+      })
     } catch (error) {
       console.error('Error fetching concept details:', error)
       setErrorMessage('Failed to load concept details')
@@ -159,13 +200,17 @@ export default function TagOntologyModern() {
   const createConcept = async () => {
     setActionLoading(true)
     try {
-      await axios.post('http://localhost:8000/api/ontology/concept', newConceptForm)
+      const conceptData = {
+        ...newConceptForm,
+        parent_id: newConceptForm.parent_id || null
+      }
+      await axios.post('http://localhost:8000/api/ontology/concept', conceptData)
       fetchOntologyTree()
       setNewConceptForm({
         tag: '',
         display_name: '',
         description: '',
-        parent_id: null
+        parent_id: ''
       })
       setSuccessMessage('Concept created successfully!')
     } catch (error: any) {
@@ -238,7 +283,87 @@ export default function TagOntologyModern() {
     setExpandedNodes(newExpanded)
   }
 
-  const renderTreeNode = (node: TagConcept, level: number = 0) => {
+  const exportOntology = async (includeInstances: boolean = false) => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/tags/io/export', {
+        params: {
+          include_instances: includeInstances,
+          include_proposals: false
+        }
+      })
+      
+      // Create a blob and download
+      const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5)
+      a.href = url
+      a.download = `tag_ontology_export_${timestamp}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      
+      setSuccessMessage(`Exported ${response.data.metadata.total_concepts} concepts successfully!`)
+    } catch (error: any) {
+      setErrorMessage(`Export failed: ${error.response?.data?.detail || error.message}`)
+    }
+  }
+
+  const importOntology = async (file: File, mergeMode: string = 'replace') => {
+    setActionLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('merge_mode', mergeMode)
+      formData.append('validate_before_import', 'true')
+      formData.append('backup_existing', 'true')
+      
+      const response = await axios.post('http://localhost:8000/api/tags/io/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      
+      if (response.data.success) {
+        setSuccessMessage(
+          `Import successful! Imported ${response.data.concepts_imported} concepts, ` +
+          `${response.data.aliases_imported} aliases, ${response.data.relations_imported} relations`
+        )
+        // Refresh the tree
+        fetchOntologyTree()
+      } else {
+        setErrorMessage(`Import failed: ${response.data.errors.join(', ')}`)
+      }
+    } catch (error: any) {
+      setErrorMessage(`Import failed: ${error.response?.data?.detail || error.message}`)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const validateOntology = async () => {
+    setActionLoading(true)
+    try {
+      const response = await axios.get('http://localhost:8000/api/tags/io/validate')
+      
+      if (response.data.valid) {
+        setSuccessMessage('Ontology validation passed! No issues found.')
+      } else {
+        const issues = response.data.issues.slice(0, 5).join('\n')
+        const warnings = response.data.warnings.slice(0, 5).join('\n')
+        setErrorMessage(
+          `Validation found ${response.data.summary.critical_issues} issues and ${response.data.summary.warnings} warnings:\n${issues}\n${warnings}`
+        )
+      }
+    } catch (error: any) {
+      setErrorMessage(`Validation failed: ${error.response?.data?.detail || error.message}`)
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const renderTreeNode = (node: TagConcept, level: number = 0, isLast: boolean = false, parentPath: string = "") => {
     const isExpanded = expandedNodes.has(node.id)
     const hasChildren = node.children && node.children.length > 0
     const matchesSearch = !searchTerm || 
@@ -248,11 +373,43 @@ export default function TagOntologyModern() {
 
     if (!matchesSearch && !hasChildren) return null
 
+    // Visual hierarchy indicators
+    const getEntityIcon = (entityType?: string) => {
+      switch(entityType) {
+        case 'person': return '👤'
+        case 'organisation': return '🏢'
+        case 'location': return '📍'
+        case 'model': return '🤖'
+        case 'dataset': return '📊'
+        case 'method': return '⚙️'
+        default: return null
+      }
+    }
+
+    const entityIcon = getEntityIcon(node.entity_type)
+
     return (
-      <div key={node.id} className="py-1">
+      <div key={node.id} className="relative">
+        {/* Tree lines for visual hierarchy */}
+        {level > 0 && (
+          <div 
+            className="absolute left-0 top-0 h-full w-px bg-border"
+            style={{ left: `${(level - 1) * 24 + 16}px` }}
+          />
+        )}
+        {level > 0 && (
+          <div 
+            className="absolute top-3 h-px bg-border"
+            style={{ 
+              left: `${(level - 1) * 24 + 16}px`,
+              width: '12px'
+            }}
+          />
+        )}
+        
         <div
           className={cn(
-            "flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer transition-colors",
+            "flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer transition-colors relative",
             selectedConcept?.id === node.id && "bg-accent"
           )}
           style={{ paddingLeft: `${level * 24 + 8}px` }}
@@ -260,7 +417,7 @@ export default function TagOntologyModern() {
         >
           {hasChildren && (
             <button 
-              className="p-0.5 hover:bg-background rounded"
+              className="p-0.5 hover:bg-background rounded z-10"
               onClick={(e) => {
                 e.stopPropagation()
                 toggleNode(node.id)
@@ -275,36 +432,51 @@ export default function TagOntologyModern() {
           )}
           {!hasChildren && <div className="w-5" />}
           
-          <Tag className="w-4 h-4 text-muted-foreground" />
+          {entityIcon ? (
+            <span className="text-base" title={node.entity_type}>{entityIcon}</span>
+          ) : (
+            <Tag className="w-4 h-4 text-muted-foreground" />
+          )}
           
           <div className="flex-1 flex items-center gap-2">
             <span className="font-medium">{node.display_name}</span>
-            <span className="text-xs text-muted-foreground">({node.tag})</span>
-            {node.descendant_count > 0 && (
+            {level === 0 && (
+              <Badge variant="default" className="text-xs">
+                Root
+              </Badge>
+            )}
+            {node.child_count > 0 && (
               <Badge variant="secondary" className="text-xs">
-                {node.descendant_count} descendants
+                {node.child_count} {node.child_count === 1 ? 'child' : 'children'}
               </Badge>
             )}
             {node.synonyms.length > 0 && (
-              <div className="flex gap-1">
-                {node.synonyms.slice(0, 3).map(s => (
-                  <Badge key={s} variant="outline" className="text-xs">
-                    {s}
-                  </Badge>
-                ))}
-                {node.synonyms.length > 3 && (
+              <Tooltip>
+                <TooltipTrigger>
                   <Badge variant="outline" className="text-xs">
-                    +{node.synonyms.length - 3}
+                    {node.synonyms.length} synonyms
                   </Badge>
-                )}
-              </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-xs">
+                    {node.synonyms.join(', ')}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>
         
         {isExpanded && hasChildren && (
-          <div>
-            {node.children!.map(child => renderTreeNode(child, level + 1))}
+          <div className="relative">
+            {node.children!.map((child, index) => 
+              renderTreeNode(
+                child, 
+                level + 1, 
+                index === node.children!.length - 1,
+                `${parentPath}${node.id}/`
+              )
+            )}
           </div>
         )}
       </div>
@@ -348,6 +520,7 @@ export default function TagOntologyModern() {
   }
 
   return (
+    <TooltipProvider>
     <div className="max-w-full mx-auto p-6 space-y-6">
       {/* Header */}
       <Card>
@@ -356,10 +529,10 @@ export default function TagOntologyModern() {
             <div>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <FolderTree className="w-6 h-6" />
-                Tag Ontology Manager
+                Concept Hierarchy Manager
               </CardTitle>
               <CardDescription>
-                Organize and manage your tag hierarchy with AI assistance
+                Organize and manage your concept hierarchy with AI assistance
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -367,17 +540,17 @@ export default function TagOntologyModern() {
                 <DialogTrigger asChild>
                   <Button variant="outline" className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
-                    Gemini Reorganizer
+                    Concept Reorganizer
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
                   <DialogHeader>
-                    <DialogTitle>Tag Reorganizer - Gemini 2.5 Pro</DialogTitle>
+                    <DialogTitle>Concept Reorganizer - Persistent & Recoverable</DialogTitle>
                     <DialogDescription>
-                      Use AI to reorganize and optimize your tag hierarchy
+                      AI-powered concept reorganization with automatic save and recovery. Results persist across browser sessions and server restarts.
                     </DialogDescription>
                   </DialogHeader>
-                  <TagReorganizer />
+                  <TagReorganizerPersistent />
                 </DialogContent>
               </Dialog>
 
@@ -401,6 +574,78 @@ export default function TagOntologyModern() {
                   />
                 </DialogContent>
               </Dialog>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" title="Export ontology">
+                    <FileDown className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => exportOntology(false)}>
+                    <FileJson className="w-4 h-4 mr-2" />
+                    Export Structure Only
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => exportOntology(true)}>
+                    <FileJson className="w-4 h-4 mr-2" />
+                    Export with Tag Instances
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" title="Import ontology from JSON">
+                    <FileUp className="w-4 h-4 mr-2" />
+                    Import
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Import Tag Ontology</DialogTitle>
+                    <DialogDescription>
+                      Upload a JSON file to import tag ontology structure
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="import-file">Select JSON file</Label>
+                      <Input
+                        id="import-file"
+                        type="file"
+                        accept=".json"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            importOntology(file, 'replace')
+                          }
+                        }}
+                      />
+                    </div>
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Importing will replace the current ontology. A backup will be created automatically.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button 
+                variant="outline"
+                onClick={validateOntology}
+                disabled={actionLoading}
+                title="Validate ontology consistency"
+              >
+                {actionLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <CheckSquare className="w-4 h-4 mr-2" />
+                )}
+                Validate
+              </Button>
 
               <Button 
                 variant="outline" 
@@ -451,7 +696,7 @@ export default function TagOntologyModern() {
         {/* Tree View */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle className="text-lg">Tag Hierarchy</CardTitle>
+            <CardTitle className="text-lg">Concept Hierarchy</CardTitle>
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -493,9 +738,17 @@ export default function TagOntologyModern() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="details" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="synonyms">Synonyms</TabsTrigger>
+                <TabsTrigger value="graph">
+                  <GitBranch className="w-4 h-4 mr-1" />
+                  Graph
+                </TabsTrigger>
+                <TabsTrigger value="orphans">
+                  <Tag className="w-4 h-4 mr-1" />
+                  Orphans
+                </TabsTrigger>
                 <TabsTrigger value="create">Create New</TabsTrigger>
               </TabsList>
 
@@ -564,15 +817,32 @@ export default function TagOntologyModern() {
                       <div className="grid gap-4">
                         {/* Basic Information */}
                         <div className="space-y-4">
-                          <div>
-                            <Label>Tag ID</Label>
-                            <Input value={selectedConcept.tag} disabled />
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">MongoDB _id</Label>
+                              <Input value={selectedConcept._id || selectedConcept.id || ''} disabled className="font-mono text-xs" />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Concept ID</Label>
+                              <Input value={selectedConcept.id || ''} disabled className="font-mono text-xs" />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Slug</Label>
+                              <Input value={selectedConcept.slug || selectedConcept.tag || ''} disabled className="font-mono text-xs" />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Entity Type</Label>
+                              <Input value={selectedConcept.entity_type || 'topic'} disabled className="text-xs" />
+                            </div>
                           </div>
 
                           <div>
                             <Label>Display Name</Label>
                             <Input 
-                              value={selectedConcept.display_name}
+                              value={selectedConcept.display_name || ''}
                               onChange={(e) => setSelectedConcept({
                                 ...selectedConcept,
                                 display_name: e.target.value
@@ -593,6 +863,36 @@ export default function TagOntologyModern() {
                               rows={3}
                             />
                           </div>
+
+                          {/* Metadata */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Created At</Label>
+                              <Input 
+                                value={selectedConcept.created_at ? new Date(selectedConcept.created_at).toLocaleString() : 'Unknown'} 
+                                disabled 
+                                className="text-xs" 
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-muted-foreground">Created By</Label>
+                              <Input value={selectedConcept.created_by || 'system'} disabled className="text-xs" />
+                            </div>
+                          </div>
+
+                          {/* Auto-generated and original tag */}
+                          {selectedConcept.auto_generated && (
+                            <div className="p-2 rounded-md bg-muted">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="secondary" className="text-xs">Auto-generated</Badge>
+                                {selectedConcept.original_tag_text && (
+                                  <span className="text-xs text-muted-foreground">
+                                    from: "{selectedConcept.original_tag_text}"
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <Separator />
@@ -601,18 +901,32 @@ export default function TagOntologyModern() {
                         <div className="space-y-4">
                           <h4 className="font-semibold text-sm">Hierarchy</h4>
                           
-                          {/* Parent Concept */}
-                          {selectedConcept.parent && (
+                          {/* Parent Concepts (can be multiple) */}
+                          {selectedConcept.parent_details && selectedConcept.parent_details.length > 0 && (
                             <div>
-                              <Label className="text-xs text-muted-foreground">Parent Concept</Label>
-                              <div 
-                                className="mt-1 p-2 rounded-md bg-muted hover:bg-accent cursor-pointer transition-colors flex items-center gap-2"
-                                onClick={() => fetchConceptDetails(selectedConcept.parent!.id)}
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                                <Tag className="w-4 h-4 text-muted-foreground" />
-                                <span className="font-medium">{selectedConcept.parent.display_name}</span>
-                                <span className="text-xs text-muted-foreground">({selectedConcept.parent.tag})</span>
+                              <Label className="text-xs text-muted-foreground">
+                                Parent Concept{selectedConcept.parent_details.length > 1 ? 's' : ''}
+                                {selectedConcept.parent_details.length > 1 && (
+                                  <span className="ml-1 text-primary">(poly-hierarchy)</span>
+                                )}
+                              </Label>
+                              <div className="mt-1 space-y-1">
+                                {selectedConcept.parent_details.map((parent: any) => (
+                                  <div 
+                                    key={parent.id}
+                                    className="p-2 rounded-md bg-muted hover:bg-accent cursor-pointer transition-colors flex items-center gap-2"
+                                    onClick={() => fetchConceptDetails(parent.id)}
+                                  >
+                                    <ChevronRight className="w-4 h-4" />
+                                    {parent.icon ? (
+                                      <span className="text-base">{parent.icon}</span>
+                                    ) : (
+                                      <Tag className="w-4 h-4 text-muted-foreground" />
+                                    )}
+                                    <span className="font-medium">{parent.display_name}</span>
+                                    <span className="text-xs text-muted-foreground">({parent.tag})</span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )}
@@ -647,11 +961,11 @@ export default function TagOntologyModern() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <Label className="text-xs text-muted-foreground">Level</Label>
-                              <Input value={selectedConcept.level} disabled className="mt-1" />
+                              <Input value={selectedConcept.level || ''} disabled className="mt-1" />
                             </div>
                             <div>
                               <Label className="text-xs text-muted-foreground">Path</Label>
-                              <Input value={selectedConcept.path} disabled className="mt-1" />
+                              <Input value={selectedConcept.path || ''} disabled className="mt-1" />
                             </div>
                           </div>
                         </div>
@@ -663,7 +977,7 @@ export default function TagOntologyModern() {
                           <h4 className="font-semibold text-sm">Usage Statistics</h4>
                           
                           {selectedConcept.usage_stats ? (
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 gap-4">
                               <Card>
                                 <CardContent className="p-4">
                                   <div className="flex items-center justify-between mb-2">
@@ -680,6 +994,15 @@ export default function TagOntologyModern() {
                                     <div className="text-2xl font-bold">{selectedConcept.usage_stats.article_count}</div>
                                   </div>
                                   <p className="text-xs text-muted-foreground">Articles</p>
+                                </CardContent>
+                              </Card>
+                              <Card>
+                                <CardContent className="p-4">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <FileText className="w-4 h-4 text-orange-500" />
+                                    <div className="text-2xl font-bold">{selectedConcept.usage_stats.paper_count || 0}</div>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">Papers</p>
                                 </CardContent>
                               </Card>
                               <Card>
@@ -778,6 +1101,16 @@ export default function TagOntologyModern() {
                 )}
               </TabsContent>
 
+              <TabsContent value="graph" className="space-y-4">
+                <div className="h-[600px]">
+                  <OntologyGraph />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="orphans" className="space-y-4">
+                <OrphanTagAssigner />
+              </TabsContent>
+
               <TabsContent value="create" className="space-y-4">
                 <div className="grid gap-4">
                   <div>
@@ -820,12 +1153,12 @@ export default function TagOntologyModern() {
                   <div>
                     <Label>Parent Concept (Optional)</Label>
                     <Input 
-                      type="number"
-                      placeholder="Parent concept ID"
-                      value={newConceptForm.parent_id || ''}
+                      type="text"
+                      placeholder="Parent concept ID (e.g., c_0001)"
+                      value={newConceptForm.parent_id}
                       onChange={(e) => setNewConceptForm({
                         ...newConceptForm,
-                        parent_id: e.target.value ? parseInt(e.target.value) : null
+                        parent_id: e.target.value
                       })}
                     />
                   </div>
@@ -854,5 +1187,6 @@ export default function TagOntologyModern() {
         </Card>
       </div>
     </div>
+    </TooltipProvider>
   )
 }

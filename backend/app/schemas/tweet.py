@@ -12,8 +12,10 @@ class MediaItem(BaseModel):
     height: Optional[int]
 
 class TagItem(BaseModel):
-    tag: str
+    tag: str  # The original tag (for backwards compatibility)
+    display_name: Optional[str] = None  # The human-readable display name
     type: str = "manual"
+    slug: Optional[str] = None  # The snake_case slug
 
 class TweetMetrics(BaseModel):
     likes: int

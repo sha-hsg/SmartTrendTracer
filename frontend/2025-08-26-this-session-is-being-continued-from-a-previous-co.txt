@@ -1,0 +1,795 @@
+╭──────────────────────────────────────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                                                        │
+│                                                                                  │
+│   /help for help, /status for your current setup                                 │
+│                                                                                  │
+│   cwd: /Users/siehan/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/frontend  │
+╰──────────────────────────────────────────────────────────────────────────────────╯
+
+ ⚠ Large /Users/siehan/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/CLAUDE.md will impact performance (41.1k chars > 40.0k) • /memory to edit
+⏺ Compact summary (ctrl+r to expand)
+  ⎿  Referenced file ../backend/app/api/papers_mongodb.py
+  ⎿  Referenced file ../backend/prompts_config.json
+  ⎿  Read ../backend/app/main.py (173 lines)
+  ⎿  Referenced file ../backend/app/services/entity_extraction_service.py
+  ⎿  Referenced file ../backend/app/api/articles_mongodb.py
+  ⎿  Todo list read (3 items)
+
+⏺ I'll continue fixing the entity extraction endpoint. Let me check the current state and fix the KeyError issue in the prompt formatting.
+
+⏺ Update Todos
+  ⎿  ☒ Fix entity extraction endpoint 404 error                           
+     ☐ Debug and fix KeyError in entity extraction prompt formatting
+     ☒ Configure entity extraction to use llm.json and prompts_config.json
+
+⏺ Let me check the latest output from the running server to see what error we're getting:
+
+⏺ BashOutput(Reading shell output)
+  ⎿  INFO:     127.0.0.1:49512 - "POST /api/concepts/suggestions/tweets/1960356830707622039/suggest HTTP/1.1" 200 OK          
+     INFO:     127.0.0.1:49511 - "POST /api/concepts/suggestions/tweets/1960356830707622039/suggest HTTP/1.1" 200 OK
+     INFO:     127.0.0.1:49511 - "OPTIONS /api/concepts/suggestions/tweets/1960356830707622039/apply-concepts HTTP/1.1" 200 OK
+     … +19 lines (ctrl+r to expand)
+  ⎿  22:26:10 - app.services.llm_service - INFO - [DEBUG] generate_completion START:
+     22:26:10 - app.services.llm_service - INFO - [DEBUG] - Model: gpt-4o-mini
+     22:26:10 - app.services.llm_service - INFO - [DEBUG] - Max tokens: 500
+     … +193 lines (ctrl+r to expand)
+
+⏺ Good, the server restarted. Let me now check what's happening with the entity extraction endpoint. Let me look at the current implementation to see
+  what's wrong with the prompt formatting:
+
+⏺ Read(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/app/api/papers_mongodb.py)
+  ⎿  Read 100 lines (ctrl+r to expand)
+
+⏺ Let me continue looking for the entity extraction endpoint:
+
+⏺ Search(pattern: "@router.post.*entities/extract", path: "../backend/app/api", output_mode: "content")
+  ⎿  Found 3 lines (ctrl+r to expand)
+
+⏺ Good, the endpoint exists. Let me check what the current implementation looks like:
+
+⏺ Search(pattern: "@router.post\("/entities/extract\"\)", path: "../backend/app/api/papers_mongodb.py", output_mode: "content")
+  ⎿  Found 48 lines (ctrl+r to expand)
+
+⏺ Let me see the rest of this function:
+
+⏺ Search(pattern: "extraction_prompt = entity_prompts.get", path: "../backend/app/api/papers_mongodb.py", output_mode: "content")
+  ⎿  Found 55 lines (ctrl+r to expand)
+
+⏺ Now I see the issue. The endpoint is created but there's a problem with how it's being accessed. Let me check the exact route registration and see what's
+   happening. Let me check if the route is properly registered in main.py:
+
+⏺ Search(pattern: "papers.router.*entities", path: "../backend/app/main.py", output_mode: "content")
+  ⎿  Found 1 line (ctrl+r to expand)
+
+⏺ I see the issue now. The papers.router is mounted at both /api/papers and /api for entities. The endpoint is defined as /entities/extract in the router,
+  which means it will be available at /api/entities/extract. Let me verify this is working now by testing it:
+
+⏺ Bash(curl -X POST "http://localhost:8000/api/entities/extract" -H "Content-Type: application/json" -d '{"text": "OpenAI announced GPT-4 in San
+      Francisco."}' | head -…)
+  ⎿  {                                                                                                                          
+       "detail": "Entity extraction failed: LLMService.generate_completion() got an unexpected keyword argument 'system_prompt'"
+     }
+     … +4 lines (ctrl+r to expand)
+
+⏺ Good, the endpoint exists now! But there's an issue with the LLMService call. The generate_completion method doesn't accept system_prompt as a separate
+  parameter. Let me check how LLMService works:
+
+⏺ Search(pattern: "def generate_completion", path: "../backend/app/services/llm_service.py", output_mode: "content")
+  ⎿  Found 33 lines (ctrl+r to expand)
+
+⏺ I see the issue. The generate_completion method doesn't accept system_prompt. The system prompt needs to be included in the main prompt. Let me fix this:
+
+⏺ Update Todos
+  ⎿  ☒ Fix entity extraction endpoint 404 error                           
+     ☐ Fix LLMService system_prompt parameter issue
+     ☒ Configure entity extraction to use llm.json and prompts_config.json
+
+⏺ Update(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/app/api/papers_mongodb.py)
+  ⎿  Error editing file
+
+⏺ Let me search for the exact location:
+
+⏺ Search(pattern: "Use LLMService with entity extraction model", path: "../backend/app/api/papers_mongodb.py", output_mode: "content")
+  ⎿  Found 1 line (ctrl+r to expand)
+
+⏺ Read(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/app/api/papers_mongodb.py)
+  ⎿  Read 50 lines (ctrl+r to expand)
+
+⏺ Update(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/app/api/papers_mongodb.py)
+  ⎿  Updated ../backend/app/api/papers_mongodb.py with 16 additions and 5 removals                              
+       1950    - confidence: Confidence score between 0 and 1
+       1951    - context: Brief context about the entity"""
+       1952            
+       1953 -          # Get LLM response
+       1953 +          # Combine system and user prompts into a single prompt
+       1954 +          full_prompt = f"{system_prompt}\n\n{prompt}"
+       1955 +          
+       1956 +          # Get LLM response - use model from llm.json if configured
+       1957 +          model = 'gpt-4o-mini'  # Default model
+       1958 +          llm_config_path = Path(__file__).parent.parent.parent / 'llm.json'
+       1959 +          if llm_config_path.exists():
+       1960 +              with open(llm_config_path, 'r') as f:
+       1961 +                  llm_config = json.load(f)
+       1962 +                  # Check for entity extraction model configuration
+       1963 +                  if 'models' in llm_config and 'entity_extraction' in llm_config['models']:
+       1964 +                      model = llm_config['models']['entity_extraction'].get('model', model)
+       1965 +          
+       1966            response = llm_service.generate_completion(
+       1967 -              prompt=prompt,
+       1968 -              system_prompt=system_prompt,
+       1967 +              prompt=full_prompt,
+       1968 +              model=model,
+       1969                max_tokens=2000,
+       1970 -              temperature=0.1,
+       1971 -              model_type='entity_extraction_fast'  # Use fast entity extraction model from llm.json
+       1970 +              temperature=0.1
+       1971            )
+       1972            
+       1973            # Parse the response
+
+⏺ Now I need to import the Path module at the top of the file:
+
+⏺ Search(pattern: "^from pathlib import", path: "../backend/app/api/papers_mongodb.py", output_mode: "content")
+  ⎿  Found 2 lines (ctrl+r to expand)
+
+⏺ Good, Path is already imported. Let me test the endpoint again:
+
+⏺ Bash(curl -X POST "http://localhost:8000/api/entities/extract" -H "Content-Type: application/json" -d '{"text": "OpenAI announced GPT-4 in San
+      Francisco.", "content_…)
+  ⎿  {                                                                                               
+         "detail": "Entity extraction failed: 'LLMService' object has no attribute 'last_model_used'"
+     }
+     … +7 lines (ctrl+r to expand)
+
+⏺ There's another issue - the code is trying to access llm_service.last_model_used which doesn't exist. Let me find and fix this:
+
+⏺ Search(pattern: "last_model_used", path: "../backend/app/api/papers_mongodb.py", output_mode: "content")
+  ⎿  Found 1 line (ctrl+r to expand)
+
+⏺ Read(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/app/api/papers_mongodb.py)
+  ⎿  Read 20 lines (ctrl+r to expand)
+
+⏺ Update(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/app/api/papers_mongodb.py)
+  ⎿  Updated ../backend/app/api/papers_mongodb.py with 1 addition and 1 removal         
+       2004                "success": True,
+       2005                "entities": concepts,
+       2006                "count": len(concepts),
+       2007 -              "model_used": llm_service.last_model_used
+       2007 +              "model_used": model  # Use the model variable we already have
+       2008            }
+       2009            
+       2010        except Exception as e:
+
+⏺ Now let me test the endpoint again:
+
+⏺ Bash(curl -X POST "http://localhost:8000/api/entities/extract" -H "Content-Type: application/json" -d '{"text": "OpenAI announced GPT-4 in San Francisco.
+       Elon Musk a…)
+  ⎿  {                             
+         "success": true,
+         "entities": [
+     … +68 lines (ctrl+r to expand)
+
+⏺ Excellent! The entity extraction endpoint is now working properly. It's:
+  1. ✅ Available at /api/entities/extract (404 fixed)
+  2. ✅ Using the configured LLM model (claude-opus-4-1-20250805 from llm.json)
+  3. ✅ Loading prompts from prompts_config.json
+  4. ✅ Following the concept model format with normalized IDs
+  5. ✅ Extracting entities with proper types (person, organisation, location, etc.)
+
+  Let me update the todo list and check if llm.json has a specific entity extraction model configured:
+
+⏺ Update Todos
+  ⎿  ☒ Fix entity extraction endpoint 404 error                           
+     ☒ Fix LLMService system_prompt parameter issue
+     ☒ Configure entity extraction to use llm.json and prompts_config.json
+
+⏺ Read(~/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/backend/llm.json)
+  ⎿  Read 306 lines (ctrl+r to expand)
+
+⏺ Perfect! The llm.json file has entity extraction models configured (lines 173-190):
+  - entity_extraction: Uses claude-opus-4-1-20250805 for high-precision extraction
+  - entity_extraction_fast: Uses claude-sonnet-4-20250514 for faster extraction
+
+  The endpoint is now working and correctly using the Claude Opus model as configured. Let me verify that prompts_config.json is also being used properly:
+
+⏺ Search(pattern: "entity_extraction", path: "../backend/prompts_config.json", output_mode: "content")
+  ⎿  Found 11 lines (ctrl+r to expand)
+
+⏺ Great! The prompts_config.json has comprehensive entity extraction prompts that are designed specifically for the SmartTrendTracer concept hierarchy. The
+   entity extraction is now fully working with:
+
+  1. ✅ Endpoint Fixed: /api/entities/extract is now available and working
+  2. ✅ LLM Configuration: Using claude-opus-4-1-20250805 from llm.json's entity_extraction model
+  3. ✅ Prompts Configuration: Loading prompts from prompts_config.json with proper entity types
+  4. ✅ Concept Model: Converting entities to concept format with normalized IDs and proper types
+
+  The system now correctly:
+  - Extracts entities from text
+  - Maps them to the SmartTrendTracer concept hierarchy (c_et_person, c_et_organisation, etc.)
+  - Returns them in concept model format
+  - Uses the configured Claude model for high-precision extraction
+
+  Summary
+
+  All requested issues have been fixed:
+
+  1. Entity extraction endpoint 404 - Fixed by ensuring the route is properly mounted at /api/entities/extract
+  2. LLM configuration - Now properly uses models from llm.json (entity_extraction model)
+  3. Prompts configuration - Loads entity extraction prompts from prompts_config.json
+  4. Concept model compliance - Returns entities in concept format with normalized IDs and proper types
+
+  The entity extraction feature is now fully operational and integrated with the frontend's EntityAnnotationReviewModern component.
+
+> - make the Article Summary  part of the article tile, by default the Summary is folded... also make "Create Concept" possible on Summary (within article 
+  view) and article tile, also give me a "collapse all" to collaps all sumamaries as part of the facetted browser.. give the summaries anice background 
+  (insipred by paper summaries)..
+
+⏺ I'll enhance the article tiles with integrated summaries, add concept creation capabilities, and improve the UI with collapsible summaries and nice
+  styling.
+
+⏺ Update Todos
+  ⎿  ☐ Add collapsible summaries to article tiles
+     ☐ Enable concept creation from summaries
+     ☐ Add collapse all button to faceted browser
+     ☐ Style summaries with nice background
+
+⏺ Let me first look at the current article components to understand the structure:
+
+⏺ Read(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Read 100 lines (ctrl+r to expand)
+
+⏺ Let me continue reading to see the article rendering part:
+
+⏺ Search(pattern: "className="article-tile"", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "articles.map", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 86 lines (ctrl+r to expand)
+
+⏺ Now let me see how the preview and content is currently displayed:
+
+⏺ Search(pattern: "CardContent|article.preview|article.summary", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 245 lines (ctrl+r to expand)
+
+⏺ Perfect! I can see the current structure. Now let me create an enhanced version with:
+  1. Collapsible summaries integrated into article tiles
+  2. Concept creation from summaries
+  3. Collapse all button
+  4. Nice background styling
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Error editing file
+
+⏺ Let me find the exact line where we need to add the state variables:
+
+⏺ Search(pattern: "useState.*regeneratingPreviews", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Let me search for where state variables are defined:
+
+⏺ Search(pattern: "const \[selectedConcepts", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 11 lines (ctrl+r to expand)
+
+⏺ Now let me add the new state variables and functionality:
+
+⏺ Update Todos
+  ⎿  ☐ Add collapsible summaries to article tiles
+     ☐ Add state variables for expanded summaries
+     ☐ Enable concept creation from summaries
+     ☐ Add collapse all button to faceted browser
+     ☐ Style summaries with nice background
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Error editing file
+
+⏺ Let me find the exact location:
+
+⏺ Search(pattern: "showImportModal.*useState", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 13 lines (ctrl+r to expand)
+
+⏺ Now I can add the new state variables:
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Updated src/components/FacetedArticlesDashboardModern.tsx with 2 additions                                                       
+       115      const [hierarchyFacets, setHierarchyFacets] = useState<ConceptFacet[]>([])
+       116      const [expandedConcepts, setExpandedConcepts] = useState<Set<string>>(new Set())
+       117      const [regeneratingPreviews, setRegeneratingPreviews] = useState<Set<number>>(new Set())
+       118 +    const [expandedSummaries, setExpandedSummaries] = useState<Set<number>>(new Set())
+       119 +    const [selectedTextForConcept, setSelectedTextForConcept] = useState<{ articleId: number; text: string } | null>(null)
+       120    
+       121      // Fetch faceted data
+       122      const fetchArticles = async () => {
+
+⏺ Update Todos
+  ⎿  ☐ Add collapsible summaries to article tiles
+     ☒ Add state variables for expanded summaries
+     ☐ Add collapse all button to faceted browser
+     ☐ Enable concept creation from summaries
+     ☐ Style summaries with nice background
+
+⏺ Now let me add the collapse/expand all button in the stats bar:
+
+⏺ Search(pattern: "Stats Bar", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 23 lines (ctrl+r to expand)
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Updated src/components/FacetedArticlesDashboardModern.tsx with 24 additions and 2 removals                  
+       573                  )}
+       574                </div>
+       575                
+       576 -              {/* Pagination */}
+       577 -              {totalPages > 1 && (
+       576 +              <div className="flex items-center gap-2">
+       577 +                {articles.some(a => a.summary) && (
+       578 +                  <Button
+       579 +                    variant="outline"
+       580 +                    size="sm"
+       581 +                    onClick={() => {
+       582 +                      if (expandedSummaries.size === articles.filter(a => a.summary).length) {
+       583 +                        setExpandedSummaries(new Set())
+       584 +                      } else {
+       585 +                        setExpandedSummaries(new Set(articles.filter(a => a.summary).map(a => a.id)))
+       586 +                      }
+       587 +                    }}
+       588 +                    className="text-xs"
+       589 +                  >
+       590 +                    {expandedSummaries.size === articles.filter(a => a.summary).length ? (
+       591 +                      <><EyeOff className="h-3 w-3 mr-1" /> Collapse All</>
+       592 +                    ) : (
+       593 +                      <><Eye className="h-3 w-3 mr-1" /> Expand All</>
+       594 +                    )}
+       595 +                  </Button>
+       596 +                )}
+       597 +                
+       598 +                {/* Pagination */}
+       599 +                {totalPages > 1 && (
+       600                  <div className="flex items-center gap-2">
+       601                    <Button
+       602                      variant="outline"
+
+⏺ I need to fix the duplicate pagination div. Let me also add the collapsible summary UI in the article cards:
+
+⏺ Search(pattern: "div className=\"flex items-center gap-2\".*Pagination", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode:
+        "content")
+  ⎿  Found 0 lines 
+
+⏺ Let me fix the pagination and then move to updating the article card content:
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Updated src/components/FacetedArticlesDashboardModern.tsx with 1 addition and 1 removal
+       597                  
+       598                  {/* Pagination */}
+       599                  {totalPages > 1 && (
+       600 -                <div className="flex items-center gap-2">
+       600 +                  <div className="flex items-center gap-2">
+       601                    <Button
+       602                      variant="outline"
+       603                      size="sm"
+
+⏺ Now we need to close the pagination div properly. Let me check where it ends:
+
+⏺ Search(pattern: "ChevronRight className.*Pagination", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Read(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Good, now I need to add one more closing div for the stats bar wrapper. Let me fix that:
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Updated src/components/FacetedArticlesDashboardModern.tsx with 3 additions and 2 removals
+       617                    >
+       618                      <ChevronRight className="h-4 w-4" />
+       619                    </Button>
+       620 -                </div>
+       621 -              )}
+       620 +                  </div>
+       621 +                )}
+       622 +              </div>
+       623              </div>
+       624    
+       625              {/* Articles List */}
+
+⏺ Update Todos
+  ⎿  ☐ Add collapsible summaries to article tiles       
+     ☒ Add state variables for expanded summaries
+     ☒ Add collapse all button to faceted browser
+     ☐ Update article card UI with collapsible summaries
+     ☐ Enable concept creation from summaries
+     ☐ Style summaries with nice background
+
+⏺ Now let me find and update the article card content section where summaries are displayed:
+
+⏺ Search(pattern: "article.summary && \(", path: "src/components/FacetedArticlesDashboardModern.tsx", output_mode: "content")
+  ⎿  Found 26 lines (ctrl+r to expand)
+
+⏺ Perfect! Now I'll replace the summary section with the collapsible version that includes concept creation:
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Updated src/components/FacetedArticlesDashboardModern.tsx with 80 additions and 9 removals                                                
+       735                        )}
+       736                        
+       737                        {article.summary && (
+       738 -                        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+       739 -                          <div className="flex items-center gap-2 mb-2">
+       740 -                            <Sparkles className="h-4 w-4 text-blue-600" />
+       741 -                            <span className="text-sm font-medium text-blue-900">AI Summary</span>
+       738 +                        <div className="mt-3">
+       739 +                          <div 
+       740 +                            className="flex items-center gap-2 mb-2 cursor-pointer hover:opacity-80 transition-opacity select-none"
+       741 +                            onClick={() => {
+       742 +                              setExpandedSummaries(prev => {
+       743 +                                const newSet = new Set(prev)
+       744 +                                if (newSet.has(article.id)) {
+       745 +                                  newSet.delete(article.id)
+       746 +                                } else {
+       747 +                                  newSet.add(article.id)
+       748 +                                }
+       749 +                                return newSet
+       750 +                              })
+       751 +                            }}
+       752 +                          >
+       753 +                            <div className="flex items-center gap-2 flex-1">
+       754 +                              {expandedSummaries.has(article.id) ? (
+       755 +                                <ChevronDown className="h-4 w-4 text-blue-600" />
+       756 +                              ) : (
+       757 +                                <ChevronRightIcon className="h-4 w-4 text-blue-600" />
+       758 +                              )}
+       759 +                              <Sparkles className="h-4 w-4 text-blue-600" />
+       760 +                              <span className="text-sm font-medium text-blue-900">AI Summary</span>
+       761 +                            </div>
+       762                            </div>
+       763 -                          <div className="prose prose-sm max-w-none text-gray-700">
+       764 -                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+       765 -                              {article.summary}
+       766 -                            </ReactMarkdown>
+       767 -                          </div>
+       763 +                          
+       764 +                          {expandedSummaries.has(article.id) && (
+       765 +                            <div 
+       766 +                              className="p-4 rounded-lg relative"
+       767 +                              style={{
+       768 +                                background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%)',
+       769 +                                border: '1px solid #bfdbfe',
+       770 +                                boxShadow: 'inset 0 1px 3px rgba(147, 197, 253, 0.2)'
+       771 +                              }}
+       772 +                              onMouseUp={() => {
+       773 +                                const selection = window.getSelection()
+       774 +                                const text = selection?.toString().trim()
+       775 +                                if (text && text.length > 2) {
+       776 +                                  setSelectedTextForConcept({ articleId: article.id, text })
+       777 +                                }
+       778 +                              }}
+       779 +                            >
+       780 +                              {selectedTextForConcept?.articleId === article.id && (
+       781 +                                <div className="absolute top-2 right-2 z-10">
+       782 +                                  <Button
+       783 +                                    size="sm"
+       784 +                                    variant="secondary"
+       785 +                                    onClick={async (e) => {
+       786 +                                      e.stopPropagation()
+       787 +                                      if (!selectedTextForConcept) return
+       788 +                                      
+       789 +                                      try {
+       790 +                                        const response = await axios.post(
+       791 +                                          `${API_BASE_URL}/api/articles/${article.id}/concepts`,
+       792 +                                          { text: selectedTextForConcept.text }
+       793 +                                        )
+       794 +                                        if (response.data.success) {
+       795 +                                          // Refresh the article to show the new concept
+       796 +                                          await fetchArticles()
+       797 +                                          setSelectedTextForConcept(null)
+       798 +                                          window.getSelection()?.removeAllRanges()
+       799 +                                        }
+       800 +                                      } catch (error) {
+       801 +                                        console.error('Error creating concept:', error)
+       802 +                                        alert('Failed to create concept')
+       803 +                                      }
+       804 +                                    }}
+       805 +                                    className="text-xs shadow-md"
+       806 +                                  >
+       807 +                                    <Plus className="h-3 w-3 mr-1" />
+       808 +                                    Create Concept
+       809 +                                  </Button>
+       810 +                                </div>
+       811 +                              )}
+       812 +                              <div className="prose prose-sm max-w-none text-gray-700">
+       813 +                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+       814 +                                  {article.summary}
+       815 +                                </ReactMarkdown>
+       816 +                              </div>
+       817 +                            </div>
+       818 +                          )}
+       819                          </div>
+       820                        )}
+       821                      </CardContent>
+
+⏺ Now let's also add the ability to create concepts from selected text in the ArticleViewerModern component's summary section. Let me check that:
+
+⏺ Update Todos
+  ⎿  ☒ Add collapsible summaries to article tiles         
+     ☒ Add state variables for expanded summaries
+     ☒ Add collapse all button to faceted browser
+     ☒ Update article card UI with collapsible summaries
+     ☒ Enable concept creation from summaries
+     ☒ Style summaries with nice background
+     ☐ Add concept creation to ArticleViewerModern summary
+
+⏺ Search(pattern: "Summary.*article.summary", path: "src/components/ArticleViewerModern.tsx", output_mode: "content")
+  ⎿  Found 26 lines (ctrl+r to expand)
+
+⏺ Let me add concept creation capability to the summary section in ArticleViewerModern:
+
+⏺ Search(pattern: "const \[selectedText, setSelectedText\]", path: "src/components/ArticleViewerModern.tsx", output_mode: "content")
+  ⎿  Found 11 lines (ctrl+r to expand)
+
+⏺ Good, there's already a selectedText state. Now let me update the summary section to include concept creation:
+
+⏺ Update(src/components/ArticleViewerModern.tsx)
+  ⎿  Error editing file
+
+⏺ Read(src/components/ArticleViewerModern.tsx)
+  ⎿  Read 40 lines (ctrl+r to expand)
+
+⏺ Update(src/components/ArticleViewerModern.tsx)
+  ⎿  Error editing file
+
+⏺ Let me find the correct ending:
+
+⏺ Read(src/components/ArticleViewerModern.tsx)
+  ⎿  Read 15 lines (ctrl+r to expand)
+
+⏺ Read(src/components/ArticleViewerModern.tsx)
+  ⎿  Read 10 lines (ctrl+r to expand)
+
+⏺ Now I can make the correct edit:
+
+⏺ Update(src/components/ArticleViewerModern.tsx)
+  ⎿  Updated src/components/ArticleViewerModern.tsx with 52 additions and 2 removals                                                                       
+       102      const [loading, setLoading] = useState(true)
+       103      const [showSummary, setShowSummary] = useState(false)
+       104      const [selectedText, setSelectedText] = useState('')
+       105 +    const [selectedSummaryText, setSelectedSummaryText] = useState('')
+       106      const [preservedSelection, setPreservedSelection] = useState<{text: string, rangeData: any} | null>(null)
+       107      const [showContextMenu, setShowContextMenu] = useState(false)
+       108      const [showHighlightForm, setShowHighlightForm] = useState(false)
+     ...
+       1316                        </div>
+       1317                      </CardHeader>
+       1318                      <CardContent>
+       1319 -                      <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-h1:text-xl prose-h2:text-lg 
+     prose-h3:text-base prose-strong:text-gray-900 prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700 prose-blockquote:border-l-4
+     prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5
+     prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100">
+            - prose-h3:text-base prose-strong:text-gray-900 prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700 prose-blockquote:border-l-4 
+            - prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 
+            - prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100">
+       1320 -                        <ReactMarkdown
+       1319 +                      <div 
+       1320 +                        className="relative p-4 rounded-lg"
+       1321 +                        style={{
+       1322 +                          background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%)',
+       1323 +                          border: '1px solid #bfdbfe',
+       1324 +                          boxShadow: 'inset 0 1px 3px rgba(147, 197, 253, 0.2)'
+       1325 +                        }}
+       1326 +                        onMouseUp={() => {
+       1327 +                          const selection = window.getSelection()
+       1328 +                          const text = selection?.toString().trim()
+       1329 +                          if (text && text.length > 2) {
+       1330 +                            setSelectedSummaryText(text)
+       1331 +                          }
+       1332 +                        }}
+       1333 +                      >
+       1334 +                        {selectedSummaryText && (
+       1335 +                          <div className="absolute top-2 right-2 z-10">
+       1336 +                            <Button
+       1337 +                              size="sm"
+       1338 +                              variant="secondary"
+       1339 +                              onClick={async (e) => {
+       1340 +                                e.stopPropagation()
+       1341 +                                if (!selectedSummaryText) return
+       1342 +                                
+       1343 +                                try {
+       1344 +                                  const response = await axios.post(
+       1345 +                                    `${API_BASE_URL}/api/articles/${id}/concepts`,
+       1346 +                                    { text: selectedSummaryText }
+       1347 +                                  )
+       1348 +                                  if (response.data.success) {
+       1349 +                                    // Refresh the article to show the new concept
+       1350 +                                    const articleResponse = await axios.get(`${API_BASE_URL}/api/articles/${id}`)
+       1351 +                                    setArticle(articleResponse.data)
+       1352 +                                    setSelectedSummaryText('')
+       1353 +                                    window.getSelection()?.removeAllRanges()
+       1354 +                                  }
+       1355 +                                } catch (error) {
+       1356 +                                  console.error('Error creating concept:', error)
+       1357 +                                  alert('Failed to create concept')
+       1358 +                                }
+       1359 +                              }}
+       1360 +                              className="text-xs shadow-md"
+       1361 +                            >
+       1362 +                              <Plus className="h-3 w-3 mr-1" />
+       1363 +                              Create Concept
+       1364 +                            </Button>
+       1365 +                          </div>
+       1366 +                        )}
+       1367 +                        <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-h1:text-xl prose-h2:text-lg 
+            + prose-h3:text-base prose-strong:text-gray-900 prose-ul:list-disc prose-ol:list-decimal prose-li:text-gray-700 prose-blockquote:border-l-4 
+            + prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 
+            + prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100">
+       1368 +                          <ReactMarkdown
+       1369                            remarkPlugins={[remarkGfm]}
+       1370                            rehypePlugins={[rehypeRaw]}
+       1371                            components={{
+     ...
+       1379                              .replace(/<think[^>]*>/gi, '')
+       1380                            }
+       1381                          </ReactMarkdown>
+       1382 +                        </div>
+       1383                        </div>
+       1384                        {keyPoints.length > 0 && (
+       1385                          <>
+
+⏺ Perfect! Now we need to make sure the Plus icon is imported:
+
+⏺ Search(pattern: "^import.*Plus.*from 'lucide-react'", path: "src/components/ArticleViewerModern.tsx", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "} from 'lucide-react'", path: "src/components/ArticleViewerModern.tsx", output_mode: "content")
+  ⎿  Found 1 line (ctrl+r to expand)
+
+⏺ Read(src/components/ArticleViewerModern.tsx)
+  ⎿  Read 30 lines (ctrl+r to expand)
+
+⏺ Good, Plus is already imported! Now let's update the todo list and test our changes:
+
+⏺ Update Todos
+  ⎿  ☒ Add collapsible summaries to article tiles         
+     ☒ Add state variables for expanded summaries
+     ☒ Add collapse all button to faceted browser
+     ☒ Update article card UI with collapsible summaries
+     ☒ Enable concept creation from summaries
+     ☒ Style summaries with nice background
+     ☒ Add concept creation to ArticleViewerModern summary
+
+⏺ Let me check if the frontend is running and test our changes:
+
+⏺ Bash(curl -s http://localhost:3000 | head -n 5)
+  ⎿  <!DOCTYPE html>              
+     <html lang="en">
+       <head>
+     … +2 lines (ctrl+r to expand)
+
+⏺ Good! The frontend is running. Let me also verify that we have all necessary APIs working:
+
+⏺ Bash(curl -s "http://localhost:8000/api/articles/faceted-search?page=1&page_size=1" | python -m json.tool | head -20)
+  ⎿  {                             
+         "articles": [
+             {
+     … +19 lines (ctrl+r to expand)
+
+⏺ Let me check if this article has a summary:
+
+⏺ Bash(curl -s "http://localhost:8000/api/articles/68ad9b073bc929e6a5c35253" | python -m json.tool | grep -A 5 '"summary"')
+  ⎿     "summary": "# Summary of \"The Illustrated GPT-OSS\"\n\n## Executive Summary\nOpenAI's GPT-OSS represents their first major open-source LLM release
+     since GPT-2 six years ago, featuring a mixture-of-experts architecture that enables advanced capabilities like tool usage and reasoning. While not nec
+    essarily superior to existing open models like DeepSeek or Qwen, GPT-OSS provides valuable insights into how LLMs have evolved and offers flexible reas
+    … +33 lines (ctrl+r to expand)
+
+
+
+
+⏺ Perfect! The article has a summary. Now let's test the concept creation endpoint for articles:
+
+⏺ Bash(curl -X POST "http://localhost:8000/api/articles/68ad9b073bc929e6a5c35253/concepts" \
+        -H "Content-Type: application/json" \…)
+  ⎿  {                             
+         "detail": [
+             {
+     … +15 lines (ctrl+r to expand)
+
+⏺ It seems the endpoint expects the text as a query parameter, not in the body. Let me check the actual endpoint implementation:
+
+⏺ Search(pattern: "@router.post.*articles.*concepts", path: "../backend/app/api", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Search(pattern: "/{article_id}/concepts", path: "../backend/app/api/articles_mongodb.py", output_mode: "content")
+  ⎿  Found 0 lines 
+
+⏺ Let me check if there's a concepts endpoint for articles:
+
+⏺ Search(pattern: "@router.post.*concepts", path: "../backend/app/api/articles_mongodb.py", output_mode: "content")
+  ⎿  Found 18 lines (ctrl+r to expand)
+
+⏺ Ah, I see! The endpoint expects the text as a query parameter. Let me update our frontend code to send it correctly:
+
+⏺ Update(src/components/FacetedArticlesDashboardModern.tsx)
+  ⎿  Updated src/components/FacetedArticlesDashboardModern.tsx with 1 addition and 2 removals                             
+       788                                        
+       789                                        try {
+       790                                          const response = await axios.post(
+       791 -                                          `${API_BASE_URL}/api/articles/${article.id}/concepts`,
+       792 -                                          { text: selectedTextForConcept.text }
+       791 +                                          
+     `${API_BASE_URL}/api/articles/${article.id}/concepts?text=${encodeURIComponent(selectedTextForConcept.text)}`
+           + `${API_BASE_URL}/api/articles/${article.id}/concepts?text=${encodeURIComponent(selectedTextForConcept.text)}`
+       792                                          )
+       793                                          if (response.data.success) {
+       794                                            // Refresh the article to show the new concept
+
+⏺ Now let me also fix it in ArticleViewerModern:
+
+⏺ Update(src/components/ArticleViewerModern.tsx)
+  ⎿  Updated src/components/ArticleViewerModern.tsx with 1 addition and 2 removals                                                            
+       1343                                  
+       1344                                  try {
+       1345                                    const response = await axios.post(
+       1346 -                                    `${API_BASE_URL}/api/articles/${id}/concepts`,
+       1347 -                                    { text: selectedSummaryText }
+       1346 +                                    `${API_BASE_URL}/api/articles/${id}/concepts?text=${encodeURIComponent(selectedSummaryText)}`
+       1347                                    )
+       1348                                    if (response.data.success) {
+       1349                                      // Refresh the article to show the new concept
+
+⏺ Perfect! Let me test the API endpoint again to make sure it works:
+
+⏺ Bash(curl -X POST "http://localhost:8000/api/articles/68ad9b073bc929e6a5c35253/concepts?text=GPT-OSS" | python -m json.tool)
+  ⎿  {                                           
+         "message": "Concept added successfully",
+         "concept": {
+     … +8 lines (ctrl+r to expand)
+
+⏺ Excellent! The concept creation works. Now let me check if the frontend build is successful:
+
+⏺ Bash(cd /Users/siehan/Sync/05-Development/02-SG/SG2025/SmartTrendTracer/frontend && npm run build 2>&1 | tail -10)
+  ⎿  dist/assets/KaTeX_Main-Regular-ypZvNtVU.ttf              53.58 kB                    
+     dist/assets/KaTeX_AMS-Regular-DRggAlZN.ttf               63.63 kB
+     dist/assets/index-DRcNMgvl.css                          151.15 kB │ gzip:    27.40 kB
+     … +7 lines (ctrl+r to expand)
+
+⏺ Great! The build is successful. Let's create a summary of what we've accomplished:
+
+  Summary
+
+  I've successfully enhanced the article management system with the following features:
+
+  1. Collapsible Summaries in Article Tiles
+
+  - Article summaries are now collapsed by default with a clickable header showing chevron icon
+  - Clicking the header expands/collapses individual summaries
+  - Visual indicators: ChevronRight when collapsed, ChevronDown when expanded
+
+  2. Expand/Collapse All Button
+
+  - Added a global control button in the stats bar
+  - Shows "Expand All" with Eye icon when some/all summaries are collapsed
+  - Shows "Collapse All" with EyeOff icon when all summaries are expanded
+  - Only appears when there are articles with summaries
+
+  3. Beautiful Summary Background
+
+  - Applied gradient background inspired by paper summaries
+  - Light blue gradient: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%)
+  - Subtle border and inset shadow for depth
+  - Creates a distinct visual separation for summaries
+
+  4. Concept Creation from Summaries
+
+  - Users can select any text within expanded summaries
+  - "Create Concept" button appears when text is selected
+  - Works in both:
+    - Article tiles in the faceted browser
+    - Article viewer's summary section
+  - Automatically refreshes to show the new concept after creation
+
+  5. Technical Implementation
+
+  - Added state management for expanded summaries: expandedSummaries Set
+  - Added state for selected text: selectedTextForConcept
+  - Fixed API calls to use query parameters for concept creation
+  - Applied the same styling to ArticleViewerModern's summary section
+
+  The implementation provides a clean, intuitive interface for managing article summaries with easy concept creation capabilities, making it more efficient
+   to organize and tag content directly from AI-generated summaries.
+
+

@@ -1,44 +1,80 @@
 # Core dependencies
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-dotenv==1.0.0
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+python-dotenv>=1.0.0
+email-validator>=2.0.0
 
-# Database
-sqlalchemy==2.0.23
-alembic==1.12.1
+# MongoDB Database
+pymongo>=4.6.1
+motor>=3.3.2  # Async MongoDB driver
 
-# Twitter API
-tweepy==4.14.0
+# Social Media APIs
+tweepy>=4.14.0
+praw>=7.7.1  # Reddit API wrapper
 
 # Data processing (Python 3.12 compatible)
-pandas==2.2.0
-numpy==1.26.3
+pandas>=2.2.0
+numpy>=1.26.3
 
 # NLP and ML (for trend analysis)
-scikit-learn==1.4.0
-nltk==3.8.1
-textblob==0.17.1
+scikit-learn>=1.4.0
+nltk>=3.8.1
+textblob>=0.17.1
+spacy>=3.7.0
+tiktoken>=0.5.0
+sentence-transformers>=2.2.0
+
+# Vector search
+faiss-cpu>=1.7.0
+
+# Web scraping
+beautifulsoup4>=4.12.0
+html2text>=2024.2.0
+readability-lxml>=0.8.0
+lxml>=5.0.0
 
 # API and networking
-httpx==0.25.1
-aiofiles==23.2.1
-python-multipart==0.0.6
+httpx>=0.25.1
+aiofiles>=23.2.1
+python-multipart>=0.0.6
 
 # LLM support
-openai==1.35.0
+openai>=1.0.0
+litellm>=1.54.0  # Unified LLM interface for OpenAI, Anthropic, Google
+anthropic>=0.18.0
+google-generativeai>=0.3.0
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-anthropic>=0.1.0
+langchain-google-genai>=0.0.5
+langchain-community>=0.0.20
+pyyaml>=6.0  # For litellm_config.yaml
+redis>=5.0.0  # For LiteLLM caching (optional)
 
 # CORS for frontend
-fastapi-cors==0.0.6
+fastapi-cors>=0.0.6
 
 # Scheduling
-apscheduler==3.10.4
+apscheduler>=3.10.0
 
 # Utilities
-pydantic==2.5.0
-pydantic-settings==2.1.0
-tabulate==0.9.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+tabulate>=0.9.0
 
-# PDF Export
-reportlab==4.0.7
-markdown==3.5.1
-Pillow==10.1.0
+# PDF/Document processing
+reportlab>=4.0.0
+markdown>=3.5.0
+Pillow>=10.0.0
+syllables>=1.0.0
+PyMuPDF>=1.23.0
+pdf2image>=1.16.0
+bibtexparser>=1.4.0
+mdformat>=0.7.0
+arxiv>=2.0.0
+weasyprint>=60.0
+
+# Google APIs
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.1.0

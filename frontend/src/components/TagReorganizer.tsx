@@ -260,8 +260,8 @@ function TagReorganizer() {
   return (
     <div className="tag-reorganizer">
       <div className="reorganizer-header">
-        <h2>🤖 Gemini 2.5 Pro Tag Reorganizer</h2>
-        <p>Use AI to automatically organize your tags into a logical hierarchy</p>
+        <h2>🤖 GPT-5 Enhanced Concept Reorganizer</h2>
+        <p>Use GPT-5 to comprehensively reorganize your concepts with full backwards compatibility</p>
       </div>
 
       {error && (

@@ -1,10 +1,6 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
 from datetime import datetime, timedelta
 from typing import List, Dict
-
-from app.models import get_db, Tweet, Topic, TweetTopic, Tag
 
 router = APIRouter()
 
@@ -12,7 +8,6 @@ router = APIRouter()
 def get_trends(
     hours: int = Query(24, ge=1, le=168),
     limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
 ):
     """Get trending topics in the last N hours"""
     cutoff_time = datetime.utcnow() - timedelta(hours=hours)
@@ -45,7 +40,6 @@ def get_trends(
 @router.get("/topics")
 def get_topics(
     limit: int = 20,
-    db: Session = Depends(get_db)
 ):
     """Get all topics with statistics"""
     topics = db.query(Topic).order_by(Topic.mention_count.desc()).limit(limit).all()
@@ -64,7 +58,6 @@ def get_topics(
 
 @router.get("/analysis")
 def get_trend_analysis(
-    db: Session = Depends(get_db)
 ):
     """Get comprehensive trend analysis"""
     now = datetime.utcnow()

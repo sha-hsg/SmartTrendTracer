@@ -2,15 +2,31 @@
 """
 Run the SmartTrendTracer backend server with proper shutdown handling.
 
+This script starts the MongoDB-based API server (app.main:app) which includes:
+- Tweets API with faceted search (/api/tweets)
+- Papers API with PDF processing (/api/papers)
+- Articles/Substack API (/api/articles)
+- Concepts suggestions API (/api/concepts/suggestions)
+- Tags and ontology APIs (/api/tags, /api/ontology)
+- Trends and analytics APIs (/api/trends, /api/user-trends, /api/analytics/trends)
+- RAG search API (/api/rag)
+- And more...
+
 Notes:
 - Avoid custom signal handlers when using Uvicorn reload=True (reloader spawns subprocesses).
 - This script runs without reload for predictable graceful shutdown.
 """
 
+import os
 import signal
 import sys
 import logging
 from typing import Optional
+
+# Set environment variables BEFORE any imports to prevent MPS segfault
+os.environ['PYTORCH_ENABLE_MPS_FALLBACK'] = '1'
+os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 import uvicorn
 from app.config import API_HOST, API_PORT
@@ -62,10 +78,12 @@ def main():
     logger.info("📚 API Docs: http://%s:%s/docs", API_HOST, API_PORT)
     logger.info("🎨 Dashboard: http://localhost:3000")
     logger.info("")
-    logger.info("✨ Features on startup:")
-    logger.info("  • Automatic gap-filling (collects tweets since last run)")
-    logger.info("  • Scheduled collection every 30 minutes")
+    logger.info("✨ Features:")
     logger.info("  • Interactive AI tagging system")
+    logger.info("  • PDF processing with Marker and MinerU")
+    logger.info("  • RAG-powered search")
+    logger.info("")
+    logger.info("📌 Note: Tweet collection runs as a separate service")
     logger.info("")
     logger.info("🛑 To shutdown properly: Press Ctrl+C")
     logger.info("=" * 60)

@@ -4,13 +4,7 @@ Service for analyzing trends in research papers
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
-from sqlalchemy import func, desc, and_, or_
-from sqlalchemy.orm import Session
 import numpy as np
-
-from ..models import Paper, PaperTag, PaperAuthor, PaperReference, PaperSnippet
-from ..models import Tweet, Tag, SubstackArticle
-
 
 class PaperTrendsService:
     """Analyze trends and patterns in research papers"""

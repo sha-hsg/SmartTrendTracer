@@ -1,0 +1,2580 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">The Hidden Attention of Mamba Models</title>
+				<funder ref="#_HPHdGQT">
+					<orgName type="full">Michael J. Fox Foundation</orgName>
+				</funder>
+				<funder ref="#_8W9SUGV">
+					<orgName type="full">Ministry of Innovation, Science &amp; Technology ,Israel</orgName>
+				</funder>
+				<funder>
+					<orgName type="full">Tel Aviv University Center for AI and Data Science</orgName>
+					<orgName type="abbreviated">TAD</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2024-03-31">31 Mar 2024</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Ameen</forename><surname>Ali</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">School of Computer Science , Tel Aviv University</note>
+								<orgName type="department">School of Computer Science</orgName>
+								<orgName type="institution">Tel Aviv University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Itamar</forename><surname>Zimerman</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">School of Computer Science , Tel Aviv University</note>
+								<orgName type="department">School of Computer Science</orgName>
+								<orgName type="institution">Tel Aviv University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Lior</forename><surname>Wolf</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">School of Computer Science , Tel Aviv University</note>
+								<orgName type="department">School of Computer Science</orgName>
+								<orgName type="institution">Tel Aviv University</orgName>
+							</affiliation>
+						</author>
+						<title level="a" type="main">The Hidden Attention of Mamba Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2024-03-31">31 Mar 2024</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">138BA9552C6D009F91153A13EA8501DF</idno>
+					<idno type="arXiv">arXiv:2403.01590v2[cs.LG]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-21T17:42+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>The Mamba layer offers an efficient selective state space model (SSM) that is highly effective in modeling multiple domains, including NLP, long-range sequence processing, and computer vision. Selective SSMs are viewed as dual models, in which one trains in parallel on the entire sequence via an IO-aware parallel scan, and deploys in an autoregressive manner. We add a third view and show that such models can be viewed as attention-driven models. This new perspective enables us to empirically and theoretically compare the underlying mechanisms to that of the self-attention layers in transformers and allows us to peer inside the inner workings of the Mamba model with explainability methods. Our code is publicly available 1 .</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Recently, Selective State Space Layers <ref type="bibr" target="#b29">[30]</ref>, also known as Mamba models, have shown remarkable performance in diverse applications including language modeling <ref type="bibr" target="#b4">[5,</ref><ref type="bibr" target="#b29">30,</ref><ref type="bibr" target="#b57">58,</ref><ref type="bibr" target="#b72">73]</ref>, image processing <ref type="bibr" target="#b43">[44,</ref><ref type="bibr" target="#b81">82]</ref>, video processing <ref type="bibr" target="#b79">[80]</ref>, medical imaging <ref type="bibr" target="#b27">[28,</ref><ref type="bibr" target="#b42">43,</ref><ref type="bibr" target="#b47">48,</ref><ref type="bibr" target="#b61">62,</ref><ref type="bibr" target="#b74">75,</ref><ref type="bibr" target="#b75">76,</ref><ref type="bibr" target="#b77">78]</ref>, tabular data <ref type="bibr" target="#b1">[2]</ref>, point-cloud analysis <ref type="bibr" target="#b41">[42]</ref>, graphs <ref type="bibr" target="#b9">[10,</ref><ref type="bibr" target="#b70">71]</ref>, N-dimensional sequence modeling <ref type="bibr" target="#b40">[41]</ref> and more. Characterized by their linear complexity in sequence length during training and fast RNN-like computation during inference (left and middle panels of Fig. <ref type="figure">1</ref>), Mamba models offer a 5x increase in the throughput of Transformers for auto-regressive generation and the ability to efficiently handle long-range dependencies.</p><p>Despite their growing success, the information-flow dynamics between tokens in Mamba models and the way they learn remain largely unexplored. Critical questions about their learning mechanisms, particularly how they capture dependencies and their resemblance to other established layers, such as RNNs, CNNs, or attention mechanisms, remain unanswered. Additionally, the lack of interoperability methods for these models may pose a significant hurdle to debugging them and may also reduce their applicability in socially sensitive domains in which explainability is required.</p><p>Motivated by these gaps, our research aims to provide insights into the dynamics of Mamba models and develop methodologies for their interpretation. While the traditional views of state-space models are through the lens of convolutional or recurrent layers <ref type="bibr" target="#b31">[32]</ref>, we show that selective state-space layers are a form Fig. <ref type="figure">1</ref>: Three Perspectives of the Selective State-Space Layer:(Left) Selective State-Space Models (SSMs) can be efficiently computed with linear complexity using parallel scans, allowing for effective parallelization on modern hardware, such as GPUs. (Middle) Similar to SSMs, the selective state-space layer can be computed via a time-variant recurrent rule. (Right) A new view of the selective SSM layer, showing that it uses attention similarly to transformers (see Eq. 11). Our view enables the generation of attention maps, offering valuable applications in areas such as XAI.</p><p>of attention models. This is achieved through a novel reformulation of Mamba computation using a data-control linear operator, unveiling hidden attention matrices within the Mamba layer. This enables us to employ well-established interpretability and explainability techniques, commonly used in transformer realms, to devise the first set of tools for interpreting Mamba models. Furthermore, our analysis of implicit attention matrices offers a direct framework for comparing the properties and inner representations of transformers <ref type="bibr" target="#b69">[70]</ref> and Mamba models.</p><p>Our main contributions encompass the following main aspects: (i) We shed light on the fundamental nature of Mamba models, by showing that they rely on implicit attention, which is implemented by a unique data-control linear operator, as illustrated in Fig. <ref type="figure">1</ref> (right). (ii) Our analysis reveals that Mamba models give rise to three orders of magnitude more attention matrices than transformers. (iii) We provide a set of explainability and interpretability tools based on these hidden attention matrices. (iv) For comparable model sizes, Mamba model-based attention shows comparable explainability metrics results to that of transformers. (v) We present a theoretical analysis of the evolution of attention capabilities in state-space models and their expressiveness, offering a deeper understanding of the factors that contribute to Mamba's effectiveness.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Background</head><p>Transformers The Transformer architecture <ref type="bibr" target="#b69">[70]</ref> is the dominant architecture in the recent NLP and Computer Vision literature. It relies on self-attention to capture dependencies between different tokens. Self-attention allows these models to dynamically focus on different parts of the input sequence, calculating the relevance of each part to others. It can be computed as follows:</p><formula xml:id="formula_0">Self -Attention(Q, K, V ) = αV, α = softmax QK T √ d k<label>(1)</label></formula><p>where Q, K, and V represent queries, keys, and values, respectively, and d k is the dimension of the keys. Additionally, the Transformer utilizes H attention heads to process information in parallel, allowing the model to capture various dependencies. The attention matrix α enables the models to weigh the importance of tokens based on their contribution to the context, and they can also used for interpretability <ref type="bibr" target="#b7">[8]</ref>, explainability <ref type="bibr" target="#b14">[15]</ref>, and improved classification <ref type="bibr" target="#b15">[16,</ref><ref type="bibr" target="#b68">69]</ref>.</p><p>State-Space Layers State-Space Layers were first introduced in <ref type="bibr" target="#b31">[32]</ref> and have seen significant improvements through the seminal work in <ref type="bibr" target="#b30">[31]</ref>. These layers have demonstrated promising results across several domains, including NLP <ref type="bibr" target="#b23">[24,</ref><ref type="bibr" target="#b50">51]</ref>, audio generation <ref type="bibr" target="#b25">[26]</ref>, image processing [9, <ref type="bibr" target="#b53">54,</ref><ref type="bibr" target="#b78">79]</ref>, long video understanding <ref type="bibr" target="#b71">[72]</ref>, RL <ref type="bibr" target="#b17">[18,</ref><ref type="bibr" target="#b44">45]</ref>, speech recognition <ref type="bibr" target="#b62">[63]</ref>, and more. Given one channel of the input sequence x := (x 1 , • • • , x L ) such that x i ∈ R, these layers can be implemented using either recurrence or convolution. The recurrent formulation, which relies on the recurrent state h t ∈ R N where N is the state size, is defined as follows: given the discretization functions f A , f B , and parameters A, B, C and ∆, the recurrent rule for the SSM is:</p><formula xml:id="formula_1">Ā = f A (A, ∆), B = f B (A, B, ∆), h t = Āh t-1 + Bx t , y t = Ch t (2)</formula><p>This recurrent rule can be expanded as:</p><formula xml:id="formula_2">h t = Āt Bx 0 + Āt-1 Bx 1 + • • • + Bx t , y t = C Āt Bx 0 + C Āt-1 Bx 1 + • • • + C Bx t</formula><p>(3) Since the recurrence is linear, Eq. 3 can also be expressed as a convolution, via a convolution kernel</p><formula xml:id="formula_3">K := (k 1 , • • • , k L ),</formula><p>where k i = C Āi-1 B, thus allowing sub-quadratic complexity in sequence length. The equivalence between the recurrence and the convolution provides a versatile framework that enables parallel and efficient training with sub-quadratic complexity with the convolution view, alongside a faster recurrent view, facilitating the acceleration of autoregressive generation by decoupling step complexity from sequence length. As the layer defined as a map from R L to R L , to process D channels the layer employs D independent copies of itself.</p><p>S6 Layers A recent development in state space layers is selective SSMs <ref type="bibr" target="#b29">[30]</ref> (S6), which show outstanding performance in NLP <ref type="bibr" target="#b4">[5,</ref><ref type="bibr" target="#b57">58,</ref><ref type="bibr" target="#b72">73]</ref>, vision <ref type="bibr" target="#b43">[44,</ref><ref type="bibr" target="#b81">82]</ref>, graph classification <ref type="bibr" target="#b9">[10,</ref><ref type="bibr" target="#b70">71]</ref>, and more. These models rely on time-variant SSMs, namely, the discrete matrices Ā, B, and C of each channel are modified over the L time steps depending on the input sequence. As opposed to traditional state-space layers, which operate individually on each channel, selective state-space layers compute the SSM matrices Āi , Bi , C i for all i ≤ L based on all the channels, and then apply the time-variant recurrent rule individually for each channel. Hence, we denote the entire input sequence by x :</p><formula xml:id="formula_4">= (x 1 , • • • , xL ) ∈ R L×D where xi ∈ R D .</formula><p>The per-time discrete matrices Āi , Bi , and C i are defined as follows:</p><formula xml:id="formula_5">B i = S B (x i ), C i = S C (x i ), ∆ i = softplus(S ∆ (x i )) (4) f A (∆ i , A) = exp(∆ i A), f B (∆ i , A, B i ) = ∆ i B i ,<label>(5)</label></formula><formula xml:id="formula_6">Āi = f A (∆ i , A), Bi = f B (∆ i , A, B i )<label>(6)</label></formula><p>where f A , f B represents the discretization rule, S B , S C , S ∆ are linear projection layers, and SoftPlus is an elementwise function that is a smooth approximation of ReLU. While previous state-space layers employ complex-valued SSMs and non-diagonal matrices, Mamba employs real-diagonal parametrization.</p><p>The motivation for input-dependent time-variant layers is to make those recurrent layers more expressive and flexible, allowing them to capture more complex dependencies. While other input-dependent time-variant mechanisms have been proposed in previous works through gated RNNs, the S5 layer <ref type="bibr" target="#b65">[66]</ref>, or adaptive filtering via input-dependent IIR filters <ref type="bibr">[47]</ref>, Mamba significantly improves on these layers by presenting a flexible, yet still efficient, approach. This efficiency was achieved via the IO-aware implementation of associative scans, which can be parallelized on modern hardware via work-efficient parallel scanners <ref type="bibr" target="#b11">[12,</ref><ref type="bibr" target="#b49">50]</ref>.</p><p>Mamba The Mamba block is built on top of the selective state-space layer, Conv1D and other elementwise operators. Inspired by the architecure of Gated MLP and H3 <ref type="bibr" target="#b23">[24]</ref>, and given an input x′ :</p><formula xml:id="formula_7">= (x ′ 1 , • • • x′ L )</formula><p>it is defined as follows:</p><p>x = SiLU( Conv1D( Linear(x ′ ) ) ), ẑ = SiLU( Linear(x ′ ) ) (7)</p><formula xml:id="formula_8">ŷ′ = Linear(Selective SSM(x) ⊗ ẑ)), ŷ = LayerNorm(ŷ ′ + x′ ) (<label>8</label></formula><formula xml:id="formula_9">)</formula><p>where ⊗ is elementwise multiplication. Mamba models contain Λ stacked mamba blocks and D channels per block, and we denote the tensors in the i-th block and j-th channel with a superscript, where the first index refers to the block number.</p><p>Inspired by the vision transformer ViT <ref type="bibr" target="#b18">[19]</ref>, both <ref type="bibr" target="#b43">[44,</ref><ref type="bibr" target="#b81">82]</ref> replace the standard self-attention mechanism by two Mamba layers, where each layer is applied in a bidirectional manner. The resulting model achieves favorable results compared to the standard ViT in terms of both accuracy and efficiency, when comparing models with the same number of parameters.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Explainability</head><p>Explainability methods have been extensively explored in the context of deep neural networks, particularly in domains such as natural language processing (NLP) <ref type="bibr" target="#b0">[1,</ref><ref type="bibr" target="#b3">4,</ref><ref type="bibr" target="#b5">6,</ref><ref type="bibr" target="#b13">14,</ref><ref type="bibr" target="#b14">15,</ref><ref type="bibr" target="#b80">81]</ref>, computer vision [7, <ref type="bibr" target="#b35">36,</ref><ref type="bibr" target="#b52">53,</ref><ref type="bibr" target="#b63">64,</ref><ref type="bibr" target="#b67">68]</ref>, and attention-based models <ref type="bibr" target="#b3">[4,</ref><ref type="bibr" target="#b13">14,</ref><ref type="bibr" target="#b14">15,</ref><ref type="bibr" target="#b80">81]</ref>.</p><p>The contributions most closely aligned with ours are those specifically tailored for transformer explainability. Abnar and Zuidema <ref type="bibr" target="#b0">[1]</ref> introduce the Attention-Rollout method, which aggregates the attention matrices across different layers by analyzing the paths in the inter-layer pairwise attention graph. Chefer et al. <ref type="bibr" target="#b13">[14,</ref><ref type="bibr" target="#b14">15]</ref> combine LRP scores <ref type="bibr">[7]</ref> with the attention gradients to obtain classspecific relevance scores. Ali et al. <ref type="bibr" target="#b3">[4]</ref> enhanced attributions by treating the non-linear Softmax and LayerNorm operators as a constant, thereby attributing relevance exclusively through the value path, disregarding these operators. Yuan et al. <ref type="bibr" target="#b80">[81]</ref> treats the output token representations as states in a Markov chain in which the transition matrix is built using attention weights.</p><p>Our work performs similar attention-based analysis for Mamba and we derive versions of <ref type="bibr" target="#b0">[1,</ref><ref type="bibr" target="#b14">15]</ref> that are suitable for such SSM models.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Method</head><p>In this section, we detail our methodology. First, in section 3.1, we reformulate selective state-space (S6) layers as self-attention, enabling the extraction of attention matrices from S6 layers. Subsequently, in sections 3.2 and 3.3, we demonstrate how these hidden attention matrices can be leveraged to develop class-agnostic and class-specific tools for explainable AI of Mamba models.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Hidden Attention Matrices In Selective State Spaces Layers</head><p>Given the per-channel time-variant system matrices Ā1 , • • • , ĀL , B1 , • • • , BL , and C 1 , • • • , C L from Eq. 4 and 6, each channel within the selective state-space layers can be processed independently. Thus, for simplicity, the formulation presented in this section will proceed under the assumption that the input sequence x consists of a single channel.</p><p>By considering the initial conditions h 0 = 0, unrolling Eq. 2 yields:</p><formula xml:id="formula_10">h 1 = B1 x 1 , y 1 = C 1 B1 x 1 , h 2 = Ā2 B1 x 1 + B2 x 2 , y 2 = C 2 Ā2 B1 x 1 +C 2 B2 x 2<label>(</label></formula><p>9) and in general:</p><formula xml:id="formula_11">h t = t j=1 Π t k=j+1 Āk Bj x j , y t = C t t j=1 Π t k=j+1 Āk Bj x j<label>(10)</label></formula><p>By converting Eq. 10 into a matrix form we get:</p><formula xml:id="formula_12">y = αx,      y 1 y 2 . . . y L      =      C 1 B1 0 • • • 0 C 2 Ā2 B1 C 2 B2 • • • 0 . . . . . . . . . 0 C L Π L k=2 Āk B1 C L Π L k=3 Āk B2 • • • C L BL           x 1 x 2 . . . x L     <label>(11</label></formula><p>) Hence, the S6 layer can be viewed as a data-controlled linear operator <ref type="bibr" target="#b58">[59]</ref>, where the matrix α ∈ R L×L is a function of the input and the parameters A, S B , S C , S ∆ . The element at row i and column j captures how x j influences y i , and is computed by:</p><formula xml:id="formula_13">αi,j = C i Π i k=j+1 Āk Bj<label>(12)</label></formula><p>Eq. 11 and 12 link α to the conventional standard attention matrix (Eq. 1), and highlight that S6 can be considered a variant of causal self-attention.</p><p>Simplifying and Interpreting the Hidden Matrices Since Āt is a diagonal matrix, the different N coordinates of the state h t in Eq. 10 do not interact when computing h t+1 . Thus, Eq. 10 (left) can be computed independently for each coordinate m ∈ {1, 2, . . . , N }:</p><formula xml:id="formula_14">h t [m] = t j=1 Π t k=j+1 Āk [m, m] Bj [m]x j , y t = N m=1 C t [m]h t [m]<label>(13)</label></formula><p>where</p><formula xml:id="formula_15">C i [m], A k [m, m], B j [m]</formula><p>∈ R, plugging it into Eq. 12 yields:</p><formula xml:id="formula_16">αi,j = C i Π i k=j+1 Āk Bj = N m=1 C i [m] Π i k=j+1 Āk [m, m] Bj [m]<label>(14)</label></formula><p>Note that while equations 10 and 12 contain matrix multiplication, Eq. 13 relies on elementwise multiplication.</p><p>An interesting observation arising from Eq. 14 is that a single channel of S6 produces N inner attention matrices</p><formula xml:id="formula_17">C i [m] Π i k=j+1 Āk [m, m] Bj [m]</formula><p>, which are summed up over m to obtain α. In contrast, in the Transformer, a single attention matrix is produced by each of the H attention heads. Given that the number of channels in Mamba models D is typically a hundred times greater than the number of heads in a transformer (for example, Vision-Mamba-Tiny has D = 384 channels, compared to H = 3 heads in DeiT-Tiny), the Mamba layer generates approximately DN H ≈ 100N more attention matrices than the original self-attention layer.</p><p>To further understand the structure and characterization of these attention matrices, we will express the hidden attention matrices α for each channel d as a direct function of the input x. To do so, we first substitute Eq.4, 5 and Eq.6 into Eq. 12, and obtain:</p><formula xml:id="formula_18">αi,j = S C (x i ) Π i k=j+1 exp softplus(S ∆ (x k ))A softplus(S ∆ (x j ))S B (x j ) =<label>(15)</label></formula><formula xml:id="formula_19">S C (x i ) exp i k=j+1 softplus(S ∆ (x k )) A softplus(S ∆ (x j ))S B (x j )<label>(16)</label></formula><p>For simplicitly, we propose a simplification of Eq. 16 by substituting the softplus function with the ReLU function, and summing only over positive elements:</p><formula xml:id="formula_20">αi,j ≈ S C (x i )     exp     i k=j+1 S ∆ (x k )&gt;0 S ∆ (x k )     A     ReLU(S ∆ (x j ))S B (x j )<label>(17)</label></formula><p>Consider the following query/key/value notation:</p><formula xml:id="formula_21">Qi := S C (x i ), Kj := ReLU(S ∆ (x j )S B (x j ), Hi,j := exp i k=j+1 S ∆ (x k )&gt;0 S ∆ (x k ) A (18)</formula><p>Eq. 17 can be further simplified to:</p><formula xml:id="formula_22">αi,j ≈ Qi Hi,j Kj<label>(19)</label></formula><p>This formulation enhances our understanding of the Mamba's attention mechanism. Whereas traditional self-attention captures the influence of x j on x i through the dot products between Q i and K j , Mamba's approach correlates this influence with Qi and Kj , respectively. Additionally, Hi,j controls the significance of the recent i -j tokens, encapsulating the continuous aggregated historical context spanning from x j to x i .</p><p>This distinction between self-attention and Mamba, captured by Hi,j could be a key factor in enabling Mamba models to understand and utilize continuous historical context within sequences more efficiently than attention.</p><p>Furthermore, Eq. 19, and 18 offer further insights into the characterization of the hidden attention matrices by demonstrating that the only terms modified across channels are A and ∆ i , which influence the values of Hi,j and Kj through the discretization rule in Eq. 5. Hence, all the hidden attention matrices follow a common pattern, distinguished by the keys Kj via ∆ i and the significance of the history Hi,j via A and ∆ i .</p><p>A distinct divergence between Mamba's attention mechanism and traditional self-attention lies in the latter's utilization of a per-row softmax function. It is essential to recognize that various attention models have either omitted the softmax <ref type="bibr" target="#b45">[46]</ref> or substituted it with elementwise neural activations <ref type="bibr" target="#b37">[38,</ref><ref type="bibr" target="#b48">49,</ref><ref type="bibr" target="#b76">77,</ref><ref type="bibr" target="#b82">83]</ref>, achieving comparable outcomes to the original framework.</p><p>The softmax operator is known to lead to oversmoothing <ref type="bibr">[3,</ref><ref type="bibr" target="#b73">74]</ref>. As we show in the Appendix A, Mamba attention layers have lower inter-token smoothing than Transformer attention.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Application to Attention Rollout</head><p>As our class-agnostic explainability teqchniqe for Mamba models, we built our method on top of the Attention-Rollout <ref type="bibr" target="#b0">[1]</ref> method. For simplicity, we assume that we are dealing with a vision mamba model, which operates on sequences of size L + 1, where L is the sequence length obtained from the √ L × √ L image patches, with a classification (CLS) token appended to the end of the sequence.</p><p>To do so, for each sample, we first extract the hidden attention matrix αλ,d for any channel d ∈ [D] and layer λ ∈ [Λ] according to the formulation in section 3.1 (Eq. 11), such that αλ,d ∈ R (L+1)×(L+1)</p><p>Attention-Rollout is then applied as follows:</p><formula xml:id="formula_23">∀λ ∈ [Λ] : αλ = I L+1 + E d∈[D] (α λ,d ), αλ ∈ R (L+1)×(L+1)<label>(20)</label></formula><p>where</p><formula xml:id="formula_24">I L+1 ∈ R (L+1)×(L+1</formula><p>) is an identity matrix utilized to incorporate the influence of skip connections along the layers. Now, the per-layer global attention matrices αλ for all λ ∈ [Λ] are aggregated into the final map ρ by:</p><formula xml:id="formula_25">ρ = Π Λ λ=1 αλ , ρ ∈ R (L+1)×(L+1)<label>(21)</label></formula><p>Note that each row of ρ corresponds to a relevance map for each token, given the other tokens. In the context of this study, which concentrates on classification models, our attention analysis directs attention exclusively to the CLS token. Thus, we derive the final relevance map from the row associated with the CLS token in the output matrix, denoted by ρ CLS ∈ R L , which contains the relevance scores evaluating each token's influence on the classification token. Finally, to obtain the final explanation heatmap we reshape ρ CLS ∈ R L to √ L × √ L and upsample it back to the size of the original image using bilinear interpolation.</p><p>Although Mamba models are causal by definition, resulting in causal hidden attention matrices, our method can be extended to a bidirectional setting in a straightforward manner. This adaptation involves modifying Eq. 20 so that αλ,d becomes the outcome of summing the (two) per-direction matrices of the λ-layer and the d-channel.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.3">Application to Attention-based Attribution</head><p>As our class-specific explainability technique for Mamba models, we have tailored the Transformer-Attribution <ref type="bibr" target="#b14">[15]</ref> explainability method, which is specifically designed for transformers, to suit Mamba models. This method relies on a combination of LRP scores and attention gradients to generate the relevance scores. Since each Mamba block includes several peripheral layers that are not included in transformers, such as Conv1D, additional gating mechanisms, and multiple linear projection layers, a robust mechanism must be designed carefully. For simplicity, we focus on vision Mamba, with a grid of √ L patches in each row and column, as in Sec. 3.2.</p><p>The Transformer-Attribution method encompasses two stages: (i) generating a relevance map for each attention layer, followed by (ii) the aggregation of these relevance maps across all layers, using the aggregation rule specified in 21, to produce the final map ρ.</p><p>The difference from the attention rollout method therefore lies in how step (i) is applied to each Mamba layer λ ∈ [Λ]. For the ĥ ∈ [H] attention head at layer λ, the transformer method <ref type="bibr" target="#b14">[15]</ref> computes the following two maps: (1) LRP [7] relevance scores map R λ, ĥ, and (2) the gradients ∇α λ, ĥ with respect to a target class of interest. Then, these two are fused by a Hadamard product:</p><formula xml:id="formula_26">β λ = I L + E ĥ∈[ Ĥ] (∇α λ, ĥ ⊙ R λ, ĥ) + , I L+1 ∈ R (L+1)×(L+1)<label>(22)</label></formula><p>Our method, Mamba-Attribution, depicted in Fig. <ref type="figure" target="#fig_0">2</ref>, deviates from this method by modifying Eq. 22 in the following aspects: (i) Instead of computing the  gradients on the per-head attention matrices ∇α λ, ĥ, we compute the gradients of ∇ŷ ′λ,d . The motivation for these modifications is to exploit the gradients of both the S6 mixer and the gating mechanism in Eq. 8 (left), to obtain strong classspecific maps. (ii) We simply replace R λ, ĥ with the attention matrices αλ,d at layer λ and channel d, since we empirically observe that those attention matrices produce better relevance maps. Both of these modifications are manifested by the following form, which defines our method:</p><formula xml:id="formula_27">βλ = I L + E d∈D (∇ŷ ′λ,d ) ⊙ E d∈D (α λ,d ) +<label>(23)</label></formula></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Experiments</head><p>In this section, we present an in-depth analysis of the hidden attention mechanism embedded within Mamba models, focusing on its semantic diversity and applicability in explainable AI frameworks. We start by visualizing the hidden attention matrices for both NLP and vision models in Sec. 4.1, followed by assessing our explainable AI techniques empirically, via perturbation and segmentation tests in Sec. 4.2.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Visualization of Attention Matrices</head><p>The Visual Mamba (ViM) comes in two versions: in one, the CLS token is last and in the other, the CLS token is placed in the middle. Fig. <ref type="figure" target="#fig_1">3</ref> shows how this positioning influences the impact of the patches on the CLS, by averaging over the entire test set. Evidently, the patches near the CLS token are more influential. This phenomenon may suggest that a better strategy is to have a non-spatial/global CLS token <ref type="bibr" target="#b21">[22,</ref><ref type="bibr" target="#b36">37]</ref>. In NLP, we compare attention matrices extracted from Mamba (130m) and Transformer (Pythia-160m <ref type="bibr" target="#b10">[11]</ref>) language models, trained on the Pile <ref type="bibr" target="#b24">[25]</ref> dataset for next token prediction. The attention maps are extracted using examples from the Lambada dataset (preprocessed by OpenAI).</p><p>As can be seen, the hidden attention matrices of Mamba appear to be similar to the attention matrices extracted from transformers In both models, the dependencies between distant tokens are captured in the deeper layers of the model, as depicted in the lower rows. Some of the attention matrices demonstrate the ability of selective SSM models and transformers to focus on parts of the input. In those cases, instead of the diagonal patterns, some columns seem to miss the diagonal element and the attention is more diffused (recall that we normalized the Mamba attention maps for visualization purposes. In practice, these columns have little activity).</p><p>Evidently, both the Mamba attention matrices and the transformer attention matrices possess similar properties and depict the two-dimensional structure within the data as bands with an offset of √ L. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Explainability Metrics</head><p>The explainable AI experiments include three types of explainability methods:</p><p>(1) Raw-Attention, which employs raw attention scores as relevancies. Our findings indicate that averaging the attention maps across layers yields optimal results.</p><p>(2) Attn-Rollout <ref type="bibr" target="#b0">[1]</ref> for Transformers, and its Mamba version, as depicted in Sec. 3.2. Finally, (3) The Transformer Attribution of Chefer et al. <ref type="bibr" target="#b13">[14]</ref> and its Mamba Attribution counterpart, detailed in Sec. 3.3. Fig. <ref type="figure" target="#fig_3">5</ref> depicts the results of the six attribution methods on typical samples from the ImageNet test set. As can be seen, the Mamba-based heatmaps are often more complete than their transformer-based counterparts. The raw attention of Mamba stands out from the other five heatmaps, since it depicts activity across the entire image. However, the relevant object is highlighted.</p><p>Next, we apply explainability evaluation metrics. These metrics allow one to compare different explainability methods that are applied to the same model. Applying them to compare different models is not meant to say that model X is more explainable than model Y. The main purpose is to show that the attention maps of Mamba we introduce are as useful as the attention maps of Transformers in terms of providing explainability. A secondary aim is to validate the feasibility of potential use for weakly supervised downstream tasks that require spatial location. Perturbation Perturbation Tests In this evaluation framework, we employ an input perturbation scheme to assess the efficacy of various explanation methods, following the approach outlined by <ref type="bibr" target="#b13">[14,</ref><ref type="bibr" target="#b14">15]</ref>.</p><p>These experiments are conducted under two distinct settings. In the positive perturbation scenario, a quality explanation involves an ordered list of pixels, arranged most-to-least relevant. Consequently, when gradually masking out the pixels of the input image, starting from the highest relevance to the lowest, and measuring the mean top-1 accuracy of the network, one anticipates a notable decrease in performance.</p><p>Conversely, in the negative perturbation setup, a robust explanation is expected to uphold the accuracy of the model while systematically removing pixels, starting from the lowest relevance to the highest.</p><p>In both cases, the evaluation metrics consider the area-under-curve (AUC) focusing on the erasure of 10% to 90% of the pixels.</p><p>The results of the perturbations are presented in Tab. 1, depicting the performance of different explanation methods under both positive and negative perturbation scenarios across the two models. In the positive perturbation scenario, where lower AUC values are indicative of better performance, we notice that for Raw-Attention, Mamba shows a better AUC compared to the Vision Transformer (ViT). For the Attn-Rollout method, Mamba outperforms the ViT, while the latter shows a better AUC under the Attribution method. In the negative perturbation scenario, where higher AUC values are better, the Transformerbased methods consistently outperform Mammba across all three methods. The tendency for lower AUC in both positive (where it is desirable) and negative perturbation (where it is undesirable) may indicate that the Mamba model is more sensitive to blacking out patches, and it would be interesting to add experiments in which the patches are blurred instead <ref type="bibr" target="#b22">[23]</ref>. For perturbation tests in the NLP domain, please refer to the Appendices B and C.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Segmentation Tests</head><p>It is expected that an effective explainability method would produce reasonable foreground segmentation maps. This is assessed for ImageNet classifiers by comparing the obtained heatmap against the ground truth segmentation maps available in the ImageNet-Segmentation dataset <ref type="bibr" target="#b32">[33]</ref>.</p><p>Evaluation is conducted based on pixel accuracy, mean-intersection-overunion (mIoU) and mean average precision (mAP) metrics, aligning with established benchmarks in the literature for explainability <ref type="bibr" target="#b13">[14,</ref><ref type="bibr" target="#b14">15,</ref><ref type="bibr" target="#b35">36,</ref><ref type="bibr" target="#b52">53]</ref>.</p><p>The results are outlined in Tab. 2. For Raw-Attention, Mamba demonstrates significantly higher pixel accuracy and mean Intersection over Union compared to Vision Transformer, while the latter performs better in mean Average Precision. Under the Attn-Rollout method, Mamba outperforms Vision Transformer in mean Average Precision, pixel accuracy and mean Intersection over Union. Finally, Transformer-Attribution consistently surpasses Mamba-Attribution, achiev- ing the highest scores in pixel accuracy, mean Average Precision, and mean Intersection over Union, respectively. These results underscore the potential of Mamba's attention mechanism as approaching and sometimes surpassing the interoperability level of Transformer models, especially when the attention maps are taken as is. It also highlights the applicability of Mamba models for downstream tasks such as weakly supervised segmentation. It seems, however, that the Mamba-based attribution model, which is modeled closely after the transformer method of Chefer et al. <ref type="bibr" target="#b14">[15]</ref> may benefit from further adjustments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Discussion: The Evolution of Attention in SSMs</head><p>A natural question to ask is whether the attention perspective we exposed is unique to Selective SSM (the building block of Mamba), separating it from other SSMs. The answer is that Selective SSM, similar to transformers, contains a type of layer we call data-dependent non-diagonal mixer, which previous layers do not.</p><p>In their seminal work, Poli et al. <ref type="bibr" target="#b58">[59]</ref> claim that a crucial aspect of transformers is the existence of an expressive, data-controlled linear operator. Here, we focus on a more specific component, which is an expressive data-controlled linear non-diagonal mixer operator. This distinguishes between elementwise operators that act on the data associated with specific tokens (including MLP, gating mechanisms, and GLU activations <ref type="bibr" target="#b64">[65]</ref>) and mixer operations that pool information from multiple tokens.</p><p>The mixer components can further be divided into fixed, e.g., using pooling operators with fixed structure and coefficients, or data-dependent, in which the interactions between tokens are controlled by their input-dependent representations, e.g., self-attention. In appendix E we prove the following result, which sheds light on the gradual evolution of attention in SSM models.</p><p>Theorem 1. (i) S4 <ref type="bibr" target="#b30">[31]</ref>, DSS <ref type="bibr" target="#b33">[34]</ref>, S5 <ref type="bibr" target="#b65">[66]</ref> have fixed mixing elements. (ii) GSS <ref type="bibr" target="#b51">[52]</ref>,and Hyena <ref type="bibr" target="#b58">[59]</ref> have fixed mixing elements with diagonal data-control mechanism. (iii) Selective SSM have data-controlled non-diagonal mixers.</p><p>Transformers are recognized for their superior in-context learning (ICL) capabilities, where the model adapts its function according to the input provided <ref type="bibr">[13]</ref>. Empirical evidence has demonstrated that Mamba models are the first SSMs to exhibit ICL capabilities on par with those of transformers <ref type="bibr" target="#b28">[29,</ref><ref type="bibr" target="#b55">56]</ref>. Based on the intuition that the capacity to focus on specific inputs is required for ICL, we hypothesize that the presence of data-controlled non-diagonal mixers in both transformers and Mamba models is crucial for achieving a high level of ICL.</p><p>A question then arises: which model is more expressive, transformers or selective SSM? While previous work has shown that Transformers are more expressive than traditional state-space layers <ref type="bibr" target="#b84">[85]</ref>, we show in Appendix D that the situation is reversed for selective SSMs, as follows:</p><p>Theorem 2. One channel of the selective state-space layer can express all functions that a single transformer head can express. Conversely, a single Transformer layer cannot express all functions that a single selective SSM layer can.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Conclusions</head><p>In this work, we have established a significant link between Mamba and selfattention layers, illustrating that the Mamba layer can be reformulated as an implicit form of causal self-attention mechanism. This links the highly effective Mamba layers directly with the transformer layers.</p><p>The parallel perspective plays a crucial role in efficient training and the recurrent perspective is essential for effective causal generation. The attention perspective plays a role in understanding the inner representation of the Mamba model. While "Attention is not Explanation" <ref type="bibr">[39]</ref>, attention layers have been widely used for transformer explainability. By leveraging the obtained attention matrices, we introduce the first (as far as we can ascertain) explainability techniques for Mamba models, for both task-specific and task-agnostic regimes. This contribution equips the research community with novel tools for examining the performance, fairness, robustness, and weaknesses of Mamba models, thereby paving the way for future improvements, and it also enables weakly supervised downstream tasks. Looking ahead, we plan to delve into the relationships between Mamba, Self-Attention and other recent layers, such as RWKV <ref type="bibr" target="#b56">[57]</ref>, Retention <ref type="bibr" target="#b66">[67]</ref> and Hyena <ref type="bibr" target="#b58">[59]</ref>, and develop XAI methods for LLMs relying on these layers and their corresponding vision variants <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b83">84]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A Oversmoothing</head><p>Oversmoothing poses a significant challenge for Transformer-based models <ref type="bibr">[3,</ref><ref type="bibr">3,</ref><ref type="bibr" target="#b19">20,</ref><ref type="bibr" target="#b26">27,</ref><ref type="bibr" target="#b54">55,</ref><ref type="bibr" target="#b60">61,</ref><ref type="bibr" target="#b73">74]</ref>, affecting their ability to accurately capture and represent intricate features and relationships. In Transformer-based models, oversmoothing impacts tasks such as natural language processing <ref type="bibr" target="#b16">[17,</ref><ref type="bibr" target="#b39">40]</ref> and vision <ref type="bibr">[3,</ref><ref type="bibr" target="#b26">27,</ref><ref type="bibr" target="#b60">61]</ref>, where it blurs fine-grained details essential for understanding and localization <ref type="bibr">[3,</ref><ref type="bibr" target="#b60">61]</ref>. Recent transformer-based contributions <ref type="bibr">[3,</ref><ref type="bibr" target="#b73">74]</ref> on over-smoothing have developed various tools for measuring it, which we utilize when comparing transformers to Mamba-based architectures. Following Wang et al <ref type="bibr" target="#b73">[74]</ref> we employ the cosine similarity metric, which operates on a layer index l and its corresponding feature map X l ∈ R L+1×d , such that L is the sequence length excluding the CLS token and d is the feature dimensionality. The cosine similarity for X l is then defined as:</p><formula xml:id="formula_28">M l feat = 2 n(n -1) n i=1 n j=i+1 X (l)T i,: X (l) j,: ∥X (l) i,: ∥ 2 ∥X (l) j,: ∥ 2 , (<label>24</label></formula><formula xml:id="formula_29">)</formula><p>where X (l) i,: represents the i-th row (token) of X (l) . In words, this measure calculates the average similarity between all token pairs except for self-similarity.</p><p>The results are averaged across the entire ImageNet validation set. For further details, refer to <ref type="bibr" target="#b73">[74]</ref>.</p><p>Fig. <ref type="figure" target="#fig_4">6</ref> compares M l feat between transformers' attention and Mamba attention for different layers, where the layer index is normalized by the total number of layers. Evidently, there is a clear reduction in the inter-cosine similarity among tokens for all layers in the Mamba model (with 24 layers) compared to the Vision Transformer <ref type="bibr">(12 layers)</ref>. This variation can be attributed to the use of the softmax operator within the self-attention layer, a factor recognized as contributing to the oversmoothing problem <ref type="bibr">[3,</ref><ref type="bibr" target="#b73">74]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B NLP Experiments</head><p>In this experiment, our aim is to extend the utilization of the proposed methods to the domain of Natural Language Processing (NLP). To achieve this, we conduct a comparative analysis between the Mamba-160M model and BERT-large, drawing upon established literature in the field <ref type="bibr" target="#b3">[4,</ref><ref type="bibr" target="#b14">15]</ref>. Two settings are considered : (1) activation task, in this task, a good explanation involves listing tokens in order of their relevance, from most to least. When these tokens are added to an initially empty sentence, they should activate the network output as much and as quickly as possible. We evaluate the quality of explanations by observing the output probability p c (x) for the ground-truth class c. (2) pruning task, the pruning task involves removing tokens from the original sentence, starting with those deemed least relevant and progressing to the most relevant. We assess the impact of this pruning, by measuring the difference between the unpruned model's output logits y 0 and y mt of the pruned output. In the activation task, we begin with a sentence containing "&lt;UNK&gt;" tokens and gradually replace them with the original tokens in order of highest to lowest relevance. Conversely, in the pruning task, we remove tokens from lowest to highest relevance by replacing them with "&lt;UNK&gt;" tokens.</p><p>The dataset employed in our study is the IMDb movie review sentiment classification dataset, consisting of 25,000 samples for training and an equal number for testing, with binary labels indicating sentiment polarity. We utilize the Mamba-130M<ref type="foot" target="#foot_0">foot_0</ref> and BERT<ref type="foot" target="#foot_1">foot_1</ref> models fine-tuned on the IMDB dataset for classification. BERT stands out as our baseline choice, benefiting from a readily available implementation of the Transformer-Attr method <ref type="foot" target="#foot_2">4</ref> . Notably, both models exhibit comparable accuracy levels on the downstream task of IMDB movie review sentiment classification. The results, depicted in Fig. <ref type="figure" target="#fig_5">7</ref>, illustrate that in both the pruning and activation tasks, Mamba-Attr exhibits comparable or occasionally superior performance to the Transformer-Attr method. We present the results of each method in separate graphs, as the two models are not directly comparable due to differences in the logit scale and the behavior on random changes to the prompt. In Sec C we provide qualitative results for the different explanation methods (Mamba-Attr and Transformer-Attr) on the IMDb dataset, for both positive (green) and negative (red) sentiments. Evidently, Mamba-Attr tends to generate more sparse explanations in comparison to its Transformer-Attr counterpart.</p><p>For instance, in the analysis of the first negative sample, our method emphasizes the rating of "1" as the most salient feature along with other negative terms. Conversely, the transformer attribution method yields a less sparse explanation, focusing primarily on the relevant word while also encompassing other nonrelevant terms. Similarly, in the assessment of the third negative example, our method exhibits a comparable behavior, placing emphasis on the ratings alongside other relevant negative terms. Conversely, while the salient words identified by the transformer attribution method remain valid, its explanation is comparatively less sparse. We observe a similar trend across positive sentiments as well (depicted in green). For instance, in the final positive review, Mamba-Attr distinctly highlights the phrase "Greatest Movie which ever made, " serving as clear evidence of a positive sentiment. In contrast, the explanation provided by Trans-Attr appears more broad and encompassing.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C NLP Qualitative Results</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Mamba-Attr</head><p>Transformer-Attr</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>D Expressiveness of Mamba Models</head><p>Theorem 3. One channel of the selective state-space layer can express all functions that a single transformer head can express. Conversely, a single Transformer layer cannot express all functions that a single selective SSM layer can.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Motivation and Intuition:</head><p>The motivation for this proof relies on Hi,j in Eq. 19, which enables Mamba to utilize continuous historical context within sequences more efficiently than traditional attention mechanisms. To exploit this capability, we focus on a problem involving input-dependent control over the entire input, a task that cannot be captured by relying solely on pairwise interactions at single layer, which constitute the foundation of self-attention. Assumptions:</p><p>1. For simplicity, we will disregard the discretization, as it has been shown to be unnecessary in previous work <ref type="bibr" target="#b34">[35]</ref>. 2. As our regime focuses on real elements (x i ∈ R), the hidden dimension of the transformer is 1. Hence, the parameters of both the self-attention mechanism and the Mamba are scalars, namely</p><formula xml:id="formula_30">A i , B i , C i , W Q , W V , W K ∈ R Proof.</formula><p>Based on the definition of the count in row function, our proof straightforwardly arises from the following three lemmas:</p><p>Definition 1. The count in row problem: Given a binary sequence x 1 , x 2 , . . . , x L such that x i ∈ {0, 1} for all i ≤ L, the "count in row" function f is defined to produce an output sequence y 1 , y 2 , . . . , y L , where each y i is determined based on the contiguous subsequence of 1s to which x i belongs. Formally:</p><formula xml:id="formula_31">y i = f (x 1 , . . . , x i ) = max 0≤j≤i {i -j + 1 | i k=j [x k &gt; 0] = 1} ∪ {0}<label>(25)</label></formula><p>where [x k &gt; 0] is the Iverson bracket, equaling 1 if x k &gt; 0 and 0 otherwise.</p><p>Lemma 1. One channel of Mamba can express the count in row function for sequences of any length.</p><p>Proof. Assumption 1 defines the following recurrence rule:</p><formula xml:id="formula_32">Bi = S B (x i ), C i = S C (x i ), Āi = S A (x i ) + A<label>(26)</label></formula><formula xml:id="formula_33">h t = Āt h t-1 + Bt x t , y t = C t h t<label>(27)</label></formula><p>By substituting S B , S C , S A = 1, A = 0 into Eq. 27, we obtain the following results:</p><formula xml:id="formula_34">h t = h t-1 + x t , y t = h t<label>(28)</label></formula><p>Now, there are two cases: (i) If x i = 0, it's clear that both the state h t and the output y t receive zero values. (ii) Otherwise (if x i = 1), we see that both h t and y t increase by one, clearly demonstrating that the entire mechanism exactly solves the count in row problem.</p><p>Lemma 2. One transformer head cannot express the count in row function for sequences with more than two elements.</p><p>Proof. The self-attention mechanism computes the output as follows</p><formula xml:id="formula_35">O = softmax (XW Q )(XW K ) T √ d k • (XW V )<label>(29)</label></formula><p>Consider the count in row problem for a binary sequence of length 3, the i-th coordinate in the output can be computed by:</p><formula xml:id="formula_36">O i = 3 j=1 exp (W Q • x i ) • (W K • x j ) 3 k=1 exp ((W Q • x i ) • (W K • x k )) • (W V • x j )<label>(30)</label></formula><p>where we omitted the scale factor √ d k (which can be incorporated into the W Q matrix).</p><p>For the sake of contradiction, we will assume that there are weights for the key, query, and value matrices that solve this problem. Furthermore, recall that W Q , W K , W V ∈ R, according to Assumption 2. Hence: 1. For (x 1 , x 2 , x 3 ) = (0, 1, 1), the output y 3 = 2. Plugging it into Eq. 30 yields:</p><formula xml:id="formula_37">O 3 = W V 2 exp(W Q W K ) 1 + 2 exp(W Q W K ) = 2<label>(31)</label></formula><p>2. For (x 1 , x 2 , x 3 ) = (0, 0, 1), the output y 3 = 1. Plugging it into Eq. 30 yields:</p><formula xml:id="formula_38">O 3 = W V exp(W Q W K ) 2 + exp(W Q W K ) = 1<label>(32)</label></formula><p>Dividing Eq.31 by Eq.32 results in the following:</p><formula xml:id="formula_39">2 2 + exp(W Q W K ) 1 + 2 exp(W Q W K ) = 2 → exp(W Q W K ) = 1</formula><p>Upon plugging it into the eq. 31, we obtained:</p><formula xml:id="formula_40">O 3 = W V 2 3 = 2 → W V = 3</formula><p>However, for (x 1 , x 2 , x 3 ) = (1, 0, 1), the output y 3 is 1, by plugging it to eq. 30, and substituting the values of W V and exp(W Q W K ), we obtain:</p><formula xml:id="formula_41">O 3 = 3 2 exp(W Q W K ) 1 + 2 exp(W Q W K ) = 2 ̸ = 1</formula><p>As requested. Please note that the same technique also works when omitting the softmax function.</p><p>Lemma 3. One channel of the selective state-space layer can express all functions that a single transformer head can express.</p><p>Proof. For simplicity, we consider a causal attention variant without softmax, as the softmax is designed to normalize values rather than improve expressiveness. According to Assumption 1, we omit the discretization. Thus, we can simply set the value of A i to I which is the identity, by substitute A = I and S A = 0. Hence, it is clear that Eq. 11 and Eq. 12 become identical to causal attention, except for the softmax function.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Fig. 2 :</head><label>2</label><figDesc>Fig. 2: Comperative Visualization of Transformer-Attribution and our Mamba-Attribution, both class specific methods.</figDesc><graphic coords="9,134.77,116.23,188.81,95.95" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Fig. 3 :</head><label>3</label><figDesc>Fig. 3: Average attention maps for CLS token in the middle (a,b,c) and as the first (d,e,f).</figDesc><graphic coords="9,345.72,115.83,134.79,102.80" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Fig. 4 Fig. 4 :</head><label>44</label><figDesc>Fig. 4: Hidden Attention Matrices: Attention matrices in vision and NLP Models.Each row represents a different layer within the models, showcasing the evolution of the attention matrices at 25% (top), 50%, and 75% (bottom) of the layer depth.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>Fig. 5 :</head><label>5</label><figDesc>Fig. 5: Qualitative results for the different explanation methods for the ViT-small and the Mamba-small models. (a) the original image, (b) the aggregated Raw-Attention of ViT-Small, (c) Attention Rollout for ViT-Small, (d) Transformer-Attribution for ViT-Small, (e) the Raw-Attention of Mamba-Small, (f) Attention-Rollout of Mamba-Small and (g) the Mamba-Attribution method for the Mamba-Small model.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>Fig. 6 :</head><label>6</label><figDesc>Fig.6: The inter cosine-similarity across the tokens for both DeiT and Vision-Mamba small models across the layers, results are averaged across the whole validation set of ImageNet.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>Fig. 7 :</head><label>7</label><figDesc>Fig.7: Evaluation of explanations using input perturbations for the IMDb dataset, top row shows the results for the pruning task in which the words of least absolute relevance are replaced with &lt;UNK&gt; first and the bottom row shows the results for the activation task in which the most relevant words are added first, in both tasks we show the results for Mamba-Attr and Transformer-Attr separately.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 :</head><label>1</label><figDesc>Positive and Negative perturbation AUC results (percentages) for the predicted class on the ImageNet validation set. For positive perturbation lower is better, and for negative perturbation higher is better.</figDesc><table><row><cell></cell><cell cols="2">Positive Perturbation</cell><cell cols="2">Negative Perturbation</cell></row><row><cell></cell><cell>Mamba</cell><cell>Transformer</cell><cell>Mamba</cell><cell>Transformer</cell></row><row><cell>Raw-Attention</cell><cell>17.268</cell><cell>20.687</cell><cell>34.025</cell><cell>40.766</cell></row><row><cell>Attn-Rollout</cell><cell>18.806</cell><cell>20.594</cell><cell>41.864</cell><cell>43.525</cell></row><row><cell>Attribution</cell><cell>16.619</cell><cell>15.351</cell><cell>39.632</cell><cell>48.089</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2 :</head><label>2</label><figDesc>Segmentation performance on the ImageNet-Segmentation<ref type="bibr" target="#b32">[33]</ref> dataset (percent). Higher is better. The upper part depicts the results for Vision Mamba-small while the lower part contains the results for Vision Transformer-Small</figDesc><table><row><cell>Model</cell><cell>Method</cell><cell>pixel accuracy</cell><cell>mAP</cell><cell>mIoU</cell></row><row><cell>Transformer</cell><cell>Raw-Attention</cell><cell>59.69</cell><cell>77.25</cell><cell>36.94</cell></row><row><cell>Mamba</cell><cell>Raw-Attention</cell><cell>67.64</cell><cell>74.88</cell><cell>45.09</cell></row><row><cell>Transformer</cell><cell>Attn-Rollout [1]</cell><cell>66.84</cell><cell>80.34</cell><cell>47.85</cell></row><row><cell>Mamba</cell><cell>Attn-Rollout (Sec. 3.2)</cell><cell>71.01</cell><cell>80.78</cell><cell>51.51</cell></row><row><cell>Transformer</cell><cell>Transformer-Attr [15]</cell><cell>79.26</cell><cell>84.85</cell><cell>60.63</cell></row><row><cell>Mamba</cell><cell>Mamba-Attr (Sec. 3.3)</cell><cell>74.72</cell><cell>81.70</cell><cell>54.24</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_0"><p>https://huggingface.co/trinhxuankhai/mamba_text_classification</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_1"><p>https://huggingface.co/textattack/bert-base-uncased-imdb</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_2"><p>https://github.com/hila-chefer/Transformer-Explainability</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head n="7">Acknowledgments</head><p>This work was supported by a grant from the <rs type="funder">Tel Aviv University Center for AI and Data Science (TAD)</rs>. This research was also supported by the <rs type="funder">Ministry of Innovation, Science &amp; Technology ,Israel</rs> (<rs type="grantNumber">1001576154</rs>) and the <rs type="funder">Michael J. Fox Foundation</rs> (<rs type="grantNumber">MJFF-022407</rs>). The contribution of the first author is part of a PhD thesis research conducted at <rs type="institution">Tel Aviv University</rs>.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funding" xml:id="_8W9SUGV">
+					<idno type="grant-number">1001576154</idno>
+				</org>
+				<org type="funding" xml:id="_HPHdGQT">
+					<idno type="grant-number">MJFF-022407</idno>
+				</org>
+			</listOrg>
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E Expressiveness of SSMs and Long-Convolution Layers</head><p>Theorem 4. (i) S4 <ref type="bibr" target="#b30">[31]</ref>, DSS <ref type="bibr" target="#b33">[34]</ref>, S5 <ref type="bibr" target="#b65">[66]</ref> have fixed mixing elements. (ii) GSS <ref type="bibr" target="#b51">[52]</ref>,and Hyena <ref type="bibr" target="#b58">[59]</ref> have fixed mixing elements with diagonal data-control mechanism. (iii) Selective SSM have data-controlled non-diagonal mixers.</p><p>Proof. We will prove this theorem separately per each layer: S4, DSS: Both layers implicitly parametrize a convolution kernel K via the A, B and C matrices as follows:</p><p>This kernel does not depend on the input, and it is the only operation that captures interactions between tokens. Therefore, both layers have fixed elements.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>S5:</head><p>The S5 layer extend S4 such that it map multi-input to multi-output rather than mapping single-input to single-output. It use the following recurrent rule:</p><p>which can be computed by</p><p>However, in contrast to S4 and DSS, now C Āi B in R H×H instead of in R. Hence, we can conclude that the mechanism mixes tokens in a fixed pattern, which is captured by</p><p>Āt-i Bx t . GSS: GSS enhances the DSS framework, which utilizes fixed mixing elements, by incorporating an elementwise gating mechanism. Hence, the entire layer can be viewed as a composition of two operators, a mixer that isn't data-dependent (DSS), and an elementwise data-dependent gating, which is equivalent to a diagonal data-control linear operator.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Hyena:</head><p>The Hyena layer is defined by the recurrence of two components: long implicit convolution and elementwise gating. For simplicity, we consider single recurrence steps to constitute the entire layer, since any layer can benefit from such a recurrent-based extension. Additionally, single recurrence is the most common application of the Hyena layer. Hence, similar to GSS, the layer can be viewed as a composition of a mixer that isn't data-dependent (based on CKConv <ref type="bibr" target="#b59">[60]</ref>) and a diagonal data-control operator, which is implemented through elementwise data-dependent gating. Selective SSM: As can be seen in Eq. 10 and 19, the selective SSM can be represented by: y = αx, αi,j = Qi Hi,j Kj</p><p>Thus, it's clear that the linear operator, which relies on α, is a data-controlled, non-diagonal mixer.</p></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Quantifying attention flow in transformers</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Abnar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Zuidema</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 58th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="volume">4</biblScope>
+			<biblScope unit="page" from="11" to="13" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Abnar, S., Zuidema, W.: Quantifying attention flow in transformers. In: Proceed- ings of the 58th Annual Meeting of the Association for Computational Linguistics. pp. 4190-4197 (2020) 4, 5, 7, 11, 13</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<monogr>
+		<title level="m" type="main">Mambatab: A simple yet effective approach for handling tabular data</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Ahamed</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Cheng</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.08867</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ahamed, M.A., Cheng, Q.: Mambatab: A simple yet effective approach for handling tabular data. arXiv preprint arXiv:2401.08867 (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<monogr>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ali</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Galanti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2306.01610</idno>
+		<title level="m">Centered self-attention layers</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">21</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ali, A., Galanti, T., Wolf, L.: Centered self-attention layers. arXiv preprint arXiv:2306.01610 (2023) 7, 20, 21</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Xai for transformers: Better explanations through conservative propagation</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ali</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Schnake</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Eberle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Montavon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><forename type="middle">R</forename><surname>Müller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Machine Learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="volume">4</biblScope>
+			<biblScope unit="page">21</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ali, A., Schnake, T., Eberle, O., Montavon, G., Müller, K.R., Wolf, L.: Xai for transformers: Better explanations through conservative propagation. In: Interna- tional Conference on Machine Learning. pp. 435-451. PMLR (2022) 4, 21</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<monogr>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Anthony</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tokpanov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Glorioso</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Millidge</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.01771</idno>
+		<title level="m">Blackmamba: Mixture of experts for state-space models</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Anthony, Q., Tokpanov, Y., Glorioso, P., Millidge, B.: Blackmamba: Mixture of experts for state-space models. arXiv preprint arXiv:2402.01771 (2024) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Explaining Recurrent Neural Network Predictions in Sentiment Analysis</title>
+		<author>
+			<persName><forename type="first">Leila</forename><surname>Arras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Grégoire</forename><surname>Montavon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Klaus-Robert</forename><surname>Müller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wojciech</forename><surname>Samek</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/w17-5221</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 8th Workshop on Computational Approaches to Subjectivity, Sentiment and Social Media Analysis</title>
+		<meeting>the 8th Workshop on Computational Approaches to Subjectivity, Sentiment and Social Media Analysis</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="159" to="168" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Arras, L., Montavon, G., Müller, K.R., Samek, W.: Explaining recurrent neural network predictions in sentiment analysis. In: Proceedings of the 8th Workshop on Computational Approaches to Subjectivity, Sentiment and Social Media Analysis. pp. 159-168 (2017)</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">On Pixel-Wise Explanations for Non-Linear Classifier Decisions by Layer-Wise Relevance Propagation</title>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Bach</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Binder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Grégoire</forename><surname>Montavon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Frederick</forename><surname>Klauschen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Klaus-Robert</forename><surname>Müller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wojciech</forename><surname>Samek</surname></persName>
+		</author>
+		<idno type="DOI">10.1371/journal.pone.0130140</idno>
+	</analytic>
+	<monogr>
+		<title level="j">PLOS ONE</title>
+		<title level="j" type="abbrev">PLoS ONE</title>
+		<idno type="ISSNe">1932-6203</idno>
+		<imprint>
+			<biblScope unit="volume">10</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page">e0130140</biblScope>
+			<date type="published" when="2015-07-10">2015</date>
+			<publisher>Public Library of Science (PLoS)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bach, S., Binder, A., Montavon, G., Klauschen, F., Müller, K.R., Samek, W.: On pixel-wise explanations for non-linear classifier decisions by layer-wise relevance propagation. PloS one 10(7), e0130140 (2015) 4, 8</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<monogr>
+		<author>
+			<persName><forename type="first">D</forename><surname>Bahdanau</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Cho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Bengio</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1409.0473</idno>
+		<title level="m">Neural machine translation by jointly learning to align and translate</title>
+		<imprint>
+			<date type="published" when="2014">2014</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Bahdanau, D., Cho, K., Bengio, Y.: Neural machine translation by jointly learning to align and translate. arXiv preprint arXiv:1409.0473 (2014)</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<monogr>
+		<title level="m" type="main">2-d ssm: A general spatial layer for visual transformers</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Baron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Zimerman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2306.06635</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Baron, E., Zimerman, I., Wolf, L.: 2-d ssm: A general spatial layer for visual trans- formers. arXiv preprint arXiv:2306.06635 (2023) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Graph mamba: Towards learning on graphs with state space models</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Behrouz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Hashemi</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.08678</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Behrouz, A., Hashemi, F.: Graph mamba: Towards learning on graphs with state space models. arXiv preprint arXiv:2402.08678 (2024) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Pythia: A suite for analyzing large language models across training and scaling</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Biderman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Schoelkopf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">G</forename><surname>Anthony</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Bradley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>O'brien</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Hallahan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Purohit</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">U</forename><forename type="middle">S</forename><surname>Prashanth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Raff</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Machine Learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">10</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Biderman, S., Schoelkopf, H., Anthony, Q.G., Bradley, H., O&apos;Brien, K., Hallahan, E., Khan, M.A., Purohit, S., Prashanth, U.S., Raff, E., et al.: Pythia: A suite for analyzing large language models across training and scaling. In: International Conference on Machine Learning. pp. 2397-2430. PMLR (2023) 10</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<title level="m" type="main">Prefix sums and their applications</title>
+		<author>
+			<persName><forename type="first">G</forename><forename type="middle">E</forename><surname>Blelloch</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="1990">1990</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">Technical Report</note>
+	<note type="raw_reference">Blelloch, G.E.: Prefix sums and their applications. Technical Report (1990) 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Language models are few-shot learners</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">D</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Askell</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in neural information processing systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page">14</biblScope>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J.D., Dhariwal, P., Nee- lakantan, A., Shyam, P., Sastry, G., Askell, A., et al.: Language models are few-shot learners. Advances in neural information processing systems 33, 1877-1901 (2020) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Generic Attention-model Explainability for Interpreting Bi-Modal and Encoder-Decoder Transformers</title>
+		<author>
+			<persName><forename type="first">Hila</forename><surname>Chefer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shir</forename><surname>Gur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lior</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/iccv48922.2021.00045</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2021 IEEE/CVF International Conference on Computer Vision (ICCV)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2021-10">2021</date>
+			<biblScope unit="page" from="387" to="396" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chefer, H., Gur, S., Wolf, L.: Generic attention-model explainability for interpret- ing bi-modal and encoder-decoder transformers. In: Proceedings of the IEEE/CVF International Conference on Computer Vision. pp. 397-406 (2021) 4, 11, 12</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Transformer Interpretability Beyond Attention Visualization</title>
+		<author>
+			<persName><forename type="first">Hila</forename><surname>Chefer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shir</forename><surname>Gur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lior</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/cvpr46437.2021.00084</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2021 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2021-06">2021. 8, 12, 13, 21</date>
+			<biblScope unit="volume">3</biblScope>
+			<biblScope unit="page" from="782" to="791" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chefer, H., Gur, S., Wolf, L.: Transformer interpretability beyond attention visu- alization. In: Proceedings of the IEEE/CVF conference on computer vision and pattern recognition. pp. 782-791 (2021) 3, 4, 5, 8, 12, 13, 21</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Optimizing relevance maps of vision transformers improves robustness</title>
+		<author>
+			<persName><forename type="first">H</forename><surname>Chefer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Schwartz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page">3</biblScope>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chefer, H., Schwartz, I., Wolf, L.: Optimizing relevance maps of vision transform- ers improves robustness. Advances in Neural Information Processing Systems 35, 33618-33632 (2022) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Alleviating over-smoothing for unsupervised sentence representation</title>
+		<author>
+			<persName><forename type="first">N</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Shou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Pei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Jiang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page">20</biblScope>
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Chen, N., Shou, L., Pei, J., Gong, M., Cao, B., Chang, J., Li, J., Jiang, D.: Allevi- ating over-smoothing for unsupervised sentence representation. In: Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 3552-3566 (Jul 2023) 20</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Decision s4: Efficient sequencebased rl via state spaces layers</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">B</forename><surname>David</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Zimerman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Nachmani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Eleventh International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">David, S.B., Zimerman, I., Nachmani, E., Wolf, L.: Decision s4: Efficient sequence- based rl via state spaces layers. In: The Eleventh International Conference on Learning Representations (2022) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<monogr>
+		<title level="m" type="main">An image is worth 16x16 words: Transformers for image recognition at scale</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Dosovitskiy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Beyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Kolesnikov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Weissenborn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Unterthiner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Dehghani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Minderer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Heigold</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gelly</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2010.11929</idno>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., Dehghani, M., Minderer, M., Heigold, G., Gelly, S., et al.: An image is worth 16x16 words: Transformers for image recognition at scale. arXiv preprint arXiv:2010.11929 (2020) 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<monogr>
+		<author>
+			<persName><forename type="first">G</forename><forename type="middle">J</forename><surname>Dovonon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">M</forename><surname>Bronstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">J</forename><surname>Kusner</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.04301</idno>
+		<title level="m">Setting the record straight on transformer oversmoothing</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">20</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Dovonon, G.J., Bronstein, M.M., Kusner, M.J.: Setting the record straight on transformer oversmoothing. arXiv preprint arXiv:2401.04301 (2024) 20</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">RMT: Retentive Networks Meet Vision Transformers</title>
+		<author>
+			<persName><forename type="first">Qihang</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huaibo</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mingrui</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongmin</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ran</forename><surname>He</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/cvpr52733.2024.00539</idno>
+		<idno type="arXiv">arXiv:2309.11523</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2024 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="5641" to="5651" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Fan, Q., Huang, H., Chen, M., Liu, H., He, R.: Rmt: Retentive networks meet vision transformers. arXiv preprint arXiv:2309.11523 (2023) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<monogr>
+		<author>
+			<persName><forename type="first">A</forename><surname>Farooq</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Awais</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Ahmed</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Kittler</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2111.13156</idno>
+		<title level="m">Global interaction modelling in vision transformer via super tokens</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page">9</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Farooq, A., Awais, M., Ahmed, S., Kittler, J.: Global interaction modelling in vision transformer via super tokens. arXiv preprint arXiv:2111.13156 (2021) 9</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Interpretable explanations of black boxes by meaningful perturbation</title>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">C</forename><surname>Fong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Vedaldi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the IEEE international conference on computer vision</title>
+		<meeting>the IEEE international conference on computer vision</meeting>
+		<imprint>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page">12</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fong, R.C., Vedaldi, A.: Interpretable explanations of black boxes by meaningful perturbation. In: Proceedings of the IEEE international conference on computer vision. pp. 3429-3437 (2017) 12</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<monogr>
+		<title level="m" type="main">Hungry hungry hippos: Towards language modeling with state space models</title>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">Y</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Dao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><forename type="middle">K</forename><surname>Saab</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">W</forename><surname>Thomas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Rudra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ré</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2212.14052</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Fu, D.Y., Dao, T., Saab, K.K., Thomas, A.W., Rudra, A., Ré, C.: Hungry hun- gry hippos: Towards language modeling with state space models. arXiv preprint arXiv:2212.14052 (2022) 3, 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<monogr>
+		<author>
+			<persName><forename type="first">L</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Biderman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Black</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Golding</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Hoppe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Foster</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Phang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Thite</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Nabeshima</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2101.00027</idno>
+		<title level="m">The pile: An 800gb dataset of diverse text for language modeling</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page">10</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Gao, L., Biderman, S., Black, S., Golding, L., Hoppe, T., Foster, C., Phang, J., He, H., Thite, A., Nabeshima, N., et al.: The pile: An 800gb dataset of diverse text for language modeling. arXiv preprint arXiv:2101.00027 (2020) 10</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">It&apos;s raw! audio generation with state-space models</title>
+		<author>
+			<persName><forename type="first">K</forename><surname>Goel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Donahue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ré</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Machine Learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Goel, K., Gu, A., Donahue, C., Ré, C.: It&apos;s raw! audio generation with state-space models. In: International Conference on Machine Learning. pp. 7616-7633. PMLR (2022) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<monogr>
+		<author>
+			<persName><forename type="first">C</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Chandra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2104.12753</idno>
+		<title level="m">Vision transformers with patch diversification</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page">20</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Gong, C., Wang, D., Li, M., Chandra, V., Liu, Q.: Vision transformers with patch diversification. arXiv preprint arXiv:2104.12753 (2021) 20</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Nnmamba: 3D Biomedical Image Segmentation, Classification and Landmark Detection with State Space Model</title>
+		<author>
+			<persName><forename type="first">Haifan</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luoyao</forename><surname>Kang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yitao</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yihan</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiang</forename><surname>Wan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xusheng</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haofeng</forename><surname>Li</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/isbi60581.2025.10980694</idno>
+		<idno type="arXiv">arXiv:2402.03526</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2025 IEEE 22nd International Symposium on Biomedical Imaging (ISBI)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="1" to="5" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Gong, H., Kang, L., Wang, Y., Wan, X., Li, H.: nnmamba: 3d biomedical image segmentation, classification and landmark detection with state space model. arXiv preprint arXiv:2402.03526 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<monogr>
+		<author>
+			<persName><forename type="first">R</forename><surname>Grazzi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Siems</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Schrodi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Brox</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Hutter</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.03170</idno>
+		<title level="m">Is mamba capable of incontext learning?</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Grazzi, R., Siems, J., Schrodi, S., Brox, T., Hutter, F.: Is mamba capable of in- context learning? arXiv preprint arXiv:2402.03170 (2024) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<monogr>
+		<title level="m" type="main">Mamba: Linear-time sequence modeling with selective state spaces</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Dao</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2312.00752</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Gu, A., Dao, T.: Mamba: Linear-time sequence modeling with selective state spaces. arXiv preprint arXiv:2312.00752 (2023) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<monogr>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Goel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ré</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2111.00396</idno>
+		<title level="m">Efficiently modeling long sequences with structured state spaces</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page">27</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Gu, A., Goel, K., Ré, C.: Efficiently modeling long sequences with structured state spaces. arXiv preprint arXiv:2111.00396 (2021) 3, 14, 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Combining recurrent, convolutional, and continuous-time models with linear state space layers</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Johnson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Goel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Saab</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Dao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Rudra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ré</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in neural information processing systems</title>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page">3</biblScope>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gu, A., Johnson, I., Goel, K., Saab, K., Dao, T., Rudra, A., Ré, C.: Combining recurrent, convolutional, and continuous-time models with linear state space layers. Advances in neural information processing systems 34, 572-585 (2021) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">ImageNet Auto-Annotation with Segmentation Propagation</title>
+		<author>
+			<persName><forename type="first">Matthieu</forename><surname>Guillaumin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Küttel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vittorio</forename><surname>Ferrari</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s11263-014-0713-9</idno>
+	</analytic>
+	<monogr>
+		<title level="j">International Journal of Computer Vision</title>
+		<title level="j" type="abbrev">Int J Comput Vis</title>
+		<idno type="ISSN">0920-5691</idno>
+		<idno type="ISSNe">1573-1405</idno>
+		<imprint>
+			<biblScope unit="volume">110</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="328" to="348" />
+			<date type="published" when="2014-04-07">2014</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Guillaumin, M., Küttel, D., Ferrari, V.: Imagenet auto-annotation with segmenta- tion propagation. International Journal of Computer Vision 110, 328-348 (2014) 12, 13</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Diagonal state spaces are as effective as structured state spaces</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gupta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Berant</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page">27</biblScope>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gupta, A., Gu, A., Berant, J.: Diagonal state spaces are as effective as structured state spaces. Advances in Neural Information Processing Systems 35, 22982-22994 (2022) 14, 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<monogr>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gupta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Mehta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Berant</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2212.00768</idno>
+		<title level="m">Simplifying and understanding state space models with diagonal linear rnns</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">25</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Gupta, A., Mehta, H., Berant, J.: Simplifying and understanding state space mod- els with diagonal linear rnns. arXiv preprint arXiv:2212.00768 (2022) 25</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">Visualization of supervised and self-supervised neural networks via attribution guided factorization</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ali</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI conference on artificial intelligence</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page">12</biblScope>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gur, S., Ali, A., Wolf, L.: Visualization of supervised and self-supervised neural networks via attribution guided factorization. In: Proceedings of the AAAI confer- ence on artificial intelligence. vol. 35, pp. 11545-11554 (2021) 4, 12</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">GradViT: Gradient Inversion of Vision Transformers</title>
+		<author>
+			<persName><forename type="first">Ali</forename><surname>Hatamizadeh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongxu</forename><surname>Yin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Holger</forename><surname>Roth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenqi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jan</forename><surname>Kautz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daguang</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pavlo</forename><surname>Molchanov</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/cvpr52688.2022.00978</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">9</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hatamizadeh, A., Yin, H., Heinrich, G., Kautz, J., Molchanov, P.: Global context vision transformers. In: International Conference on Machine Learning. pp. 12633- 12646. PMLR (2023) 9</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Transformer quality in linear time</title>
+		<author>
+			<persName><forename type="first">W</forename><surname>Hua</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Le</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Machine Learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">7</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hua, W., Dai, Z., Liu, H., Le, Q.: Transformer quality in linear time. In: Interna- tional Conference on Machine Learning. pp. 9099-9117. PMLR (2022) 7</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">Demonstration Papers at HLT-NAACL 2004 on XX - HLT-NAACL &apos;04</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Jain</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">C</forename><surname>Wallace</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/1614025</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of NAACL-HLT</title>
+		<meeting>NAACL-HLT</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jain, S., Wallace, B.C.: Attention is not explanation. In: Proceedings of NAACL- HLT. pp. 3543-3556 (2019) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">Characterizing and addressing the issue of oversmoothing in neural autoregressive sequence modeling</title>
+		<author>
+			<persName><forename type="first">Ilia</forename><surname>Kulikov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maksim</forename><surname>Eremeev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyunghyun</forename><surname>Cho</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.aacl-main.82</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2nd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics and the 12th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)</title>
+		<meeting>the 2nd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics and the 12th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-11">Nov 2022</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="1115" to="1124" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Kulikov, I., Eremeev, M., Cho, K.: Characterizing and addressing the issue of oversmoothing in neural autoregressive sequence modeling. In: Proceedings of the 2nd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics and the 12th International Joint Conference on Natural Language Pro- cessing (Volume 1: Long Papers). pp. 1115-1124. Association for Computational Linguistics, Online only (Nov 2022) 20</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<monogr>
+		<title level="m" type="main">Mamba-nd: Selective state space modeling for multidimensional data</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Singh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Grover</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.05892</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Li, S., Singh, H., Grover, A.: Mamba-nd: Selective state space modeling for multi- dimensional data. arXiv preprint arXiv:2402.05892 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<monogr>
+		<title level="m" type="main">Pointmamba: A simple state space model for point cloud analysis</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Zou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Bai</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.10739</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Liang, D., Zhou, X., Wang, X., Zhu, X., Xu, W., Zou, Z., Ye, X., Bai, X.: Point- mamba: A simple state space model for point cloud analysis. arXiv preprint arXiv:2402.10739 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">Swin-UMamba: Mamba-Based UNet with ImageNet-Based Pretraining</title>
+		<author>
+			<persName><forename type="first">Jiarun</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hong-Yu</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Xi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lequan</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cheng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yong</forename><surname>Liang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guangming</forename><surname>Shi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yizhou</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shaoting</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hairong</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shanshan</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-72114-4_59</idno>
+		<idno type="arXiv">arXiv:2402.03302</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="615" to="625" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Liu, J., Yang, H., Zhou, H.Y., Xi, Y., Yu, L., Yu, Y., Liang, Y., Shi, G., Zhang, S., Zheng, H., et al.: Swin-umamba: Mamba-based unet with imagenet-based pre- training. arXiv preprint arXiv:2402.03302 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<monogr>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Xie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.10166</idno>
+		<title level="m">Vmamba: Visual state space model</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Liu, Y., Tian, Y., Zhao, Y., Yu, H., Xie, L., Wang, Y., Ye, Q., Liu, Y.: Vmamba: Visual state space model. arXiv preprint arXiv:2401.10166 (2024) 1, 3, 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">Structured state space models for in-context reinforcement learning</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Schroecker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Parisotto</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Foerster</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Singh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Behbahani</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="page">3</biblScope>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lu, C., Schroecker, Y., Gu, A., Parisotto, E., Foerster, J., Singh, S., Behbahani, F.: Structured state space models for in-context reinforcement learning. Advances in Neural Information Processing Systems 36 (2024) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">Soft: Softmax-free transformer with linear complexity</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Xiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="page">7</biblScope>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lu, J., Yao, J., Zhang, J., Zhu, X., Xu, H., Gao, W., Xu, C., Xiang, T., Zhang, L.: Soft: Softmax-free transformer with linear complexity. Advances in Neural Infor- mation Processing Systems 34, 21297-21309 (2021) 7</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<analytic>
+		<title level="a" type="main">Focus Your Attention (with Adaptive IIR Filters)</title>
+		<author>
+			<persName><forename type="first">Shahar</forename><surname>Lutati</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Itamar</forename><surname>Zimerman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lior</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.emnlp-main.772</idno>
+		<idno type="arXiv">arXiv:2305.14952</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2023 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="12538" to="12549" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Lutati, S., Zimerman, I., Wolf, L.: Focus your attention (with adaptive iir filters). arXiv preprint arXiv:2305.14952 (2023) 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<monogr>
+		<title level="m" type="main">U-mamba: Enhancing long-range dependency for biomedical image segmentation</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.04722</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ma, J., Li, F., Wang, B.: U-mamba: Enhancing long-range dependency for biomed- ical image segmentation. arXiv preprint arXiv:2401.04722 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<monogr>
+		<author>
+			<persName><forename type="first">X</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Kong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Gui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Neubig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>May</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2209.10655</idno>
+		<title level="m">Mega: moving average equipped gated attention</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">7</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ma, X., Zhou, C., Kong, X., He, J., Gui, L., Neubig, G., May, J., Zettlemoyer, L.: Mega: moving average equipped gated attention. arXiv preprint arXiv:2209.10655 (2022) 7</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<monogr>
+		<title level="m" type="main">Parallelizing linear recurrent neural nets over sequence length</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Martin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Cundy</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1709.04057</idno>
+		<imprint>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Martin, E., Cundy, C.: Parallelizing linear recurrent neural nets over sequence length. arXiv preprint arXiv:1709.04057 (2017) 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b50">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><surname>Mehta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gupta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Cutkosky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Neyshabur</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2206.13947</idno>
+		<title level="m">Long range language modeling via gated state spaces</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Mehta, H., Gupta, A., Cutkosky, A., Neyshabur, B.: Long range language modeling via gated state spaces. arXiv preprint arXiv:2206.13947 (2022) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b51">
+	<monogr>
+		<title level="m" type="main">Long range language modeling via gated state spaces</title>
+		<author>
+			<persName><forename type="first">H</forename><surname>Mehta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gupta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Cutkosky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Neyshabur</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2206.13947</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="volume">14</biblScope>
+			<biblScope unit="page">27</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Mehta, H., Gupta, A., Cutkosky, A., Neyshabur, B.: Long range language modeling via gated state spaces. arXiv preprint arXiv:2206.13947 (2022) 14, 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b52">
+	<analytic>
+		<title level="a" type="main">Relative attributing propagation: Interpreting the comparative contributions of individual units in deep neural networks</title>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">J</forename><surname>Nam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">W</forename><surname>Lee</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the AAAI conference on artificial intelligence</title>
+		<meeting>the AAAI conference on artificial intelligence</meeting>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="page">12</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nam, W.J., Gur, S., Choi, J., Wolf, L., Lee, S.W.: Relative attributing propaga- tion: Interpreting the comparative contributions of individual units in deep neural networks. In: Proceedings of the AAAI conference on artificial intelligence. vol. 34, pp. 2501-2508 (2020) 4, 12</note>
+</biblStruct>
+
+<biblStruct xml:id="b53">
+	<analytic>
+		<title level="a" type="main">S4nd: Modeling images and videos as multidimensional signals with state spaces</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Nguyen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Goel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Downs</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Dao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Baccus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ré</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in neural information processing systems</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page">3</biblScope>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nguyen, E., Goel, K., Gu, A., Downs, G., Shah, P., Dao, T., Baccus, S., Ré, C.: S4nd: Modeling images and videos as multidimensional signals with state spaces. Advances in neural information processing systems 35, 2846-2861 (2022) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b54">
+	<analytic>
+		<title level="a" type="main">Mitigating over-smoothing in transformers via regularized nonlocal functionals</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Nguyen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Nguyen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Baraniuk</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="page">20</biblScope>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nguyen, T., Nguyen, T., Baraniuk, R.: Mitigating over-smoothing in transformers via regularized nonlocal functionals. Advances in Neural Information Processing Systems 36 (2024) 20</note>
+</biblStruct>
+
+<biblStruct xml:id="b55">
+	<monogr>
+		<author>
+			<persName><forename type="first">J</forename><surname>Park</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Park</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Xiong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Cho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Oymak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Papailiopoulos</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.04248</idno>
+		<title level="m">Can mamba learn how to learn? a comparative study on in-context learning tasks</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Park, J., Park, J., Xiong, Z., Lee, N., Cho, J., Oymak, S., Lee, K., Papailiopoulos, D.: Can mamba learn how to learn? a comparative study on in-context learning tasks. arXiv preprint arXiv:2402.04248 (2024) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b56">
+	<monogr>
+		<author>
+			<persName><forename type="first">B</forename><surname>Peng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Alcaide</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Anthony</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Albalak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Arcadinho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Grella</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><forename type="middle">K</forename><surname>Gv</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2305.13048</idno>
+		<title level="m">Rwkv: Reinventing rnns for the transformer era</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Peng, B., Alcaide, E., Anthony, Q., Albalak, A., Arcadinho, S., Cao, H., Cheng, X., Chung, M., Grella, M., GV, K.K., et al.: Rwkv: Reinventing rnns for the trans- former era. arXiv preprint arXiv:2305.13048 (2023) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b57">
+	<monogr>
+		<title level="m" type="main">Moe-mamba: Efficient selective state space models with mixture of experts</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Pióro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Ciebiera</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Król</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ludziejewski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Jaszczur</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.04081</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Pióro, M., Ciebiera, K., Król, K., Ludziejewski, J., Jaszczur, S.: Moe-mamba: Efficient selective state space models with mixture of experts. arXiv preprint arXiv:2401.04081 (2024) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b58">
+	<monogr>
+		<title level="m" type="main">Hyena hierarchy: Towards larger convolutional language models</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Poli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Massaroli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Nguyen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">Y</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Dao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Baccus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Bengio</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Ermon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ré</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2302.10866</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">27</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Poli, M., Massaroli, S., Nguyen, E., Fu, D.Y., Dao, T., Baccus, S., Bengio, Y., Ermon, S., Ré, C.: Hyena hierarchy: Towards larger convolutional language models. arXiv preprint arXiv:2302.10866 (2023) 5, 13, 14, 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b59">
+	<monogr>
+		<title level="m" type="main">Ckconv: Continuous kernel convolution for sequential data</title>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">W</forename><surname>Romero</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Kuzina</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">J</forename><surname>Bekkers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">M</forename><surname>Tomczak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Hoogendoorn</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2102.02611</idno>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page">27</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Romero, D.W., Kuzina, A., Bekkers, E.J., Tomczak, J.M., Hoogendoorn, M.: Ckconv: Continuous kernel convolution for sequential data. arXiv preprint arXiv:2102.02611 (2021) 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b60">
+	<analytic>
+		<title level="a" type="main">Token contrast for weakly-supervised semantic segmentation</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Ru</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Du</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition</title>
+		<meeting>the IEEE/CVF Conference on Computer Vision and Pattern Recognition</meeting>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">20</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ru, L., Zheng, H., Zhan, Y., Du, B.: Token contrast for weakly-supervised semantic segmentation. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 3093-3102 (2023) 20</note>
+</biblStruct>
+
+<biblStruct xml:id="b61">
+	<monogr>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ruan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Xiang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.02491</idno>
+		<title level="m">Vm-unet: Vision mamba unet for medical image segmentation</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ruan, J., Xiang, S.: Vm-unet: Vision mamba unet for medical image segmentation. arXiv preprint arXiv:2402.02491 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b62">
+	<analytic>
+		<title level="a" type="main">Diagonal state space augmented transformers for speech recognition</title>
+		<author>
+			<persName><forename type="first">G</forename><surname>Saon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gupta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Cui</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Saon, G., Gupta, A., Cui, X.: Diagonal state space augmented transformers for speech recognition. In: ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). pp. 1-5. IEEE (2023) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b63">
+	<analytic>
+		<title level="a" type="main">Gradcam: Visual explanations from deep networks via gradient-based localization</title>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">R</forename><surname>Selvaraju</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cogswell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Das</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Vedantam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Parikh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Batra</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the IEEE international conference on computer vision</title>
+		<meeting>the IEEE international conference on computer vision</meeting>
+		<imprint>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Selvaraju, R.R., Cogswell, M., Das, A., Vedantam, R., Parikh, D., Batra, D.: Grad- cam: Visual explanations from deep networks via gradient-based localization. In: Proceedings of the IEEE international conference on computer vision. pp. 618-626 (2017) 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b64">
+	<monogr>
+		<author>
+			<persName><forename type="first">N</forename><surname>Shazeer</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2002.05202</idno>
+		<title level="m">Glu variants improve transformer</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Shazeer, N.: Glu variants improve transformer. arXiv preprint arXiv:2002.05202 (2020) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b65">
+	<monogr>
+		<title level="m" type="main">Simplified state space layers for sequence modeling</title>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">T</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Warrington</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">W</forename><surname>Linderman</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2208.04933</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">27</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Smith, J.T., Warrington, A., Linderman, S.W.: Simplified state space layers for sequence modeling. arXiv preprint arXiv:2208.04933 (2022) 4, 14, 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b66">
+	<monogr>
+		<title level="m" type="main">Retentive network: A successor to transformer for large language models</title>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Dong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Xia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Xue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Wei</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2307.08621</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Sun, Y., Dong, L., Huang, S., Ma, S., Xia, Y., Xue, J., Wang, J., Wei, F.: Retentive network: A successor to transformer for large language models. arXiv preprint arXiv:2307.08621 (2023) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b67">
+	<analytic>
+		<title level="a" type="main">Axiomatic attribution for deep networks</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Sundararajan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Taly</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Yan</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International conference on machine learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sundararajan, M., Taly, A., Yan, Q.: Axiomatic attribution for deep networks. In: International conference on machine learning. pp. 3319-3328. PMLR (2017) 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b68">
+	<analytic>
+		<title level="a" type="main">Training data-efficient image transformers &amp; distillation through attention</title>
+		<author>
+			<persName><forename type="first">H</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Cord</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Douze</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Massa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Sablayrolles</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Jégou</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International conference on machine learning</title>
+		<imprint>
+			<publisher>PMLR</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Touvron, H., Cord, M., Douze, M., Massa, F., Sablayrolles, A., Jégou, H.: Training data-efficient image transformers &amp; distillation through attention. In: International conference on machine learning. pp. 10347-10357. PMLR (2021) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b69">
+	<analytic>
+		<title level="a" type="main">Attention is all you need</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Vaswani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Shazeer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Parmar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Uszkoreit</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Jones</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">N</forename><surname>Gomez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><forename type="middle">U</forename><surname>Kaiser</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Polosukhin</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">30</biblScope>
+			<biblScope unit="page">2</biblScope>
+			<date type="published" when="2017">2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser, L.u., Polosukhin, I.: Attention is all you need. In: Advances in Neural Information Processing Systems. vol. 30 (2017) 2</note>
+</biblStruct>
+
+<biblStruct xml:id="b70">
+	<monogr>
+		<title level="m" type="main">Graph-mamba: Towards long-range graph sequence modeling with selective state spaces</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Tsepa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.00789</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wang, C., Tsepa, O., Ma, J., Wang, B.: Graph-mamba: Towards long-range graph sequence modeling with selective state spaces. arXiv preprint arXiv:2402.00789 (2024) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b71">
+	<analytic>
+		<title level="a" type="main">Selective structured state-spaces for long-form video understanding</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Omar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Hamid</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition</title>
+		<meeting>the IEEE/CVF Conference on Computer Vision and Pattern Recognition</meeting>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wang, J., Zhu, W., Wang, P., Yu, X., Liu, L., Omar, M., Hamid, R.: Selective structured state-spaces for long-form video understanding. In: Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. pp. 6387- 6397 (2023) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b72">
+	<monogr>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Gangavarapu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">N</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Rush</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.13660</idno>
+		<title level="m">Mambabyte: Token-free selective state space model</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wang, J., Gangavarapu, T., Yan, J.N., Rush, A.M.: Mambabyte: Token-free selec- tive state space model. arXiv preprint arXiv:2401.13660 (2024) 1, 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b73">
+	<monogr>
+		<title level="m" type="main">Anti-oversmoothing in deep vision transformers via the fourier domain analysis: From theory to practice</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2203.05962</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page">21</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wang, P., Zheng, W., Chen, T., Wang, Z.: Anti-oversmoothing in deep vision trans- formers via the fourier domain analysis: From theory to practice. arXiv preprint arXiv:2203.05962 (2022) 7, 20, 21</note>
+</biblStruct>
+
+<biblStruct xml:id="b74">
+	<monogr>
+		<title level="m" type="main">Semi-mamba-unet: Pixel-level contrastive cross-supervised visual mamba-based unet for semi-supervised medical image segmentation</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Ma</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.07245</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wang, Z., Ma, C.: Semi-mamba-unet: Pixel-level contrastive cross-supervised visual mamba-based unet for semi-supervised medical image segmentation. arXiv preprint arXiv:2402.07245 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b75">
+	<monogr>
+		<title level="m" type="main">Mamba-unet: Unet-like pure visual mamba for medical image segmentation</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">Q</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Li</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.05079</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wang, Z., Zheng, J.Q., Zhang, Y., Cui, G., Li, L.: Mamba-unet: Unet-like pure visual mamba for medical image segmentation. arXiv preprint arXiv:2402.05079 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b76">
+	<monogr>
+		<title level="m" type="main">Replacing softmax with relu in vision transformers</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Wortsman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Gilmer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Kornblith</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2309.08586</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">7</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wortsman, M., Lee, J., Gilmer, J., Kornblith, S.: Replacing softmax with relu in vision transformers. arXiv preprint arXiv:2309.08586 (2023) 7</note>
+</biblStruct>
+
+<biblStruct xml:id="b77">
+	<monogr>
+		<title level="m" type="main">Segmamba: Long-range sequential modeling mamba for 3d medical image segmentation</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Xing</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhu</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.13560</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Xing, Z., Ye, T., Yang, Y., Liu, G., Zhu, L.: Segmamba: Long-range sequential mod- eling mamba for 3d medical image segmentation. arXiv preprint arXiv:2401.13560 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b78">
+	<monogr>
+		<title level="m" type="main">Diffusion models without attention</title>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">N</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Rush</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2311.18257</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">3</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Yan, J.N., Gu, J., Rush, A.M.: Diffusion models without attention. arXiv preprint arXiv:2311.18257 (2023) 3</note>
+</biblStruct>
+
+<biblStruct xml:id="b79">
+	<monogr>
+		<title level="m" type="main">Vivim: a video vision mamba for medical video object segmentation</title>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Xing</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhu</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.14168</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">1</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Yang, Y., Xing, Z., Zhu, L.: Vivim: a video vision mamba for medical video object segmentation. arXiv preprint arXiv:2401.14168 (2024) 1</note>
+</biblStruct>
+
+<biblStruct xml:id="b80">
+	<monogr>
+		<title level="m" type="main">Explaining information flow inside vision transformers using markov chain. In: eXplainable AI approaches for debugging and diagnosis</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Yuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Xiong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Dou</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="volume">4</biblScope>
+			<biblScope unit="page">5</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yuan, T., Li, X., Xiong, H., Cao, H., Dou, D.: Explaining information flow in- side vision transformers using markov chain. In: eXplainable AI approaches for debugging and diagnosis. (2021) 4, 5</note>
+</biblStruct>
+
+<biblStruct xml:id="b81">
+	<monogr>
+		<title level="m" type="main">Vision mamba: Efficient visual representation learning with bidirectional state space model</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Liao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2401.09417</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">4</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zhu, L., Liao, B., Zhang, Q., Wang, X., Liu, W., Wang, X.: Vision mamba: Efficient visual representation learning with bidirectional state space model. arXiv preprint arXiv:2401.09417 (2024) 1, 3, 4</note>
+</biblStruct>
+
+<biblStruct xml:id="b82">
+	<monogr>
+		<title level="m" type="main">Converting transformers to polynomial form for secure inference over homomorphic encryption</title>
+		<author>
+			<persName><forename type="first">I</forename><surname>Zimerman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Baruch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Drucker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Ezov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Soceanu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2311.08610</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">7</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zimerman, I., Baruch, M., Drucker, N., Ezov, G., Soceanu, O., Wolf, L.: Converting transformers to polynomial form for secure inference over homomorphic encryption. arXiv preprint arXiv:2311.08610 (2023) 7</note>
+</biblStruct>
+
+<biblStruct xml:id="b83">
+	<monogr>
+		<title level="m" type="main">Multi-dimensional hyena for spatial inductive bias</title>
+		<author>
+			<persName><forename type="first">I</forename><surname>Zimerman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2309.13600</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zimerman, I., Wolf, L.: Multi-dimensional hyena for spatial inductive bias. arXiv preprint arXiv:2309.13600 (2023) 14</note>
+</biblStruct>
+
+<biblStruct xml:id="b84">
+	<monogr>
+		<author>
+			<persName><forename type="first">I</forename><surname>Zimerman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wolf</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2311.16620</idno>
+		<title level="m">On the long range abilities of transformers</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page">14</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Zimerman, I., Wolf, L.: On the long range abilities of transformers. arXiv preprint arXiv:2311.16620 (2023) 14</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

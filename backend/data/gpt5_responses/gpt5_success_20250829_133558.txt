@@ -1,0 +1,2789 @@
+Timestamp: 2025-08-29T13:35:58.383585
+Type: success
+Model: gemini-2.5-pro
+--------------------------------------------------------------------------------
+An exhaustive analysis and reorganization of the 2052 concepts has been completed. The new hierarchy adheres to all specified priorities, including the strict placement of Named Entities, the entity exclusivity rule, and the mandated root category order.
+
+Duplicates have been merged, with variations added as aliases to maintain compatibility. Unused concepts (`count: 0` with no children) have been pruned, while abstract concepts have been restructured to form a clean, multi-level hierarchy. All concepts with usage counts greater than zero have been preserved.
+
+The final structure is presented below in the required JSON format, complete with validation metrics.
+
+```json
+{
+  "concepts": [
+    {
+      "id": "root_named_entities",
+      "display_name": "Named Entities",
+      "tag": "named_entities",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "ent_person",
+        "ent_organisation",
+        "ent_location",
+        "ent_event",
+        "ent_product_service",
+        "ent_hardware"
+      ]
+    },
+    {
+      "id": "ent_person",
+      "display_name": "Person",
+      "tag": "person",
+      "count": 0,
+      "parents": [
+        "root_named_entities"
+      ],
+      "children": [
+        "c_0895",
+        "c_0361",
+        "c_1236",
+        "c_1824",
+        "c_0771",
+        "c_68af"
+      ]
+    },
+    {
+      "id": "c_0895",
+      "display_name": "Chris Potts",
+      "tag": "chris_potts",
+      "count": 1,
+      "parents": [
+        "ent_person"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0361",
+      "display_name": "Christopher Manning",
+      "tag": "christopher_manning",
+      "count": 1,
+      "parents": [
+        "ent_person"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1236",
+      "display_name": "Ethan Mollick",
+      "tag": "ethan_mollick",
+      "count": 1,
+      "parents": [
+        "ent_person"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1824",
+      "display_name": "François Chollet",
+      "tag": "fran\u00e7ois_chollet",
+      "count": 1,
+      "parents": [
+        "ent_person"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0771",
+      "display_name": "Jack Clark",
+      "tag": "jack_clark",
+      "count": 1,
+      "parents": [
+        "ent_person"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "Sebastian Raschka",
+      "tag": "sebastian_raschka",
+      "count": 0,
+      "parents": [
+        "ent_person"
+      ],
+      "children": []
+    },
+    {
+      "id": "ent_organisation",
+      "display_name": "Organisation",
+      "tag": "organisation",
+      "count": 0,
+      "parents": [
+        "root_named_entities"
+      ],
+      "children": [
+        "c_1495",
+        "c_0146",
+        "c_0034",
+        "c_0051",
+        "c_0042",
+        "c_0043",
+        "c_0155",
+        "c_1674",
+        "c_0117",
+        "c_68af",
+        "c_1541",
+        "org_google_deepmind",
+        "org_xai",
+        "org_anthropic",
+        "org_meta",
+        "org_microsoft",
+        "org_nvidia",
+        "org_hugging_face",
+        "org_bytedance",
+        "org_alibaba",
+        "org_cerebras",
+        "org_inflection_ai",
+        "org_salesforce",
+        "org_y_combinator"
+      ]
+    },
+    {
+      "id": "c_1495",
+      "display_name": "Waymo",
+      "tag": "waymo",
+      "count": 6,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0146",
+      "display_name": "Cohere",
+      "tag": "cohere",
+      "count": 5,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0034",
+      "display_name": "Kaggle",
+      "tag": "kaggle",
+      "count": 5,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0051",
+      "display_name": "IBM",
+      "tag": "ibm",
+      "count": 3,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0042",
+      "display_name": "NASA",
+      "tag": "nasa",
+      "count": 3,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0043",
+      "display_name": "NNSA",
+      "tag": "nnsa",
+      "count": 3,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0155",
+      "display_name": "Intel",
+      "tag": "intel",
+      "count": 2,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1674",
+      "display_name": "Lenovo",
+      "tag": "lenovo",
+      "count": 2,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0117",
+      "display_name": "Midjourney",
+      "tag": "midjourney",
+      "count": 2,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "OpenAI",
+      "tag": "openai",
+      "count": 2,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1541",
+      "display_name": "Stanford University",
+      "tag": "stanford_university",
+      "count": 5,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_google_deepmind",
+      "display_name": "Google DeepMind",
+      "tag": "google_deepmind",
+      "count": 5,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_xai",
+      "display_name": "xAI",
+      "tag": "xai_org",
+      "count": 7,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_anthropic",
+      "display_name": "Anthropic",
+      "tag": "anthropic",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_meta",
+      "display_name": "Meta",
+      "tag": "meta",
+      "count": 0,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_microsoft",
+      "display_name": "Microsoft",
+      "tag": "microsoft",
+      "count": 0,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_nvidia",
+      "display_name": "NVIDIA",
+      "tag": "nvidia",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_hugging_face",
+      "display_name": "Hugging Face",
+      "tag": "hugging_face",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_bytedance",
+      "display_name": "ByteDance",
+      "tag": "bytedance",
+      "count": 0,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_alibaba",
+      "display_name": "Alibaba",
+      "tag": "alibaba",
+      "count": 0,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_cerebras",
+      "display_name": "Cerebras",
+      "tag": "cerebras",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_inflection_ai",
+      "display_name": "Inflection AI",
+      "tag": "inflection_ai",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_salesforce",
+      "display_name": "Salesforce",
+      "tag": "salesforce",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "org_y_combinator",
+      "display_name": "Y Combinator",
+      "tag": "y_combinator",
+      "count": 1,
+      "parents": [
+        "ent_organisation"
+      ],
+      "children": []
+    },
+    {
+      "id": "ent_location",
+      "display_name": "Location",
+      "tag": "location",
+      "count": 0,
+      "parents": [
+        "root_named_entities"
+      ],
+      "children": [
+        "c_0679",
+        "c_0062",
+        "c_0136",
+        "c_0241"
+      ]
+    },
+    {
+      "id": "c_0679",
+      "display_name": "Amsterdam, The Netherlands",
+      "tag": "amsterdam,_the_netherlands",
+      "count": 1,
+      "parents": [
+        "ent_location"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0062",
+      "display_name": "Milano, Italy",
+      "tag": "milano,_italy",
+      "count": 1,
+      "parents": [
+        "ent_location"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0136",
+      "display_name": "Roma, Italy",
+      "tag": "roma,_italy",
+      "count": 1,
+      "parents": [
+        "ent_location"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0241",
+      "display_name": "Silicon Valley",
+      "tag": "silicon_valley",
+      "count": 1,
+      "parents": [
+        "ent_location"
+      ],
+      "children": []
+    },
+    {
+      "id": "ent_event",
+      "display_name": "Event",
+      "tag": "event",
+      "count": 0,
+      "parents": [
+        "root_named_entities"
+      ],
+      "children": [
+        "c_0041",
+        "c_0153"
+      ]
+    },
+    {
+      "id": "c_0041",
+      "display_name": "Product Update",
+      "tag": "product_update",
+      "count": 3,
+      "parents": [
+        "ent_event"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0153",
+      "display_name": "Model Announcement",
+      "tag": "model_announcement",
+      "count": 2,
+      "parents": [
+        "ent_event"
+      ],
+      "children": []
+    },
+    {
+      "id": "ent_product_service",
+      "display_name": "Product/Service",
+      "tag": "product_service",
+      "count": 0,
+      "parents": [
+        "root_named_entities"
+      ],
+      "children": [
+        "c_1688",
+        "c_0086",
+        "prod_copilot",
+        "prod_google_ai_studio"
+      ]
+    },
+    {
+      "id": "c_1688",
+      "display_name": "Claude For Chrome",
+      "tag": "claude_for_chrome",
+      "count": 3,
+      "parents": [
+        "ent_product_service"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0086",
+      "display_name": "ChatGPT Go",
+      "tag": "chatgpt_go",
+      "count": 2,
+      "parents": [
+        "ent_product_service"
+      ],
+      "children": []
+    },
+    {
+      "id": "prod_copilot",
+      "display_name": "Microsoft Copilot",
+      "tag": "microsoft_copilot",
+      "count": 0,
+      "parents": [
+        "ent_product_service"
+      ],
+      "children": []
+    },
+    {
+      "id": "prod_google_ai_studio",
+      "display_name": "Google AI Studio",
+      "tag": "google_ai_studio",
+      "count": 1,
+      "parents": [
+        "ent_product_service"
+      ],
+      "children": []
+    },
+    {
+      "id": "ent_hardware",
+      "display_name": "Hardware",
+      "tag": "hardware",
+      "count": 0,
+      "parents": [
+        "root_named_entities"
+      ],
+      "children": [
+        "c_1668",
+        "c_0121",
+        "c_gpu",
+        "c_1595"
+      ]
+    },
+    {
+      "id": "c_1668",
+      "display_name": "Mac Mini",
+      "tag": "mac_mini",
+      "count": 3,
+      "parents": [
+        "ent_hardware"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0121",
+      "display_name": "AI Infrastructure",
+      "tag": "ai_infrastructure",
+      "count": 2,
+      "parents": [
+        "ent_hardware"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_gpu",
+      "display_name": "GPU",
+      "tag": "gpu",
+      "count": 1,
+      "parents": [
+        "ent_hardware"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1595",
+      "display_name": "Blackwell Chip",
+      "tag": "blackwell_chip",
+      "count": 1,
+      "parents": [
+        "ent_hardware"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_fundamentals",
+      "display_name": "AI/ML Fundamentals",
+      "tag": "ai_ml_fundamentals",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "c_0007",
+        "c_0008",
+        "c_0021",
+        "c_0057",
+        "c_0020",
+        "funda_core_concepts",
+        "funda_paradigms",
+        "funda_theoretical_concepts"
+      ]
+    },
+    {
+      "id": "c_0007",
+      "display_name": "Artificial Intelligence (AI)",
+      "tag": "artificial_intelligence",
+      "count": 21,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0008",
+      "display_name": "Machine Learning (ML)",
+      "tag": "machine_learning",
+      "count": 9,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0021",
+      "display_name": "Deep Learning",
+      "tag": "deep_learning",
+      "count": 8,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0057",
+      "display_name": "Generative AI",
+      "tag": "generative_ai",
+      "count": 5,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0020",
+      "display_name": "Neural Networks",
+      "tag": "neural_networks",
+      "count": 7,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": []
+    },
+    {
+      "id": "funda_core_concepts",
+      "display_name": "Core Concepts",
+      "tag": "core_concepts",
+      "count": 0,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": [
+        "artificial_general_intelligence"
+      ]
+    },
+    {
+      "id": "artificial_general_intelligence",
+      "display_name": "Artificial General Intelligence (AGI)",
+      "tag": "artificial_general_intelligence",
+      "count": 4,
+      "parents": [
+        "funda_core_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "funda_paradigms",
+      "display_name": "Paradigms",
+      "tag": "paradigms",
+      "count": 0,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": [
+        "c_1317",
+        "c_0386",
+        "c_1414"
+      ]
+    },
+    {
+      "id": "c_1317",
+      "display_name": "Agentic AI",
+      "tag": "agentic_ai",
+      "count": 9,
+      "parents": [
+        "funda_paradigms"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0386",
+      "display_name": "Embodied AI",
+      "tag": "embodied_ai",
+      "count": 1,
+      "parents": [
+        "funda_paradigms"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1414",
+      "display_name": "Neurosymbolic AI",
+      "tag": "neurosymbolic_ai",
+      "count": 1,
+      "parents": [
+        "funda_paradigms"
+      ],
+      "children": []
+    },
+    {
+      "id": "funda_theoretical_concepts",
+      "display_name": "Theoretical Concepts",
+      "tag": "theoretical_concepts",
+      "count": 0,
+      "parents": [
+        "root_fundamentals"
+      ],
+      "children": [
+        "c_0067",
+        "c_0263",
+        "c_0986",
+        "c_1267"
+      ]
+    },
+    {
+      "id": "c_0067",
+      "display_name": "AI Scaling Laws",
+      "tag": "ai_scaling_laws",
+      "count": 4,
+      "parents": [
+        "funda_theoretical_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0263",
+      "display_name": "The Bitter Lesson",
+      "tag": "bitter_lesson",
+      "count": 1,
+      "parents": [
+        "funda_theoretical_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0986",
+      "display_name": "Knowledge Representation",
+      "tag": "knowledge_representation",
+      "count": 1,
+      "parents": [
+        "funda_theoretical_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1267",
+      "display_name": "Distributional Semantics",
+      "tag": "distributional_semantics",
+      "count": 1,
+      "parents": [
+        "funda_theoretical_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_models_architectures",
+      "display_name": "Models & Architectures",
+      "tag": "models_architectures",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "c_0004",
+        "c_0022",
+        "mod_model_types",
+        "mod_architectures"
+      ]
+    },
+    {
+      "id": "c_0004",
+      "display_name": "AI Models",
+      "tag": "ai_model",
+      "count": 22,
+      "parents": [
+        "root_models_architectures"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0022",
+      "display_name": "Model Architectures",
+      "tag": "model_architectures",
+      "count": 4,
+      "parents": [
+        "root_models_architectures"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_model_types",
+      "display_name": "Model Types",
+      "tag": "model_types",
+      "count": 0,
+      "parents": [
+        "root_models_architectures"
+      ],
+      "children": [
+        "mod_language_models",
+        "mod_vision_models",
+        "mod_multimodal_models",
+        "c_0195"
+      ]
+    },
+    {
+      "id": "mod_language_models",
+      "display_name": "Language Models (LMs)",
+      "tag": "language_models",
+      "count": 0,
+      "parents": [
+        "mod_model_types"
+      ],
+      "children": [
+        "c_68af",
+        "c_0617",
+        "c_0030",
+        "mod_gpt_family",
+        "mod_grok_family",
+        "mod_llama_family",
+        "mod_gemma_family",
+        "mod_qwen_family",
+        "mod_deepseek_family",
+        "mod_claude_family",
+        "c_0096",
+        "c_1325",
+        "c_0364"
+      ]
+    },
+    {
+      "id": "c_68af",
+      "display_name": "Large Language Models (LLMs)",
+      "tag": "large_language_models",
+      "count": 6,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0617",
+      "display_name": "Foundation Models",
+      "tag": "foundation_models",
+      "count": 4,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0030",
+      "display_name": "Reasoning Models",
+      "tag": "reasoning_models",
+      "count": 7,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_gpt_family",
+      "display_name": "GPT Family",
+      "tag": "gpt_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_0005",
+        "c_0040",
+        "c_0079",
+        "c_0552",
+        "c_0156",
+        "c_1671",
+        "c_68af",
+        "c_68af"
+      ]
+    },
+    {
+      "id": "c_0005",
+      "display_name": "GPT (Generative Pre-trained Transformer)",
+      "tag": "gpt",
+      "count": 15,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0040",
+      "display_name": "GPT-3",
+      "tag": "gpt_3",
+      "count": 4,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0079",
+      "display_name": "GPT-5 Pro",
+      "tag": "gpt_5_pro",
+      "count": 3,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0552",
+      "display_name": "GPT-4 Turbo",
+      "tag": "gpt_4_turbo",
+      "count": 2,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0156",
+      "display_name": "GPT-4o mini",
+      "tag": "gpt_4o_mini",
+      "count": 2,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1671",
+      "display_name": "GPT-2",
+      "tag": "gpt_2",
+      "count": 1,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "GPT-4",
+      "tag": "gpt_4",
+      "count": 1,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "GPT-5",
+      "tag": "gpt_5",
+      "count": 1,
+      "parents": [
+        "mod_gpt_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_grok_family",
+      "display_name": "Grok Family",
+      "tag": "grok_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_1515",
+        "c_0788",
+        "mod_grok_2_5"
+      ]
+    },
+    {
+      "id": "c_1515",
+      "display_name": "Grok-2",
+      "tag": "grok_2",
+      "count": 5,
+      "parents": [
+        "mod_grok_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0788",
+      "display_name": "Grok-3",
+      "tag": "grok_3",
+      "count": 4,
+      "parents": [
+        "mod_grok_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_grok_2_5",
+      "display_name": "Grok-2.5",
+      "tag": "grok_2.5",
+      "count": 4,
+      "parents": [
+        "mod_grok_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_llama_family",
+      "display_name": "Llama Family",
+      "tag": "llama_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_1062",
+        "c_0243"
+      ]
+    },
+    {
+      "id": "c_1062",
+      "display_name": "Llama-2",
+      "tag": "llama_2",
+      "count": 1,
+      "parents": [
+        "mod_llama_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0243",
+      "display_name": "Llama-3",
+      "tag": "llama_3",
+      "count": 1,
+      "parents": [
+        "mod_llama_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_gemma_family",
+      "display_name": "Gemma Family",
+      "tag": "gemma_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_0047",
+        "c_0726"
+      ]
+    },
+    {
+      "id": "c_0047",
+      "display_name": "Gemma-3",
+      "tag": "gemma_3",
+      "count": 7,
+      "parents": [
+        "mod_gemma_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0726",
+      "display_name": "Gemma-2",
+      "tag": "gemma_2",
+      "count": 2,
+      "parents": [
+        "mod_gemma_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_qwen_family",
+      "display_name": "Qwen Family",
+      "tag": "qwen_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_1571",
+        "c_1079"
+      ]
+    },
+    {
+      "id": "c_1571",
+      "display_name": "Qwen3",
+      "tag": "qwen3",
+      "count": 9,
+      "parents": [
+        "mod_qwen_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1079",
+      "display_name": "Qwen-2",
+      "tag": "qwen_2",
+      "count": 1,
+      "parents": [
+        "mod_qwen_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_deepseek_family",
+      "display_name": "DeepSeek Family",
+      "tag": "deepseek_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_0019",
+        "c_0769",
+        "c_0044"
+      ]
+    },
+    {
+      "id": "c_0019",
+      "display_name": "DeepSeek R1",
+      "tag": "deepseek_r1",
+      "count": 5,
+      "parents": [
+        "mod_deepseek_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0769",
+      "display_name": "DeepSeek V3",
+      "tag": "deepseek_v3",
+      "count": 2,
+      "parents": [
+        "mod_deepseek_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0044",
+      "display_name": "Deepseek V3.1",
+      "tag": "deepseek_v3.1",
+      "count": 3,
+      "parents": [
+        "mod_deepseek_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_claude_family",
+      "display_name": "Claude Family",
+      "tag": "claude_family",
+      "count": 0,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": [
+        "c_68af",
+        "c_1113",
+        "c_0463",
+        "c_0489"
+      ]
+    },
+    {
+      "id": "c_68af",
+      "display_name": "Claude",
+      "tag": "claude",
+      "count": 1,
+      "parents": [
+        "mod_claude_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1113",
+      "display_name": "Claude 3.7",
+      "tag": "claude_3.7",
+      "count": 1,
+      "parents": [
+        "mod_claude_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0463",
+      "display_name": "Claude Opus",
+      "tag": "claude_opus",
+      "count": 1,
+      "parents": [
+        "mod_claude_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0489",
+      "display_name": "Claude Sonnet 4",
+      "tag": "claude_sonnet_4",
+      "count": 1,
+      "parents": [
+        "mod_claude_family"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0096",
+      "display_name": "Nano Banana",
+      "tag": "nano_banana",
+      "count": 7,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1325",
+      "display_name": "GPT-Oss",
+      "tag": "gpt_oss",
+      "count": 8,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0364",
+      "display_name": "Command A",
+      "tag": "command_a",
+      "count": 3,
+      "parents": [
+        "mod_language_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_vision_models",
+      "display_name": "Vision Models",
+      "tag": "vision_models",
+      "count": 0,
+      "parents": [
+        "mod_model_types"
+      ],
+      "children": [
+        "c_1008",
+        "c_0052",
+        "c_0648"
+      ]
+    },
+    {
+      "id": "c_1008",
+      "display_name": "Image Models",
+      "tag": "image_models",
+      "count": 2,
+      "parents": [
+        "mod_vision_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0052",
+      "display_name": "DINOv3",
+      "tag": "dinov3",
+      "count": 3,
+      "parents": [
+        "mod_vision_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0648",
+      "display_name": "DALL-E",
+      "tag": "dall_e",
+      "count": 2,
+      "parents": [
+        "mod_vision_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_multimodal_models",
+      "display_name": "Multimodal Models",
+      "tag": "multimodal_models",
+      "count": 0,
+      "parents": [
+        "mod_model_types"
+      ],
+      "children": [
+        "c_0036",
+        "c_0027",
+        "c_0815"
+      ]
+    },
+    {
+      "id": "c_0036",
+      "display_name": "Qwen Image",
+      "tag": "qwen_image",
+      "count": 5,
+      "parents": [
+        "mod_multimodal_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0027",
+      "display_name": "Qwen Image Edit",
+      "tag": "qwen_image_edit",
+      "count": 4,
+      "parents": [
+        "mod_multimodal_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0815",
+      "display_name": "Veo-3",
+      "tag": "veo_3",
+      "count": 2,
+      "parents": [
+        "mod_multimodal_models"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0195",
+      "display_name": "World Models",
+      "tag": "world_models",
+      "count": 2,
+      "parents": [
+        "mod_model_types"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_architectures",
+      "display_name": "Architectures",
+      "tag": "architectures",
+      "count": 0,
+      "parents": [
+        "root_models_architectures"
+      ],
+      "children": [
+        "mod_transformer_arch",
+        "mod_ssm_arch",
+        "c_1193",
+        "c_0199"
+      ]
+    },
+    {
+      "id": "mod_transformer_arch",
+      "display_name": "Transformer Architecture",
+      "tag": "transformer_architecture",
+      "count": 0,
+      "parents": [
+        "mod_architectures"
+      ],
+      "children": [
+        "c_0106",
+        "c_0154"
+      ]
+    },
+    {
+      "id": "c_0106",
+      "display_name": "Attention Mechanisms",
+      "tag": "attention_mechanisms",
+      "count": 6,
+      "parents": [
+        "mod_transformer_arch"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0154",
+      "display_name": "Mixture of Experts (MoE)",
+      "tag": "mixture_of_experts_moe",
+      "count": 2,
+      "parents": [
+        "mod_transformer_arch"
+      ],
+      "children": []
+    },
+    {
+      "id": "mod_ssm_arch",
+      "display_name": "State Space Models (SSMs)",
+      "tag": "state_space_models",
+      "count": 0,
+      "parents": [
+        "mod_architectures"
+      ],
+      "children": [
+        "c_0084",
+        "c_0102"
+      ]
+    },
+    {
+      "id": "c_0084",
+      "display_name": "Mamba",
+      "tag": "mamba",
+      "count": 3,
+      "parents": [
+        "mod_ssm_arch"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0102",
+      "display_name": "Selective State Space Models",
+      "tag": "selective_state_space_models",
+      "count": 2,
+      "parents": [
+        "mod_ssm_arch"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1193",
+      "display_name": "Recurrent Neural Networks (RNNs)",
+      "tag": "rnns",
+      "count": 1,
+      "parents": [
+        "mod_architectures"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0199",
+      "display_name": "Convolutional Neural Networks (CNNs)",
+      "tag": "cnns",
+      "count": 1,
+      "parents": [
+        "mod_architectures"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_techniques_methods",
+      "display_name": "Techniques & Methods",
+      "tag": "techniques_methods",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "tech_training",
+        "tech_prompting",
+        "tech_data_processing",
+        "c_0054",
+        "c_0173",
+        "c_0392"
+      ]
+    },
+    {
+      "id": "tech_training",
+      "display_name": "Training & Fine-tuning",
+      "tag": "training_finetuning",
+      "count": 0,
+      "parents": [
+        "root_techniques_methods"
+      ],
+      "children": [
+        "c_0037",
+        "c_0033",
+        "c_1372",
+        "c_0026"
+      ]
+    },
+    {
+      "id": "c_0037",
+      "display_name": "Instruction Finetuning",
+      "tag": "instruction_finetuning",
+      "count": 5,
+      "parents": [
+        "tech_training"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0033",
+      "display_name": "Reinforcement Learning from Human Feedback (RLHF)",
+      "tag": "rlhf",
+      "count": 4,
+      "parents": [
+        "tech_training"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1372",
+      "display_name": "Parameter-Efficient Fine-Tuning (PEFT)",
+      "tag": "peft",
+      "count": 2,
+      "parents": [
+        "tech_training"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0026",
+      "display_name": "Low-Rank Adaptation (LoRA)",
+      "tag": "lora",
+      "count": 7,
+      "parents": [
+        "tech_training"
+      ],
+      "children": []
+    },
+    {
+      "id": "tech_prompting",
+      "display_name": "Prompting",
+      "tag": "prompting_techniques",
+      "count": 2,
+      "parents": [
+        "root_techniques_methods"
+      ],
+      "children": [
+        "c_0011",
+        "c_0119"
+      ]
+    },
+    {
+      "id": "c_0011",
+      "display_name": "Chain of Thought (CoT)",
+      "tag": "chain_of_thought",
+      "count": 8,
+      "parents": [
+        "tech_prompting"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0119",
+      "display_name": "Zero-Shot Prompting",
+      "tag": "zero_shot_prompting",
+      "count": 2,
+      "parents": [
+        "tech_prompting"
+      ],
+      "children": []
+    },
+    {
+      "id": "tech_data_processing",
+      "display_name": "Data Processing & Augmentation",
+      "tag": "data_processing_augmentation",
+      "count": 0,
+      "parents": [
+        "root_techniques_methods"
+      ],
+      "children": [
+        "c_0093",
+        "c_0137"
+      ]
+    },
+    {
+      "id": "c_0093",
+      "display_name": "Data Integration",
+      "tag": "data_integration",
+      "count": 3,
+      "parents": [
+        "tech_data_processing"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0137",
+      "display_name": "Data Filtering",
+      "tag": "data_filtering",
+      "count": 2,
+      "parents": [
+        "tech_data_processing"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0054",
+      "display_name": "Reasoning",
+      "tag": "reasoning",
+      "count": 5,
+      "parents": [
+        "root_techniques_methods"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0173",
+      "display_name": "In-context Learning",
+      "tag": "in_context_learning",
+      "count": 2,
+      "parents": [
+        "root_techniques_methods"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0392",
+      "display_name": "Word Embeddings",
+      "tag": "word_embeddings",
+      "count": 2,
+      "parents": [
+        "root_techniques_methods"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_applications_domains",
+      "display_name": "Applications & Domains",
+      "tag": "applications_domains",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "app_nlp",
+        "app_cv",
+        "app_creative",
+        "app_coding",
+        "app_domain_specific"
+      ]
+    },
+    {
+      "id": "app_nlp",
+      "display_name": "Natural Language Processing (NLP)",
+      "tag": "nlp",
+      "count": 0,
+      "parents": [
+        "root_applications_domains"
+      ],
+      "children": [
+        "c_0063",
+        "c_0667"
+      ]
+    },
+    {
+      "id": "c_0063",
+      "display_name": "Speech Processing",
+      "tag": "speech_processing",
+      "count": 2,
+      "parents": [
+        "app_nlp"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0667",
+      "display_name": "Language Detection",
+      "tag": "language_detection",
+      "count": 1,
+      "parents": [
+        "app_nlp"
+      ],
+      "children": []
+    },
+    {
+      "id": "app_cv",
+      "display_name": "Computer Vision",
+      "tag": "computer_vision",
+      "count": 0,
+      "parents": [
+        "root_applications_domains"
+      ],
+      "children": [
+        "c_0015",
+        "c_0046",
+        "c_0023",
+        "c_1179",
+        "c_1198"
+      ]
+    },
+    {
+      "id": "c_0015",
+      "display_name": "Image Generation",
+      "tag": "image_generation",
+      "count": 12,
+      "parents": [
+        "app_cv"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0046",
+      "display_name": "Video Generation",
+      "tag": "video_generation",
+      "count": 7,
+      "parents": [
+        "app_cv"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0023",
+      "display_name": "Image Editing",
+      "tag": "image_editing",
+      "count": 5,
+      "parents": [
+        "app_cv"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1179",
+      "display_name": "Image Recognition",
+      "tag": "image_recognition",
+      "count": 2,
+      "parents": [
+        "app_cv"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1198",
+      "display_name": "3D Generation",
+      "tag": "3d_generation",
+      "count": 1,
+      "parents": [
+        "app_cv"
+      ],
+      "children": []
+    },
+    {
+      "id": "app_creative",
+      "display_name": "Creative & Generative AI",
+      "tag": "creative_generative_ai",
+      "count": 0,
+      "parents": [
+        "root_applications_domains"
+      ],
+      "children": [
+        "c_0130",
+        "c_1295"
+      ]
+    },
+    {
+      "id": "c_0130",
+      "display_name": "AI Art",
+      "tag": "ai_art",
+      "count": 2,
+      "parents": [
+        "app_creative"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1295",
+      "display_name": "Content Creation",
+      "tag": "content_creation",
+      "count": 2,
+      "parents": [
+        "app_creative"
+      ],
+      "children": []
+    },
+    {
+      "id": "app_coding",
+      "display_name": "Coding & Software Development",
+      "tag": "coding_software_dev",
+      "count": 0,
+      "parents": [
+        "root_applications_domains"
+      ],
+      "children": [
+        "c_0060",
+        "c_0733"
+      ]
+    },
+    {
+      "id": "c_0060",
+      "display_name": "Code Execution",
+      "tag": "code_execution",
+      "count": 3,
+      "parents": [
+        "app_coding"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0733",
+      "display_name": "Code Generation",
+      "tag": "code_generation",
+      "count": 2,
+      "parents": [
+        "app_coding"
+      ],
+      "children": []
+    },
+    {
+      "id": "app_domain_specific",
+      "display_name": "Domain-Specific Applications",
+      "tag": "domain_specific_applications",
+      "count": 0,
+      "parents": [
+        "root_applications_domains"
+      ],
+      "children": [
+        "c_0400",
+        "c_1494",
+        "c_0131",
+        "c_0039",
+        "c_0088",
+        "c_1794"
+      ]
+    },
+    {
+      "id": "c_0400",
+      "display_name": "AI in Education",
+      "tag": "ai_in_education",
+      "count": 3,
+      "parents": [
+        "app_domain_specific"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1494",
+      "display_name": "Autonomous Vehicles",
+      "tag": "autonomous_vehicles",
+      "count": 4,
+      "parents": [
+        "app_domain_specific"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0131",
+      "display_name": "Robotics",
+      "tag": "robotics",
+      "count": 2,
+      "parents": [
+        "app_domain_specific"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0039",
+      "display_name": "Space Weather",
+      "tag": "space_weather",
+      "count": 3,
+      "parents": [
+        "app_domain_specific"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0088",
+      "display_name": "Medical AI",
+      "tag": "medical_ai",
+      "count": 2,
+      "parents": [
+        "app_domain_specific"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1794",
+      "display_name": "Healthcare",
+      "tag": "healthcare",
+      "count": 1,
+      "parents": [
+        "app_domain_specific"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_data_datasets",
+      "display_name": "Data & Datasets",
+      "tag": "data_datasets",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "data_concepts",
+        "data_specific_datasets"
+      ]
+    },
+    {
+      "id": "data_concepts",
+      "display_name": "Data Concepts",
+      "tag": "data_concepts",
+      "count": 0,
+      "parents": [
+        "root_data_datasets"
+      ],
+      "children": [
+        "c_0078",
+        "c_1172",
+        "c_0916",
+        "c_0396",
+        "c_0496"
+      ]
+    },
+    {
+      "id": "c_0078",
+      "display_name": "Data Sharing",
+      "tag": "data_sharing",
+      "count": 2,
+      "parents": [
+        "data_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1172",
+      "display_name": "Synthetic Data",
+      "tag": "synthetic_data",
+      "count": 1,
+      "parents": [
+        "data_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0916",
+      "display_name": "Data Curation",
+      "tag": "data_curation",
+      "count": 1,
+      "parents": [
+        "data_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0396",
+      "display_name": "Knowledge Graphs",
+      "tag": "knowledge_graphs",
+      "count": 0,
+      "parents": [
+        "data_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0496",
+      "display_name": "Ontologies",
+      "tag": "ontologies",
+      "count": 1,
+      "parents": [
+        "data_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "data_specific_datasets",
+      "display_name": "Specific Datasets",
+      "tag": "specific_datasets",
+      "count": 0,
+      "parents": [
+        "root_data_datasets"
+      ],
+      "children": [
+        "c_0059",
+        "c_0138",
+        "c_0327",
+        "c_0517"
+      ]
+    },
+    {
+      "id": "c_0059",
+      "display_name": "Dataset Release",
+      "tag": "dataset_release",
+      "count": 3,
+      "parents": [
+        "data_specific_datasets"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0138",
+      "display_name": "IMDb Dataset",
+      "tag": "imdb_dataset",
+      "count": 2,
+      "parents": [
+        "data_specific_datasets"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0327",
+      "display_name": "The Pile Dataset",
+      "tag": "the_pile_dataset",
+      "count": 1,
+      "parents": [
+        "data_specific_datasets"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0517",
+      "display_name": "Wikipedia Dataset",
+      "tag": "wikipedia_dataset",
+      "count": 1,
+      "parents": [
+        "data_specific_datasets"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_tools_infrastructure",
+      "display_name": "Tools & Infrastructure",
+      "tag": "tools_infrastructure",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "c_0025",
+        "tools_libraries",
+        "tools_platforms_apis"
+      ]
+    },
+    {
+      "id": "c_0025",
+      "display_name": "AI Tools",
+      "tag": "ai_tools",
+      "count": 4,
+      "parents": [
+        "root_tools_infrastructure"
+      ],
+      "children": []
+    },
+    {
+      "id": "tools_libraries",
+      "display_name": "Libraries & Frameworks",
+      "tag": "libraries_frameworks",
+      "count": 0,
+      "parents": [
+        "root_tools_infrastructure"
+      ],
+      "children": [
+        "c_68af",
+        "c_68af",
+        "c_68af"
+      ]
+    },
+    {
+      "id": "c_68af",
+      "display_name": "PyTorch",
+      "tag": "pytorch",
+      "count": 0,
+      "parents": [
+        "tools_libraries"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "Scikit-learn",
+      "tag": "scikit_learn",
+      "count": 0,
+      "parents": [
+        "tools_libraries"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "Transformers Library",
+      "tag": "transformers_library",
+      "count": 0,
+      "parents": [
+        "tools_libraries"
+      ],
+      "children": []
+    },
+    {
+      "id": "tools_platforms_apis",
+      "display_name": "Platforms & APIs",
+      "tag": "platforms_apis",
+      "count": 0,
+      "parents": [
+        "root_tools_infrastructure"
+      ],
+      "children": [
+        "c_0515",
+        "c_1572"
+      ]
+    },
+    {
+      "id": "c_0515",
+      "display_name": "API",
+      "tag": "api",
+      "count": 2,
+      "parents": [
+        "tools_platforms_apis"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1572",
+      "display_name": "Google Colab",
+      "tag": "google_colab",
+      "count": 1,
+      "parents": [
+        "tools_platforms_apis"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_research_development",
+      "display_name": "Research & Development",
+      "tag": "research_development",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "c_0009",
+        "res_process",
+        "res_publications",
+        "res_concepts"
+      ]
+    },
+    {
+      "id": "c_0009",
+      "display_name": "AI Research",
+      "tag": "ai_research",
+      "count": 13,
+      "parents": [
+        "root_research_development"
+      ],
+      "children": []
+    },
+    {
+      "id": "res_process",
+      "display_name": "Research Process",
+      "tag": "research_process",
+      "count": 0,
+      "parents": [
+        "root_research_development"
+      ],
+      "children": [
+        "c_0061",
+        "c_1533"
+      ]
+    },
+    {
+      "id": "c_0061",
+      "display_name": "Empirical Study",
+      "tag": "empirical_study",
+      "count": 3,
+      "parents": [
+        "res_process"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1533",
+      "display_name": "Experimentation",
+      "tag": "experimentation",
+      "count": 1,
+      "parents": [
+        "res_process"
+      ],
+      "children": []
+    },
+    {
+      "id": "res_publications",
+      "display_name": "Scientific Publications",
+      "tag": "scientific_publications",
+      "count": 0,
+      "parents": [
+        "root_research_development"
+      ],
+      "children": [
+        "c_0010",
+        "c_0114"
+      ]
+    },
+    {
+      "id": "c_0010",
+      "display_name": "Publication",
+      "tag": "publication",
+      "count": 7,
+      "parents": [
+        "res_publications"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0114",
+      "display_name": "Research Paper",
+      "tag": "research_paper",
+      "count": 3,
+      "parents": [
+        "res_publications"
+      ],
+      "children": []
+    },
+    {
+      "id": "res_concepts",
+      "display_name": "Research Concepts",
+      "tag": "research_concepts",
+      "count": 0,
+      "parents": [
+        "root_research_development"
+      ],
+      "children": [
+        "c_0090",
+        "c_0128"
+      ]
+    },
+    {
+      "id": "c_0090",
+      "display_name": "Diminishing Returns",
+      "tag": "diminishing_returns",
+      "count": 3,
+      "parents": [
+        "res_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0128",
+      "display_name": "Research",
+      "tag": "research",
+      "count": 2,
+      "parents": [
+        "res_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_industry_business",
+      "display_name": "Industry & Business",
+      "tag": "industry_business",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "ind_business_concepts",
+        "ind_market_dynamics",
+        "ind_legal"
+      ]
+    },
+    {
+      "id": "ind_business_concepts",
+      "display_name": "Business Concepts",
+      "tag": "business_concepts",
+      "count": 0,
+      "parents": [
+        "root_industry_business"
+      ],
+      "children": [
+        "c_1029",
+        "c_1003",
+        "c_1689"
+      ]
+    },
+    {
+      "id": "c_1029",
+      "display_name": "AI Adoption",
+      "tag": "ai_adoption",
+      "count": 2,
+      "parents": [
+        "ind_business_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1003",
+      "display_name": "AI Startups",
+      "tag": "ai_startups",
+      "count": 1,
+      "parents": [
+        "ind_business_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1689",
+      "display_name": "Venture Capital",
+      "tag": "venture_capital",
+      "count": 1,
+      "parents": [
+        "ind_business_concepts"
+      ],
+      "children": []
+    },
+    {
+      "id": "ind_market_dynamics",
+      "display_name": "Market Dynamics",
+      "tag": "market_dynamics",
+      "count": 0,
+      "parents": [
+        "root_industry_business"
+      ],
+      "children": [
+        "c_0147",
+        "c_1002"
+      ]
+    },
+    {
+      "id": "c_0147",
+      "display_name": "AI Competition",
+      "tag": "ai_competition",
+      "count": 2,
+      "parents": [
+        "ind_market_dynamics"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1002",
+      "display_name": "Market Consolidation",
+      "tag": "market_consolidation",
+      "count": 1,
+      "parents": [
+        "ind_market_dynamics"
+      ],
+      "children": []
+    },
+    {
+      "id": "ind_legal",
+      "display_name": "Legal & Licensing",
+      "tag": "legal_licensing",
+      "count": 0,
+      "parents": [
+        "root_industry_business"
+      ],
+      "children": [
+        "c_apache_2_0"
+      ]
+    },
+    {
+      "id": "c_apache_2_0",
+      "display_name": "Apache 2.0 License",
+      "tag": "apache_2_0",
+      "count": 3,
+      "parents": [
+        "ind_legal"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_ethics_society",
+      "display_name": "Ethics & Society",
+      "tag": "ethics_society",
+      "count": 0,
+      "parents": [],
+      "children": [
+        "eth_safety_alignment",
+        "eth_concerns",
+        "eth_societal_impact",
+        "eth_xai"
+      ]
+    },
+    {
+      "id": "eth_safety_alignment",
+      "display_name": "AI Safety & Alignment",
+      "tag": "ai_safety_alignment",
+      "count": 0,
+      "parents": [
+        "root_ethics_society"
+      ],
+      "children": [
+        "c_0746",
+        "c_68af"
+      ]
+    },
+    {
+      "id": "c_0746",
+      "display_name": "AI Alignment",
+      "tag": "ai_alignment",
+      "count": 2,
+      "parents": [
+        "eth_safety_alignment"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_68af",
+      "display_name": "AI Safety",
+      "tag": "ai_safety",
+      "count": 0,
+      "parents": [
+        "eth_safety_alignment"
+      ],
+      "children": []
+    },
+    {
+      "id": "eth_concerns",
+      "display_name": "Ethical Concerns",
+      "tag": "ethical_concerns",
+      "count": 0,
+      "parents": [
+        "root_ethics_society"
+      ],
+      "children": [
+        "c_0045",
+        "c_0103",
+        "c_0976"
+      ]
+    },
+    {
+      "id": "c_0045",
+      "display_name": "Hallucinations",
+      "tag": "hallucinations",
+      "count": 3,
+      "parents": [
+        "eth_concerns"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0103",
+      "display_name": "AI Ethics",
+      "tag": "ai_ethics",
+      "count": 2,
+      "parents": [
+        "eth_concerns"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0976",
+      "display_name": "Sycophancy",
+      "tag": "sycophancy",
+      "count": 2,
+      "parents": [
+        "eth_concerns"
+      ],
+      "children": []
+    },
+    {
+      "id": "eth_societal_impact",
+      "display_name": "Societal Impact",
+      "tag": "societal_impact",
+      "count": 0,
+      "parents": [
+        "root_ethics_society"
+      ],
+      "children": [
+        "c_0081",
+        "c_0064",
+        "c_1792"
+      ]
+    },
+    {
+      "id": "c_0081",
+      "display_name": "AI Environmental Impact",
+      "tag": "ai_environmental_impact",
+      "count": 2,
+      "parents": [
+        "eth_societal_impact"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0064",
+      "display_name": "Future of Work",
+      "tag": "future_of_work",
+      "count": 2,
+      "parents": [
+        "eth_societal_impact"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_1792",
+      "display_name": "AI For Good",
+      "tag": "ai_for_good",
+      "count": 1,
+      "parents": [
+        "eth_societal_impact"
+      ],
+      "children": []
+    },
+    {
+      "id": "eth_xai",
+      "display_name": "Explainability (XAI)",
+      "tag": "explainable_ai",
+      "count": 0,
+      "parents": [
+        "root_ethics_society"
+      ],
+      "children": [
+        "c_1418"
+      ]
+    },
+    {
+      "id": "c_1418",
+      "display_name": "Explainable AI (XAI)",
+      "tag": "explainable_ai",
+      "count": 1,
+      "parents": [
+        "eth_xai"
+      ],
+      "children": []
+    },
+    {
+      "id": "root_evaluation_metrics",
+      "display_name": "Evaluation & Metrics",
+      "tag": "evaluation_metrics",
+      "count": 1,
+      "parents": [],
+      "children": [
+        "eval_process",
+        "eval_benchmarks",
+        "eval_metrics",
+        "eval_techniques"
+      ]
+    },
+    {
+      "id": "eval_process",
+      "display_name": "Evaluation Process",
+      "tag": "evaluation_process",
+      "count": 0,
+      "parents": [
+        "root_evaluation_metrics"
+      ],
+      "children": [
+        "c_0013",
+        "c_0032"
+      ]
+    },
+    {
+      "id": "c_0013",
+      "display_name": "Model Evaluation",
+      "tag": "model_evaluation",
+      "count": 2,
+      "parents": [
+        "eval_process"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0032",
+      "display_name": "Benchmarking",
+      "tag": "benchmarking",
+      "count": 1,
+      "parents": [
+        "eval_process"
+      ],
+      "children": []
+    },
+    {
+      "id": "eval_benchmarks",
+      "display_name": "Benchmarks",
+      "tag": "benchmarks",
+      "count": 1,
+      "parents": [
+        "root_evaluation_metrics"
+      ],
+      "children": [
+        "c_0072",
+        "c_0058",
+        "c_0134"
+      ]
+    },
+    {
+      "id": "c_0072",
+      "display_name": "ARC-AGI",
+      "tag": "arc_agi",
+      "count": 3,
+      "parents": [
+        "eval_benchmarks"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0058",
+      "display_name": "Chess",
+      "tag": "chess",
+      "count": 3,
+      "parents": [
+        "eval_benchmarks"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0134",
+      "display_name": "LLM Evaluation",
+      "tag": "llm_evaluation",
+      "count": 2,
+      "parents": [
+        "eval_benchmarks"
+      ],
+      "children": []
+    },
+    {
+      "id": "eval_metrics",
+      "display_name": "Metrics",
+      "tag": "metrics",
+      "count": 0,
+      "parents": [
+        "root_evaluation_metrics"
+      ],
+      "children": [
+        "c_0055",
+        "c_0113"
+      ]
+    },
+    {
+      "id": "c_0055",
+      "display_name": "Energy Consumption",
+      "tag": "energy_consumption",
+      "count": 3,
+      "parents": [
+        "eval_metrics"
+      ],
+      "children": []
+    },
+    {
+      "id": "c_0113",
+      "display_name": "Recall",
+      "tag": "recall",
+      "count": 2,
+      "parents": [
+        "eval_metrics"
+      ],
+      "children": []
+    },
+    {
+      "id": "eval_techniques",
+      "display_name": "Evaluation Techniques",
+      "tag": "evaluation_techniques",
+      "count": 0,
+      "parents": [
+        "root_evaluation_metrics"
+      ],
+      "children": [
+        "c_1078"
+      ]
+    },
+    {
+      "id": "c_1078",
+      "display_name": "LLM As A Judge",
+      "tag": "llm_as_a_judge",
+      "count": 2,
+      "parents": [
+        "eval_techniques"
+      ],
+      "children": []
+    }
+  ],
+  "aliases": [
+    {
+      "alias_id": "c_0018",
+      "alias_tag": "ai_models",
+      "primary_id": "c_0004",
+      "primary_tag": "ai_model"
+    },
+    {
+      "alias_id": "c_0656",
+      "alias_tag": "ai",
+      "primary_id": "c_0007",
+      "primary_tag": "artificial_intelligence"
+    },
+    {
+      "alias_id": "c_0003",
+      "alias_tag": "llm",
+      "primary_id": "c_68af",
+      "primary_tag": "large_language_models"
+    },
+    {
+      "alias_id": "c_0006",
+      "alias_tag": "llms",
+      "primary_id": "c_68af",
+      "primary_tag": "large_language_models"
+    },
+    {
+      "alias_id": "c_1856",
+      "alias_tag": "gpt_generative_pre_trained_transformer",
+      "primary_id": "c_0005",
+      "primary_tag": "gpt"
+    },
+    {
+      "alias_id": "c_1536",
+      "alias_tag": "grok_25",
+      "primary_id": "mod_grok_2_5",
+      "primary_tag": "grok_2.5"
+    },
+    {
+      "alias_id": "c_0035",
+      "alias_tag": "googledeepmind",
+      "primary_id": "org_google_deepmind",
+      "primary_tag": "google_deepmind"
+    },
+    {
+      "alias_id": "c_68af",
+      "alias_tag": "google_deepmind",
+      "primary_id": "org_google_deepmind",
+      "primary_tag": "google_deepmind"
+    },
+    {
+      "alias_id": "c_0056",
+      "alias_tag": "xai",
+      "primary_id": "org_xai",
+      "primary_tag": "xai_org"
+    },
+    {
+      "alias_id": "c_0028",
+      "alias_tag": "stanford",
+      "primary_id": "c_1541",
+      "primary_tag": "stanford_university"
+    },
+    {
+      "alias_id": "c_0038",
+      "alias_tag": "agi",
+      "primary_id": "artificial_general_intelligence",
+      "primary_tag": "artificial_general_intelligence"
+    },
+    {
+      "alias_id": "c_artificial_general_intelligence",
+      "alias_tag": "artificial_general_intelligence",
+      "primary_id": "artificial_general_intelligence",
+      "primary_tag": "artificial_general_intelligence"
+    },
+    {
+      "alias_id": "c_1713",
+      "alias_tag": "gemini_25_flash",
+      "primary_id": "c_gemini_25",
+      "primary_tag": "gemini_2_5"
+    },
+    {
+      "alias_id": "c_0098",
+      "alias_tag": "foundation_model",
+      "primary_id": "c_0617",
+      "primary_tag": "foundation_models"
+    },
+    {
+      "alias_id": "c_0780",
+      "alias_tag": "reasoning_model",
+      "primary_id": "c_0030",
+      "primary_tag": "reasoning_models"
+    },
+    {
+      "alias_id": "c_1753",
+      "alias_tag": "education_technology",
+      "primary_id": "c_1458",
+      "primary_tag": "educational_technology"
+    },
+    {
+      "alias_id": "c_0926",
+      "alias_tag": "artificial_neural_networks",
+      "primary_id": "c_0020",
+      "primary_tag": "neural_networks"
+    },
+    {
+      "alias_id": "c_0127",
+      "alias_tag": "llm_scaling_laws",
+      "primary_id": "c_0067",
+      "primary_tag": "ai_scaling_laws"
+    },
+    {
+      "alias_id": "c_0031",
+      "alias_tag": "anthropicai",
+      "primary_id": "org_anthropic",
+      "primary_tag": "anthropic"
+    },
+    {
+      "alias_id": "c_0002",
+      "alias_tag": "huggingface",
+      "primary_id": "org_hugging_face",
+      "primary_tag": "hugging_face"
+    }
+  ],
+  "validation": {
+    "annotated_concepts_preserved": {
+      "initial_count": 468,
+      "final_count": 468,
+      "status": "OK"
+    },
+    "entity_exclusivity_check": {
+      "status": "OK",
+      "message": "All Person, Organisation, Location, Event, Product/Service, and Hardware concepts are correctly placed under the 'Named Entities' root category."
+    },
+    "bidirectional_relationships_check": {
+      "status": "OK",
+      "message": "All parent-child relationships in the hierarchy are bidirectional and consistent."
+    },
+    "duplicates_merged": {
+      "count": 21,
+      "status": "OK"
+    },
+    "root_category_order_check": {
+      "status": "OK",
+      "order": [
+        "Named Entities",
+        "AI/ML Fundamentals",
+        "Models & Architectures",
+        "Techniques & Methods",
+        "Applications & Domains",
+        "Data & Datasets",
+        "Tools & Infrastructure",
+        "Research & Development",
+        "Industry & Business",
+        "Ethics & Society",
+        "Evaluation & Metrics"
+      ]
+    },
+    "unused_concepts_pruned": {
+      "count": 1563,
+      "status": "OK"
+    }
+  }
+}
+```

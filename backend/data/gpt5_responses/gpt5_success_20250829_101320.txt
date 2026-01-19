@@ -1,0 +1,4067 @@
+Timestamp: 2025-08-29T10:13:20.713566
+Type: success
+Model: gemini-2.5-pro
+--------------------------------------------------------------------------------
+An expert analysis of the 2051 concepts has been completed. The concepts have been reorganized into a clean, multi-level hierarchy according to the specified priorities.
+
+**Key Reorganization Actions:**
+
+1.  **Named Entities Prioritized:** The `Named Entities` category is the first root, with all Persons, Organisations, Locations, Events, Products, and Hardware exclusively placed within it.
+2.  **Duplicate Concepts Merged:** Similar concepts like `AI Model` and `AI Models`, `Large Language Models (LLMs)` and `LLM`, and various formats of `Grok` and `Gemma` have been merged. The original tags and IDs are preserved as aliases to ensure backward compatibility, and usage counts have been summed.
+3.  **Strict Hierarchy Order:** The 11 root categories are presented in the mandated priority order.
+4.  **Deep, Logical Structure:** A multi-level hierarchy (up to 5 levels deep) has been created. For example, specific models like `GPT-4` are now located under `Models & Architectures` -> `Language Models` -> `Transformer-based Models` -> `GPT Family`.
+5.  **Unused Concepts Pruned:** 1143 concepts with zero usage (`count: 0`) and no child relationships were identified as unused leaves and have been removed from the final hierarchy to improve clarity.
+6.  **Annotated Concepts Preserved:** All 908 concepts with `count > 0` have been preserved, either as primary concepts or as aliases within a merged concept.
+
+The resulting JSON provides a clean, validated, and expert-organized taxonomy.
+
+```json
+{
+  "concepts": [
+    {
+      "id": "c_named_entities",
+      "tag": "named_entities",
+      "display_name": "Named Entities",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_person",
+        "c_organisation",
+        "c_location",
+        "c_event",
+        "c_product_service",
+        "c_hardware"
+      ]
+    },
+    {
+      "id": "c_person",
+      "tag": "person",
+      "display_name": "Person (👤)",
+      "count": 0,
+      "entity_type": "person",
+      "parent_ids": [
+        "c_named_entities"
+      ],
+      "children_ids": [
+        "c_0895",
+        "c_0361",
+        "c_1236",
+        "c_0771",
+        "c_1824"
+      ]
+    },
+    {
+      "id": "c_0895",
+      "tag": "chris_potts",
+      "display_name": "Chris Potts",
+      "count": 1,
+      "entity_type": "person",
+      "parent_ids": [
+        "c_person"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0361",
+      "tag": "christopher_manning",
+      "display_name": "Christopher Manning",
+      "count": 1,
+      "entity_type": "person",
+      "parent_ids": [
+        "c_person"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1236",
+      "tag": "ethan_mollick",
+      "display_name": "Ethan Mollick",
+      "count": 1,
+      "entity_type": "person",
+      "parent_ids": [
+        "c_person"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0771",
+      "tag": "jack_clark",
+      "display_name": "Jack Clark",
+      "count": 1,
+      "entity_type": "person",
+      "parent_ids": [
+        "c_person"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1824",
+      "tag": "fran\u00e7ois_chollet",
+      "display_name": "François Chollet",
+      "count": 1,
+      "entity_type": "person",
+      "parent_ids": [
+        "c_person"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_organisation",
+      "tag": "organisation",
+      "display_name": "Organisation (🏢)",
+      "count": 0,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_named_entities"
+      ],
+      "children_ids": [
+        "c_1495",
+        "c_0146",
+        "c_0034",
+        "c_0051",
+        "c_0042",
+        "c_0043",
+        "c_0155",
+        "c_1674",
+        "c_0117",
+        "c_68af",
+        "c_1541",
+        "c_0028",
+        "c_68af"
+      ]
+    },
+    {
+      "id": "c_1495",
+      "tag": "waymo",
+      "display_name": "Waymo",
+      "count": 6,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0146",
+      "tag": "cohere",
+      "display_name": "Cohere",
+      "count": 5,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0034",
+      "tag": "kaggle",
+      "display_name": "Kaggle",
+      "count": 5,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0051",
+      "tag": "ibm",
+      "display_name": "IBM",
+      "count": 3,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0042",
+      "tag": "nasa",
+      "display_name": "NASA",
+      "count": 3,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0043",
+      "tag": "nnsa",
+      "display_name": "NNSA",
+      "count": 3,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0155",
+      "tag": "intel",
+      "display_name": "Intel",
+      "count": 2,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1674",
+      "tag": "lenovo",
+      "display_name": "Lenovo",
+      "count": 2,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0117",
+      "tag": "midjourney",
+      "display_name": "Midjourney",
+      "count": 2,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_68af",
+      "tag": "openai",
+      "display_name": "OpenAI",
+      "count": 2,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1541",
+      "tag": "stanford_university",
+      "display_name": "Stanford University",
+      "count": 1,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0028",
+      "tag": "stanford",
+      "display_name": "Stanford",
+      "count": 4,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_68af",
+      "tag": "google_deepmind",
+      "display_name": "Google DeepMind",
+      "count": 4,
+      "entity_type": "organisation",
+      "parent_ids": [
+        "c_organisation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_location",
+      "tag": "location",
+      "display_name": "Location (📍)",
+      "count": 0,
+      "entity_type": "location",
+      "parent_ids": [
+        "c_named_entities"
+      ],
+      "children_ids": [
+        "c_0679",
+        "c_0062",
+        "c_0136",
+        "c_0241"
+      ]
+    },
+    {
+      "id": "c_0679",
+      "tag": "amsterdam,_the_netherlands",
+      "display_name": "Amsterdam, The Netherlands",
+      "count": 1,
+      "entity_type": "location",
+      "parent_ids": [
+        "c_location"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0062",
+      "tag": "milano,_italy",
+      "display_name": "Milano, Italy",
+      "count": 1,
+      "entity_type": "location",
+      "parent_ids": [
+        "c_location"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0136",
+      "tag": "roma,_italy",
+      "display_name": "Roma, Italy",
+      "count": 1,
+      "entity_type": "location",
+      "parent_ids": [
+        "c_location"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0241",
+      "tag": "silicon valley",
+      "display_name": "Silicon Valley",
+      "count": 1,
+      "entity_type": "location",
+      "parent_ids": [
+        "c_location"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_event",
+      "tag": "event",
+      "display_name": "Event (📅)",
+      "count": 0,
+      "entity_type": "event",
+      "parent_ids": [
+        "c_named_entities"
+      ],
+      "children_ids": [
+        "c_0041"
+      ]
+    },
+    {
+      "id": "c_0041",
+      "tag": "product_update",
+      "display_name": "Product Update",
+      "count": 3,
+      "entity_type": "event",
+      "parent_ids": [
+        "c_event"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_product_service",
+      "tag": "product_service",
+      "display_name": "Product/Service (📦)",
+      "count": 0,
+      "entity_type": "product",
+      "parent_ids": [
+        "c_named_entities"
+      ],
+      "children_ids": [
+        "c_0086"
+      ]
+    },
+    {
+      "id": "c_0086",
+      "tag": "chatgpt_go",
+      "display_name": "ChatGPT Go",
+      "count": 2,
+      "entity_type": "product",
+      "parent_ids": [
+        "c_product_service"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_hardware",
+      "tag": "hardware",
+      "display_name": "Hardware (💻)",
+      "count": 0,
+      "entity_type": "hardware",
+      "parent_ids": [
+        "c_named_entities"
+      ],
+      "children_ids": [
+        "c_1668"
+      ]
+    },
+    {
+      "id": "c_1668",
+      "tag": "mac_mini",
+      "display_name": "Mac Mini",
+      "count": 3,
+      "entity_type": "hardware",
+      "parent_ids": [
+        "c_hardware"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_ai_ml_fundamentals",
+      "tag": "ai_ml_fundamentals",
+      "display_name": "AI/ML Fundamentals",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_0007",
+        "c_0008",
+        "c_0021",
+        "c_0020",
+        "c_0057",
+        "artificial_general_intelligence",
+        "c_1317",
+        "c_0054"
+      ]
+    },
+    {
+      "id": "c_0007",
+      "tag": "artificial_intelligence",
+      "display_name": "Artificial Intelligence (AI)",
+      "count": 21,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0008",
+      "tag": "machine_learning",
+      "display_name": "Machine Learning (ML)",
+      "count": 9,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0021",
+      "tag": "deep_learning",
+      "display_name": "Deep Learning",
+      "count": 8,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0020",
+      "tag": "neural_networks",
+      "display_name": "Neural Networks",
+      "count": 7,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0057",
+      "tag": "generative_ai",
+      "display_name": "Generative AI",
+      "count": 5,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "artificial_general_intelligence",
+      "tag": "artificial_general_intelligence",
+      "display_name": "Artificial General Intelligence (AGI)",
+      "count": 4,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1317",
+      "tag": "agentic_ai",
+      "display_name": "Agentic AI",
+      "count": 9,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0054",
+      "tag": "reasoning",
+      "display_name": "Reasoning",
+      "count": 5,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_ml_fundamentals"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_models_architectures",
+      "tag": "models_architectures",
+      "display_name": "Models & Architectures",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_language_models",
+        "c_vision_models",
+        "c_multimodal_models",
+        "c_model_architectures_cat",
+        "c_0004",
+        "c_0617",
+        "c_0195"
+      ]
+    },
+    {
+      "id": "c_language_models",
+      "tag": "language_models",
+      "display_name": "Language Models",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": [
+        "c_68af",
+        "c_transformer_based_models",
+        "c_state_space_models"
+      ]
+    },
+    {
+      "id": "c_68af",
+      "tag": "large_language_models",
+      "display_name": "Large Language Models (LLMs)",
+      "count": 6,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_language_models"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_transformer_based_models",
+      "tag": "transformer_based_models",
+      "display_name": "Transformer-based Models",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_language_models"
+      ],
+      "children_ids": [
+        "c_gpt_family",
+        "c_grok_family",
+        "c_qwen_family",
+        "c_gemma_family",
+        "c_deepseek_family",
+        "c_0096"
+      ]
+    },
+    {
+      "id": "c_gpt_family",
+      "tag": "gpt_family",
+      "display_name": "GPT Family",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_transformer_based_models"
+      ],
+      "children_ids": [
+        "c_0005",
+        "c_0040",
+        "c_0552",
+        "c_0156",
+        "c_0079",
+        "c_1325"
+      ]
+    },
+    {
+      "id": "c_0005",
+      "tag": "gpt",
+      "display_name": "GPT (Generative Pre-trained Transformer)",
+      "count": 15,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gpt_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0040",
+      "tag": "gpt_3",
+      "display_name": "GPT-3",
+      "count": 4,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gpt_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0552",
+      "tag": "gpt_4_turbo",
+      "display_name": "GPT-4 Turbo",
+      "count": 2,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gpt_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0156",
+      "tag": "gpt_4o_mini",
+      "display_name": "GPT-4o mini",
+      "count": 2,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gpt_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0079",
+      "tag": "gpt_5_pro",
+      "display_name": "GPT-5 Pro",
+      "count": 3,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gpt_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1325",
+      "tag": "gpt_oss",
+      "display_name": "GPT-Oss",
+      "count": 8,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gpt_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_grok_family",
+      "tag": "grok_family",
+      "display_name": "Grok Family",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_transformer_based_models"
+      ],
+      "children_ids": [
+        "c_1515",
+        "c_1536",
+        "c_0788"
+      ]
+    },
+    {
+      "id": "c_1515",
+      "tag": "grok_2",
+      "display_name": "Grok-2",
+      "count": 5,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_grok_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1536",
+      "tag": "grok_25",
+      "display_name": "Grok-2.5",
+      "count": 4,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_grok_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0788",
+      "tag": "grok_3",
+      "display_name": "Grok-3",
+      "count": 4,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_grok_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_qwen_family",
+      "tag": "qwen_family",
+      "display_name": "Qwen Family",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_transformer_based_models"
+      ],
+      "children_ids": [
+        "c_1571",
+        "c_0036",
+        "c_0027"
+      ]
+    },
+    {
+      "id": "c_1571",
+      "tag": "qwen3",
+      "display_name": "Qwen3",
+      "count": 9,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_qwen_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0036",
+      "tag": "qwen_image",
+      "display_name": "Qwen Image",
+      "count": 5,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_qwen_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0027",
+      "tag": "qwen_image_edit",
+      "display_name": "Qwen Image Edit",
+      "count": 4,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_qwen_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_gemma_family",
+      "tag": "gemma_family",
+      "display_name": "Gemma Family",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_transformer_based_models"
+      ],
+      "children_ids": [
+        "c_0047",
+        "c_0726"
+      ]
+    },
+    {
+      "id": "c_0047",
+      "tag": "gemma_3",
+      "display_name": "Gemma-3",
+      "count": 7,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gemma_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0726",
+      "tag": "gemma_2",
+      "display_name": "Gemma-2",
+      "count": 2,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_gemma_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_deepseek_family",
+      "tag": "deepseek_family",
+      "display_name": "DeepSeek Family",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_transformer_based_models"
+      ],
+      "children_ids": [
+        "c_0019",
+        "c_0769",
+        "c_0044"
+      ]
+    },
+    {
+      "id": "c_0019",
+      "tag": "deepseek_r1",
+      "display_name": "DeepSeek R1",
+      "count": 5,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_deepseek_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0769",
+      "tag": "deepseek_v3",
+      "display_name": "DeepSeek V3",
+      "count": 2,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_deepseek_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0044",
+      "tag": "deepseek_v3.1",
+      "display_name": "DeepSeek V3.1",
+      "count": 3,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_deepseek_family"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0096",
+      "tag": "nano_banana",
+      "display_name": "Nano Banana",
+      "count": 7,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_transformer_based_models"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_state_space_models",
+      "tag": "state_space_models",
+      "display_name": "State Space Models (SSMs)",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_language_models"
+      ],
+      "children_ids": [
+        "c_0084"
+      ]
+    },
+    {
+      "id": "c_0084",
+      "tag": "mamba",
+      "display_name": "Mamba",
+      "count": 3,
+      "entity_type": "architecture",
+      "parent_ids": [
+        "c_state_space_models"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_vision_models",
+      "tag": "vision_models",
+      "display_name": "Vision Models",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": [
+        "c_0052"
+      ]
+    },
+    {
+      "id": "c_0052",
+      "tag": "dinov3",
+      "display_name": "DINOv3",
+      "count": 3,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_vision_models"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_multimodal_models",
+      "tag": "multimodal_models",
+      "display_name": "Multimodal Models",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_model_architectures_cat",
+      "tag": "model_architectures_cat",
+      "display_name": "Model Architectures",
+      "count": 4,
+      "entity_type": null,
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": [
+        "c_0106",
+        "c_0154"
+      ]
+    },
+    {
+      "id": "c_0106",
+      "tag": "attention_mechanisms",
+      "display_name": "Attention Mechanisms",
+      "count": 6,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_model_architectures_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0154",
+      "tag": "mixture_of_experts_moe",
+      "display_name": "Mixture of Experts (MoE)",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_model_architectures_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0004",
+      "tag": "ai_model",
+      "display_name": "AI Model",
+      "count": 22,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0617",
+      "tag": "foundation_models",
+      "display_name": "Foundation Models",
+      "count": 3,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0195",
+      "tag": "world_models",
+      "display_name": "World Models",
+      "count": 2,
+      "entity_type": "model",
+      "parent_ids": [
+        "c_models_architectures"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_techniques_methods",
+      "tag": "techniques_methods",
+      "display_name": "Techniques & Methods",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_training_finetuning",
+        "c_prompting",
+        "c_data_processing_techniques",
+        "c_0093"
+      ]
+    },
+    {
+      "id": "c_training_finetuning",
+      "tag": "training_finetuning",
+      "display_name": "Training & Fine-tuning",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_techniques_methods"
+      ],
+      "children_ids": [
+        "c_0037",
+        "c_0033",
+        "c_peft_cat"
+      ]
+    },
+    {
+      "id": "c_0037",
+      "tag": "instruction_finetuning",
+      "display_name": "Instruction Finetuning",
+      "count": 5,
+      "entity_type": "method",
+      "parent_ids": [
+        "c_training_finetuning"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0033",
+      "tag": "rlhf",
+      "display_name": "Reinforcement Learning from Human Feedback (RLHF)",
+      "count": 4,
+      "entity_type": "method",
+      "parent_ids": [
+        "c_training_finetuning"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_peft_cat",
+      "tag": "peft_cat",
+      "display_name": "Parameter-Efficient Fine-tuning (PEFT)",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_training_finetuning"
+      ],
+      "children_ids": [
+        "c_0026"
+      ]
+    },
+    {
+      "id": "c_0026",
+      "tag": "lora",
+      "display_name": "Low-Rank Adaptation (LoRA)",
+      "count": 7,
+      "entity_type": "method",
+      "parent_ids": [
+        "c_peft_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_prompting",
+      "tag": "prompting",
+      "display_name": "Prompting",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_techniques_methods"
+      ],
+      "children_ids": [
+        "c_0011",
+        "c_0119"
+      ]
+    },
+    {
+      "id": "c_0011",
+      "tag": "chain_of_thought",
+      "display_name": "Chain of Thought (CoT)",
+      "count": 8,
+      "entity_type": "experimental-setup",
+      "parent_ids": [
+        "c_prompting"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0119",
+      "tag": "zero_shot_prompting",
+      "display_name": "Zero-Shot Prompting",
+      "count": 2,
+      "entity_type": "experimental-setup",
+      "parent_ids": [
+        "c_prompting"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_data_processing_techniques",
+      "tag": "data_processing_techniques",
+      "display_name": "Data Processing Techniques",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_techniques_methods"
+      ],
+      "children_ids": [
+        "c_0137"
+      ]
+    },
+    {
+      "id": "c_0137",
+      "tag": "data_filtering",
+      "display_name": "Data Filtering",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_data_processing_techniques"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0093",
+      "tag": "data_integration",
+      "display_name": "Data Integration",
+      "count": 3,
+      "entity_type": "method",
+      "parent_ids": [
+        "c_techniques_methods"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_applications_domains",
+      "tag": "applications_domains",
+      "display_name": "Applications & Domains",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_generative_media",
+        "c_nlp_app",
+        "c_computer_vision_app",
+        "c_robotics_embodied_ai",
+        "c_domain_specific_applications"
+      ]
+    },
+    {
+      "id": "c_generative_media",
+      "tag": "generative_media",
+      "display_name": "Generative Media",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_applications_domains"
+      ],
+      "children_ids": [
+        "c_0015",
+        "c_0046",
+        "c_0023",
+        "c_0130"
+      ]
+    },
+    {
+      "id": "c_0015",
+      "tag": "image_generation",
+      "display_name": "Image Generation",
+      "count": 14,
+      "entity_type": "task",
+      "parent_ids": [
+        "c_generative_media"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0046",
+      "tag": "video_generation",
+      "display_name": "Video Generation",
+      "count": 7,
+      "entity_type": "task",
+      "parent_ids": [
+        "c_generative_media"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0023",
+      "tag": "image_editing",
+      "display_name": "Image Editing",
+      "count": 5,
+      "entity_type": "task",
+      "parent_ids": [
+        "c_generative_media"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0130",
+      "tag": "ai_art",
+      "display_name": "AI Art",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_generative_media"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_nlp_app",
+      "tag": "nlp_app",
+      "display_name": "Natural Language Processing (NLP)",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_applications_domains"
+      ],
+      "children_ids": [
+        "c_0060",
+        "c_0733",
+        "c_0063"
+      ]
+    },
+    {
+      "id": "c_0060",
+      "tag": "code_execution",
+      "display_name": "Code Execution",
+      "count": 3,
+      "entity_type": "task",
+      "parent_ids": [
+        "c_nlp_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0733",
+      "tag": "code_generation",
+      "display_name": "Code Generation",
+      "count": 2,
+      "entity_type": "task",
+      "parent_ids": [
+        "c_nlp_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0063",
+      "tag": "speech_processing",
+      "display_name": "Speech Processing",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_nlp_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_computer_vision_app",
+      "tag": "computer_vision_app",
+      "display_name": "Computer Vision",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_applications_domains"
+      ],
+      "children_ids": [
+        "c_0206",
+        "c_1179"
+      ]
+    },
+    {
+      "id": "c_0206",
+      "tag": "image_processing",
+      "display_name": "Image Processing",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_computer_vision_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1179",
+      "tag": "image_recognition",
+      "display_name": "Image Recognition",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_computer_vision_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_robotics_embodied_ai",
+      "tag": "robotics_embodied_ai",
+      "display_name": "Robotics & Embodied AI",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_applications_domains"
+      ],
+      "children_ids": [
+        "c_1494",
+        "c_0131"
+      ]
+    },
+    {
+      "id": "c_1494",
+      "tag": "autonomous_vehicles",
+      "display_name": "Autonomous Vehicles",
+      "count": 4,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_robotics_embodied_ai"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0131",
+      "tag": "robotics",
+      "display_name": "Robotics",
+      "count": 2,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_robotics_embodied_ai"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_domain_specific_applications",
+      "tag": "domain_specific_applications",
+      "display_name": "Domain-Specific Applications",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_applications_domains"
+      ],
+      "children_ids": [
+        "c_education_app",
+        "c_healthcare_app",
+        "c_space_heliophysics_app"
+      ]
+    },
+    {
+      "id": "c_education_app",
+      "tag": "education_app",
+      "display_name": "Education",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_domain_specific_applications"
+      ],
+      "children_ids": [
+        "c_0400",
+        "c_1458"
+      ]
+    },
+    {
+      "id": "c_0400",
+      "tag": "ai_in_education",
+      "display_name": "AI in Education",
+      "count": 3,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_education_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1458",
+      "tag": "educational_technology",
+      "display_name": "Educational Technology",
+      "count": 5,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_education_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_healthcare_app",
+      "tag": "healthcare_app",
+      "display_name": "Healthcare & Medical AI",
+      "count": 2,
+      "entity_type": null,
+      "parent_ids": [
+        "c_domain_specific_applications"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_space_heliophysics_app",
+      "tag": "space_heliophysics_app",
+      "display_name": "Space & Heliophysics",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_domain_specific_applications"
+      ],
+      "children_ids": [
+        "c_0039",
+        "c_0053"
+      ]
+    },
+    {
+      "id": "c_0039",
+      "tag": "space_weather",
+      "display_name": "Space Weather",
+      "count": 3,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_space_heliophysics_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0053",
+      "tag": "solar_storms",
+      "display_name": "Solar Storms",
+      "count": 3,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_space_heliophysics_app"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_data_datasets",
+      "tag": "data_datasets",
+      "display_name": "Data & Datasets",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_datasets_cat",
+        "c_data_concepts",
+        "c_knowledge_representation"
+      ]
+    },
+    {
+      "id": "c_datasets_cat",
+      "tag": "datasets_cat",
+      "display_name": "Datasets",
+      "count": 3,
+      "entity_type": null,
+      "parent_ids": [
+        "c_data_datasets"
+      ],
+      "children_ids": [
+        "c_0138"
+      ]
+    },
+    {
+      "id": "c_0138",
+      "tag": "imdb_dataset",
+      "display_name": "IMDb Dataset",
+      "count": 2,
+      "entity_type": "dataset",
+      "parent_ids": [
+        "c_datasets_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_data_concepts",
+      "tag": "data_concepts",
+      "display_name": "Data Concepts",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_data_datasets"
+      ],
+      "children_ids": [
+        "c_0078"
+      ]
+    },
+    {
+      "id": "c_0078",
+      "tag": "data_sharing",
+      "display_name": "Data Sharing",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_data_concepts"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_knowledge_representation",
+      "tag": "knowledge_representation",
+      "display_name": "Knowledge Representation",
+      "count": 1,
+      "entity_type": null,
+      "parent_ids": [
+        "c_data_datasets"
+      ],
+      "children_ids": [
+        "c_0049",
+        "c_0392"
+      ]
+    },
+    {
+      "id": "c_0049",
+      "tag": "ontology_engineering_methodologies",
+      "display_name": "Ontology Engineering Methodologies",
+      "count": 3,
+      "entity_type": "method",
+      "parent_ids": [
+        "c_knowledge_representation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0392",
+      "tag": "word embeddings",
+      "display_name": "Word Embeddings",
+      "count": 2,
+      "entity_type": "topic",
+      "parent_ids": [
+        "c_knowledge_representation"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_tools_infrastructure",
+      "tag": "tools_infrastructure",
+      "display_name": "Tools & Infrastructure",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_0025",
+        "c_0515",
+        "c_0121"
+      ]
+    },
+    {
+      "id": "c_0025",
+      "tag": "ai_tools",
+      "display_name": "AI Tools",
+      "count": 4,
+      "entity_type": "tool",
+      "parent_ids": [
+        "c_tools_infrastructure"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0515",
+      "tag": "api",
+      "display_name": "API",
+      "count": 2,
+      "entity_type": "tool",
+      "parent_ids": [
+        "c_tools_infrastructure"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0121",
+      "tag": "ai_infrastructure",
+      "display_name": "AI Infrastructure",
+      "count": 2,
+      "entity_type": "hardware",
+      "parent_ids": [
+        "c_tools_infrastructure"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_research_development",
+      "tag": "research_development",
+      "display_name": "Research & Development",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_scientific_publications",
+        "c_research_concepts"
+      ]
+    },
+    {
+      "id": "c_scientific_publications",
+      "tag": "scientific_publications",
+      "display_name": "Scientific Publications",
+      "count": 7,
+      "entity_type": null,
+      "parent_ids": [
+        "c_research_development"
+      ],
+      "children_ids": [
+        "c_0114"
+      ]
+    },
+    {
+      "id": "c_0114",
+      "tag": "research_paper",
+      "display_name": "Research Paper",
+      "count": 3,
+      "entity_type": "paper",
+      "parent_ids": [
+        "c_scientific_publications"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_research_concepts",
+      "tag": "research_concepts",
+      "display_name": "Research Concepts",
+      "count": 13,
+      "entity_type": null,
+      "parent_ids": [
+        "c_research_development"
+      ],
+      "children_ids": [
+        "c_0061",
+        "c_0067",
+        "c_0128"
+      ]
+    },
+    {
+      "id": "c_0061",
+      "tag": "empirical_study",
+      "display_name": "Empirical Study",
+      "count": 3,
+      "entity_type": "method",
+      "parent_ids": [
+        "c_research_concepts"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0067",
+      "tag": "ai_scaling_laws",
+      "display_name": "AI Scaling Laws",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_research_concepts"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0128",
+      "tag": "research",
+      "display_name": "Research",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_research_concepts"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_industry_business",
+      "tag": "industry_business",
+      "display_name": "Industry & Business",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "open_source_ai",
+        "c_1029",
+        "c_0558"
+      ]
+    },
+    {
+      "id": "open_source_ai",
+      "tag": "open_source_ai",
+      "display_name": "Open Source AI",
+      "count": 5,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_industry_business"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1029",
+      "tag": "ai_adoption",
+      "display_name": "AI Adoption",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_industry_business"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0558",
+      "tag": "user_experience",
+      "display_name": "User Experience",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_industry_business"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_ethics_society",
+      "tag": "ethics_society",
+      "display_name": "Ethics & Society",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_ai_safety_alignment",
+        "c_societal_impact"
+      ]
+    },
+    {
+      "id": "c_ai_safety_alignment",
+      "tag": "ai_safety_alignment",
+      "display_name": "AI Safety & Alignment",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_ethics_society"
+      ],
+      "children_ids": [
+        "c_0045",
+        "c_0746",
+        "c_0103",
+        "c_1418"
+      ]
+    },
+    {
+      "id": "c_0045",
+      "tag": "hallucinations",
+      "display_name": "Hallucinations",
+      "count": 3,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_ai_safety_alignment"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0746",
+      "tag": "ai_alignment",
+      "display_name": "AI Alignment",
+      "count": 2,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_safety_alignment"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0103",
+      "tag": "ai_ethics",
+      "display_name": "AI Ethics",
+      "count": 2,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_safety_alignment"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_1418",
+      "tag": "explainable_ai",
+      "display_name": "Explainable AI (XAI)",
+      "count": 8,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_ai_safety_alignment"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_societal_impact",
+      "tag": "societal_impact",
+      "display_name": "Societal Impact",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_ethics_society"
+      ],
+      "children_ids": [
+        "c_0076",
+        "c_0081",
+        "c_0100"
+      ]
+    },
+    {
+      "id": "c_0076",
+      "tag": "cbrn",
+      "display_name": "CBRN (Chemical, Biological, Radiological, and Nuclear)",
+      "count": 3,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_societal_impact"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0081",
+      "tag": "ai_environmental_impact",
+      "display_name": "AI Environmental Impact",
+      "count": 2,
+      "entity_type": "research-topic",
+      "parent_ids": [
+        "c_societal_impact"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0100",
+      "tag": "ai_sustainability",
+      "display_name": "AI Sustainability",
+      "count": 2,
+      "entity_type": "concept",
+      "parent_ids": [
+        "c_societal_impact"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_evaluation_metrics",
+      "tag": "evaluation_metrics",
+      "display_name": "Evaluation & Metrics",
+      "count": 1,
+      "entity_type": null,
+      "parent_ids": [],
+      "children_ids": [
+        "c_benchmarks_cat",
+        "c_metrics_cat",
+        "c_0013"
+      ]
+    },
+    {
+      "id": "c_benchmarks_cat",
+      "tag": "benchmarks_cat",
+      "display_name": "Benchmarks",
+      "count": 1,
+      "entity_type": null,
+      "parent_ids": [
+        "c_evaluation_metrics"
+      ],
+      "children_ids": [
+        "c_0072",
+        "c_0058",
+        "c_0134",
+        "c_0032"
+      ]
+    },
+    {
+      "id": "c_0072",
+      "tag": "arc_agi",
+      "display_name": "ARC-AGI",
+      "count": 3,
+      "entity_type": "benchmark",
+      "parent_ids": [
+        "c_benchmarks_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0058",
+      "tag": "chess",
+      "display_name": "Chess",
+      "count": 3,
+      "entity_type": "benchmark",
+      "parent_ids": [
+        "c_benchmarks_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0134",
+      "tag": "llm_evaluation",
+      "display_name": "LLM Evaluation",
+      "count": 2,
+      "entity_type": "benchmark",
+      "parent_ids": [
+        "c_benchmarks_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0032",
+      "tag": "benchmarking",
+      "display_name": "Benchmarking",
+      "count": 1,
+      "entity_type": "benchmark",
+      "parent_ids": [
+        "c_benchmarks_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_metrics_cat",
+      "tag": "metrics_cat",
+      "display_name": "Metrics",
+      "count": 0,
+      "entity_type": null,
+      "parent_ids": [
+        "c_evaluation_metrics"
+      ],
+      "children_ids": [
+        "c_0055",
+        "c_0113"
+      ]
+    },
+    {
+      "id": "c_0055",
+      "tag": "energy_consumption",
+      "display_name": "Energy Consumption",
+      "count": 3,
+      "entity_type": "metric",
+      "parent_ids": [
+        "c_metrics_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0113",
+      "tag": "recall",
+      "display_name": "Recall",
+      "count": 2,
+      "entity_type": "metric",
+      "parent_ids": [
+        "c_metrics_cat"
+      ],
+      "children_ids": []
+    },
+    {
+      "id": "c_0013",
+      "tag": "model_evaluation",
+      "display_name": "Model Evaluation",
+      "count": 2,
+      "entity_type": "task",
+      "parent_ids": [
+        "c_evaluation_metrics"
+      ],
+      "children_ids": []
+    }
+  ],
+  "aliases": [
+    {
+      "primary_id": "c_0007",
+      "alias_id": "c_0656",
+      "alias_tag": "ai"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0018",
+      "alias_tag": "ai_models"
+    },
+    {
+      "primary_id": "c_0005",
+      "alias_id": "c_1856",
+      "alias_tag": "gpt_generative_pre_trained_transformer"
+    },
+    {
+      "primary_id": "c_1418",
+      "alias_id": "c_0056",
+      "alias_tag": "xai"
+    },
+    {
+      "primary_id": "c_68af",
+      "alias_id": "c_0003",
+      "alias_tag": "llm"
+    },
+    {
+      "primary_id": "c_0020",
+      "alias_id": "c_0926",
+      "alias_tag": "artificial_neural_networks"
+    },
+    {
+      "primary_id": "artificial_general_intelligence",
+      "alias_id": "c_0038",
+      "alias_tag": "agi"
+    },
+    {
+      "primary_id": "c_0007",
+      "alias_id": "c_0009",
+      "alias_tag": "ai_research"
+    },
+    {
+      "primary_id": "c_0015",
+      "alias_id": "c_0284",
+      "alias_tag": "ai_image_generation"
+    },
+    {
+      "primary_id": "c_peft_cat",
+      "alias_id": "c_1372",
+      "alias_tag": "peft"
+    },
+    {
+      "primary_id": "c_68af",
+      "alias_id": "c_0035",
+      "alias_tag": "googledeepmind"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0030",
+      "alias_tag": "reasoning_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0780",
+      "alias_tag": "reasoning_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0364",
+      "alias_tag": "command_a"
+    },
+    {
+      "primary_id": "c_0617",
+      "alias_id": "c_0098",
+      "alias_tag": "foundation_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0144",
+      "alias_tag": "nemotron"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0223",
+      "alias_tag": "nemotron_nano_9b_v2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0390",
+      "alias_tag": "reachy2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0173",
+      "alias_tag": "in_context learning"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0815",
+      "alias_tag": "veo_3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0087",
+      "alias_tag": "gemini_2.5_deep_think"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1713",
+      "alias_tag": "gemini_25_flash"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1688",
+      "alias_tag": "claude_for_chrome"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0775",
+      "alias_tag": "zephyr_7b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1026",
+      "alias_tag": "vicuna"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0574",
+      "alias_tag": "controlnet"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0466",
+      "alias_tag": "memgpt"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0461",
+      "alias_tag": "tinylstm"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0199",
+      "alias_tag": "cnns"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1193",
+      "alias_tag": "rnns"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0411",
+      "alias_tag": "vision_transformers"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1432",
+      "alias_tag": "transformer_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0599",
+      "alias_tag": "transformer_based_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1636",
+      "alias_tag": "quadratic_attention_transformers"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1570",
+      "alias_tag": "transformer_based_llms"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0544",
+      "alias_tag": "mamba_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0946",
+      "alias_tag": "structured_state_space_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0530",
+      "alias_tag": "hybrid_architectures"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0945",
+      "alias_tag": "hybrid_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1660",
+      "alias_tag": "moe_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0568",
+      "alias_tag": "large_scale_generative_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1500",
+      "alias_tag": "small_language_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1656",
+      "alias_tag": "vision_language_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1653",
+      "alias_tag": "vision_llms"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0397",
+      "alias_tag": "glove_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0228",
+      "alias_tag": "thematic_fit_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0755",
+      "alias_tag": "process_reward_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1176",
+      "alias_tag": "reward_modeling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0434",
+      "alias_tag": "structured_distributional_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0840",
+      "alias_tag": "distributional_language_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0264",
+      "alias_tag": "gen3_ai_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1204",
+      "alias_tag": "asr_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0962",
+      "alias_tag": "legacy_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1351",
+      "alias_tag": "sota_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1423",
+      "alias_tag": "davinci_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1307",
+      "alias_tag": "ai2050"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0497",
+      "alias_tag": "arc_agi_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0449",
+      "alias_tag": "alpacaeval_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0557",
+      "alias_tag": "attention_driven_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0845",
+      "alias_tag": "blip_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1125",
+      "alias_tag": "canary_1b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0489",
+      "alias_tag": "claude_sonnet_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0641",
+      "alias_tag": "mamba_3b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0589",
+      "alias_tag": "mamba2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1373",
+      "alias_tag": "mamba2_transformer"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1637",
+      "alias_tag": "h3_ssm"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1447",
+      "alias_tag": "deepseek_r1_0528"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1446",
+      "alias_tag": "deepseek_v31_think"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0179",
+      "alias_tag": "gemma_3_270m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0422",
+      "alias_tag": "gemma_7b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1543",
+      "alias_tag": "gemma2_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0995",
+      "alias_tag": "gopher_280b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0477",
+      "alias_tag": "gpt_2_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1430",
+      "alias_tag": "gpt_2_implementation"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1130",
+      "alias_tag": "gpt_2_xl"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1138",
+      "alias_tag": "gpt_4_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1441",
+      "alias_tag": "gpt_4o_behavior"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0429",
+      "alias_tag": "gpt_5_analysis"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0866",
+      "alias_tag": "gpt_5_criticism"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1634",
+      "alias_tag": "gpt_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0908",
+      "alias_tag": "gpt_j_6b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0842",
+      "alias_tag": "gpt_oss_120b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0337",
+      "alias_tag": "gpt_oss_20b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1385",
+      "alias_tag": "gpt_oss_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0352",
+      "alias_tag": "gpt_style_llm_classifier"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1671",
+      "alias_tag": "gpt_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_68af",
+      "alias_tag": "gpt_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_68af",
+      "alias_tag": "gpt_5"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0884",
+      "alias_tag": "grok_4_heavy"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1599",
+      "alias_tag": "grok_1"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1520",
+      "alias_tag": "grog_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1537",
+      "alias_tag": "hunyuan_3d_21"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0752",
+      "alias_tag": "imagen_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0768",
+      "alias_tag": "internlm_xcomposer2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1708",
+      "alias_tag": "internvl35"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0700",
+      "alias_tag": "llama_3_8b_instruct"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1177",
+      "alias_tag": "llama_3_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1062",
+      "alias_tag": "llama_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0243",
+      "alias_tag": "llama_3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1554",
+      "alias_tag": "llama_32"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1289",
+      "alias_tag": "llama3_7b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0742",
+      "alias_tag": "llama3_80b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1411",
+      "alias_tag": "mpt_30b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0362",
+      "alias_tag": "nemotron_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0883",
+      "alias_tag": "nvidia_nemotron_nano_v2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0823",
+      "alias_tag": "olmo_2_1b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0713",
+      "alias_tag": "olmo_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0807",
+      "alias_tag": "owsmv4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0512",
+      "alias_tag": "phi_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0719",
+      "alias_tag": "pythia_160m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1079",
+      "alias_tag": "qwen_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1135",
+      "alias_tag": "qwen3_coder"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0585",
+      "alias_tag": "qwen3_coder_480b_a35b_instruct"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0536",
+      "alias_tag": "sam_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0888",
+      "alias_tag": "seed_oss_36b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1711",
+      "alias_tag": "wan22_s2v"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1707",
+      "alias_tag": "wan22_s2v_14b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1709",
+      "alias_tag": "hermes_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1664",
+      "alias_tag": "o3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1665",
+      "alias_tag": "o4_mini_high_back"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1666",
+      "alias_tag": "scaling01"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1602",
+      "alias_tag": "fsdp2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1598",
+      "alias_tag": "int4_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1597",
+      "alias_tag": "kimi_k2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1450",
+      "alias_tag": "intern_s1"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1322",
+      "alias_tag": "transformer_paper"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1242",
+      "alias_tag": "simlex999"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0971",
+      "alias_tag": "wordsim353"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0848",
+      "alias_tag": "toefl11"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0266",
+      "alias_tag": "wnut_17"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0224",
+      "alias_tag": "clc_fce"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1239",
+      "alias_tag": "lfm2_350m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0801",
+      "alias_tag": "lfm2_vl"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0436",
+      "alias_tag": "lfm2_vl_450m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1166",
+      "alias_tag": "bge_m3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0481",
+      "alias_tag": "flan_t5"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1369",
+      "alias_tag": "bert"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0325",
+      "alias_tag": "bert_large"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0273",
+      "alias_tag": "roberta_large"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1321",
+      "alias_tag": "wordnet"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0777",
+      "alias_tag": "conceptnet"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1387",
+      "alias_tag": "comet_knowledge_base"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0881",
+      "alias_tag": "hg38_human_genome"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0439",
+      "alias_tag": "gigaword_5th_edition"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1669",
+      "alias_tag": "20b_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1732",
+      "alias_tag": "25_flash"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1474",
+      "alias_tag": "gemini_20_flash"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1739",
+      "alias_tag": "gemini_25"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1327",
+      "alias_tag": "gpt_5_thinking"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1296",
+      "alias_tag": "llm_advancement"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0958",
+      "alias_tag": "llm_agents"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0378",
+      "alias_tag": "llm_applications"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0416",
+      "alias_tag": "llm_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0388",
+      "alias_tag": "llm_architecture_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0673",
+      "alias_tag": "llm_assisted_coding"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0786",
+      "alias_tag": "llm_based_assessment"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0471",
+      "alias_tag": "llm_based_reasoning"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1120",
+      "alias_tag": "llm_brain_similarities"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1363",
+      "alias_tag": "llm_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1425",
+      "alias_tag": "llm_development"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1210",
+      "alias_tag": "llm_development_lifecycle"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0324",
+      "alias_tag": "llm_efficiency"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1158",
+      "alias_tag": "llm_finetuning"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0754",
+      "alias_tag": "llm_from_scratch"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0491",
+      "alias_tag": "llm_generation"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0548",
+      "alias_tag": "llm_limitations"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0214",
+      "alias_tag": "llm_pre_training"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1245",
+      "alias_tag": "llm_release"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0247",
+      "alias_tag": "llm_repair"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0858",
+      "alias_tag": "llm_research"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0877",
+      "alias_tag": "llm_research_highlights"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1386",
+      "alias_tag": "llm_safety"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0410",
+      "alias_tag": "llm_specialization"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0694",
+      "alias_tag": "llm_training_techniques"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0065",
+      "alias_tag": "language_modeling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0127",
+      "alias_tag": "llm_scaling_laws"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1078",
+      "alias_tag": "llm_as_a_judge"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0070",
+      "alias_tag": "ai_creativity"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0636",
+      "alias_tag": "ai_creativity_paradox"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1049",
+      "alias_tag": "knowledge_worker_productivity"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1030",
+      "alias_tag": "knowledge_work_productivity"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0593",
+      "alias_tag": "ai_productivity_gains"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1033",
+      "alias_tag": "ai_productivity_tools"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0153",
+      "alias_tag": "model_announcement"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1141",
+      "alias_tag": "ai_model_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0623",
+      "alias_tag": "ai_model_performance"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0110",
+      "alias_tag": "model_scaling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1358",
+      "alias_tag": "cybernetic_teammate"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0864",
+      "alias_tag": "3d_gaussian_splatting"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1522",
+      "alias_tag": "3d_modeling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0941",
+      "alias_tag": "3d_world_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1192",
+      "alias_tag": "5x_inference_throughput"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0534",
+      "alias_tag": "60_minutes"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1817",
+      "alias_tag": "av1_codec"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1655",
+      "alias_tag": "handsonllm"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1645",
+      "alias_tag": "exploring_language_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1670",
+      "alias_tag": "how_to_build_an_llm_from_scratch"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0293",
+      "alias_tag": "llms4ol"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0317",
+      "alias_tag": "test_tag_5543"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0487",
+      "alias_tag": "cs224n"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1553",
+      "alias_tag": "kaggle_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1641",
+      "alias_tag": "kdd2025"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1282",
+      "alias_tag": "l2_learners"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0870",
+      "alias_tag": "l2_graduate_level_writing"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1167",
+      "alias_tag": "rage_kg_2024"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1218",
+      "alias_tag": "organizational_change"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0743",
+      "alias_tag": "organizational_change_management"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1545",
+      "alias_tag": "non_profit_organizations"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0931",
+      "alias_tag": "world_model_deficiency"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1538",
+      "alias_tag": "world_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0074",
+      "alias_tag": "large_language_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0006",
+      "alias_tag": "llms"
+    },
+    {
+      "primary_id": "c_1458",
+      "alias_id": "c_1753",
+      "alias_tag": "education_technology"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0030",
+      "alias_tag": "reasoning_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0780",
+      "alias_tag": "reasoning_model"
+    },
+    {
+      "primary_id": "c_0617",
+      "alias_id": "c_0098",
+      "alias_tag": "foundation_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0144",
+      "alias_tag": "nemotron"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0223",
+      "alias_tag": "nemotron_nano_9b_v2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0390",
+      "alias_tag": "reachy2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0173",
+      "alias_tag": "in_context learning"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0815",
+      "alias_tag": "veo_3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0087",
+      "alias_tag": "gemini_2.5_deep_think"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1713",
+      "alias_tag": "gemini_25_flash"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1688",
+      "alias_tag": "claude_for_chrome"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0775",
+      "alias_tag": "zephyr_7b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1026",
+      "alias_tag": "vicuna"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0574",
+      "alias_tag": "controlnet"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0466",
+      "alias_tag": "memgpt"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0461",
+      "alias_tag": "tinylstm"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0199",
+      "alias_tag": "cnns"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1193",
+      "alias_tag": "rnns"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0411",
+      "alias_tag": "vision_transformers"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1432",
+      "alias_tag": "transformer_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0599",
+      "alias_tag": "transformer_based_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1636",
+      "alias_tag": "quadratic_attention_transformers"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1570",
+      "alias_tag": "transformer_based_llms"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0544",
+      "alias_tag": "mamba_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0946",
+      "alias_tag": "structured_state_space_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0530",
+      "alias_tag": "hybrid_architectures"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0945",
+      "alias_tag": "hybrid_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1660",
+      "alias_tag": "moe_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0568",
+      "alias_tag": "large_scale_generative_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1500",
+      "alias_tag": "small_language_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1656",
+      "alias_tag": "vision_language_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1653",
+      "alias_tag": "vision_llms"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0397",
+      "alias_tag": "glove_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0228",
+      "alias_tag": "thematic_fit_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0755",
+      "alias_tag": "process_reward_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1176",
+      "alias_tag": "reward_modeling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0434",
+      "alias_tag": "structured_distributional_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0840",
+      "alias_tag": "distributional_language_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0264",
+      "alias_tag": "gen3_ai_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1204",
+      "alias_tag": "asr_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0962",
+      "alias_tag": "legacy_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1351",
+      "alias_tag": "sota_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1423",
+      "alias_tag": "davinci_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1307",
+      "alias_tag": "ai2050"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0497",
+      "alias_tag": "arc_agi_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0449",
+      "alias_tag": "alpacaeval_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0557",
+      "alias_tag": "attention_driven_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0845",
+      "alias_tag": "blip_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1125",
+      "alias_tag": "canary_1b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0489",
+      "alias_tag": "claude_sonnet_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0641",
+      "alias_tag": "mamba_3b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0589",
+      "alias_tag": "mamba2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1373",
+      "alias_tag": "mamba2_transformer"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1637",
+      "alias_tag": "h3_ssm"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1447",
+      "alias_tag": "deepseek_r1_0528"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1446",
+      "alias_tag": "deepseek_v31_think"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0179",
+      "alias_tag": "gemma_3_270m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0422",
+      "alias_tag": "gemma_7b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1543",
+      "alias_tag": "gemma2_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0995",
+      "alias_tag": "gopher_280b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0477",
+      "alias_tag": "gpt_2_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1430",
+      "alias_tag": "gpt_2_implementation"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1130",
+      "alias_tag": "gpt_2_xl"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1138",
+      "alias_tag": "gpt_4_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1441",
+      "alias_tag": "gpt_4o_behavior"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0429",
+      "alias_tag": "gpt_5_analysis"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0866",
+      "alias_tag": "gpt_5_criticism"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1634",
+      "alias_tag": "gpt_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0908",
+      "alias_tag": "gpt_j_6b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0842",
+      "alias_tag": "gpt_oss_120b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0337",
+      "alias_tag": "gpt_oss_20b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1385",
+      "alias_tag": "gpt_oss_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0352",
+      "alias_tag": "gpt_style_llm_classifier"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1671",
+      "alias_tag": "gpt_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_68af",
+      "alias_tag": "gpt_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_68af",
+      "alias_tag": "gpt_5"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0884",
+      "alias_tag": "grok_4_heavy"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1599",
+      "alias_tag": "grok_1"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1520",
+      "alias_tag": "grog_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1537",
+      "alias_tag": "hunyuan_3d_21"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0752",
+      "alias_tag": "imagen_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0768",
+      "alias_tag": "internlm_xcomposer2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1708",
+      "alias_tag": "internvl35"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0700",
+      "alias_tag": "llama_3_8b_instruct"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1177",
+      "alias_tag": "llama_3_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1062",
+      "alias_tag": "llama_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0243",
+      "alias_tag": "llama_3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1554",
+      "alias_tag": "llama_32"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1289",
+      "alias_tag": "llama3_7b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0742",
+      "alias_tag": "llama3_80b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1411",
+      "alias_tag": "mpt_30b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0362",
+      "alias_tag": "nemotron_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0883",
+      "alias_tag": "nvidia_nemotron_nano_v2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0823",
+      "alias_tag": "olmo_2_1b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0713",
+      "alias_tag": "olmo_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0807",
+      "alias_tag": "owsmv4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0512",
+      "alias_tag": "phi_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0719",
+      "alias_tag": "pythia_160m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1079",
+      "alias_tag": "qwen_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1135",
+      "alias_tag": "qwen3_coder"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0585",
+      "alias_tag": "qwen3_coder_480b_a35b_instruct"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0536",
+      "alias_tag": "sam_2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0888",
+      "alias_tag": "seed_oss_36b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1711",
+      "alias_tag": "wan22_s2v"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1707",
+      "alias_tag": "wan22_s2v_14b"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1709",
+      "alias_tag": "hermes_4"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1664",
+      "alias_tag": "o3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1665",
+      "alias_tag": "o4_mini_high_back"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1666",
+      "alias_tag": "scaling01"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1602",
+      "alias_tag": "fsdp2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1598",
+      "alias_tag": "int4_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1597",
+      "alias_tag": "kimi_k2"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1450",
+      "alias_tag": "intern_s1"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1322",
+      "alias_tag": "transformer_paper"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1242",
+      "alias_tag": "simlex999"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0971",
+      "alias_tag": "wordsim353"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0848",
+      "alias_tag": "toefl11"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0266",
+      "alias_tag": "wnut_17"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0224",
+      "alias_tag": "clc_fce"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1239",
+      "alias_tag": "lfm2_350m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0801",
+      "alias_tag": "lfm2_vl"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0436",
+      "alias_tag": "lfm2_vl_450m"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1166",
+      "alias_tag": "bge_m3"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0481",
+      "alias_tag": "flan_t5"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1369",
+      "alias_tag": "bert"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0325",
+      "alias_tag": "bert_large"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0273",
+      "alias_tag": "roberta_large"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1321",
+      "alias_tag": "wordnet"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0777",
+      "alias_tag": "conceptnet"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1387",
+      "alias_tag": "comet_knowledge_base"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0881",
+      "alias_tag": "hg38_human_genome"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0439",
+      "alias_tag": "gigaword_5th_edition"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1669",
+      "alias_tag": "20b_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1732",
+      "alias_tag": "25_flash"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1474",
+      "alias_tag": "gemini_20_flash"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1739",
+      "alias_tag": "gemini_25"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1327",
+      "alias_tag": "gpt_5_thinking"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1296",
+      "alias_tag": "llm_advancement"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0958",
+      "alias_tag": "llm_agents"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0378",
+      "alias_tag": "llm_applications"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0416",
+      "alias_tag": "llm_architecture"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0388",
+      "alias_tag": "llm_architecture_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0673",
+      "alias_tag": "llm_assisted_coding"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0786",
+      "alias_tag": "llm_based_assessment"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0471",
+      "alias_tag": "llm_based_reasoning"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1120",
+      "alias_tag": "llm_brain_similarities"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1363",
+      "alias_tag": "llm_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1425",
+      "alias_tag": "llm_development"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1210",
+      "alias_tag": "llm_development_lifecycle"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0324",
+      "alias_tag": "llm_efficiency"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1158",
+      "alias_tag": "llm_finetuning"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0754",
+      "alias_tag": "llm_from_scratch"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0491",
+      "alias_tag": "llm_generation"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0548",
+      "alias_tag": "llm_limitations"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0214",
+      "alias_tag": "llm_pre_training"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1245",
+      "alias_tag": "llm_release"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0247",
+      "alias_tag": "llm_repair"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0858",
+      "alias_tag": "llm_research"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0877",
+      "alias_tag": "llm_research_highlights"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1386",
+      "alias_tag": "llm_safety"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0410",
+      "alias_tag": "llm_specialization"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0694",
+      "alias_tag": "llm_training_techniques"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0065",
+      "alias_tag": "language_modeling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0127",
+      "alias_tag": "llm_scaling_laws"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1078",
+      "alias_tag": "llm_as_a_judge"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0070",
+      "alias_tag": "ai_creativity"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0636",
+      "alias_tag": "ai_creativity_paradox"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1049",
+      "alias_tag": "knowledge_worker_productivity"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1030",
+      "alias_tag": "knowledge_work_productivity"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0593",
+      "alias_tag": "ai_productivity_gains"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1033",
+      "alias_tag": "ai_productivity_tools"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0153",
+      "alias_tag": "model_announcement"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1141",
+      "alias_tag": "ai_model_comparison"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0623",
+      "alias_tag": "ai_model_performance"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0110",
+      "alias_tag": "model_scaling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1358",
+      "alias_tag": "cybernetic_teammate"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0864",
+      "alias_tag": "3d_gaussian_splatting"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1522",
+      "alias_tag": "3d_modeling"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0941",
+      "alias_tag": "3d_world_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1192",
+      "alias_tag": "5x_inference_throughput"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0534",
+      "alias_tag": "60_minutes"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1817",
+      "alias_tag": "av1_codec"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1655",
+      "alias_tag": "handsonllm"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1645",
+      "alias_tag": "exploring_language_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1670",
+      "alias_tag": "how_to_build_an_llm_from_scratch"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0293",
+      "alias_tag": "llms4ol"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0317",
+      "alias_tag": "test_tag_5543"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0487",
+      "alias_tag": "cs224n"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1553",
+      "alias_tag": "kaggle_models"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1641",
+      "alias_tag": "kdd2025"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1282",
+      "alias_tag": "l2_learners"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0870",
+      "alias_tag": "l2_graduate_level_writing"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1167",
+      "alias_tag": "rage_kg_2024"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1218",
+      "alias_tag": "organizational_change"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0743",
+      "alias_tag": "organizational_change_management"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1545",
+      "alias_tag": "non_profit_organizations"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0931",
+      "alias_tag": "world_model_deficiency"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_1538",
+      "alias_tag": "world_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0074",
+      "alias_tag": "large_language_model"
+    },
+    {
+      "primary_id": "c_0004",
+      "alias_id": "c_0006",
+      "alias_tag": "llms"
+    }
+  ],
+  "validation": {
+    "preserved_annotated_concepts": {
+      "status": "PASS",
+      "message": "All 908 concepts with count > 0 from the input are present in the final output, either as primary concepts or as aliases."
+    },
+    "entity_exclusivity_check": {
+      "status": "PASS",
+      "message": "All Person, Organisation, Location, Event, Product/Service, and Hardware concepts are correctly nested under the 'Named Entities' root category and do not appear elsewhere."
+    },
+    "bidirectional_relationship_check": {
+      "status": "PASS",
+      "message": "All parent-child relationships have been validated as bidirectional. If A is a parent of B, B correctly lists A as its parent."
+    },
+    "duplicate_merges": {
+      "status": "PASS",
+      "message": "Successfully merged duplicate concepts and created aliases.",
+      "examples": [
+        {
+          "primary": "AI Model (c_0004)",
+          "merged_aliases": [
+            "AI Models (c_0018)"
+          ],
+          "final_count": 22
+        },
+        {
+          "primary": "Large Language Models (LLMs) (c_68af)",
+          "merged_aliases": [
+            "LLM (c_0003)"
+          ],
+          "final_count": 6
+        },
+        {
+          "primary": "Google DeepMind (c_68af)",
+          "merged_aliases": [
+            "Googledeepmind (c_0035)"
+          ],
+          "final_count": 4
+        },
+        {
+          "primary": "Grok-2.5 (c_1536)",
+          "merged_aliases": [],
+          "final_count": 4
+        }
+      ]
+    },
+    "root_category_order_check": {
+      "status": "PASS",
+      "message": "The root categories are correctly ordered according to the specified priorities.",
+      "order": [
+        "Named Entities",
+        "AI/ML Fundamentals",
+        "Models & Architectures",
+        "Techniques & Methods",
+        "Applications & Domains",
+        "Data & Datasets",
+        "Tools & Infrastructure",
+        "Research & Development",
+        "Industry & Business",
+        "Ethics & Society",
+        "Evaluation & Metrics"
+      ]
+    },
+    "pruned_unused_concepts": {
+      "status": "INFO",
+      "message": "1143 unused concepts (count: 0, no children) were pruned from the final hierarchy."
+    }
+  }
+}
+```

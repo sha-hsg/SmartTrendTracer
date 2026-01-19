@@ -1,0 +1,2036 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Distilling Event Sequence Knowledge From Large Language Models</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2024-07-01">1 Jul 2024</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Somin</forename><surname>Wadhwa</surname></persName>
+							<email>wadhwa.s@northeastern.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> IBM Research , USA</note>
+								<orgName type="institution">IBM Research</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Northeastern University , USA</note>
+								<orgName type="institution">Northeastern University</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Oktie</forename><surname>Hassanzadeh</surname></persName>
+							<email>hassanzadeh@us.ibm.com</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> IBM Research , USA</note>
+								<orgName type="institution">IBM Research</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Debarun</forename><surname>Bhattacharjya</surname></persName>
+							<email>debarunb@us.ibm.com</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> IBM Research , USA</note>
+								<orgName type="institution">IBM Research</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Ken</forename><surname>Barker</surname></persName>
+							<email>kjbarker@us.ibm.com</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> IBM Research , USA</note>
+								<orgName type="institution">IBM Research</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Jian</forename><surname>Ni</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> IBM Research , USA</note>
+								<orgName type="institution">IBM Research</orgName>
+								<address>
+									<country key="US">USA</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Distilling Event Sequence Knowledge From Large Language Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2024-07-01">1 Jul 2024</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">E00275A445A6AA1E81D7E03A83FA5770</idno>
+					<idno type="arXiv">arXiv:2401.07237v3[cs.CL]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:36+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Knowledge Graphs</term>
+					<term>Large Language Models</term>
+					<term>Knowledge Distillation</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Event sequence models have been found to be highly effective in the analysis and prediction of events. Building such models requires availability of abundant high-quality event sequence data. In certain applications, however, clean structured event sequences are not available, and automated sequence extraction results in data that is too noisy and incomplete. In this work, we explore the use of Large Language Models (LLMs) to generate event sequences that can effectively be used for probabilistic event model construction. This can be viewed as a mechanism of distilling event sequence knowledge from LLMs. Our approach relies on a Knowledge Graph (KG) of event concepts with partial causal relations to guide the generative language model for causal event sequence generation. We show that our approach can generate high-quality event sequences, filling a knowledge gap in the input KG. Furthermore, we explore how the generated sequences can be leveraged to discover useful and more complex structured knowledge from pattern mining and probabilistic event models. We release our sequence generation code and evaluation framework, as well as corpus of event sequence data.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Building probabilistic models from event sequence data has numerous practical applications across different domains when plentiful high-quality event data is available. For example, in Finance, event models can be used to predict stock market trends and make informed investment decisions. In Healthcare, event models can help identify patterns and correlations in patient data to improve diagnoses and treatment plans. In the field of Cybersecurity, these models can be used to detect and prevent potential cyber attacks by analyzing the sequence of events leading up to a breach. A common characteristic of the data in these domains is that sequences are clearly associated with an entity (e.g., a company, a person, or a device). There are however other domains where such a clean association between events and entities may not be possible. One such application is news event analysis <ref type="bibr" target="#b8">[8,</ref><ref type="bibr" target="#b13">13,</ref><ref type="bibr" target="#b18">18,</ref><ref type="bibr" target="#b30">30]</ref>. While various news sources record and describe newsworthy events, it is often not possible to automatically put together coherent sequences of events, because each event may involve multiple topics and actors, and many correlated and unrelated events may be occurring simultaneously or in close proximity</p><p>Prior work has addressed this challenge by devising automated mechanisms for extracting narratives <ref type="bibr" target="#b29">[29,</ref><ref type="bibr" target="#b33">33]</ref>, topic detection and tracking <ref type="bibr" target="#b1">[2]</ref>, and timeline summarization <ref type="bibr" target="#b16">[16]</ref>. While these different categories of solutions have been successful in a range of applications, the outcome is inherently noisy and not in the form of structured event sequences useful for the construction of event models. Prior work has shown little success in automatically turning narratives into structured sequences. In this paper, we explore a novel mechanism for creating structured event sequences in such domains, using generative language models.</p><p>Large Language Models <ref type="bibr" target="#b6">[7,</ref><ref type="bibr" target="#b31">31,</ref><ref type="bibr" target="#b38">38]</ref> have recently become the dominant paradigm in a range of natural language processing (NLP) tasks <ref type="bibr" target="#b11">[11]</ref> and often beat traditional approaches on a number of challenging tasks, including complex arithmetic reasoning <ref type="bibr" target="#b22">[22]</ref> and open-domain question answering <ref type="bibr" target="#b23">[23]</ref>. In this paper, our goal is to examine the capability of LLMs to generate structured event sequences useful for event analysis. Our aim is to use LLMs directly for generation of event sequences, as opposed to improving prior extraction methods that would rely on high-quality and comprehensive sources describing detailed event sequences for a wide variety of events. Our hypothesis is that LLMs trained on large corpora have already gathered the required knowledge of plausible event sequences and therefore can be suitably guided to produce diverse and high-quality event sequences. To effectively distill this knowledge, we use event-related concepts in Wikidata <ref type="bibr" target="#b36">[36]</ref>, a comprehensive general-domain knowledge graph, to guide the sequence generation. This can be viewed as a novel mechanism for knowledge-guided text generation <ref type="bibr" target="#b42">[42]</ref> and symbolic knowledge distillation <ref type="bibr" target="#b39">[39]</ref>. We then use these generated sequences for pattern mining and learning probabilistic event models, as a way of further structuring the underlying knowledge. Figure <ref type="figure">1</ref> shows our overall framework along with examples from our experiments of patterns mined from an LLM-generated event sequence collection, as a well as a simple model learned from the collection.</p><p>In summary, we make the following contributions:</p><p>1. We devise a new iterative in-context prompting strategy for generating highquality event sequences using LLMs. To the best of our knowledge, we are the first to use LLMs to generate structured event sequences for the purpose of analyzing various event models. 2. We compile high-quality event sequences using our generation mechanism, based on a curated set of high-level event concepts (classes) from Wikidata that represent newsworthy events. 3. We develop an evaluation framework and conduct experiments to show the value of LLM-powered event sequence generation on replicating and augmenting knowledge in structured representations such as knowledge graphs. 4. We further demonstrate the practical usefulness of our approach by leveraging downstream pattern mining and probabilistic event models. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Probabilistic Model</head><p>Fig. <ref type="figure">1</ref>. An overview of our framework for distilling event sequence knowledge from LLMs, along with examples portraying potential use cases. We show that by (1) starting with a sparse knowledge graph such as Wikidata, we can generate targeted event sequences. Owing to the inherent sparsity in the underlying KG, we can (2) use LLMs to carry out a portion of the evaluation (i.e. precision) to select an optimal model. On this new generated sequence dataset, we then (3) apply classical pattern-mining algorithms (e.g., GSP) to identify potentially interesting has_cause and has_effect event sequence chains, and (4) learn summary Markov models (SuMMs) to identify potential influencing events for particular event types of interest; these are both illustrations of extracting complex structured knowledge from the generated sequences.</p><p>Our code and generated sequence data are included in the supplementary material, and will be made publicly available for future research.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>News Event Analysis The primary applications of our work are around news event analysis and forecasting. Liang <ref type="bibr" target="#b45">[45]</ref> presents a taxonomy of different flavors of event prediction in the literature. Our target event prediction applications fall under the "Semantic Prediction" category, with time and location details not being of interest, and the primary goal being the prediction of "event profiles" such as event types. Seminal work in this area is the work of Radinsky et al. <ref type="bibr" target="#b30">[30]</ref> where causal relations between past events are extracted from text and then a knowledge graph is utilized to generalize the extracted relations in order to make predictions. More recent work has explored the use of graph sequence mining over a graph structure representation of events extracted from text <ref type="bibr" target="#b8">[8]</ref>, with graph mining used as a mechanism of extracting useful relations from large and noisy outputs of extraction. The application of building event sequence models over such outputs has not been explored. Our paper explores an alternative approach of event sequence generation that is capable of generating longer and potentially higher-quality sequences.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Event Sequence Extraction from Text</head><p>There is a wealth of literature on different methods of extracting sequences from textual corpora. Norambuena et al. <ref type="bibr" target="#b29">[29]</ref> present a comprehensive survey of automated methods of narrative extraction. Narratives contain several elements including events, participants (actors/protagonists), time, and space. The task of event detection itself is a highly challenging task and the topic of extensive research <ref type="bibr" target="#b9">[9,</ref><ref type="bibr" target="#b41">41,</ref><ref type="bibr" target="#b24">24]</ref>, which has its root in the Topic Detection and Tracking (TDT) task <ref type="bibr" target="#b33">[33]</ref>. This line of work started out as a DARPA-sponsored initiative with the same name <ref type="bibr" target="#b2">[3]</ref>. Another closely related task is news timeline summarization <ref type="bibr" target="#b16">[16]</ref>. While pattern mining algorithms have been applied to the output of such extractions, e.g. for creation of "domain templates" <ref type="bibr" target="#b14">[14]</ref>, we are not aware of any attempts to use the extractions to construct event models for analysis or prediction. This is mainly due to the fact that the output of such methods often result in very short and noisy sequences, not suitable for the majority of event sequence models.</p><p>Sequential Pattern Mining and Event Sequence Models Sequential pattern mining and related approaches have been the subject of extensive research <ref type="bibr" target="#b27">[27,</ref><ref type="bibr" target="#b26">26,</ref><ref type="bibr" target="#b28">28,</ref><ref type="bibr" target="#b15">15]</ref>. These algorithms take in a set of sequences (or "sequential records") with a set of unique events (or "items") and often a "minimum support" threshold, and return as output a ranked set of all frequent sequences in a given sequence collection (or database) meeting the minimum support threshold. There is also a long line of work on statistical and probabilistic models for analysis of different kinds of event sequences. Our focus in this paper is on multivariate event sequences, i.e., sequences of various event types without timestamps. Markov models for sequences <ref type="bibr" target="#b32">[32,</ref><ref type="bibr" target="#b4">5]</ref> and long short-term memory (LSTM) <ref type="bibr" target="#b20">[20]</ref> models are examples of prediction models. We leverage a more recent family of models -Summary Markov models <ref type="bibr" target="#b5">[6]</ref> -for some of the experiments in this paper that involve analyzing generated event sequences.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Knowledge-Guided Event Sequence Generation</head><p>Through utilizing LLMs, we model event prediction as a conditional generation task under zero and iterative few-shot settings. Our targets are linearized sequences of event concepts. We begin by prompting a large language model (with in-context exemplars) with an event trigger y 1 to generate the next concept from a defined set of labels, and repeat this process until we get a sequence of desired length. Formally, given an event trigger T , we model the probability of generating linearized string y of length T containing N unique event concepts that follow T in sequence:</p><formula xml:id="formula_0">p LM (y|T ) = T t=2 p(y t |T , y &lt;t-1 )<label>(1)</label></formula><p>This is the standard conditional language modeling objective. We try multiple prompting techniques and qualitatively observe optimal results with an iterative in-context few-shot prompting strategy (Figure <ref type="figure">2</ref>). Specifically, we start with a set of six randomly selected examples of the form -"What usually follows event X?". This approach follows the incremental prompting procedure from <ref type="bibr" target="#b25">[25]</ref>. Based on the model output (Y ) from a pre-specified vocabulary, we append this same example to the original prompt in conjunction (i.e. "What usually follows event X and Y ?") with ICL examples of the same form. As shown in Figure <ref type="figure">2</ref>, our iterative technique serves dual purposes: (i) it leverages in-context learning; and (ii) eliminates the need for implementing complex resolvers to post-process model outputs. We repeat this process until a sequence of a desired minimum length m is achieved (in our experiments, m = 3) or we've exhausted a maximum number of tries (k = 10 in our experiments) to generate an in-domain event type.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Identifying Event Concepts</head><p>With incremental prompting we curate a new dataset of high-level event concepts (classes) from Wikidata that represent newsworthy events. To do so, we query Wikidata for event concepts that have links to Wikinews articles and are instances of classes that are a subclass of the occurrence class, i.e., indicating they are newsworthy event classes. We gathered 50 top-level classes for these event concepts, each having multiple labels (e.g. conflict → conflict (psychological), dispute, disagreement, etc.). This yielded a total of 202 unique event labels for the 50 top-level classes. Most of these event concepts have some causal relations (i.e. has_cause or has_effect). We use these relation pairs as in-context exemplars to create our prompts. We then generate event sequences through iterative in-context prompting (Figure <ref type="figure">2</ref>). Full length prompts used in all our experiments are provided in the Appendix.</p><p>To generate new event sequences in a zero-shot setting, we start with an event trigger (e.g. a concept like workplace accident), create a prompt with instructions describing desired relationships and a few in-context exemplars (ICL prompt), and constrained the model output to the original 50 event concept labels to generate the next event in the sequence (full text of the prompt is provided in the supplementary material). We append the model output to another ICL prompt with conjunctive event examples (i.e. questions of the form "What happens after X, Y, and Z"). We repeat this process until we reach a pre-defined maximum sequence length (in this case, 10) or until the model fails to generate an in-vocabulary response in k maximum attempts (in this case, k = 3). In this process, we test the following two ablations - Model Output: unemployment follows a economic decline in… Fig. <ref type="figure">2</ref>. Illustration of our approach to elicit event sequence knowledge given a label of interest. Use of instructional in-context exemplars substantially reduces the need for post-processing LLM output in addition to constraining the output label space.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Label of Interest (LoI): Rise in Unemployment</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Zero</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Number of exemplars</head><p>We varied the number of in-context exemplars between 1-12. This is in addition to the zero-shot experiments described in the main paper. We evaluated recall (i.e. proportion of references captured by the resulting output sequences) for all generated outputs in an automated way through matching lexical alignment with Wikidata references. We observed none to marginal improvements by varying the number of exemplars beyond 3 in the initial trigger prompt, and beyond 5 in the second iterative prompt.</p><p>Selection of specific exemplars Selecting in-context examples is an incredibly noisy process <ref type="bibr" target="#b44">[44]</ref>. We started with a static set of randomly selected examples, however owing to Wikidata's inherent label imbalance (political and economic events dominate newsworthy concepts), this led to erratic results, i.e. high recall on similar concepts but not otherwise.</p><p>We then tested a dynamic selection method where every instance of the prompt would contain examples similar to target_label. To achieve this, we used BERT embeddings <ref type="bibr" target="#b12">[12]</ref> to retrieve (using cosine distance) examples from the reference set. This approach however led to a lower macro-recall and, upon manual inspection of outputs, we observed a high degree of redundancy, i.e. generated outputs were copied from the ICL exemplars.</p><p>To solve for these issues, we reverted to the static prompt examples but manually selected a mix of event topics to be included in the prompt. Our current selection of the prompt yields higher macro-recall than both of the aforementioned techniques tested. While we believe there may be better techniques to select ideal candidates for ICL exemplars <ref type="bibr" target="#b3">[4,</ref><ref type="bibr" target="#b0">1]</ref> and understand how their compositionality affects specific outputs, we consider such an analysis to be beyond the scope of our work.</p><p>We repeat this sequence generation procedure on all 202 event concepts, generating 2, 276 event sequences with an average length of 5.7 labels per sequence.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Assessing the Quality of LLM-Generated Event Sequences</head><p>Open-ended text generation in a task like event sequencing, with extremely sparse reference data, poses unique challenges to the evaluation of model outputs <ref type="bibr" target="#b37">[37]</ref>. The traditional scheme to evaluate discrete model outputs has been to calculate precision and recall for the generated outputs against a predefined reference test set. However, under open-world settings and particularly when a sparse KG like Wikidata is used as reference data, a missing causal relation between two event classes in a sequence may very well be a valid relation. Therefore, it is not possible to automatically derive an accurate measure of precision and recall purely using Wikidata as reference data. We take a multi-pronged evaluation approach to assess the quality and usefulness of the generated event sequences across multiple tasks. This section presents our approach in evaluating the quality of generated event sequences, along with the results of this evaluation. An evaluation of the usefulness of the generated event sequences is presented in Section 5.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Human Evaluation of Cause-Effect Prediction Accuracy of LLMs</head><p>To quantify how well model outputs correlate with human assessments, we first conduct a small-scale human evaluation on a different, independent eventcommonsense reasoning dataset: ATOMIC <ref type="bibr" target="#b21">[21]</ref>. ATOMIC consists of eventcentered pairs of instances of the form IsAfter (Y comes after X) and Causes (X causes Y). We use these instances as input prompts to the model and then ask human annotators to evaluate model outputs. Specifically, we show human annotators anonymized model outputs and true references and elicit their preferences given a trigger event.</p><p>To generate outputs, we follow the same strategy as above for a set of 200 randomly selected event-centered input instances (100 each of the type 'X Causes Y ' and 'Y IsAfter X') <ref type="foot" target="#foot_0">3</ref> . We then present the model output and the true reference from ATOMIC to three human annotators. For example, a typical instance presented to human evaluators was of the form:</p><p>Input Instance: PersonX drops out of high school Response 1: PersonX gets a job Response 2: PersonX turns PersonX's life around Type: IsAfter One of the responses above is the LLM output, while the other is the true reference. The human evaluators are then asked to answer the following questions--Are both responses functionally similar? -Which response do you prefer? -Which response, if any, is completely irrelevant?</p><p>We find that in an overwhelming majority of the cases, the models generate output that is semantically equivalent to the reference (even though there is no direct lexical alignment), or output that the humans prefer over the true reference. Based on the responses from human evaluators <ref type="foot" target="#foot_1">4</ref> , we observe that humans found 65.82% of response pairs functionally equivalent. That is, even though not lexically aligned, they meant the same thing. In 27.64% of the instances the humans preferred the model-generated event instance over the true reference. In only 6.55% of instances did the humans prefer the true reference over the model-generated output. <ref type="foot" target="#foot_2">5</ref> These results reinforce our underlying assertion that LLMs are capable of event-centered reasoning, and therefore could produce high-quality event sequence collections.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Evaluation of Recall</head><p>Despite the sparsity of causal relations in Wikidata, one can still reasonably estimate recall through pairwise comparisons of generated event classes to the existing causal relations in Wikidata. We build a reference set of causal relations in Wikidata by curating a list of all the pairs of event concepts that have any of the several causal relations<ref type="foot" target="#foot_3">foot_3</ref> in Wikidata in any direction, including has_cause (P828), has_immediate_cause (P1478), has_contributing_factor (P1479), and has_effect(P1542). Our results show that this is an effective mechanism of comparing recall across methods, as larger models that are expected to have better accuracy yield higher recall scores.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">Evaluation of Precision</head><p>To overcome sparsity in reference data, prior work has generally relied on human evaluations <ref type="bibr" target="#b10">[10]</ref> for estimating precision, which entails looking at pairs of events and asking annotators whether or not the events in question have a causal relationship. Such a process for potentially thousands of event pairs (like in our case) can be very cost prohibitive. Furthermore, recent research <ref type="bibr" target="#b46">[46,</ref><ref type="bibr" target="#b19">19,</ref><ref type="bibr" target="#b47">47]</ref> indicates that pre-trained language models themselves might outperform lay human annotators such as those found on Amazon Mechanical Turk. For instance, <ref type="bibr" target="#b19">[19]</ref> demonstrated that labeling data under a few-shot chain-of-thought prompt ("explain-then-annotate" setting) surpasses crowdworker annotations on relevance assessments. Following these results, we use LLMs for evaluating precision and for selecting the most optimal model. We propose evaluating precision for model selection as a binary classification task. Given two events e 1 , e 2 , an evaluator model must evaluate whether e 1 reasonably leads to e 2 under a has_cause or has_effect relationship. To do this, we start with a large instruction-tuned model (in our case, Flan-T5-XXL (11B) <ref type="bibr" target="#b11">[11]</ref>) and adopt instructional in-context few shot prompting to classify whether or not e 1 reasonably leads to e 2 , and for the model to provide a justification for its results. While we hypothesize that such an approach may yield noisy results, a small manual assessment as well as our results comparing different models with different evaluator models indicate that this approach yields reliable results for comparing different models, and a reasonable estimate of the overall precision of the model. Note that the evaluator performs only a simple binary classification task that has a very high accuracy even in smaller models.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.4">Settings</head><p>We performed all our model inference related experiments on two NVIDIA V100 GPUs. We used the Huggingface library v4.26.1 <ref type="bibr" target="#b40">[40]</ref> and publicly available model checkpoints. 7 Classical pattern mining algorithms (GSP, SPADE) were implemented in Python through the use of spmf 8 library v1.4. For event sequence generation, we use in-context learning under zero shot settings for all LLMs, with top-k sampling (k = 50, in conjunction with top-p, where p = 0.95). To identify influencing events from Summary Markov Models (SuMMs), we use implementations from <ref type="bibr" target="#b5">[6]</ref> and split the dataset (generated from LLMs) into train/dev/test sets (70%/15%/15%) to generate results reported in Table <ref type="table" target="#tab_2">2</ref>. BSuMMs and OS-uMMs were learned with hyperparameters of α = 0.1, γ = 0.5 and a look-back (κ) window of 4.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.5">Results</head><p>Table <ref type="table" target="#tab_0">1</ref> summarizes our results from these experiments. While prior work as proven the concept of LLM-as-a-judge <ref type="bibr" target="#b47">[47]</ref> when much larger LLMs like GPT-4 are used, here we use less resource-intensive LLMs not for evaluation of the absolute quality of the generated sequences, but for comparison of the relative performance of models Since we use our models for dual purposes -for generating and evaluating event sequences, owing to this inherent conflict we find it prudent to independently assess these evaluator models. To ensure robustness of our results, we use multiple evaluator models and find no significant difference between evaluated precision across different models used as evaluators with the largest model performing marginally better as a precision evaluator.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.6">Discussion</head><p>We observed in our analysis that some event triggers did not produce any sequences. Out of the 202 unique input event triggers in our data, 8 event triggers yielded sequences of length 1, i.e., no sequences. This means that the underlying model could not select a relevant event concept from the provided vocabulary that might follow the given trigger.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Knowledge Distillation Through Event Sequence Analysis</head><p>Given a high-quality collection of event sequences generated by utilizing LLMs, we use pattern mining to discover high-support sequence patterns not directly derivable from the knowledge graph, and learn probabilistic models to discover complex event sequence rules.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.1">Mining New Patterns</head><p>In order to derive new, unseen relationships (has_cause or has_effect) between the extracted event classes, we use the generated event sequence collection followed by classical frequent itemset mining algorithms like GSP <ref type="bibr" target="#b34">[34]</ref> and SPADE <ref type="bibr" target="#b43">[43]</ref> to derive new high support patterns. This aspect of the overall workflow is illustrated in the middle section of Figure <ref type="figure">1</ref>, where high-support patterns are mined from event sequences. The classical pattern mining algorithms we use to mine for new event patterns are both Apriori-based approaches. Under both methods, given two sequences of the same event concept class</p><formula xml:id="formula_1">α =&lt; a 1 , a 2 , .., a n &gt; and β =&lt; b 1 , b 2 , .., b n &gt; (2)</formula><p>α is a subsequence of β denoted as α ⊆ β iff there exists a set of values 1 ≤ j 1 &lt; j 2 &lt; ... &lt; j n ≤ m such that a 1 ⊆ b j1 , a 2 ⊆ b j2 , ..., a n ⊆ b jn ,; then β is a supersequence of α. Given multiple such sequences and a support threshold, the task here is to find a set of frequent event subsequences. GSP is depicted in Algorithm 1). SPADE uses a "vertical database format", which stores sequences as lists of itemsets associated with their IDs (referred to as "id-lists"), which allows faster support counting. The algorithm organizes the search space into equivalence classes, and avoids multiple scans of the sequences.</p><p>Algorithm 1 Generalized Sequential Pattern (GSP) Mining Algorithm </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Mined Pattern Example 1</head><p>Pattern: Civil Disorder (Q686984) → Democratization (Q1064441) → Energy Crises (Q8413663) Support: 5</p><p>The pattern above occurs with a support value of 5 i.e. at least supported by 5 super-sequences. Empirically, we can find support for such a pattern in history. <ref type="foot" target="#foot_4">9</ref>In 1994, the country of South Africa democratized post civil disorder. This led to an increased energy demand over the following decade, eventually culminating in a full blown energy crises starting 2003.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Mined Pattern Example 2</head><p>Pattern: Famine (Q168247) → Refugee Crises (Q20898283) → Post Traumatic Stress Disorder(Q202387) Support: 5</p><p>The pattern above again occurs with a support value of 5 i.e. at least supported by 5 super-sequences. Similar to the previous example, evidence supporting such an event tranisiton can be found in real life. 10 During the Great Irish Famine people were forced to relocate and flee Ireland causing a refugee crises. A great number of these individuals suffered from mental health crises (e.g. PTSD) due to the events directly associated with the famine.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.2">Identifying Influencing Sets through Summary Markov Models</head><p>Learning about potential influencing events that lead to a given event type in a large set of event sequences is an important aspect of analyzing multivariate event sequences, i.e. events without time stamps, like the ones generated by our models. Classic k th order Markov chains capture these dynamics by modeling the probability of observing a particular event type given the preceding k events insequence. The recent family of summary Markov models (SuMMs) <ref type="bibr" target="#b5">[6]</ref> generalize other well known Markov models for event sequences by leveraging a function that summarizes historical event occurrences, and identifying the subset of event types that affect the probability of occurrence of event types of interest; this forms the influencing set.</p><p>We use the LLM-generated sequences to learn two types of SuMMs: binary SuMMs (BSuMMs) and ordinal SuMMs (OSuMMs). In BSuMMs, it is only the presence or absence of an event in the relevant history that has an effect on the occurrence of other events, while in OSuMMs the order of the events is also taken into account. We refer the reader to Sections 3.3 and 3.4 in <ref type="bibr" target="#b5">[6]</ref> for complete formal definitions and methods for learning SuMMs over event sequence collections. Briefly, given a subset of event labels of interest X ∈ L and a set of parameters Θ X = {θ x|h }, where θ x|h is the probability of a given event label x ∈ X occurring at any position in the sequence given the historical event occurrences h, influencing and non-influencing event sets can be formally defined as label sets U = L\ U are influencing sets for event labels X such that they minimally determine the probability of observing any particular label of interest x i for a given position i in the sequence.</p><p>Evaluation: SuMMs vs LSTMs Following the evaluation strategy implemented in <ref type="bibr" target="#b5">[6]</ref>, we focus on individual labels of interest and conduct an evaluation around probabilistic prediction. Consequently, we select negative log loss as the evaluation metric. Table <ref type="table" target="#tab_2">2</ref> summarizes our results on the test set for both BSuMMs and OSuMMs, along with a simple LSTM baseline. We observe that models trained on event sequences generated from larger models (e.g. Flan-T5-XXL) fare better than the ones generated from their smaller counterparts (e.g. Flan-T5-Large). We treat this observation as a proxy for generated event sequence quality. That is, better quality sequences lead to better predictive models. Qualitative Assessment Figure <ref type="figure">1</ref> shows examples of learned influencing sets using BSuMMs for refugee crisis and mass migration events. Two events mass migration and famine are identified as influencing events for refugee crisis. The model indicates that the occurrence of both mass migration and famine together has a 0.91 probability of resulting in refugee crisis as a part of a sequence of events. On the other hand the occurrence of mass migration in the absence of famine has a 0.31 probability of resulting in refugee crisis.</p><p>BSuMMs and OSuMMs deploy a greedy score-based forward and backward search strategy to efficiently discover the minimal influencing sets. Overall, the discovery of influencing sets from LLM-generated data provides a mechanism of distilling complex symbolic knowledge from the output of LLMs. We provide two more examples below of influencing sets derived from the application of SuMMs. For each example, we show evidence supporting the accuracy of the extracted knowledge. Overall, these results show the high quality and usefulness of the distilled event sequence knowledge.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Influencing Set Example 1</head><p>The following example identifies "Hate Crimes" as a predecessor to the occurrence of "Civil Disorder" related events. X: Civil Disorder (Q686984) Parent: Hate Crime (Q459409) -P (Civil Disorder|NO Hate Crime) = 0.12 -P (Civil Disorder|Hate Crime) = 0.55</p><p>In the example above, we see that the likelihood of a civil disorder is greatly influenced by the occurrence of a hate crime.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Influencing Set Example 2</head><p>The following example identifies "Disease Outbreaks" and "Lockdowns" as precursors to the institution of "Travel Restrictions". Error Analysis We observed that in some cases, the identified influencing setsfor some event concepts were not correct or, at times, illogical. Qualitatively, we observe that this occurs with rare event types that do not appear often either in the underlying knowledge graph, or in the LLM-generated set of event sequences. Consequently, SuMMs fail to identify logical influencing sets. For example, for the event type United States Presidential Impeachment, BSuMM model identified unequal treaty as the influencing event.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Conclusions and Future Work</head><p>In this paper, we presented methods of distilling event sequence knowledge from large language models. We first presented an approach of generating high-quality event sequences through knowledge-guided generation using LLMs. We then conducted a three-pronged quantitative and qualitative evaluation of our results. First, we evaluated LLM-generated event sequences in absolute terms through manual evaluation and automated evaluation using standard accuracy metrics. Second, we looked at some qualitative examples of newly identified high support sequences not already present in our base knowledge graph i.e. Wikidata. Finally, we gauge how probabilistic models like SuMMs fare when trained on LLM-generated data. We found that through our carefully-designed elicitation procedure, LLMs are capable of producing high-quality event sequences that can be used for the downstream tasks of pattern mining and the construction of probabilistic event models such as SuMMs.</p><p>This work demonstrates the utility of large language models for extracting event-related information and helps researchers better navigate the complex interaction between event-related entities. While we have demonstrated some usecases for the resulting dataset of event sequences -mining logical rules/patterns and extracting influencing event types -the resulting datasets in this work and those from other domains could themselves be a useful resource for researchers, as one may leverage them suitably to inform or justify decision-making. We make our code and datasets publicly available for future research. Here, we outline a number of directions for future work:</p><p>-In this paper, we used Wikidata as our base source of knowledge. The event concepts found on Wikidata often appear in the pre-training datasets of large language models. We did not consider more complex, domain-specific datasets of non-timestamped events (e.g. Healthcare, Finance). Applying LLMs to generate domain-specific events may require considerable amounts of data to fine-tune these models, and collecting such supervision to train these models at scale may be prohibitively expensive. -A key element of our evaluation strategy (precision) involves the use of the same language models that were used to generate the sequences being evaluated in the first place. Through qualitative examples and past research on using LLMs as annotators, we observe that such a strategy yields a noisy but useful signal for evaluating model performance. However, an ideal and accurate evaluation of model outputs should involve the use of human annotators and a validation of the use of larger LLMs as a part of LLMs-as-a-judge <ref type="bibr" target="#b47">[47]</ref> evaluation strategy. Furthermore, our use of smaller models was justified in part due to the simplicity of the precision evaluation task, which can be posed as a binary classification task. It will be interesting to evaluate the correctness of post-hoc explanations generated by models for their corresponding output during precision evaluation, as such explanations are key to the usefulness of the distilled knowledge, particularly in critical decision support applications. -In the context of our domain of interest in this paper (news event analysis), an exciting avenue for future research is to study the effect of utilizing structured knowledge distilled from LLMs in a pipeline for future event prediction, and a comparison with the performance of human forecasters.</p><p>Recent work <ref type="bibr" target="#b17">[17]</ref> claims that LLMs, without symbolic knowledge elicitation, come close and in some cases surpass the ability of a "crowd aggregate of competitive forecasters" in making accurate forecasts in the form of answering forecast questions on online platforms such as the Good Judgment Open ((<ref type="url" target="https://www.gjopen.com)">https://www.gjopen.com)</ref>). Two research questions arise: 1) Could a neurosymbolic approach utilizing distilled symbolic knowledge complement or outperform a purely LLM-based solution? 2) Would distilled high-quality structured knowledge provide better explainability and therefore be a more reliable tool as a part of a human-AI collaboration mechanism for event forecasting?</p><p>Supplemental Material Statement: Our supplementary material (included as a zip file in our submission) includes code and the prompts used for event sequence generation and benchmarking, as well as the base KG, and sample output files. README.md has all the details. Appendix.pdf contains our prompts and human evaluation details.</p><p>f " Question : what usually happens after earthquake ?\ n " +\ f " Answer : tsunami \ n " + \ Following the output from the above prompt trigger, we feed the in-domain outputs to the following ICL iterative prompt with conjunctive event exemplars (i.e. X and Y). We then successively use this prompt by feeding model generated outputs as new event concepts. Restricting the generated vocabulary to existing Wikidata concepts allows for a reasonable recall evaluation even from a sparse reference set. We illustrate this approach in Figure <ref type="figure">2</ref> in the main paper.</p><p>1 def build_prompt2 ( vocab , target_labels ) : prompt = " Use the following vocabulary to respond to the questions : " + \ f " Question : what usually happens after earthquake ?\ n " +\ 6 f " Answer : tsunami \ n " + \ For a model generated event sequence α = a 1 , a 2 , .., a n , we consider all possible pairs of events (a i , a i+1 ) as (trigger, consequence) pairs where a 0 is the initial trigger sequence and i ∈ 1, .., n are all events generated by the model that follow a 0 . Then we use the following prompt to evaluate correctness of all such possible pairs and use this as proxy for a true precision evaluation of the generated sequences.</p><p>1 def build_precision_eval ( trigger , consequence ) :  As mentioned in the limitations section, a key shortcoming of our approach here is that we do not evaluate the correctness of the post-hoc explanations generated by the model for it's classification label. We leave that analysis for future work.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="9">ATOMIC Human Evaluations</head><p>Amazon Mechanical Turk (AMT) is a platform for non-expert works to perform microtasks, in our case -human annotations. Three authors with graduate degrees in computer science carried out these human evaluations. Figure <ref type="figure" target="#fig_5">3</ref> shows the interface provided to these human annotators. As described in the main paper, human evaluators were asked to answer the following questions--Are both responses functionally similar? -Which response do you prefer? -Which response, if any, is completely irrelevant?</p><p>Functionally Similar Responses For responses to be functionally similar, they must convey the same meaning even if there is major lexical mismatch between the actual tokens.</p><p>Human Preferences The preferences elicited here are based on a humans degree of reasonableness given an event trigger. We observed a high Fleiss κ = 0.81 indiciating a high degree of agreement between the annotators.</p><p>Irrelevant Responses Here, again the annotators were asked to exercise judgment in what they may find a completely unreasonable response to a given event trigger.</p><p>We release the results from these human annotations for a comprehensive analysis and any additional findings that readers may infer.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head></head><label></label><figDesc>tsunami, nuclear disaster) : 6 (sentence, execution, capital punishment): 7 (famine, mass migration, refugee crisis) : 8 (ethnic cleansing, posttraumatic stress disorder): 5 P(refugee crisis | mass migration, NOT famine) = 0.31 P(mass migration | refugee crisis, NOT famine) = 0.75 P(refugee crisis | famine, NOT mass migration) = 0.68 P(refugee crisis | mass migration, AND famine) = 0.91 P(mass migration | famine) = 0.21</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head></head><label></label><figDesc>What usually comes after an earthquake? A: Tsunami Q: What usually comes after criminal offense? A: Trial Q: What usually comes after &lt;LoI&gt;?</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>X</head><label></label><figDesc>:Travel Restriction (Q87745167) Parents: Disease Outbreak (Q3241045), Lockdown (Q6665312) -P (TR|NO Outbreak, NO Lockdown) = 0.0.0001 -P (TR|Lockdown, NO Outbreak) = 0.0.29 -P (TR|NO Lockdown, Outbreak) = 0.26 Quite intuitively, we see here the likelihood of Travel Restrictions directly correlate with the institution of Disease Outbreaks and Lockdowns (since the latter have been lately associated with the former).</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>6 7f 10 f</head><label>610</label><figDesc>" Question : what usually happens after economic crises ?\ n " +\ 8 f " Answer : unemployment \ n " + \ 9 " Question : what usually happens after bomb attack ?\ n " +\ 11 f " Answer : injury \ n " + \ 12 13 f " Question : what usually happens after { target_label }?\ n " +\ return prompt Listing 1.1. Initial Trigger Prompt</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>7 8f 21 f 2 .</head><label>7212</label><figDesc>" Question : what usually happens after earthquake and tsunami ?\ n " +\ 9 f " Answer : nuclear disaster \ n " + \ 10 11 f " Question : what usually happens after economic crises and wage decline and unemployment ?\ n " +\ 12 f " Answer : legislation \ n " + \ 13 14 f " Question : what usually happens after military conflict ?\ n " +\ 15 f " Answer : war \ n " + \ 16 17 f " Question : what usually happens after military conflict and war ?\ n " +\ f " Answer : peace treaty \ n " + \ 19 20 f " Question : what usually happens after { ' and '. join ( target_labels ) }?\ n " +\ Iterative ICL Prompt with Conjunctive Examples 8 Evaluator Models (Example Outputs and Prompts)</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>2Fig. 3 .</head><label>3</label><figDesc>Fig. 3. Annotation interface for classifying model generated response vs reference (anonymized) for the ATOMIC event descriptions.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_6"><head>5 f" 3 .</head><label>53</label><figDesc>Question : Can earthquake cause a tsunami ?\ n " +\ 6 f " Answer : YES . In 2011 , Japan experienced an earthquake in tohoku that caused a tsunami . \ n " + \ 7 f " Question : Can mass shooting cause a condensation cloud ?\ n " +\ f " Answer : NO . A condensation cloud is a weather phenomenon , not a mass shooting .\ n " + \ f " Question : Can accident cause a stock market crash ?\ n " +\ f " Question : Can disease outbreak cause a inventory shrinkage ?\ n " +\ f " Answer : YES . The bubonic plague outbreak in Europe in 1348 caused a massive inventory shrinkage .\ n " + \ 13 f " Question : Can fraud cause a travel ban ?\ n " +\ 14 f " Answer : YES . Travel bans are a form of punishment for immigration fraud .\ n " + \ f " Question : Can { trigger } cause a { consequence }?\ n " + " Answer : " Prompt used to evaluate correctness of a given event pair</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 .</head><label>1</label><figDesc>Evaluation of LLM-generated sequences. For the purpose of evaluating recall (R), we count event pairs (e1, e2) if such a pair exists in Wikidata. For evaluating precision (P), we treat correctness of all generated event pairs (e1, e2) as a standard classification task. Best-performing model scores are in bold.</figDesc><table><row><cell>7 huggingface.co/docs/transformers/model_doc/flan-t5</cell></row><row><cell>8 pypi.org/project/spmf/</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 2 .</head><label>2</label><figDesc>Negative log likelihood (lower magnitude is better ) averaged over interest labels from LLM-generated (Flan-T5-XXL) event sequences. Lookback window (k) for LSTM was fixed to 5. Best-performing data generator model scores are in bold.</figDesc><table><row><cell>(↓) Data Generator Model</cell><cell cols="2">BSuMMs OSuMMs LSTM</cell></row><row><cell>Flan-T5-Large (783M) [11]</cell><cell>-63.49</cell><cell>-84.29 -109.28</cell></row><row><cell>Flan-T5-XL (3B)</cell><cell>-63.20</cell><cell>-92.65 -121.23</cell></row><row><cell>Open-Research LLaMA (3B) [35]</cell><cell>-110.57</cell><cell>-101.29 -190.68</cell></row><row><cell>Flan-T5-XXL (11B)</cell><cell>-57.99</cell><cell>-78.64 -108.89</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_0"><p>Complete details about ATOMIC are available in Table1in<ref type="bibr" target="#b21">[21]</ref>.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_1"><p>We observe strong inter-rater agreement with a Fleiss kappa, κ = 0.81; conflicting response labels were aggregated through majority vote.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="5" xml:id="foot_2"><p>Additional details on these experiments are available in the supplementary material (Appendix).</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="6" xml:id="foot_3"><p>www.wikidata.org/wiki/Wikidata:List_of_properties/causality</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="9" xml:id="foot_4"><p>wikipedia.org/wiki/South_African_energy_crisis</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_5"><p>f " Answer : " 15</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_6"><p>f " { ' '. join ( label_space ) }\ n " + \</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_7"><p>f " Question : Can economic crises cause a landslide ?\ n " +\</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_8"><p>f " Answer : NO . There is no historical example of an economic crisis causing a landslide , which is natural disaster .\ n " + \</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_9"><p>f " Answer : NO . The stock market crash of 1929 was caused by a series of events , not an accident .\ n " + \</p></note>
+		</body>
+		<back>
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Appendix</head><p>This section constitutes technical appendix (i.e. supplementary material) for the submission titled "Distilling Event Sequences from Large Language Models".</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="7">Event Sequence Prompts</head><p>We now describe the specific prompt-types used (including pseudo-code for their use) to generate event sequences given individual Wikidata event concepts. We start a Wikidata event concept label and feed it into the following prompt with 3 ICL exemplars. The prompt also includes a label space of other Wikidata concepts from which we i nstruct the model to choose a concept. In case of an outof-domain generated output (≈ 15% of total outputs), we discard those outputs.</p><p>1 def build_prompt1 ( vocab , target_label ) : 2 prompt = " Use the following vocabulary to respond to the questions : " + \ 3 f " { ' '. join ( label_space ) }\ n " + \</p></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">In-context Examples Selection for Machine Translation</title>
+		<author>
+			<persName><forename type="first">Sweta</forename><surname>Agrawal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chunting</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marjan</forename><surname>Ghazvininejad</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.findings-acl.564</idno>
+		<ptr target="https://aclanthology.org/2023.findings-acl.564" />
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: ACL 2023</title>
+		<meeting><address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="page" from="8857" to="8873" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Agrawal, S., Zhou, C., Lewis, M., Zettlemoyer, L., Ghazvininejad, M.: In-context examples selection for machine translation. In: Findings of the Association for Computational Linguistics: ACL 2023. pp. 8857-8873. Association for Computa- tional Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10.18653/v1/ 2023.findings-acl.564, https://aclanthology.org/2023.findings-acl.564</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<monogr>
+		<title level="m" type="main">Topic Detection and Tracking</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Allan</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-1-4615-0933-2</idno>
+		<imprint>
+			<date type="published" when="2012">2012</date>
+			<publisher>Springer US</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Allan, J.: Topic Detection and Tracking: Event-Based Information Organization. Springer Publishing Company, Incorporated (2012)</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Topic Detection and Tracking Pilot Study Final Report</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Allan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">G</forename><surname>Carbonell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Doddington</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Yamron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Yang</surname></persName>
+		</author>
+		<idno type="DOI">10.1184/R1/6626252.v1</idno>
+		<ptr target="https://doi.org/10.1184/R1/6626252.v1" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the DARPA Broadcast News Transcription and Understanding Workshop</title>
+		<meeting>the DARPA Broadcast News Transcription and Understanding Workshop</meeting>
+		<imprint>
+			<date type="published" when="1998-01">February, 1998. 1 1998</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Allan, J., Carbonell, J.G., Doddington, G., Yamron, J., Yang, Y.: Topic Detection and Tracking Pilot Study Final Report. In: Proceedings of the DARPA Broad- cast News Transcription and Understanding Workshop, February, 1998. (1 1998). https://doi.org/10.1184/R1/6626252.v1</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">How Do In-Context Examples Affect Compositional Generalization?</title>
+		<author>
+			<persName><forename type="first">Shengnan</forename><surname>An</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zeqi</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qiang</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bei</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nanning</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian-Guang</forename><surname>Lou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dongmei</forename><surname>Zhang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.618</idno>
+		<ptr target="https://aclanthology.org/2023.acl-long.618" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="11027" to="11052" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">An, S., Lin, Z., Fu, Q., Chen, B., Zheng, N., Lou, J.G., Zhang, D.: How do in- context examples affect compositional generalization? In: Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 11027-11052. Association for Computational Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10.18653/v1/2023.acl-long.618, https: //aclanthology.org/2023.acl-long.618</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">On Prediction Using Variable Order Markov Models</title>
+		<author>
+			<persName><forename type="first">R</forename><surname>Begleiter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>El-Yaniv</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Yona</surname></persName>
+		</author>
+		<idno type="DOI">10.1613/jair.1491</idno>
+		<ptr target="https://doi.org/10.1613/jair.1491" />
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Artificial Intelligence Research</title>
+		<title level="j" type="abbrev">jair</title>
+		<idno type="ISSNe">1076-9757</idno>
+		<imprint>
+			<biblScope unit="volume">22</biblScope>
+			<biblScope unit="page" from="385" to="421" />
+			<date type="published" when="2004-12-01">2004</date>
+			<publisher>AI Access Foundation</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Begleiter, R., El-Yaniv, R., Yona, G.: On prediction using variable order markov models. J. Artif. Intell. Res. 22, 385-421 (2004). https://doi.org/10.1613/jair. 1491, https://doi.org/10.1613/jair.1491</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Summary Markov Models for Event Sequences</title>
+		<author>
+			<persName><forename type="first">Debarun</forename><surname>Bhattacharjya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saurabh</forename><surname>Sihag</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oktie</forename><surname>Hassanzadeh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liza</forename><surname>Bialik</surname></persName>
+		</author>
+		<idno type="DOI">10.24963/ijcai.2022/670</idno>
+		<ptr target="https://doi.org/10.24963/ijcai.2022/670,mainTrack" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Thirty-First International Joint Conference on Artificial Intelligence</title>
+		<title level="s">International Joint Conferences on Artificial Intelligence Organization</title>
+		<editor>
+			<persName><forename type="first">L</forename><forename type="middle">D</forename><surname>Raedt</surname></persName>
+		</editor>
+		<meeting>the Thirty-First International Joint Conference on Artificial Intelligence</meeting>
+		<imprint>
+			<publisher>International Joint Conferences on Artificial Intelligence Organization</publisher>
+			<date type="published" when="2022-07">7 2022</date>
+			<biblScope unit="page" from="4836" to="4842" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bhattacharjya, D., Sihag, S., Hassanzadeh, O., Bialik, L.: Summary markov models for event sequences. In: Raedt, L.D. (ed.) Proceedings of the Thirty- First International Joint Conference on Artificial Intelligence, IJCAI-22. pp. 4836-4842. International Joint Conferences on Artificial Intelligence Organiza- tion (7 2022). https://doi.org/10.24963/ijcai.2022/670, https://doi.org/ 10.24963/ijcai.2022/670, main Track</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Language models are few-shot learners</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">D</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Askell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Herbert-Voss</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Krueger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Henighan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ramesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Ziegler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Winter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Hesse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Sigler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Litwin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Berner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Mccandlish</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Sutskever</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Amodei</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Advances in Neural Information Processing Systems</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Larochelle</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Ranzato</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">R</forename><surname>Hadsell</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Balcan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Lin</surname></persName>
+		</editor>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="1877" to="1901" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J.D., Dhariwal, P., Nee- lakantan, A., Shyam, P., Sastry, G., Askell, A., Agarwal, S., Herbert-Voss, A., Krueger, G., Henighan, T., Child, R., Ramesh, A., Ziegler, D., Wu, J., Winter, C., Hesse, C., Chen, M., Sigler, E., Litwin, M., Gray, S., Chess, B., Clark, J., Berner, C., McCandlish, S., Radford, A., Sutskever, I., Amodei, D.: Language models are few-shot learners. In: Larochelle, H., Ranzato, M., Hadsell, R., Balcan, M., Lin, H. (eds.) Advances in Neural Information Processing Systems. vol. 33, pp. 1877-1901.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">FOUR. Near Print and Beyond Paper</title>
+		<author>
+			<persName><surname>Curran Associates</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Inc</surname></persName>
+		</author>
+		<idno type="DOI">10.1515/9780822376767-006</idno>
+		<ptr target="https://proceedings.neurips.cc/paper_files/paper/2020/file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf" />
+	</analytic>
+	<monogr>
+		<title level="m">Paper Knowledge</title>
+		<imprint>
+			<publisher>Duke University Press</publisher>
+			<date type="published" when="2020-12-31">2020</date>
+			<biblScope unit="page" from="111" to="135" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Curran Associates, Inc. (2020), https://proceedings.neurips.cc/paper_files/ paper/2020/file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Event prediction from news text using subgraph embedding and graph sequence mining</title>
+		<author>
+			<persName><forename type="first">Recep</forename><forename type="middle">Firat</forename><surname>Cekinel</surname></persName>
+			<idno type="ORCID">0000-0003-4574-5578</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Pinar</forename><surname>Karagoz</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s11280-021-01002-1</idno>
+		<ptr target="https://doi.org/10.1007/s11280-021-01002-1" />
+	</analytic>
+	<monogr>
+		<title level="j">World Wide Web</title>
+		<title level="j" type="abbrev">World Wide Web</title>
+		<idno type="ISSN">1386-145X</idno>
+		<idno type="ISSNe">1573-1413</idno>
+		<imprint>
+			<biblScope unit="volume">25</biblScope>
+			<biblScope unit="issue">6</biblScope>
+			<biblScope unit="page" from="2403" to="2428" />
+			<date type="published" when="2022-02-28">2022</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Cekinel, R.F., Karagoz, P.: Event prediction from news text using subgraph em- bedding and graph sequence mining. World Wide Web 25(6), 2403-2428 (2022), https://doi.org/10.1007/s11280-021-01002-1</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">Event-Centric Natural Language Processing</title>
+		<author>
+			<persName><forename type="first">Muhao</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongming</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qiang</forename><surname>Ning</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manling</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Heng</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kathleen</forename><surname>Mckeown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Roth</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.acl-tutorials.2</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: Tutorial Abstracts</title>
+		<meeting>the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: Tutorial Abstracts</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chen, M., Zhang, H., Ning, Q., Li, M., Ji, H., McKeown, K., Roth, D.: Event- centric natural language processing. In: ACL (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Can Large Language Models Be an Alternative to Human Evaluations?</title>
+		<author>
+			<persName><forename type="first">Cheng-Han</forename><surname>Chiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hung-Yi</forename><surname>Lee</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.870</idno>
+		<ptr target="https://aclanthology.org/2023.acl-long.870" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="15607" to="15631" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Chiang, C.H., Lee, H.y.: Can large language models be an alternative to human evaluations? In: Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 15607-15631. Association for Computational Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10. 18653/v1/2023.acl-long.870, https://aclanthology.org/2023.acl-long.870</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">W</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Longpre</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Fedus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Dehghani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Brahma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Webson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Suzgun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Chowdhery</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Castro-Ros</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Pellat</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Robinson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Valter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Mishra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Petrov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">H</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Dean</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<title level="m">Scaling instructionfinetuned language models</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chung, H.W., Hou, L., Longpre, S., Zoph, B., Tay, Y., Fedus, W., Li, Y., Wang, X., Dehghani, M., Brahma, S., Webson, A., Gu, S.S., Dai, Z., Suzgun, M., Chen, X., Chowdhery, A., Castro-Ros, A., Pellat, M., Robinson, K., Valter, D., Narang, S., Mishra, G., Yu, A., Zhao, V., Huang, Y., Dai, A., Yu, H., Petrov, S., Chi, E.H., Dean, J., Devlin, J., Roberts, A., Zhou, D., Le, Q.V., Wei, J.: Scaling instruction- finetuned language models (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main"></title>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming-Wei</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kenton</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kristina</forename><surname>Toutanova</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/n19-1423</idno>
+		<ptr target="https://aclanthology.org/N19-1423" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference of the North</title>
+		<meeting>the 2019 Conference of the North<address><addrLine>Minneapolis, Minnesota</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019-06">Jun 2019</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="4171" to="4186" />
+		</imprint>
+	</monogr>
+	<note>Long and Short Papers</note>
+	<note type="raw_reference">Devlin, J., Chang, M.W., Lee, K., Toutanova, K.: BERT: Pre-training of deep bidirectional transformers for language understanding. In: Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers). pp. 4171-4186. Association for Computational Linguistics, Minneapolis, Minnesota (Jun 2019). https://doi.org/10.18653/v1/N19-1423, https://aclanthology. org/N19-1423</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">RESIN-11: Schema-guided Event Prediction for 11 Newsworthy Scenarios</title>
+		<author>
+			<persName><forename type="first">Xinya</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zixuan</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sha</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pengfei</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongwei</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tuan</forename><surname>Lai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xudong</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ziqi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iris</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haoyang</forename><surname>Wen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manling</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Darryl</forename><surname>Hannan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jie</forename><surname>Lei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hyounghun</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rotem</forename><surname>Dror</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haoyu</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Regan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qi</forename><surname>Zeng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qing</forename><surname>Lyu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Charles</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carl</forename><surname>Edwards</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaomeng</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yizhu</forename><surname>Jiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ghazaleh</forename><surname>Kazeminejad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenhailong</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Callison-Burch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohit</forename><surname>Bansal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carl</forename><surname>Vondrick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiawei</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Roth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shih-Fu</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Martha</forename><surname>Palmer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Heng</forename><surname>Ji</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.naacl-demo.7</idno>
+		<ptr target="https://aclanthology.org/2022.naacl-demo.7" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies: System Demonstrations</title>
+		<meeting>the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies: System Demonstrations<address><addrLine>Hybrid; Seattle, Washington + Online</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-07">Jul 2022</date>
+			<biblScope unit="page" from="54" to="63" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Du, X., Zhang, Z., Li, S., Yu, P., Wang, H., Lai, T., Lin, X., Wang, Z., Liu, I., Zhou, B., Wen, H., Li, M., Hannan, D., Lei, J., Kim, H., Dror, R., Wang, H., Regan, M., Zeng, Q., Lyu, Q., Yu, C., Edwards, C., Jin, X., Jiao, Y., Kazeminejad, G., Wang, Z., Callison-Burch, C., Bansal, M., Vondrick, C., Han, J., Roth, D., Chang, S.F., Palmer, M., Ji, H.: RESIN-11: Schema-guided event prediction for 11 newsworthy scenarios. In: Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies: System Demonstrations. pp. 54-63. Association for Computational Linguistics, Hy- brid: Seattle, Washington + Online (Jul 2022). https://doi.org/10.18653/v1/ 2022.naacl-demo.7, https://aclanthology.org/2022.naacl-demo.7</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Automatic creation of domain templates</title>
+		<author>
+			<persName><forename type="first">Elena</forename><surname>Filatova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vasileios</forename><surname>Hatzivassiloglou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kathleen</forename><surname>Mckeown</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/1273073.1273100</idno>
+		<ptr target="https://aclanthology.org/P06-2027" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the COLING/ACL on Main conference poster sessions -</title>
+		<meeting>the COLING/ACL on Main conference poster sessions<address><addrLine>Sydney, Australia</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2006-07">Jul 2006</date>
+			<biblScope unit="page" from="207" to="214" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Filatova, E., Hatzivassiloglou, V., McKeown, K.: Automatic creation of domain templates. In: Proceedings of the COLING/ACL 2006 Main Conference Poster Sessions. pp. 207-214. Association for Computational Linguistics, Sydney, Aus- tralia (Jul 2006), https://aclanthology.org/P06-2027</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">A survey of sequential pattern mining</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Fournier-Viger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">C W</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">U</forename><surname>Kiran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><forename type="middle">S</forename><surname>Koh</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Data Science and Pattern Recognition</title>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="54" to="77" />
+			<date type="published" when="2017">2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fournier-Viger, P., Lin, J.C.W., Kiran, R.U., Koh, Y.S.: A survey of sequential pattern mining. Data Science and Pattern Recognition 1(1), 54-77 (2017)</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Examining the State-of-the-Art in News Timeline Summarization</title>
+		<author>
+			<persName><forename type="first">Demian</forename><surname>Gholipour Ghalandari</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Georgiana</forename><surname>Ifrim</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.acl-main.122</idno>
+		<ptr target="https://aclanthology.org/2020.acl-main.122" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 58th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-07">Jul 2020</date>
+			<biblScope unit="page" from="1322" to="1334" />
+		</imprint>
+	</monogr>
+	<note>Association for Computational Linguistics</note>
+	<note type="raw_reference">Gholipour Ghalandari, D., Ifrim, G.: Examining the state-of-the-art in news time- line summarization. In: Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics. pp. 1322-1334. Association for Computational Lin- guistics, Online (Jul 2020). https://doi.org/10.18653/v1/2020.acl-main.122, https://aclanthology.org/2020.acl-main.122</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<monogr>
+		<title level="m" type="main">Approaching human-level forecasting with language models</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Halawi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Yueh-Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Steinhardt</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Halawi, D., Zhang, F., Yueh-Han, C., Steinhardt, J.: Approaching human-level forecasting with language models (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Knowledge-Based News Event Analysis and Forecasting Toolkit</title>
+		<author>
+			<persName><forename type="first">Oktie</forename><surname>Hassanzadeh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Parul</forename><surname>Awasthy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ken</forename><surname>Barker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Onkar</forename><surname>Bhardwaj</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Debarun</forename><surname>Bhattacharjya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Feblowitz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lee</forename><surname>Martie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Ni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kavitha</forename><surname>Srinivas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lucy</forename><surname>Yip</surname></persName>
+		</author>
+		<idno type="DOI">10.24963/ijcai.2022/850</idno>
+		<idno>ijcai.org</idno>
+		<ptr target="https://doi.org/10.24963/ijcai.2022/850" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Thirty-First International Joint Conference on Artificial Intelligence</title>
+		<meeting>the Thirty-First International Joint Conference on Artificial Intelligence<address><addrLine>Vienna, Austria</addrLine></address></meeting>
+		<imprint>
+			<publisher>International Joint Conferences on Artificial Intelligence Organization</publisher>
+			<date type="published" when="2022-07-29">23-29 July 2022. 2022</date>
+			<biblScope unit="page" from="5904" to="5907" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hassanzadeh, O., Awasthy, P., Barker, K., Bhardwaj, O., Bhattacharjya, D., Feblowitz, M., Martie, L., Ni, J., Srinivas, K., Yip, L.: Knowledge-based news event analysis and forecasting toolkit. In: Proceedings of the Thirty-First Interna- tional Joint Conference on Artificial Intelligence, IJCAI 2022, Vienna, Austria, 23- 29 July 2022. pp. 5904-5907. ijcai.org (2022), https://doi.org/10.24963/ijcai. 2022/850</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">AnnoLLM: Making Large Language Models to Be Better Crowdsourced Annotators</title>
+		<author>
+			<persName><forename type="first">Xingwei</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenghao</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yeyun</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">L</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hang</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chen</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Jiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siu</forename><forename type="middle">Ming</forename><surname>Yiu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nan</forename><surname>Duan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weizhu</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-industry.15</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 6: Industry Track)</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 6: Industry Track)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">He, X., Lin, Z., Gong, Y., Jin, A.L., Zhang, H., Lin, C., Jiao, J., Yiu, S.M., Duan, N., Chen, W.: Annollm: Making large language models to be better crowdsourced annotators (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Long Short-Term Memory</title>
+		<author>
+			<persName><forename type="first">Sepp</forename><surname>Hochreiter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jürgen</forename><surname>Schmidhuber</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/neco.1997.9.8.1735</idno>
+		<ptr target="https://doi.org/10.1162/neco.1997.9.8.1735" />
+	</analytic>
+	<monogr>
+		<title level="j">Neural Computation</title>
+		<title level="j" type="abbrev">Neural Computation</title>
+		<idno type="ISSN">0899-7667</idno>
+		<idno type="ISSNe">1530-888X</idno>
+		<imprint>
+			<biblScope unit="volume">9</biblScope>
+			<biblScope unit="issue">8</biblScope>
+			<biblScope unit="page" from="1735" to="1780" />
+			<date type="published" when="1997-11-01">nov 1997</date>
+			<publisher>MIT Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hochreiter, S., Schmidhuber, J.: Long short-term memory. Neural Comput. 9(8), 1735-1780 (nov 1997). https://doi.org/10.1162/neco.1997.9.8.1735, https: //doi.org/10.1162/neco.1997.9.8.1735</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">(Comet-) Atomic 2020: On Symbolic and Neural Commonsense Knowledge Graphs</title>
+		<author>
+			<persName><forename type="first">Jena</forename><forename type="middle">D</forename><surname>Hwang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ronan</forename><surname>Le Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>Da</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keisuke</forename><surname>Sakaguchi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Bosselut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v35i7.16792</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="6384" to="6392" />
+			<date type="published" when="2021-05-18">2021</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hwang, J.D., Bhagavatula, C., Le Bras, R., Da, J., Sakaguchi, K., Bosselut, A., Choi, Y.: Comet-atomic 2020: On symbolic and neural commonsense knowledge graphs. In: AAAI (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">MathPrompter: Mathematical Reasoning using Large Language Models</title>
+		<author>
+			<persName><forename type="first">Shima</forename><surname>Imani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liang</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Harsh</forename><surname>Shrivastava</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-industry.4</idno>
+		<ptr target="https://aclanthology.org/2023.acl-industry.4" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 5: Industry Track)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 5: Industry Track)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">5</biblScope>
+			<biblScope unit="page" from="37" to="42" />
+		</imprint>
+	</monogr>
+	<note>: Industry Track)</note>
+	<note type="raw_reference">Imani, S., Du, L., Shrivastava, H.: MathPrompter: Mathematical reasoning us- ing large language models. In: Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 5: Industry Track). pp. 37- 42. Association for Computational Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10.18653/v1/2023.acl-industry.4, https://aclanthology. org/2023.acl-industry.4</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Evaluating Open-Domain Question Answering in the Era of Large Language Models</title>
+		<author>
+			<persName><forename type="first">Ehsan</forename><surname>Kamalloo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nouha</forename><surname>Dziri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Charles</forename><surname>Clarke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Davood</forename><surname>Rafiei</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.307</idno>
+		<ptr target="https://aclanthology.org/2023.acl-long.307" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="5591" to="5606" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Kamalloo, E., Dziri, N., Clarke, C., Rafiei, D.: Evaluating open-domain ques- tion answering in the era of large language models. In: Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 5591-5606. Association for Computational Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10.18653/v1/2023.acl-long.307, https: //aclanthology.org/2023.acl-long.307</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Connecting the Dots: Event Graph Schema Induction with Path Language Modeling</title>
+		<author>
+			<persName><forename type="first">Manling</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qi</forename><surname>Zeng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ying</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyunghyun</forename><surname>Cho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Heng</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>May</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nathanael</forename><surname>Chambers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clare</forename><surname>Voss</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.50</idno>
+		<ptr target="https://aclanthology.org/2020.emnlp-main.50" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)<address><addrLine>Online</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-11">Nov 2020</date>
+			<biblScope unit="page" from="684" to="695" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Li, M., Zeng, Q., Lin, Y., Cho, K., Ji, H., May, J., Chambers, N., Voss, C.: Con- necting the dots: Event graph schema induction with path language modeling. In: Proceedings of the 2020 Conference on Empirical Methods in Natural Lan- guage Processing (EMNLP). pp. 684-695. Association for Computational Linguis- tics, Online (Nov 2020). https://doi.org/10.18653/v1/2020.emnlp-main.50, https://aclanthology.org/2020.emnlp-main.50</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Open-Domain Hierarchical Event Schema Induction by Incremental Prompting and Verification</title>
+		<author>
+			<persName><forename type="first">Sha</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruining</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manling</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Heng</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Callison-Burch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiawei</forename><surname>Han</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.312</idno>
+		<ptr target="https://aclanthology.org/2023.acl-long.312" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="5677" to="5697" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Li, S., Zhao, R., Li, M., Ji, H., Callison-Burch, C., Han, J.: Open-domain hier- archical event schema induction by incremental prompting and verification. In: Proceedings of the 61st Annual Meeting of the Association for Computational Lin- guistics (Volume 1: Long Papers). pp. 5677-5697. Association for Computational Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10.18653/v1/2023. acl-long.312, https://aclanthology.org/2023.acl-long.312</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">A taxonomy of sequential pattern mining algorithms</title>
+		<author>
+			<persName><forename type="first">Nizar</forename><forename type="middle">R</forename><surname>Mabroukeh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">I</forename><surname>Ezeife</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/1824795.1824798</idno>
+		<ptr target="https://doi.org/10.1145/1824795.1824798" />
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">43</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="41" />
+			<date type="published" when="2010-12">dec 2010</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mabroukeh, N.R., Ezeife, C.I.: A taxonomy of sequential pattern mining al- gorithms. ACM Comput. Surv. 43(1) (dec 2010). https://doi.org/10.1145/ 1824795.1824798, https://doi.org/10.1145/1824795.1824798</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Discovery of Frequent Episodes in Event Sequences</title>
+		<author>
+			<persName><forename type="first">Heikki</forename><surname>Mannila</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannu</forename><surname>Toivonen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Inkeri Verkamo</surname></persName>
+		</author>
+		<idno type="DOI">10.1023/a:1009748302351</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Data Mining and Knowledge Discovery</title>
+		<title level="j" type="abbrev">Data Mining and Knowledge Discovery</title>
+		<idno type="ISSN">1384-5810</idno>
+		<idno type="ISSNe">1573-756X</idno>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="259" to="289" />
+			<date type="published" when="1997-09">1997</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mannila, H., Toivonen, H., Verkamo, A.I.: Discovery of frequent episodes in event sequences. Data Mining and Knowledge Discovery 1, 259-289 (1997)</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">Sequential pattern mining -- approaches and algorithms</title>
+		<author>
+			<persName><forename type="first">Carl</forename><forename type="middle">H</forename><surname>Mooney</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><forename type="middle">F</forename><surname>Roddick</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2431211.2431218</idno>
+		<ptr target="https://doi.org/10.1145/2431211.2431218" />
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">45</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="1" to="39" />
+			<date type="published" when="2013-03">mar 2013</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mooney, C.H., Roddick, J.F.: Sequential pattern mining -approaches and al- gorithms. ACM Comput. Surv. 45(2) (mar 2013), https://doi.org/10.1145/ 2431211.2431218</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">A survey on event-based news narrative extraction</title>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">K</forename><surname>Norambuena</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Mitra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>North</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3584741</idno>
+		<ptr target="https://doi.org/10.1145/3584741" />
+	</analytic>
+	<monogr>
+		<title level="j">ACM Comput. Surv</title>
+		<imprint>
+			<biblScope unit="volume">55</biblScope>
+			<biblScope unit="issue">14s</biblScope>
+			<date type="published" when="2023-07">jul 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Norambuena, B.K., Mitra, T., North, C.: A survey on event-based news narrative extraction. ACM Comput. Surv. 55(14s) (jul 2023). https://doi.org/10.1145/ 3584741</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">Learning causality for news events prediction</title>
+		<author>
+			<persName><forename type="first">Kira</forename><surname>Radinsky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sagie</forename><surname>Davidovich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shaul</forename><surname>Markovitch</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2187836.2187958</idno>
+		<ptr target="https://doi.org/10.1145/2187836.2187958" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 21st international conference on World Wide Web</title>
+		<meeting>the 21st international conference on World Wide Web<address><addrLine>WWW; Lyon, France</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2012-04-16">2012. April 16-20, 2012. 2012</date>
+			<biblScope unit="page" from="909" to="918" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Radinsky, K., Davidovich, S., Markovitch, S.: Learning causality for news events prediction. In: Proceedings of the 21st World Wide Web Conference 2012, WWW 2012, Lyon, France, April 16-20, 2012. pp. 909-918. ACM (2012), https://doi. org/10.1145/2187836.2187958</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Exploring the limits of transfer learning with a unified text-to-text transformer</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Shazeer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Matena</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><forename type="middle">J</forename><surname>Liu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">J. Mach. Learn. Res</title>
+		<imprint>
+			<biblScope unit="volume">21</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2020-01">jan 2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Raffel, C., Shazeer, N., Roberts, A., Lee, K., Narang, S., Matena, M., Zhou, Y., Li, W., Liu, P.J.: Exploring the limits of transfer learning with a unified text-to-text transformer. J. Mach. Learn. Res. 21(1) (jan 2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">A Model for High-Order Markov Chains</title>
+		<author>
+			<persName><forename type="first">Adrian</forename><forename type="middle">E</forename><surname>Raftery</surname></persName>
+		</author>
+		<idno type="DOI">10.1111/j.2517-6161.1985.tb01383.x</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of the Royal Statistical Society Series B: Statistical Methodology</title>
+		<idno type="ISSN">1369-7412</idno>
+		<idno type="ISSNe">1467-9868</idno>
+		<imprint>
+			<biblScope unit="volume">47</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="528" to="539" />
+			<date type="published" when="1985-07-01">1985</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Raftery, A.: A model for high-order Markov chains. Journal of the Royal Statistical Society, Series B 47(3), 528-539 (1985)</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">A survey on narrative extraction from textual data</title>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">S</forename><surname>Santana</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Campos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Amorim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Jorge</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Silvano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Nunes</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s10462-022-10338-7</idno>
+		<ptr target="https://doi.org/10.1007/s10462-022-10338-7" />
+	</analytic>
+	<monogr>
+		<title level="j">Artif. Intell. Rev</title>
+		<imprint>
+			<biblScope unit="volume">56</biblScope>
+			<biblScope unit="issue">8</biblScope>
+			<biblScope unit="page" from="8393" to="8435" />
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Santana, B.S., Campos, R., Amorim, E., Jorge, A., Silvano, P., Nunes, S.: A survey on narrative extraction from textual data. Artif. Intell. Rev. 56(8), 8393-8435 (2023). https://doi.org/10.1007/s10462-022-10338-7</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">Mining sequential patterns: Generalizations and performance improvements</title>
+		<author>
+			<persName><forename type="first">Ramakrishnan</forename><surname>Srikant</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rakesh</forename><surname>Agrawal</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/bfb0014140</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Apers</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Bouzeghoub</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Gardarin</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Berlin Heidelberg, Berlin, Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer Berlin Heidelberg</publisher>
+			<date type="published" when="1996">1996</date>
+			<biblScope unit="page" from="1" to="17" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Srikant, R., Agrawal, R.: Mining sequential patterns: Generalizations and perfor- mance improvements. In: Apers, P., Bouzeghoub, M., Gardarin, G. (eds.) Advances in Database Technology -EDBT &apos;96. pp. 1-17. Springer Berlin Heidelberg, Berlin, Heidelberg (1996)</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Lacroix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Rozière</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Hambro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Azhar</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2302.13971</idno>
+		<title level="m">Llama: Open and efficient foundation language models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux, M.A., Lacroix, T., Rozière, B., Goyal, N., Hambro, E., Azhar, F., et al.: Llama: Open and efficient foundation language models. arXiv preprint arXiv:2302.13971 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">Wikidata</title>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Vrandečić</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Markus</forename><surname>Krötzsch</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2629489</idno>
+		<ptr target="https://doi.org/10.1145/2629489" />
+	</analytic>
+	<monogr>
+		<title level="j">Communications of the ACM</title>
+		<title level="j" type="abbrev">Commun. ACM</title>
+		<idno type="ISSN">0001-0782</idno>
+		<idno type="ISSNe">1557-7317</idno>
+		<imprint>
+			<biblScope unit="volume">57</biblScope>
+			<biblScope unit="issue">10</biblScope>
+			<biblScope unit="page" from="78" to="85" />
+			<date type="published" when="2014-09-23">sep 2014</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Vrandečić, D., Krötzsch, M.: Wikidata: A free collaborative knowledgebase. Com- mun. ACM 57(10), 78-85 (sep 2014). https://doi.org/10.1145/2629489, https: //doi.org/10.1145/2629489</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Revisiting Relation Extraction in the era of Large Language Models</title>
+		<author>
+			<persName><forename type="first">Somin</forename><surname>Wadhwa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Silvio</forename><surname>Amir</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Byron</forename><surname>Wallace</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.868</idno>
+		<ptr target="https://aclanthology.org/2023.acl-long.868" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023-07">Jul 2023</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="15566" to="15589" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Wadhwa, S., Amir, S., Wallace, B.: Revisiting relation extraction in the era of large language models. In: Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 15566-15589. Association for Computational Linguistics, Toronto, Canada (Jul 2023). https://doi.org/10. 18653/v1/2023.acl-long.868, https://aclanthology.org/2023.acl-long.868</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">Finetuned language models are zero-shot learners</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Guu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">W</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Lester</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<ptr target="https://openreview.net/forum?id=gEZrGCozdqR" />
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Bosma, M., Zhao, V., Guu, K., Yu, A.W., Lester, B., Du, N., Dai, A.M., Le, Q.V.: Finetuned language models are zero-shot learners. In: International Con- ference on Learning Representations (2022), https://openreview.net/forum?id= gEZrGCozdqR</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">Symbolic Knowledge Distillation: from General Language Models to Commonsense Models</title>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>West</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chandra</forename><surname>Bhagavatula</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jack</forename><surname>Hessel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jena</forename><surname>Hwang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Liwei</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ronan</forename><surname>Le Bras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ximing</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sean</forename><surname>Welleck</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Choi</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.naacl-main.341</idno>
+		<ptr target="https://aclanthology.org/2022.naacl-main.341" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>Seattle, United States</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-07">Jul 2022</date>
+			<biblScope unit="page" from="4602" to="4625" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">West, P., Bhagavatula, C., Hessel, J., Hwang, J., Jiang, L., Le Bras, R., Lu, X., Welleck, S., Choi, Y.: Symbolic knowledge distillation: from general language models to commonsense models. In: Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Hu- man Language Technologies. pp. 4602-4625. Association for Computational Lin- guistics, Seattle, United States (Jul 2022). https://doi.org/10.18653/v1/2022. naacl-main.341, https://aclanthology.org/2022.naacl-main.341</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Transformers: State-of-the-Art Natural Language Processing</title>
+		<author>
+			<persName><forename type="first">Thomas</forename><surname>Wolf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lysandre</forename><surname>Debut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Victor</forename><surname>Sanh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julien</forename><surname>Chaumond</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clement</forename><surname>Delangue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anthony</forename><surname>Moi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pierric</forename><surname>Cistac</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Rault</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Remi</forename><surname>Louf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Morgan</forename><surname>Funtowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joe</forename><surname>Davison</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sam</forename><surname>Shleifer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Von Platen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clara</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yacine</forename><surname>Jernite</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julien</forename><surname>Plu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Canwen</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Teven</forename><surname>Le Scao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sylvain</forename><surname>Gugger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mariama</forename><surname>Drame</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quentin</forename><surname>Lhoest</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Rush</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-demos.6</idno>
+		<ptr target="https://aclanthology.org/2020.emnlp-demos.6" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations<address><addrLine>Online</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020-10">Oct 2020</date>
+			<biblScope unit="page" from="38" to="45" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue, C., Moi, A., Cistac, P., Rault, T., Louf, R., Funtowicz, M., Davison, J., Shleifer, S., von Platen, P., Ma, C., Jernite, Y., Plu, J., Xu, C., Le Scao, T., Gugger, S., Drame, M., Lhoest, Q., Rush, A.: Transformers: State-of-the-art natural language processing. In: Proceed- ings of the 2020 Conference on Empirical Methods in Natural Language Process- ing: System Demonstrations. pp. 38-45. Association for Computational Linguistics, Online (Oct 2020). https://doi.org/10.18653/v1/2020.emnlp-demos.6, https: //aclanthology.org/2020.emnlp-demos.6</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">A survey of event extraction from text</title>
+		<author>
+			<persName><forename type="first">W</forename><surname>Xiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/ACCESS.2019.2956831</idno>
+		<ptr target="https://doi.org/10.1109/ACCESS.2019.2956831" />
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Access</title>
+		<imprint>
+			<biblScope unit="volume">7</biblScope>
+			<biblScope unit="page" from="173111" to="173137" />
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xiang, W., Wang, B.: A survey of event extraction from text. IEEE Access 7, 173111-173137 (2019). https://doi.org/10.1109/ACCESS.2019.2956831</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">A survey of knowledgeenhanced text generation</title>
+		<author>
+			<persName><forename type="first">W</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Jiang</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3512467</idno>
+		<ptr target="https://doi.org/10.1145/3512467" />
+	</analytic>
+	<monogr>
+		<title level="j">ACM Comput. Surv</title>
+		<imprint>
+			<biblScope unit="volume">54</biblScope>
+			<biblScope unit="issue">11s</biblScope>
+			<date type="published" when="2022-11">nov 2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yu, W., Zhu, C., Li, Z., Hu, Z., Wang, Q., Ji, H., Jiang, M.: A survey of knowledge- enhanced text generation. ACM Comput. Surv. 54(11s) (nov 2022). https://doi. org/10.1145/3512467, https://doi.org/10.1145/3512467</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">SPADE: An Efficient Algorithm for Mining Frequent Sequences</title>
+		<author>
+			<persName><forename type="first">Mohammed</forename><forename type="middle">J</forename><surname>Zaki</surname></persName>
+		</author>
+		<idno type="DOI">10.1023/a:1007652502315</idno>
+		<ptr target="https://api.semanticscholar.org/CorpusID:5387869" />
+	</analytic>
+	<monogr>
+		<title level="j">Machine Learning</title>
+		<title level="j" type="abbrev">Machine Learning</title>
+		<idno type="ISSN">0885-6125</idno>
+		<idno type="ISSNe">1573-0565</idno>
+		<imprint>
+			<biblScope unit="volume">42</biblScope>
+			<biblScope unit="issue">1-2</biblScope>
+			<biblScope unit="page" from="31" to="60" />
+			<date type="published" when="2004">2004</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zaki, M.J.: Spade: An efficient algorithm for mining frequent sequences. Ma- chine Learning 42, 31-60 (2004), https://api.semanticscholar.org/CorpusID: 5387869</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">Active Example Selection for In-Context Learning</title>
+		<author>
+			<persName><forename type="first">Yiming</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shi</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chenhao</forename><surname>Tan</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.emnlp-main.622</idno>
+		<ptr target="https://aclanthology.org/2022.emnlp-main.622" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2022 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Abu Dhabi, United Arab Emirates</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-12">Dec 2022</date>
+			<biblScope unit="page" from="9134" to="9148" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhang, Y., Feng, S., Tan, C.: Active example selection for in-context learning. In: Proceedings of the 2022 Conference on Empirical Methods in Natural Lan- guage Processing. pp. 9134-9148. Association for Computational Linguistics, Abu Dhabi, United Arab Emirates (Dec 2022). https://doi.org/10.18653/v1/2022. emnlp-main.622, https://aclanthology.org/2022.emnlp-main.622</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">Event Prediction in the Big Data Era</title>
+		<author>
+			<persName><forename type="first">Liang</forename><surname>Zhao</surname></persName>
+			<idno type="ORCID">0000-0002-2648-9989</idno>
+		</author>
+		<idno type="DOI">10.1145/3450287</idno>
+		<ptr target="https://doi.org/10.1145/3450287" />
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">54</biblScope>
+			<biblScope unit="issue">5</biblScope>
+			<biblScope unit="page" from="1" to="37" />
+			<date type="published" when="2021-05-25">2021</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhao, L.: Event prediction in the big data era: A systematic survey. ACM Comput. Surv. 54(5) (may 2021). https://doi.org/10.1145/3450287, https://doi.org/ 10.1145/3450287</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<analytic>
+		<title level="a" type="main">LMTurk: Few-Shot Learners as Crowdsourcing Workers in a Language-Model-as-a-Service Framework</title>
+		<author>
+			<persName><forename type="first">Mengjie</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fei</forename><surname>Mi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yasheng</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Minglei</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xin</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qun</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hinrich</forename><surname>Schuetze</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.findings-naacl.51</idno>
+		<ptr target="https://aclanthology.org/2022.findings-naacl.51" />
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: NAACL 2022</title>
+		<meeting><address><addrLine>Seattle, United States</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022-07">Jul 2022</date>
+			<biblScope unit="page" from="675" to="692" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhao, M., Mi, F., Wang, Y., Li, M., Jiang, X., Liu, Q., Schuetze, H.: LMTurk: Few- shot learners as crowdsourcing workers in a language-model-as-a-service frame- work. In: Findings of the Association for Computational Linguistics: NAACL 2022. pp. 675-692. Association for Computational Linguistics, Seattle, United States (Jul 2022). https://doi.org/10.18653/v1/2022.findings-naacl.51, https:// aclanthology.org/2022.findings-naacl.51</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<monogr>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">L</forename><surname>Chiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Sheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">P</forename><surname>Xing</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">E</forename><surname>Gonzalez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Stoica</surname></persName>
+		</author>
+		<title level="m">Judging llm-as-a-judge with mt-bench and chatbot arena</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zheng, L., Chiang, W.L., Sheng, Y., Zhuang, S., Wu, Z., Zhuang, Y., Lin, Z., Li, Z., Li, D., Xing, E.P., Zhang, H., Gonzalez, J.E., Stoica, I.: Judging llm-as-a-judge with mt-bench and chatbot arena (2023)</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

@@ -2,12 +2,9 @@
 API endpoints for managing tweet collection
 """
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from app.models import get_db, Tweet
 from app.collectors.twitter_collector import TwitterCollector
 
 router = APIRouter()
@@ -16,7 +13,6 @@ router = APIRouter()
 async def collect_tweets_now(
     background_tasks: BackgroundTasks,
     max_results: int = 50,
-    db: Session = Depends(get_db)
 ):
     """Manually trigger tweet collection"""
     
@@ -43,7 +39,6 @@ async def collect_tweets_now(
 @router.post("/collect/historical")
 def collect_historical_tweets(
     days: int = 7,
-    db: Session = Depends(get_db)
 ):
     """Collect historical tweets from the past N days"""
     if days < 1 or days > 7:
@@ -61,7 +56,7 @@ def collect_historical_tweets(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/status")
-def collection_status(db: Session = Depends(get_db)):
+def get_collection_status():
     """Get collection status and statistics"""
     
     # Get total tweets
@@ -105,7 +100,6 @@ def collection_status(db: Session = Depends(get_db)):
 @router.get("/gaps")
 def find_collection_gaps(
     hours: int = 24,
-    db: Session = Depends(get_db)
 ):
     """Find gaps in tweet collection"""
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)

@@ -2,16 +2,11 @@
 API endpoints for Twitter Media Gallery
 """
 from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_, or_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
-from app.models import get_db, Tweet, TweetMedia, Tag
-
 router = APIRouter()
-
 
 class MediaItem(BaseModel):
     id: str
@@ -32,7 +27,6 @@ class MediaItem(BaseModel):
     retweets: int
     tags: List[str]
 
-
 class MediaGalleryResponse(BaseModel):
     media: List[MediaItem]
     total: int
@@ -41,7 +35,6 @@ class MediaGalleryResponse(BaseModel):
     filters: Dict[str, Any]
     stats: Dict[str, Any]
 
-
 class MediaStats(BaseModel):
     total_media: int
     by_type: Dict[str, int]
@@ -49,10 +42,8 @@ class MediaStats(BaseModel):
     by_day: List[Dict[str, Any]]
     top_tags: List[Dict[str, Any]]
 
-
 @router.get("/gallery", response_model=MediaGalleryResponse)
 def get_media_gallery(
-    db: Session = Depends(get_db),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     media_type: Optional[str] = Query(None, description="Filter by media type: photo, video, animated_gif"),
@@ -157,10 +148,8 @@ def get_media_gallery(
         stats=stats
     )
 
-
 @router.get("/stats", response_model=MediaStats)
 def get_media_stats(
-    db: Session = Depends(get_db),
     days: int = Query(7, description="Number of days to look back")
 ):
     """
@@ -231,11 +220,9 @@ def get_media_stats(
         top_tags=top_tags
     )
 
-
 @router.get("/tweet/{tweet_id}/media")
 def get_tweet_media(
     tweet_id: str,
-    db: Session = Depends(get_db)
 ):
     """
     Get all media for a specific tweet
@@ -268,10 +255,8 @@ def get_tweet_media(
         ]
     }
 
-
 @router.get("/authors")
 def get_media_authors(
-    db: Session = Depends(get_db),
     days: int = Query(30)
 ):
     """
@@ -301,9 +286,8 @@ def get_media_authors(
         for username, name, count in authors
     ]
 
-
 @router.get("/types")
-def get_media_types(db: Session = Depends(get_db)):
+def get_media_types():
     """
     Get available media types
     """
@@ -322,7 +306,6 @@ def get_media_types(db: Session = Depends(get_db)):
         for media_type, count in types
     ]
 
-
 def get_media_icon(media_type: str) -> str:
     """Get icon for media type"""
     icons = {
@@ -331,7 +314,6 @@ def get_media_icon(media_type: str) -> str:
         "animated_gif": "🎞️"
     }
     return icons.get(media_type, "📎")
-
 
 def get_media_label(media_type: str) -> str:
     """Get display label for media type"""
@@ -342,11 +324,9 @@ def get_media_label(media_type: str) -> str:
     }
     return labels.get(media_type, media_type.title())
 
-
 @router.post("/download")
 def prepare_media_download(
     media_ids: List[str],
-    db: Session = Depends(get_db)
 ):
     """
     Prepare media for bulk download
@@ -378,7 +358,6 @@ def prepare_media_download(
         "total": len(download_items),
         "ready": True
     }
-
 
 def get_file_extension(media_type: str, url: str = None) -> str:
     """Determine file extension based on media type and URL"""

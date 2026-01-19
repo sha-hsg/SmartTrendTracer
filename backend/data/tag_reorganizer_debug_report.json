@@ -1,0 +1,146 @@
+{
+  "timestamp": "2025-08-27T11:50:38.459108",
+  "test_results": {
+    "service_test": {
+      "success": true,
+      "sample_size": 5,
+      "debug_info": {
+        "input_stats": {
+          "total_concepts": 2,
+          "organized": 0,
+          "unorganized": 2,
+          "auto_generated": 0,
+          "manual": 2
+        },
+        "sample_input": {
+          "id": "c_0001",
+          "tag": "large_language_models",
+          "display_name": "Large Language Models (LLMs)",
+          "count": 50,
+          "current_parents": []
+        },
+        "system_prompt": "You are an expert taxonomist for AI/ML. \nReorganize a flat list of tags into a hierarchical, backwards-compatible taxonomy that is compatible with the SmartTrendTracer top-level entity schema.\n\nHARD REQUIREMENTS:\n- Output valid JSON only, using the exact schema provided by the user.\n- USE THE PROVIDED IDs: Each tag now includes an 'id' field - use these IDs to map concepts back to the database.\n- Never delete legacy tags: every legacy tag must resolve to a canonical Concept via an Alias.\n- Normalize canonical slugs to lower_snake_case; provide display_name.\n- Do not put synonyms in children; represent them as Aliases.\n- PRESERVE the existing core entity type structure from top_level.json:\n  * Named Entities (person, organisation, location, event, product, hardware)\n  * Research Entities (research-topic, dataset, benchmark, metric, method, model, task, modality, license, architecture, experimental-setup)\n  * Content Types (paper, tool, concept, standard)\n- These core categories and their subcategories MUST remain as-is in the hierarchy\n- Only add NEW instances (people, companies, models, etc.) under the appropriate entity type parents\n- Assign entity_type to each Concept using the leaf types from top-level schema\n- Correct misplacements (product vs company, metric vs method) while preserving core structure\n- Enforce POLY_HIERARCHY per governance.hierarchy_policy (concepts can have multiple parents)\n- Provide validation (coverage, warnings, entity_type validity).",
+        "prompt": "Analyze these 2 tags and create a hierarchical, backwards-compatible taxonomy that is compatible with the SmartTrendTracer top-level entity schema.\n\nTOP-LEVEL ENTITY SCHEMA (for entity_type choices):\n{\n  \"version\": \"1.3.0\",\n  \"description\": \"Top-level ontology schema for SmartTrendTracer entity classification\",\n  \"last_updated\": \"2025-08-22\",\n  \"entity_types\": {\n    \"named-entities\": {\n      \"tag\": \"named-entities\",\n      \"display_name\": \"Named Entities\",\n      \"description\": \"Named entities extracted from content\",\n      \"level\": 0,\n      \"color\": \"#3B82F6\",\n      \"icon\": \"\\ud83c\\udff7\\ufe0f\",\n      \"children\": {\n        \"person\": {\n          \"tag\": \"person\",\n          \"display_name\": \"Person\",\n          \"description\": \"Individual people mentioned in content\",\n          \"level\": 1,\n          \"color\": \"#10B981\",\n          \"icon\": \"\\ud83d\\udc64\",\n          \"extraction_hints\": [\n            \"names\",\n            \"authors\",\n            \"researchers\",\n            \"CEOs\",\n            \"founders\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7,\n            \"require_capitalization\": true,\n            \"min_length\": 3\n          }\n        },\n        \"organisation\": {\n          \"tag\": \"organisation\",\n          \"display_name\": \"Organisation\",\n          \"description\": \"Companies, institutions, and organizations\",\n          \"level\": 1,\n          \"color\": \"#8B5CF6\",\n          \"icon\": \"\\ud83c\\udfe2\",\n          \"extraction_hints\": [\n            \"companies\",\n            \"universities\",\n            \"labs\",\n            \"institutes\",\n            \"foundations\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.75,\n            \"require_capitalization\": true\n          }\n        },\n        \"location\": {\n          \"tag\": \"location\",\n          \"display_name\": \"Location\",\n          \"description\": \"Geographic locations and places\",\n          \"level\": 1,\n          \"color\": \"#EF4444\",\n          \"icon\": \"\\ud83d\\udccd\",\n          \"extraction_hints\": [\n            \"cities\",\n            \"countries\",\n            \"regions\",\n            \"venues\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.8,\n            \"require_capitalization\": true\n          }\n        },\n        \"event\": {\n          \"tag\": \"event\",\n          \"display_name\": \"Event\",\n          \"description\": \"Conferences, releases, and significant events\",\n          \"level\": 1,\n          \"color\": \"#F59E0B\",\n          \"icon\": \"\\ud83d\\udcc5\",\n          \"extraction_hints\": [\n            \"conferences\",\n            \"summits\",\n            \"releases\",\n            \"announcements\",\n            \"launches\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7,\n            \"check_temporal_context\": true\n          }\n        },\n        \"product\": {\n          \"tag\": \"product\",\n          \"display_name\": \"Product/Service\",\n          \"description\": \"Commercially named products or services\",\n          \"level\": 1,\n          \"color\": \"#F97316\",\n          \"icon\": \"\\ud83e\\udde9\",\n          \"extraction_hints\": [\n            \"product names\",\n            \"services\",\n            \"offerings\",\n            \"features\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7\n          }\n        },\n        \"hardware\": {\n          \"tag\": \"hardware\",\n          \"display_name\": \"Hardware\",\n          \"description\": \"Chips, accelerators, and computing devices\",\n          \"level\": 1,\n          \"color\": \"#9CA3AF\",\n          \"icon\": \"\\ud83d\\udda5\\ufe0f\",\n          \"extraction_hints\": [\n            \"GPU\",\n            \"TPU\",\n            \"ASIC\",\n            \"chip\",\n            \"board\",\n            \"accelerator\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7\n          }\n        }\n      }\n    },\n    \"research-entities\": {\n      \"tag\": \"research-entities\",\n      \"display_name\": \"Research Entities\",\n      \"description\": \"Research and technical entities\",\n      \"level\": 0,\n      \"color\": \"#6366F1\",\n      \"icon\": \"\\ud83d\\udd2c\",\n      \"children\": {\n        \"research-topic\": {\n          \"tag\": \"research-topic\",\n          \"display_name\": \"Research Topic\",\n          \"description\": \"Research areas and topics\",\n          \"level\": 1,\n          \"color\": \"#06B6D4\",\n          \"icon\": \"\\ud83d\\udd2c\",\n          \"extraction_hints\": [\n            \"research areas\",\n            \"fields of study\",\n            \"domains\",\n            \"topics\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.65,\n            \"check_academic_context\": true\n          }\n        },\n        \"dataset\": {\n          \"tag\": \"dataset\",\n          \"display_name\": \"Dataset\",\n          \"description\": \"Datasets used in research and development\",\n          \"level\": 1,\n          \"color\": \"#84CC16\",\n          \"icon\": \"\\ud83d\\udcca\",\n          \"extraction_hints\": [\n            \"dataset names\",\n            \"corpora\",\n            \"benchmarks\",\n            \"data sources\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.8,\n            \"check_known_datasets\": true\n          }\n        },\n        \"benchmark\": {\n          \"tag\": \"benchmark\",\n          \"display_name\": \"Benchmark\",\n          \"description\": \"Performance benchmarks and evaluation metrics\",\n          \"level\": 1,\n          \"color\": \"#FBBF24\",\n          \"icon\": \"\\ud83d\\udcc8\",\n          \"extraction_hints\": [\n            \"benchmark names\",\n            \"evaluation metrics\",\n            \"leaderboards\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.75,\n            \"check_numeric_context\": true\n          }\n        },\n        \"metric\": {\n          \"tag\": \"metric\",\n          \"display_name\": \"Metric\",\n          \"description\": \"Quantitative metrics and measurements\",\n          \"level\": 1,\n          \"color\": \"#A78BFA\",\n          \"icon\": \"\\ud83d\\udccf\",\n          \"extraction_hints\": [\n            \"accuracy\",\n            \"precision\",\n            \"recall\",\n            \"F1\",\n            \"BLEU\",\n            \"perplexity\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7,\n            \"check_numeric_values\": true\n          }\n        },\n        \"method\": {\n          \"tag\": \"method\",\n          \"display_name\": \"Method\",\n          \"description\": \"Algorithms, techniques, and methodologies\",\n          \"level\": 1,\n          \"color\": \"#FB923C\",\n          \"icon\": \"\\u2699\\ufe0f\",\n          \"extraction_hints\": [\n            \"algorithms\",\n            \"techniques\",\n            \"approaches\",\n            \"methods\",\n            \"frameworks\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7,\n            \"check_technical_context\": true\n          }\n        },\n        \"model\": {\n          \"tag\": \"model\",\n          \"display_name\": \"Model\",\n          \"description\": \"AI/ML models and architectures\",\n          \"level\": 1,\n          \"color\": \"#EC4899\",\n          \"icon\": \"\\ud83e\\udd16\",\n          \"extraction_hints\": [\n            \"model names\",\n            \"architectures\",\n            \"neural networks\",\n            \"LLMs\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.75,\n            \"check_model_patterns\": true,\n            \"known_prefixes\": [\n              \"GPT\",\n              \"BERT\",\n              \"T5\",\n              \"LLaMA\",\n              \"Claude\",\n              \"Gemini\"\n            ]\n          }\n        },\n        \"task\": {\n          \"tag\": \"task\",\n          \"display_name\": \"Task\",\n          \"description\": \"Well-defined ML/NLP/CV tasks\",\n          \"level\": 1,\n          \"color\": \"#14B8A6\",\n          \"icon\": \"\\ud83e\\uddea\",\n          \"extraction_hints\": [\n            \"task names\",\n            \"benchmarked tasks\",\n            \"NER\",\n            \"QA\",\n            \"MT\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7,\n            \"controlled_vocab\": [\n              \"named-entity-recognition\",\n              \"question-answering\",\n              \"machine-translation\",\n              \"summarization\",\n              \"text-classification\",\n              \"speech-recognition\"\n            ]\n          }\n        },\n        \"modality\": {\n          \"tag\": \"modality\",\n          \"display_name\": \"Modality\",\n          \"description\": \"Input/output media types processed by models\",\n          \"level\": 1,\n          \"color\": \"#0EA5E9\",\n          \"icon\": \"\\ud83c\\udf9b\\ufe0f\",\n          \"extraction_hints\": [\n            \"text\",\n            \"image\",\n            \"audio\",\n            \"video\",\n            \"multimodal\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.65,\n            \"controlled_vocab\": [\n              \"text\",\n              \"image\",\n              \"audio\",\n              \"video\",\n              \"multimodal\"\n            ]\n          }\n        },\n        \"license\": {\n          \"tag\": \"license\",\n          \"display_name\": \"License\",\n          \"description\": \"Licenses applicable to datasets, models, or tools\",\n          \"level\": 1,\n          \"color\": \"#F472B6\",\n          \"icon\": \"\\ud83d\\udcdd\",\n          \"extraction_hints\": [\n            \"MIT\",\n            \"Apache-2.0\",\n            \"CC-BY\",\n            \"Proprietary\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7\n          }\n        },\n        \"architecture\": {\n          \"tag\": \"architecture\",\n          \"display_name\": \"Architecture\",\n          \"description\": \"Model architecture families (e.g., Transformer, CNN, RNN, Diffusion).\",\n          \"level\": 1,\n          \"color\": \"#FACC15\",\n          \"icon\": \"\\ud83c\\udfd7\\ufe0f\",\n          \"extraction_hints\": [\n            \"Transformer\",\n            \"CNN\",\n            \"RNN\",\n            \"MLP\",\n            \"Diffusion\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7\n          }\n        },\n        \"experimental-setup\": {\n          \"tag\": \"experimental-setup\",\n          \"display_name\": \"Experimental Setup\",\n          \"description\": \"Setup and configuration of experiments (e.g., zero-shot, few-shot, CoT prompting).\",\n          \"level\": 1,\n          \"color\": \"#4ADE80\",\n          \"icon\": \"\\ud83e\\uddea\",\n          \"extraction_hints\": [\n            \"zero-shot\",\n            \"few-shot\",\n            \"chain-of-thought\",\n            \"prompting\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.65\n          }\n        }\n      }\n    },\n    \"content-types\": {\n      \"tag\": \"content-types\",\n      \"display_name\": \"Content Types\",\n      \"description\": \"Types of content and documents\",\n      \"level\": 0,\n      \"color\": \"#64748B\",\n      \"icon\": \"\\ud83d\\udcc4\",\n      \"children\": {\n        \"paper\": {\n          \"tag\": \"paper\",\n          \"display_name\": \"Research Paper\",\n          \"description\": \"Academic papers and publications\",\n          \"level\": 1,\n          \"color\": \"#0EA5E9\",\n          \"icon\": \"\\ud83d\\udcdc\",\n          \"extraction_hints\": [\n            \"paper titles\",\n            \"arxiv\",\n            \"publications\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7,\n            \"check_citation_pattern\": true\n          }\n        },\n        \"tool\": {\n          \"tag\": \"tool\",\n          \"display_name\": \"Tool/Software\",\n          \"description\": \"Software tools and applications\",\n          \"level\": 1,\n          \"color\": \"#22C55E\",\n          \"icon\": \"\\ud83d\\udd27\",\n          \"extraction_hints\": [\n            \"software names\",\n            \"libraries\",\n            \"frameworks\",\n            \"APIs\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.75\n          }\n        },\n        \"concept\": {\n          \"tag\": \"concept\",\n          \"display_name\": \"Concept\",\n          \"description\": \"Abstract concepts and ideas\",\n          \"level\": 1,\n          \"color\": \"#D946EF\",\n          \"icon\": \"\\ud83d\\udcad\",\n          \"extraction_hints\": [\n            \"concepts\",\n            \"theories\",\n            \"principles\",\n            \"ideas\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.6,\n            \"allow_abstract\": true\n          }\n        },\n        \"standard\": {\n          \"tag\": \"standard\",\n          \"display_name\": \"Standard/Regulation\",\n          \"description\": \"Technical standards or regulations referenced by content\",\n          \"level\": 1,\n          \"color\": \"#94A3B8\",\n          \"icon\": \"\\ud83d\\udcd8\",\n          \"extraction_hints\": [\n            \"ISO\",\n            \"IEEE\",\n            \"regulation\",\n            \"Act\",\n            \"compliance\"\n          ],\n          \"validation_rules\": {\n            \"min_confidence\": 0.7\n          }\n        }\n      }\n    }\n  },\n  \"relation_types\": [\n    \"broader\",\n    \"narrower\",\n    \"related\",\n    \"same_as\",\n    \"produces\",\n    \"used_by\",\n    \"evaluated_on\",\n    \"trained_on\",\n    \"implements\",\n    \"released_at\",\n    \"published_in\",\n    \"licensed_under\"\n  ],\n  \"extraction_config\": {\n    \"batch_size\": 50,\n    \"max_entities_per_type\": 20,\n    \"min_entity_length\": 2,\n    \"max_entity_length\": 100,\n    \"confidence_threshold\": 0.6,\n    \"enable_coreference_resolution\": true,\n    \"enable_entity_linking\": true,\n    \"merge_similar_threshold\": 0.85\n  },\n  \"display_config\": {\n    \"show_confidence_scores\": true,\n    \"show_entity_icons\": true,\n    \"highlight_new_entities\": true,\n    \"group_by_type\": true,\n    \"sort_by\": \"confidence_desc\"\n  },\n  \"metadata_fields\": {\n    \"created_by\": {\n      \"type\": \"string\",\n      \"description\": \"User or system that created the entity\",\n      \"required\": true\n    },\n    \"created_at\": {\n      \"type\": \"datetime\",\n      \"description\": \"Timestamp of creation\",\n      \"required\": true\n    },\n    \"source\": {\n      \"type\": \"enum\",\n      \"values\": [\n        \"manual\",\n        \"llm\",\n        \"import\",\n        \"migration\"\n      ],\n      \"description\": \"Source of the entity\",\n      \"required\": true\n    },\n    \"confidence\": {\n      \"type\": \"float\",\n      \"min\": 0.0,\n      \"max\": 1.0,\n      \"description\": \"Confidence score for automated extractions\"\n    },\n    \"llm_model\": {\n      \"type\": \"string\",\n      \"description\": \"Model used for extraction\"\n    },\n    \"context\": {\n      \"type\": \"string\",\n      \"description\": \"Original context where entity was found\"\n    },\n    \"validated\": {\n      \"type\": \"boolean\",\n      \"default\": false,\n      \"description\": \"Whether the entity has been manually validated\"\n    }\n  }\n}\n\nCURRENT TAGS DATA (each tag includes 'id', 'tag', 'display_name', 'count', 'entity_type', and 'current_parents'):\n[\n  {\n    \"id\": \"c_0001\",\n    \"tag\": \"large_language_models\",\n    \"display_name\": \"Large Language Models (LLMs)\",\n    \"count\": 50,\n    \"current_parents\": []\n  },\n  {\n    \"id\": \"c_org_hugging_face\",\n    \"tag\": \"hugging_face\",\n    \"display_name\": \"Hugging Face\",\n    \"count\": 31,\n    \"current_parents\": []\n  }\n]\n\nSTATISTICS:\n- Total tags: 2\n- Total tag applications: 81\n- Average usage per tag: 40.5\n\nIMPORTANT: Each tag in the input data includes an 'id' field. Use these IDs when creating concepts and aliases to maintain proper database mappings.\n\nReturn JSON in this EXACT structure:\n{{\n  \"concepts\": [\n    {{\n      \"id\": \"c_0001\",\n      \"slug\": \"large_language_models\",\n      \"display_name\": \"Large Language Models (LLMs)\",\n      \"description\": \"Transformer-based models trained on large corpora.\",\n      \"status\": \"active\",\n      \"parents\": [\"c_models_and_architectures\"],\n      \"usage_count\": 0,\n      \"entity_type\": \"model\",     // must be one of the leaf tags in top_level_json\n      \"icon\": \"\ud83e\udd16\",\n      \"color\": null\n    }}\n  ],\n  \"aliases\": [\n    {{ \"alias_text\": \"LLM\", \"kind\": \"abbreviation\", \"alias_of\": \"c_0001\" }}\n  ],\n  \"relations\": [\n    {{ \"source\": \"c_0001\", \"target\": \"c_mmlu\", \"type\": \"evaluated_on\" }},\n    {{ \"source\": \"c_openai\", \"target\": \"c_gpt_4o\", \"type\": \"produces\" }}\n  ],\n  \"entity_type_map\": {{\n    \"person\": {{\"color\":\"#10B981\",\"icon\":\"\ud83d\udc64\"}},\n    \"organisation\": {{\"color\":\"#8B5CF6\",\"icon\":\"\ud83c\udfe2\"}},\n    \"location\": {{\"color\":\"#EF4444\",\"icon\":\"\ud83d\udccd\"}},\n    \"event\": {{\"color\":\"#F59E0B\",\"icon\":\"\ud83d\udcc5\"}},\n    \"model\": {{\"color\":\"#EC4899\",\"icon\":\"\ud83e\udd16\"}},\n    \"method\": {{\"color\":\"#FB923C\",\"icon\":\"\u2699\ufe0f\"}},\n    \"dataset\": {{\"color\":\"#84CC16\",\"icon\":\"\ud83d\udcca\"}},\n    \"benchmark\": {{\"color\":\"#FBBF24\",\"icon\":\"\ud83d\udcc8\"}},\n    \"metric\": {{\"color\":\"#A78BFA\",\"icon\":\"\ud83d\udccf\"}},\n    \"research-topic\": {{\"color\":\"#06B6D4\",\"icon\":\"\ud83d\udd2c\"}},\n    \"paper\": {{\"color\":\"#0EA5E9\",\"icon\":\"\ud83d\udcdc\"}},\n    \"tool\": {{\"color\":\"#22C55E\",\"icon\":\"\ud83d\udd27\"}},\n    \"concept\": {{\"color\":\"#D946EF\",\"icon\":\"\ud83d\udcad\"}}\n  }},\n  \"root_categories\": [\n    \"c_fundamentals\",\"c_models_and_architectures\",\"c_techniques_and_methods\",\n    \"c_data\",\"c_applications\",\"c_evaluation\",\"c_ecosystem_and_industry\",\"c_responsible_ai\"\n  ],\n  \"merge_proposals\": [\n    {{\n      \"primary\": \"large_language_models\",\n      \"merge_into\": [\"LLM\",\"LLMs\",\"llm\"],\n      \"reason\": \"Variants referring to the same concept.\"\n    }}\n  ],\n  \"new_categories_suggested\": [\n    {{\n      \"name\": \"academic_institutions\",\n      \"display_name\": \"Academic Institutions\",\n      \"description\": \"Universities and research labs active in AI/ML.\"\n    }}\n  ],\n  \"governance\": {{\n    \"hierarchy_policy\": \"POLY_HIERARCHY\",\n    \"slug_style\": \"lower_snake_case\",\n    \"alias_types\": [\"synonym\",\"variant\",\"misspelling\",\"deprecated_redirect\"],\n    \"lints\": [\"no_alias_in_children\",\"ascii_slug\",\"no_orphans\",\"no_cycles\",\"entity_type_valid\"]\n  }},\n  \"validation\": {{\n    \"coverage_total_legacy_tags\": 2,\n    \"coverage_mapped_percent\": 100.0,\n    \"warnings\": [],\n    \"notes\": \"All legacy tags resolve to a canonical concept.\"\n  }},\n  \"confidence_score\": 0.85,\n  \"reasoning\": \"Brief explanation of merges, placements, and entity_type assignments.\"\n}}\n\nIMPORTANT:\n- Map every legacy tag to either a Concept or an Alias (no deletions).\n- Set entity_type ONLY from leaf types in the provided top-level schema.\n- Do not place synonyms in children; use aliases.\n- Correct misplacements (e.g., move 'Apple-Intelligence' under tool; link 'Apple' (organisation) --produces--> 'Apple Intelligence').\n- If uncertain, make your best choice and record a short note in validation.warnings.",
+        "prompt_size": 18003,
+        "system_prompt_size": 1485,
+        "estimated_tokens": 77,
+        "output_stats": {
+          "concepts_returned": 2,
+          "aliases_returned": 8,
+          "merge_proposals": 1,
+          "response_size": 3931
+        },
+        "validation": {
+          "all_tags_mapped": true,
+          "unmapped_tags": [],
+          "unmapped_ids": [],
+          "duplicate_aliases": [],
+          "orphan_concepts": [],
+          "statistics": {
+            "total_input_tags": 2,
+            "mapped_tags": 2,
+            "mapped_ids": 2,
+            "concepts_created": 2,
+            "aliases_created": 8,
+            "root_categories": 8,
+            "orphan_concepts": 0,
+            "duplicate_aliases": 0,
+            "ids_provided": 2
+          }
+        }
+      }
+    }
+  },
+  "debug_log": [
+    {
+      "time": "2025-08-27T11:49:13.521173",
+      "level": "INFO",
+      "message": "Starting comprehensive debug tests..."
+    },
+    {
+      "time": "2025-08-27T11:49:13.521187",
+      "level": "INFO",
+      "message": "Testing debug endpoints..."
+    },
+    {
+      "time": "2025-08-27T11:49:13.527034",
+      "level": "ERROR",
+      "message": "\u274c Failed to load concept stats: HTTP 404"
+    },
+    {
+      "time": "2025-08-27T11:49:13.527654",
+      "level": "ERROR",
+      "message": "\u274c Failed to test GPT-5 config: HTTP 404"
+    },
+    {
+      "time": "2025-08-27T11:49:13.527804",
+      "level": "INFO",
+      "message": "Testing service initialization..."
+    },
+    {
+      "time": "2025-08-27T11:49:14.295179",
+      "level": "INFO",
+      "message": "Initializing GPT-5 reorganizer..."
+    },
+    {
+      "time": "2025-08-27T11:49:14.312508",
+      "level": "SUCCESS",
+      "message": "\u2705 GPT-5 reorganizer initialized with model: gpt-5-2025-08-07"
+    },
+    {
+      "time": "2025-08-27T11:49:14.312517",
+      "level": "INFO",
+      "message": "Initializing concept service..."
+    },
+    {
+      "time": "2025-08-27T11:49:14.347905",
+      "level": "SUCCESS",
+      "message": "\u2705 Concept service loaded 1784 concepts"
+    },
+    {
+      "time": "2025-08-27T11:49:14.347916",
+      "level": "INFO",
+      "message": "Testing with 5 sample tags..."
+    },
+    {
+      "time": "2025-08-27T11:50:38.450539",
+      "level": "DEBUG",
+      "message": "Debug info from reorganization:"
+    },
+    {
+      "time": "2025-08-27T11:50:38.450555",
+      "level": "DEBUG",
+      "message": "  Input: {'total_concepts': 2, 'organized': 0, 'unorganized': 2, 'auto_generated': 0, 'manual': 2}"
+    },
+    {
+      "time": "2025-08-27T11:50:38.450560",
+      "level": "DEBUG",
+      "message": "  Output: {'concepts_returned': 2, 'aliases_returned': 8, 'merge_proposals': 1, 'response_size': 3931}"
+    },
+    {
+      "time": "2025-08-27T11:50:38.450570",
+      "level": "DEBUG",
+      "message": "  Validation: {'all_tags_mapped': True, 'unmapped_tags': [], 'unmapped_ids': [], 'duplicate_aliases': [], 'orphan_concepts': [], 'statistics': {'total_input_tags': 2, 'mapped_tags': 2, 'mapped_ids': 2, 'concepts_created': 2, 'aliases_created': 8, 'root_categories': 8, 'orphan_concepts': 0, 'duplicate_aliases': 0, 'ids_provided': 2}}"
+    },
+    {
+      "time": "2025-08-27T11:50:38.453288",
+      "level": "INFO",
+      "message": "Testing async reorganization start..."
+    },
+    {
+      "time": "2025-08-27T11:50:38.458708",
+      "level": "ERROR",
+      "message": "\u274c Failed to start reorganization: HTTP 404"
+    },
+    {
+      "time": "2025-08-27T11:50:38.458788",
+      "level": "ERROR",
+      "message": "Error: {\"detail\":\"Not Found\"}"
+    }
+  ],
+  "summary": {
+    "total_tests": 1,
+    "passed": 1,
+    "failed": 0
+  }
+}

@@ -3,10 +3,8 @@ Unified Trends API
 Provides tag-based trends and clustering for tweets and articles
 """
 from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy.orm import Session
 from typing import Optional
 
-from app.models import get_db
 from app.analyzers.unified_trend_analyzer import UnifiedTrendAnalyzer
 
 router = APIRouter()
@@ -15,7 +13,6 @@ router = APIRouter()
 def get_tweet_tag_trends(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
     limit: int = Query(20, ge=5, le=50, description="Maximum number of tags to return"),
-    db: Session = Depends(get_db)
 ):
     """
     Get tag-based trends for tweets
@@ -28,7 +25,6 @@ def get_tweet_tag_trends(
 def get_article_tag_trends(
     days: int = Query(30, ge=1, le=180, description="Number of days to analyze"),
     limit: int = Query(20, ge=5, le=50, description="Maximum number of tags to return"),
-    db: Session = Depends(get_db)
 ):
     """
     Get tag-based trends for articles
@@ -41,7 +37,6 @@ def get_article_tag_trends(
 def cluster_tweets(
     days: int = Query(7, ge=1, le=30, description="Number of days to analyze"),
     n_clusters: Optional[int] = Query(None, ge=2, le=20, description="Number of clusters (auto if not specified)"),
-    db: Session = Depends(get_db)
 ):
     """
     Cluster tweets based on content similarity
@@ -54,7 +49,6 @@ def cluster_tweets(
 def cluster_articles(
     days: int = Query(30, ge=7, le=180, description="Number of days to analyze"),
     n_clusters: Optional[int] = Query(None, ge=2, le=15, description="Number of clusters (auto if not specified)"),
-    db: Session = Depends(get_db)
 ):
     """
     Cluster articles based on content similarity
@@ -66,7 +60,6 @@ def cluster_articles(
 @router.get("/comparison")
 def compare_trends(
     days: int = Query(7, ge=1, le=30, description="Number of days to analyze"),
-    db: Session = Depends(get_db)
 ):
     """
     Compare trends between tweets and articles
@@ -125,7 +118,6 @@ def compare_trends(
 @router.get("/dashboard")
 def get_unified_dashboard(
     days: int = Query(7, ge=1, le=30, description="Number of days to analyze"),
-    db: Session = Depends(get_db)
 ):
     """
     Get comprehensive dashboard data for both tweets and articles

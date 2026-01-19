@@ -1,0 +1,545 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Ontology engineering with Large Language Models</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2023-07-31">31 Jul 2023</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Patricia</forename><surname>Mateiu</surname></persName>
+							<email>patriciamateiu33@gmail.com</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>*</label> Department of Computer Science , Technical University of Cluj-Napoca , 400114 Cluj-Napoca , Romania</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Technical University of Cluj-Napoca</orgName>
+								<address>
+									<postCode>400114</postCode>
+									<settlement>Cluj-Napoca</settlement>
+									<country key="RO">Romania</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Adrian</forename><surname>Groza</surname></persName>
+							<email>adrian.groza@cs.utcluj.ro</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>*</label> Department of Computer Science , Technical University of Cluj-Napoca , 400114 Cluj-Napoca , Romania</note>
+								<orgName type="department">Department of Computer Science</orgName>
+								<orgName type="institution">Technical University of Cluj-Napoca</orgName>
+								<address>
+									<postCode>400114</postCode>
+									<settlement>Cluj-Napoca</settlement>
+									<country key="RO">Romania</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Ontology engineering with Large Language Models</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2023-07-31">31 Jul 2023</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">4590BDB4EEF23C599E2DB3B8A6FE3FB5</idno>
+					<idno type="arXiv">arXiv:2307.16699v1[cs.AI]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-20T13:01+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>We tackle the task of enriching ontologies by automatically translating natural language sentences into Description Logic. Since Large Language Models (LLMs) are the best tools for translations, we fine-tuned a GPT-3 model to convert Natural Language sentences into OWL Functional Syntax. We employ objective and concise examples to fine-tune the model regarding: instances, class subsumption, domain and range of relations, object properties relationships, disjoint classes, complements, cardinality restrictions. The resulted axioms are used to enrich an ontology, in a human supervised manner. The developed tool is publicly provided as a Protégé plugin.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>I. MOTIVATION</head><p>The technical challenges and costs associated with the development of ontologies are arguable the main causes for the partial failure of the Semantic Web. Aiming to facilitate the development of ontologies by industry, the economical aspects of ontology engineering have been subject to the Ontology Cost Model (ONTOCOM) <ref type="bibr" target="#b1">[1]</ref>. Despite the existence of several ontology engineering methodologies (OEMs) (no less than 15 as identified by <ref type="bibr" target="#b2">[2]</ref> in 2013), the domain of Semantic Web does not benefit from a mature and largely accepted methodology. More recently, <ref type="bibr" target="#b3">[3]</ref> have analysed 9 OEMs, concluding that non-collaborative methodologies have a negative impact on the liveness, evolution, and reusability of the ontologies.</p><p>We rely here on the current opportunities provided by Large Language Models (LLMs). We argue that LLMs have the potential to largely increase the efficiency of the ontology engineering. Since LLMs are best technology for language translation, our employ them to translate from natural language to description logic (DL). That is, given a description in natural language (definition, domain knowledge), the aim is to automatically obtain corresponding ontology in a formal language. We developed a tool able to enrich and populate an ontology with domain knowledge available in natural language. The tool relies on GPT-3 which we fine-tuned for the ontology engineering task. The solution is freely available and is provided as a plugin for the Protégé editor.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>II. TUNING THE MODEL FOR OWL</head><p>The tool is constructed as a Protégé plugin that supports the development of an ontology from scratch and also the enrichment of an existing ontology. Natural language sentences are translated into ontological elements and appended to the current ontology (Figure <ref type="figure">1</ref>). The prompts are sent to a fine-tuned GPT-3 davinci model which returns the result into ontology axioms. Technically, these axioms are handled  <ref type="figure">1</ref>: Data flow for the presented approach using the owlapi Java library <ref type="bibr" target="#b4">[4]</ref>, and appended to the active ontology in the Protégé editor.</p><p>We developed a dataset of 150 pairs of prompts and their corresponding translations into OWL Functional Syntax. We seek to cover various cases and to incorporate a variety of domains, in favor of attaining an adaptable model. Tables I and II depict some of the prompts used in the training set. We used the following conventions:</p><p>First, the underscore symbol is used for elements having multiple words, since it is the default naming convention used in Protégé, e.g., the object property named has sibling or compound individual names such as Wolfgang Amadeus Mozart.</p><p>Second, we settled the class and object property names in only lowercase letters, while the individual names can begin either with a lowercase or an uppercase letter.</p><p>Third, for subclass relationships, to highlight the general aspect, several connection words were used. For example, the sentence every man is a person creates a subclass relationship between the class person and the class man. If these classes do not exist in the ontology, the declaration axioms will generate them. Otherwise, these axioms are ignored. The quantifier every is used to emphasize that there is no instance where an individual that belongs to the class man will not belong to the class person. Other connection words can be used for defining this type of relationship, e.g., all lilies are flowers, cats are a type of animal. Multiple subclass relationships can be used at the same time, as in the example bugs, ants, ladybugs, flies are insects. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A. Running Scenario</head><p>We exemplify the functionalities of the plugin on the family ontology. First, let the sentence s 1 : Ana is a girl, which the tool automatically translates in OWL Functional Syntax with three axioms (line 1 in Table <ref type="table">I</ref>).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Declaration(Class(: girl))</head><p>(1) Declaration(NamedIndividual(: Anna))</p><p>(2) ClassAssertion(: girl : Anna)</p><p>Since the first axiom is a declaration, the new class, girl is added to the taxonomy, as subclass of the top concept, owl:Thing (see Figure <ref type="figure">2</ref>). The second axiom is also a declaration, but of an individual, and will be added to the Individuals by type panel. Additionally, the class will appear in this panel as well, since the third axiom is a class assertion axiom, meaning that the individual Anna is included in the class girl. These axioms are added to a temporary ontology, and retrieved using OWLAPI library. Second, let the sentence s 2 : Lana is a girl. This statement involves the same class as in s 1 , but a different individual in the assertion. The ontology will be populated with the new individual Lana, which belongs to the already existing class girl. Figure <ref type="figure">3</ref> shows that the new individual is added to the list corresponding to class defined in the first step.</p><p>Third, let the alternative sentence s 3 : Anna and Lana are girls. Here, instead of specifying the class for each named individual, multiple individuals belong to the same collective The plugin is able to deliver the same ontology as in case of statements s 1 and s 2 (see Figure <ref type="figure" target="#fig_2">4</ref>). The class is declared only once, while the second declaration of the same class is ignored. The trained model offers the users several options in transmitting the components they want to include in the ontology.</p><p>Fourth, one can add object properties. Consider the statement s 4 : Anna and Lana are each other's sisters. The resulted property is attached to the object property taxonomy, and the assertions can be seen in the third panel of the left half in Figure <ref type="figure">5</ref>, by clicking on each individual. Figure <ref type="figure">5</ref> presents the relation Lana has sister Anna and the inverse relation.</p><p>Fifth, one can add assertions about new individuals. Let s 5 : Nola and Anna are each other's cousins. In this case, Nola, who was not defined prior and has no class association, will be added as an individual, but separate than the ones grouped by class. The object property will be added for both individuals, just like in the previous step (see Figure <ref type="figure" target="#fig_3">6</ref>). We run experiments with three strategies: zero-shot learning, few-shot learning and fine-tuning.</p><p>The Zero-shot learning strategy asks the language model to generate the output directly, with no presented examples. Several experiments were run with this strategy, using the GPT-3.5-turbo model. The results were, although not incorrect, not the expected ones. For example, using prompt Translate 'Anna is a girl' into Functional Syntax, the model returned is(Anna, girl), which is not helpful since it is not in the form of an axiom. It rather represents the relationship is between Anna and girl, yet does not offer any information on the form or meaning of these words.</p><p>The few-shot learning strategy lets LLMs train for specific tasks from a few examples. To assess this strategy, we tested various prompts. The first trial was Anna is a girl, whose corresponding axioms are also included in the example. The outcome for this prompt was not the expected one and the solution was proven to be inconsistent, returning different results for the same prompt. In the first trial, besides the declarations and the class assertion for individual Anna and class girl, the response includes other axioms, that are not logical for the given context. Namely, the last line is an object property assertion between an individual and a class, which is not possible. The second trial is not as faulty, it does not include incorrect axioms, but it includes extra axioms that are not needed. For example, the declaration for the class person and the object property married to, which are not in the prompt. Results such as this one would cause users to have an ontology that is too big, and only partially used, which, in fact, contradicts their preferences and intentions.</p><p>The fine-tuning strategy requires a dedicated dataset. A dataset with 150 prompt-result pairs and a validation set with 50 such pairs were used, with the same format and variation as those in the training data set, but with different cases and examples. The validation data set is used to determine the optimal combination of hyper-parameters that would have the best token accuracy. Regarding the data structure, several tests were done to determine the correct order of the completion result with respect to the prompt. One question was whether it was better to write the declarations and assertion or relationship axioms in the order that the words appear in the sentence or to write them in the order that Protégé would save them in a Functional Syntax. Both options were considered in training with several combinations of hyper-parameters.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>IV. RELATED WORK</head><p>Before the LLMs era tools like Fred <ref type="bibr" target="#b5">[5]</ref> were used. Fred is a machine reader designed for the Semantic Web that can analyze natural language in 48 different languages and generates linked data in the OWL format. However, the resulting axioms require further processing before they can be effectively utilized for reasoning. In the recent years, there have been various approaches in learning ontologies from text data, by extracting the ontological terms and structuring them into one component <ref type="bibr" target="#b6">[6]</ref>. For instance, Božić <ref type="bibr" target="#b7">[7]</ref> has analysed the potential combining Semantic Web and GPT, as well as the related risks that might pose a threat.</p><p>OntoGPT tool <ref type="bibr" target="#b8">[8]</ref> extracts information from text, by using three strategies: SPIRES, HALO, and SPINDOCTOR. SPIRES applies a knowledge schema on the input text and returns an instance with multiple attribute-value relations, where the values are either data primitives or other instances, thus creating a linked scheme. HALO is a Few-Shot Learning approach, which solves tasks with limited number of examples for learning while using prior knowledge.</p><p>Conceptual modelling using large language models have been experienced by <ref type="bibr" target="#b9">[9]</ref>. ChatGPT was used to generate entityrelations diagrams (ER). The designed prompt starts with an explanation of ER diagrams. Then the prompt includes an example of ER diagram in JSON syntax. The last part of the prompt is the natural language description of the task. A second experiment has focused on business process diagrams. A subset of BPMN diagrams has been considered. The prompt describes the meta-model in NL (e.g. a task has exactly one predecessor and one successor) and an example in JSON format. The third experiment has targeted UML class diagrams, for which a Zero-Shot approach has been preferred. Even if large parts of the conceptual modelling was correct, modelling experience of a human expert was required to validate the model.</p><p>GraphGPT <ref type="bibr" target="#b10">[10]</ref> converts natural language into knowledge graphs. The application does not imply ontology population, it rather offers the users a view on how the data they submit might be connected. Bikeyev <ref type="bibr" target="#b11">[11]</ref> has proposed an alternative of knowledge model engineering and knowledge graph generation as an automated approach that avoids the vagueness of Natural Language Processing. A bottom-up approach is combined to a LLM, namely GPT-3. The method uses two types of prompts, one to generate a hierarchy of elements and the other to determine possible relationships between them. In both cases, it is necessary that the prompts respect memory limitations, so that the prompt and the result can fit entirely in the given memory slot. After the initial hierarchy is constructed, each element can be used in another prompt to give a more detailed result, and this step can continue until the result is satisfactory. The advantage is that this approach can suit the individual preferences of each user, depending on how much detail they need in the ontology. GraphGPT can incorporate newly available data when updating, thus allowing a form of stream reasoning <ref type="bibr" target="#b12">[12]</ref> when populating the knowledge graph.</p><p>Csaszar and Slavescu have developed a tool to help software developers visualize the call graph of their code while editing it. Two graphs are automatically built from the source code: the import graph and the call graph. Instead of LLMs, the process of building the two graphs is based on using a query based architecture, commonly used by language servers <ref type="bibr" target="#b13">[13]</ref> In a literature dominated by transformers, Ilies and Marginean have used grammars to provide a white box alternative <ref type="bibr" target="#b14">[14]</ref>. Context free grammars and semantic roles are used to structure knowledge from texts related to cooking recipes. Lex and Yacc interleave with AllenNLP to compute a parse tree for a cooking recipe, where each group of words is labeled with an appropriate semantic role. The approach can be applied to other types of instruction manuals.</p><p>Yang et al. <ref type="bibr" target="#b15">[15]</ref> have developed LOGICLLAMA, a finetuned tool used for natural language to First-Order Logic translation, which can be also used for correcting FOL results generated by GPT-3.5 and is comparable to GPT-4. The MALLS dataset contains pairs NL-FOL generated by GPT-4 and is intended to be used for fine-tuning and testing the model. These pairs are resulted by repeatedly prompting GPT-4 using a pipeline which adjusts depending on the previous results. The LLOGICLLAMA is obtained from training and fine-tuning a model using the MALLS data set for two main tasks, generating translation from NL to FOL and correcting already generated translations by GPT-3.5. The first one uses natural language text as input and provides FOL output, while the second one uses a pair of NL and the resulted FOL translation returned by GPT-3.5 and provides a single output in FOL, representing the necessary adjustments or corrections.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>V. CONCLUSION</head><p>The developed plugin shows hows language models (e.g. GPT) can be used in automating learning and populating ontologies, a process which is very time-consuming, complex and could be overwhelming in terms of decision making. The aim was to exploit the capabilities of pre-trained language models to obtain OWL axioms. Aware of the limitations and risks of Large Language Models, the tool aims to be a support tool that saves development time. It also reduces the interaction time with the domain expert, given that a description of the domain exists in natural language. Ongoing work regards quantitative evaluation and assessing the efficiency of ontology engineering with and without the tool.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head></head><label></label><figDesc>Fig. 1: Data flow for the presented approach</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Fig. 2 :Fig. 3 :</head><label>23</label><figDesc>Fig. 2: Adding new instances and classes</figDesc><graphic coords="2,316.70,50.54,241.61,145.05" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Fig. 4 :</head><label>4</label><figDesc>Fig. 4: Formalising multiple individuals belonging to the same collective class</figDesc><graphic coords="3,53.69,50.54,241.61,115.09" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>Fig. 6 :</head><label>6</label><figDesc>Fig. 6: Adding assertions about new individuals</figDesc><graphic coords="3,53.69,590.36,241.61,108.15" type="bitmap" /></figure>
+		</body>
+		<back>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">WE ARE THE TRUE AMERICANS:</title>
+		<author>
+			<persName><forename type="first">Mary</forename><forename type="middle">Anne</forename><surname>Trasciatti</surname></persName>
+		</author>
+		<idno type="DOI">10.5325/jj.28174288.13</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Used, Abused, and Sidelined</title>
+		<imprint>
+			<publisher>Penn State University Press</publisher>
+			<date type="published" when="2025-08-19" />
+			<biblScope unit="page" from="141" to="159" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">I: Fine-tuning davinci model for classes Prompt Result Anna is a girl Declaration(Class(:girl)) Declaration(NamedIndividual(:Anna)) ClassAssertion(:girl :Anna) every rose is a flower Declaration(Class(:flower)) Declaration(Class(:rose)) SubClassOf(:rose :flower) Brandon is a male artist Declaration(Class(:male)) Declaration(Class(:artist)) Declaration(NamedIndividual(:Brandon)) ClassAssertion(:male :Brandon) ClassAssertion(:artist :Brandon) no woman is a man Declaration(Class(:man)) Declaration(Class(:woman)) DisjointClasses(:man :woman) Tina is not a cat Declaration(Class(:cat)) Declaration(NamedIndividual(:Tina)) ClassAssertion(ObjectComplementOf(:cat) :Tina) TABLE II: Fine-tuning davinci model for object properties Prompt Result Sarah and Anna are each other&apos;s sisters Declaration(ObjectProperty(:has sister)) Declaration(NamedIndividual(:Anna)) Declaration(NamedIndividual(:Sarah)) ObjectPropertyAssertion(:has sister :Anna :Sarah) ObjectPropertyAssertion(:has sister :Sarah :Anna) Mia owns 2 bikes Declaration(Class(:bike)) Declaration(ObjectProperty(:owns)) Declaration(NamedIndividual(:Mia)) ClassAssertion(ObjectExactCardinality(2 :owns :bike) :Mia) Michael owns tractors Declaration(Class(:tractor)) Declaration(ObjectProperty(:owns)) Declaration(NamedIndividual(:Michael)) ClassAssertion(ObjectSomeValuesFrom(:owns :tractor) :Michael) rabbits eat only car- rots Declaration(Class(:carrot)) Declaration(Class(:rabbit)) Declaration(ObjectProperty(:eats)) SubClassOf(:rabbit ObjectAllValuesFrom(:eats :carrot)) all animals have ex- actly one tail Declaration(Class(:animal)) Declaration(Class(:tail)) Declaration(ObjectProperty(:has)) EquivalentClasses(:animal ObjectExactCardinality(1 :has :tail)) a mother is a female who has at least 1 child Declaration(Class(:child)) Declaration(Class(:female)) Declaration(Class(:mother)) Declaration(ObjectProperty(:has)) EquivalentClasses(:mother ObjectIntersectionOf (:female ObjectMinCardinality(1 :has :child))) Penn&apos;s mother is So- nia Declaration(ObjectProperty(:has mother)) Declaration(NamedIndividual(:Penn)) Declaration(NamedIndividual(:Sonia)) ObjectPropertyAssertion(:has mother :Penn :Sonia) Anna does not know Sabina Declaration(ObjectProperty(:knows)) Declaration(NamedIndividual(:Anna)) Declaration(NamedIndividual(:Sabina)) NegativeObjectPropertyAssertion(:knows :Anna :Sabina) Jenna is a fan of Brit- ney Spears Declaration(Class(:movie)) Declaration(ObjectProperty(:is a fan of)) Declaration(NamedIndividual(:Britney Spears)) Declaration(NamedIndividual(:Jenna)) ObjectPropertyAssertion(:is a fan of :Jenna :Britney Spears) Cora and Meena hate each other Declaration(ObjectProperty(:hates)) Declaration(NamedIndividual(:Cora)) Declaration(NamedIndividual(:Meena)) ObjectPropertyAssertion(:hates :Cora :Meena) ObjectPropertyAssertion(:hates :Meena :Cora) REFERENCES</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Ontocom: A cost estimation model for ontology engineering</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Paslaru Bontas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Simperl</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tempich</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Sure</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">5th Int. Semantic Web Conf., ISWC 2006</title>
+		<meeting><address><addrLine>Athens, GA, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2006-09">November 5-9. 2006</date>
+			<biblScope unit="page" from="625" to="639" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">E. Paslaru Bontas Simperl, C. Tempich, and Y. Sure, &quot;Ontocom: A cost estimation model for ontology engineering,&quot; in 5th Int. Semantic Web Conf., ISWC 2006, Athens, GA, USA, November 5-9. Springer, 2006, pp. 625-639.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">An Analysis of Ontology Engineering Methodologies: A Literature Review</title>
+		<author>
+			<persName><forename type="first">Rizwan</forename><surname>Iqbal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Masrah</forename><forename type="middle">Azrifah Azmi</forename><surname>Murad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aida</forename><surname>Mustapha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nurfadhlina</forename><forename type="middle">Mohd</forename><surname>Sharef</surname></persName>
+		</author>
+		<idno type="DOI">10.19026/rjaset.6.3684</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Research Journal of Applied Sciences, Engineering and Technology</title>
+		<title level="j" type="abbrev">RJASET</title>
+		<idno type="ISSN">2040-7459</idno>
+		<idno type="ISSNe">2040-7467</idno>
+		<imprint>
+			<biblScope unit="volume">6</biblScope>
+			<biblScope unit="issue">16</biblScope>
+			<biblScope unit="page" from="2993" to="3000" />
+			<date type="published" when="2013-09-10">2013</date>
+			<publisher>Maxwell Scientific Publication Corp.</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">R. Iqbal, M. A. A. Murad, A. Mustapha, N. M. Sharef et al., &quot;An analysis of ontology engineering methodologies: A literature review,&quot; Research journal of applied sciences, engineering and technology, vol. 6, no. 16, pp. 2993-3000, 2013.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Ontology engineering methodologies for the evolution of living and reused ontologies: status, trends, findings and recommendations</title>
+		<author>
+			<persName><forename type="first">Konstantinos</forename><forename type="middle">I</forename><surname>Kotis</surname></persName>
+			<idno type="ORCID">0000-0001-7838-9691</idno>
+		</author>
+		<author>
+			<persName><forename type="first">George</forename><forename type="middle">A</forename><surname>Vouros</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dimitris</forename><surname>Spiliotopoulos</surname></persName>
+		</author>
+		<idno type="DOI">10.1017/s0269888920000065</idno>
+	</analytic>
+	<monogr>
+		<title level="j">The Knowledge Engineering Review</title>
+		<title level="j" type="abbrev">The Knowledge Engineering Review</title>
+		<idno type="ISSN">0269-8889</idno>
+		<idno type="ISSNe">1469-8005</idno>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<date type="published" when="2020">2020</date>
+			<publisher>Cambridge University Press (CUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K. I. Kotis, G. A. Vouros, and D. Spiliotopoulos, &quot;Ontology engineering methodologies for the evolution of living and reused ontologies: status, trends, findings and recommendations,&quot; The Knowledge Engineering Review, vol. 35, p. e4, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">The OWL API: A Java API for OWL ontologies</title>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Horridge</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sean</forename><surname>Bechhofer</surname></persName>
+		</author>
+		<idno type="DOI">10.3233/sw-2011-0025</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Semantic Web</title>
+		<idno type="ISSN">1570-0844</idno>
+		<imprint>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="11" to="21" />
+			<date type="published" when="2011">2011</date>
+			<publisher>SAGE Publications</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Horridge and S. Bechhofer, &quot;The OWL API: A Java api for OWL ontologies,&quot; Semantic web, vol. 2, no. 1, pp. 11-21, 2011.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">FRED: From Natural Language Text to RDF and OWL in One Click</title>
+		<author>
+			<persName><forename type="first">Francesco</forename><surname>Draicchio</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aldo</forename><surname>Gangemi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Valentina</forename><surname>Presutti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrea</forename><forename type="middle">Giovanni</forename><surname>Nuzzolese</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-642-41242-4_36</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<meeting><address><addrLine>Montpellier, France</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer Berlin Heidelberg</publisher>
+			<date type="published" when="2013">May 26-30, 2013. 2013</date>
+			<biblScope unit="page" from="263" to="267" />
+		</imprint>
+	</monogr>
+	<note>Revised Selected Papers</note>
+	<note type="raw_reference">F. Draicchio, A. Gangemi, V. Presutti, and A. G. Nuzzolese, &quot;Fred: From natural language text to RDF and OWL in one click,&quot; in The Semantic Web: ESWC 2013 Satellite Events: Montpellier, France, May 26-30, 2013, Revised Selected Papers. Springer, 2013, pp. 263-267.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Automatic ontology construction from text: a review from shallow to deep learning trend</title>
+		<author>
+			<persName><forename type="first">Fatima</forename><forename type="middle">N</forename><surname>Al-Aswadi</surname></persName>
+			<idno type="ORCID">0000-0001-5413-1207</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Huah</forename><forename type="middle">Yong</forename><surname>Chan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Keng</forename><forename type="middle">Hoon</forename><surname>Gan</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s10462-019-09782-9</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Artificial Intelligence Review</title>
+		<title level="j" type="abbrev">Artif Intell Rev</title>
+		<idno type="ISSN">0269-2821</idno>
+		<idno type="ISSNe">1573-7462</idno>
+		<imprint>
+			<biblScope unit="volume">53</biblScope>
+			<biblScope unit="issue">6</biblScope>
+			<biblScope unit="page" from="3901" to="3928" />
+			<date type="published" when="2020">2020</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">F. N. Al-Aswadi, H. Y. Chan, and K. H. Gan, &quot;Automatic ontology construction from text: a review from shallow to deep learning trend,&quot; Artificial Intelligence Review, vol. 53, pp. 3901-3928, 2020.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<monogr>
+		<title level="m" type="main">Semantic web and generative pre-trained transformer (gpt)</title>
+		<author>
+			<persName><forename type="first">V</forename><surname>Božić</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">V. Božić, &quot;Semantic web and generative pre-trained transformer (gpt).&quot;</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Structured Prompt Interrogation and Recursive Extraction of Semantics (SPIRES): a method for populating knowledge bases using zero-shot learning</title>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">Harry</forename><surname>Caufield</surname></persName>
+			<idno type="ORCID">0000-0001-5705-7831</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Harshad</forename><surname>Hegde</surname></persName>
+			<idno type="ORCID">0000-0002-2411-565X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Emonet</surname></persName>
+			<idno type="ORCID">0000-0002-1501-1082</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nomi</forename><forename type="middle">L</forename><surname>Harris</surname></persName>
+			<idno type="ORCID">0000-0001-6315-3707</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Marcin</forename><forename type="middle">P</forename><surname>Joachimiak</surname></persName>
+			<idno type="ORCID">0000-0001-8175-045X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nicolas</forename><surname>Matentzoglu</surname></persName>
+			<idno type="ORCID">0000-0002-7356-1779</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hyeongsik</forename><surname>Kim</surname></persName>
+			<idno type="ORCID">0000-0002-3002-9838</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Sierra</forename><surname>Moxon</surname></persName>
+			<idno type="ORCID">0000-0002-8719-7760</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Justin</forename><forename type="middle">T</forename><surname>Reese</surname></persName>
+			<idno type="ORCID">0000-0002-2170-2250</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Melissa</forename><forename type="middle">A</forename><surname>Haendel</surname></persName>
+			<idno type="ORCID">0000-0001-9114-8737</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><forename type="middle">N</forename><surname>Robinson</surname></persName>
+			<idno type="ORCID">0000-0002-0736-9199</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">J</forename><surname>Mungall</surname></persName>
+			<idno type="ORCID">0000-0002-6601-2165</idno>
+		</author>
+		<idno type="DOI">10.1093/bioinformatics/btae104</idno>
+		<idno type="arXiv">arXiv:2304.02711</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Bioinformatics</title>
+		<idno type="ISSN">1367-4803</idno>
+		<idno type="ISSNe">1367-4811</idno>
+		<imprint>
+			<biblScope unit="volume">40</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<date type="published" when="2023">2023</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">J. H. Caufield, H. Hegde, V. Emonet et al., &quot;Structured prompt inter- rogation and recursive extraction of semantics (spires): A method for populating knowledge bases using zero-shot learning,&quot; arXiv preprint arXiv:2304.02711, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">Conceptual modeling and large language models: impressions from first experiments with chatgpt</title>
+		<author>
+			<persName><forename type="first">H.-G</forename><surname>Fill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Fettke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Köpke</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Enterprise Modelling and Information Systems Architectures (EMISAJ)</title>
+		<imprint>
+			<biblScope unit="volume">18</biblScope>
+			<biblScope unit="page" from="1" to="15" />
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">H.-G. Fill, P. Fettke, and J. Köpke, &quot;Conceptual modeling and large language models: impressions from first experiments with chatgpt,&quot; Enterprise Modelling and Information Systems Architectures (EMISAJ), vol. 18, pp. 1-15, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Padlet: An Online Tool for Learner Engagement and Collaboration, Available at https://Padlet.comPadlet: An Online Tool for Learner Engagement and Collaboration, Available at https://Padlet.com</title>
+		<author>
+			<persName><forename type="first">Cynthia</forename><forename type="middle">D</forename><surname>Fisher</surname></persName>
+		</author>
+		<idno type="DOI">10.5465/amle.2017.0055</idno>
+		<ptr target="https://graphgpt.vercel.app" />
+	</analytic>
+	<monogr>
+		<title level="j">Academy of Management Learning &amp; Education</title>
+		<title level="j" type="abbrev">AMLE</title>
+		<idno type="ISSN">1537-260X</idno>
+		<idno type="ISSNe">1944-9585</idno>
+		<imprint>
+			<biblScope unit="volume">16</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="163" to="165" />
+			<date type="published" when="2017-03" />
+			<publisher>Academy of Management</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">&quot;Graph GPT.&quot; [Online]. Available: https://graphgpt.vercel.app</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">Synthetic Ontologies: A Hypothesis</title>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Bikeyev</surname></persName>
+		</author>
+		<idno type="DOI">10.2139/ssrn.4373537</idno>
+		<idno>SSRN 4373537</idno>
+	</analytic>
+	<monogr>
+		<title level="j">SSRN Electronic Journal</title>
+		<title level="j" type="abbrev">SSRN Journal</title>
+		<idno type="ISSNe">1556-5068</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Bikeyev, &quot;Synthetic ontologies: A hypothesis,&quot; Available at SSRN 4373537, 2023.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Plausible Description Logic Programs for Stream Reasoning</title>
+		<author>
+			<persName><forename type="first">Adrian</forename><surname>Groza</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ioan</forename><forename type="middle">Alfred</forename><surname>Letia</surname></persName>
+		</author>
+		<idno type="DOI">10.3390/fi4040865</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Future Internet</title>
+		<title level="j" type="abbrev">Future Internet</title>
+		<idno type="ISSNe">1999-5903</idno>
+		<imprint>
+			<biblScope unit="volume">4</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="865" to="881" />
+			<date type="published" when="2012-10-17">2012</date>
+			<publisher>MDPI AG</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Groza and I. A. Letia, &quot;Plausible description logic programs for stream reasoning,&quot; Future Internet, vol. 4, no. 4, pp. 865-881, 2012.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Interactive call graph generation for software projects</title>
+		<author>
+			<persName><forename type="first">I.-A</forename><surname>Császár</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">R</forename><surname>Slavescu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">2020 IEEE 16th International Conference on Intelligent Computer Communication and Processing (ICCP)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="51" to="58" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">I.-A. Császár and R. R. Slavescu, &quot;Interactive call graph generation for software projects,&quot; in 2020 IEEE 16th International Conference on Intelligent Computer Communication and Processing (ICCP). IEEE, 2020, pp. 51-58.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Understanding Cooking Recipes’ Structure Using Grammars</title>
+		<author>
+			<persName><forename type="first">Andreea</forename><surname>Ilies</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anca</forename><forename type="middle">Nicoleta</forename><surname>Marginean</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/iccp53602.2021.9733570</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2021 IEEE 17th International Conference on Intelligent Computer Communication and Processing (ICCP)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2021-10-28">2021</date>
+			<biblScope unit="page" from="327" to="334" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Ilies and A. N. Marginean, &quot;Understanding cooking recipes&apos; structure using grammars,&quot; in 2021 IEEE 17th International Conference on Intelligent Computer Communication and Processing (ICCP). IEEE, 2021, pp. 327-334.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Harnessing the Power of Large Language Models for Natural Language to First-Order Logic Translation</title>
+		<author>
+			<persName><forename type="first">Yuan</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siheng</forename><surname>Xiong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ali</forename><surname>Payani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ehsan</forename><surname>Shareghi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Faramarz</forename><surname>Fekri</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.375</idno>
+		<idno type="arXiv">arXiv:2305.15541</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="6942" to="6959" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Y. Yang, S. Xiong, A. Payani, E. Shareghi, and F. Fekri, &quot;Harnessing the power of large language models for natural language to first-order logic translation,&quot; arXiv preprint arXiv:2305.15541, 2023.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

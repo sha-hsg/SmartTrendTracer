@@ -1,25 +1,23 @@
 """
-API endpoints for entity extraction and annotation management
+API endpoints for entity extraction and annotation management - MongoDB version
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 from datetime import datetime
+from bson import ObjectId
 
-from app.models import get_db, SubstackArticle, Tweet
 from app.services.entity_extraction_service import EntityExtractionService, EntityExtraction
+from app.database.mongodb import get_database
 
 router = APIRouter()
 
-
 class ExtractEntitiesRequest(BaseModel):
     text: Optional[str] = None
-    article_id: Optional[int] = None
+    article_id: Optional[str] = None  # Changed to str for MongoDB ObjectId
     tweet_id: Optional[str] = None
     use_fast_model: bool = False
-
+    model: Optional[str] = None  # Allow custom model selection from UI
 
 class EntitySuggestion(BaseModel):
     id: str
@@ -30,20 +28,17 @@ class EntitySuggestion(BaseModel):
     normalized: str
     metadata: Dict
 
-
 class EntityReviewRequest(BaseModel):
     entity_id: str
     action: str  # "accept", "reject", "modify"
     new_type: Optional[str] = None
     new_text: Optional[str] = None
 
-
 class BulkEntityActionRequest(BaseModel):
     entity_ids: List[str]
     action: str  # "accept_all", "reject_all"
-    article_id: Optional[int] = None  # Article ID for context
+    article_id: Optional[str] = None  # Changed to str for MongoDB ObjectId
     entities: Optional[List[Dict]] = None  # Full entity data for processing
-
 
 class EntityExtractionResponse(BaseModel):
     entities: List[EntitySuggestion]
@@ -51,49 +46,60 @@ class EntityExtractionResponse(BaseModel):
     source: str
     model: str
 
-
 @router.post("/extract", response_model=EntityExtractionResponse)
 def extract_entities(
     request: ExtractEntitiesRequest,
-    db: Session = Depends(get_db)
 ):
     """
-    Extract entities from text, article, or tweet
+    Extract entities from text, article, or tweet - MongoDB version
     """
+    db = get_database()
+
     # Get text based on source
     text = request.text
     source = "direct"
-    
+
     if request.article_id:
-        article = db.query(SubstackArticle).filter(
-            SubstackArticle.id == request.article_id
-        ).first()
+        # MongoDB query for article
+        article = None
+        try:
+            if len(request.article_id) == 24:
+                article = db.articles.find_one({'_id': ObjectId(request.article_id)})
+            else:
+                article = db.articles.find_one({'old_sqlite_id': int(request.article_id)})
+        except:
+            pass
+
         if not article:
             raise HTTPException(status_code=404, detail="Article not found")
-        text = f"{article.title}\n\n{article.content_markdown[:5000]}"  # Limit length
-        source = f"article_{article.id}"
-    
+
+        content = article.get('content_markdown') or article.get('content', '')
+        text = f"{article.get('title', '')}\n\n{content[:5000]}"  # Limit length
+        source = f"article_{request.article_id}"
+
     elif request.tweet_id:
-        tweet = db.query(Tweet).filter(
-            Tweet.id == request.tweet_id
-        ).first()
+        # MongoDB query for tweet
+        tweet = db.tweets.find_one({'id': request.tweet_id})
         if not tweet:
             raise HTTPException(status_code=404, detail="Tweet not found")
-        text = tweet.text
-        source = f"tweet_{tweet.id}"
-    
+        text = tweet.get('text', '')
+        source = f"tweet_{request.tweet_id}"
+
     if not text:
         raise HTTPException(status_code=400, detail="No text provided for extraction")
-    
-    # Initialize service
-    service = EntityExtractionService(use_fast_model=request.use_fast_model)
-    
+
+    # Initialize service with custom model if specified
+    service = EntityExtractionService(
+        use_fast_model=request.use_fast_model,
+        custom_model=request.model  # Use model from UI selection
+    )
+
     # Extract entities
     entities = service.extract_entities(
         text=text,
         article_id=request.article_id
     )
-    
+
     # Convert to response format
     entity_suggestions = [
         EntitySuggestion(
@@ -107,19 +113,19 @@ def extract_entities(
         )
         for entity in entities
     ]
-    
+
     # Calculate statistics
     stats = {
         "total": len(entities),
         "by_type": {},
         "avg_confidence": sum(e.confidence for e in entities) / len(entities) if entities else 0
     }
-    
+
     for entity in entities:
         if entity.entity_type not in stats["by_type"]:
             stats["by_type"][entity.entity_type] = 0
         stats["by_type"][entity.entity_type] += 1
-    
+
     return EntityExtractionResponse(
         entities=entity_suggestions,
         stats=stats,
@@ -127,52 +133,51 @@ def extract_entities(
         model=service.model_name
     )
 
-
 @router.get("/suggestions/{article_id}")
 def get_entity_suggestions(
-    article_id: int,
-    db: Session = Depends(get_db)
+    article_id: str,  # Changed to str for MongoDB ObjectId
 ):
     """
-    Get cached entity suggestions for an article
+    Get cached entity suggestions for an article - MongoDB version
     """
-    # This would retrieve cached suggestions from database
-    # For now, we'll extract them fresh
-    article = db.query(SubstackArticle).filter(
-        SubstackArticle.id == article_id
-    ).first()
-    
+    db = get_database()
+
+    # MongoDB query for article
+    article = None
+    try:
+        if len(article_id) == 24:
+            article = db.articles.find_one({'_id': ObjectId(article_id)})
+        else:
+            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
+    except:
+        pass
+
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
-    
+
+    content = article.get('content_markdown') or article.get('content', '')
     service = EntityExtractionService(use_fast_model=False)
     entities = service.extract_entities(
-        text=f"{article.title}\n\n{article.content_markdown[:5000]}",
+        text=f"{article.get('title', '')}\n\n{content[:5000]}",
         article_id=article_id
     )
-    
+
     return {
         "article_id": article_id,
         "entities": [e.to_dict() for e in entities],
         "extracted_at": datetime.utcnow().isoformat()
     }
 
-
 @router.post("/review")
 def review_entity(
     request: EntityReviewRequest,
-    db: Session = Depends(get_db),
     user: str = Query(default="user")
 ):
     """
-    Review and accept/reject/modify an entity suggestion
+    Review and accept/reject/modify an entity suggestion - MongoDB version
     """
-    # In a real implementation, this would:
-    # 1. Find the entity suggestion in a cache/staging table
-    # 2. Apply the requested action
-    # 3. If accepted, save to ontology
-    # 4. Log the action for audit
-    
+    db = get_database()
+
     if request.action == "accept":
         # Create mock entity for demonstration
         entity = EntityExtraction(
@@ -181,16 +186,18 @@ def review_entity(
             confidence=0.9,
             context="Accepted by user"
         )
-        
+
         service = EntityExtractionService()
         parent_type = request.new_type or "person"
+
+        # Save entity to ontology (this returns a concept from MongoDB)
         concept = service.save_entity_to_ontology(db, entity, parent_type, user)
-        
+
         if concept:
             return {
                 "status": "accepted",
                 "entity_id": request.entity_id,
-                "concept_id": concept.id,
+                "concept_id": str(concept.get('_id')) if concept.get('_id') else None,
                 "message": f"Entity saved to ontology under {parent_type}"
             }
         else:
@@ -199,14 +206,14 @@ def review_entity(
                 "entity_id": request.entity_id,
                 "message": "Failed to save entity to ontology"
             }
-    
+
     elif request.action == "reject":
         return {
             "status": "rejected",
             "entity_id": request.entity_id,
             "message": "Entity suggestion rejected"
         }
-    
+
     elif request.action == "modify":
         return {
             "status": "modified",
@@ -215,37 +222,57 @@ def review_entity(
             "new_text": request.new_text,
             "message": "Entity suggestion modified"
         }
-    
+
     else:
         raise HTTPException(status_code=400, detail=f"Invalid action: {request.action}")
-
 
 @router.post("/bulk-action")
 def bulk_entity_action(
     request: BulkEntityActionRequest,
-    db: Session = Depends(get_db),
     user: str = Query(default="user")
 ):
     """
-    Apply bulk actions to multiple entity suggestions
+    Apply bulk actions to multiple entity suggestions - MongoDB version
     """
+    db = get_database()
+
     results = {
         "total": len(request.entity_ids),
         "processed": 0,
         "failed": 0,
         "action": request.action
     }
-    
+
     if request.action == "accept_all":
         # Process each entity and save to ontology
         service = EntityExtractionService()
         processed_count = 0
         failed_count = 0
-        
+
         # Use article_id from request if provided
         article_id = request.article_id
-        
-        # If entities data is provided, use it; otherwise try to look up by ID
+        article_object_id = None
+
+        # Get article if ID provided
+        if article_id:
+            try:
+                if len(article_id) == 24:
+                    article_object_id = ObjectId(article_id)
+                    article = db.articles.find_one({'_id': article_object_id})
+                else:
+                    article = db.articles.find_one({'old_sqlite_id': int(article_id)})
+                    if article:
+                        article_object_id = article['_id']
+            except:
+                article = None
+
+            if not article:
+                return {
+                    **results,
+                    "message": f"Article {article_id} not found"
+                }
+
+        # If entities data is provided, use it
         if request.entities:
             # Process full entity data
             for entity_data in request.entities:
@@ -255,7 +282,7 @@ def bulk_entity_action(
                     entity_type = entity_data.get('type', '')
                     confidence = entity_data.get('confidence', 0.9)
                     context = entity_data.get('context', '')
-                    
+
                     # Create entity object
                     entity = EntityExtraction(
                         text=entity_text,
@@ -263,42 +290,43 @@ def bulk_entity_action(
                         confidence=confidence,
                         context=context
                     )
-                    
+
                     # Save entity to ontology as a tag concept
                     concept = service.save_entity_to_ontology(db, entity, entity_type, user)
-                    print(f"Created concept: {concept.tag if concept else 'None'} for entity: {entity_text}")
-                    
-                    if concept and article_id:
-                        # Add as tag to the article
-                        from app.models import ArticleTag, SubstackArticle
-                        
-                        # Check if article exists
-                        article = db.query(SubstackArticle).filter(
-                            SubstackArticle.id == article_id
-                        ).first()
-                        
-                        if article:
-                            # Check if tag already exists for this article (case-insensitive)
-                            existing_tag = db.query(ArticleTag).filter(
-                                ArticleTag.article_id == article_id,
-                                func.lower(ArticleTag.tag) == func.lower(concept.tag)
-                            ).first()
-                            
-                            if not existing_tag:
-                                # Add the tag to the article
-                                new_tag = ArticleTag(
-                                    article_id=article_id,
-                                    tag=concept.tag,
-                                    tag_type="entity"  # Mark as entity-extracted tag
-                                )
-                                db.add(new_tag)
-                                print(f"Added tag '{concept.tag}' to article {article_id}")
-                                processed_count += 1
-                            else:
-                                print(f"Tag '{concept.tag}' already exists on article {article_id}")
-                                processed_count += 1  # Already exists, count as processed
+                    print(f"Created concept: {concept.get('display_name') if concept else 'None'} for entity: {entity_text}")
+
+                    if concept and article_object_id:
+                        # Add as tag to the article using tag_instances collection
+                        concept_id = concept.get('_id')
+                        display_name = concept.get('display_name', entity_text)
+                        slug = concept.get('slug', entity_text.lower().replace(' ', '-'))
+
+                        # Check if tag instance already exists (case-insensitive)
+                        # Use content_type/content_id to match faceted-search queries
+                        existing_instance = db.tag_instances.find_one({
+                            'content_type': 'article',
+                            'content_id': str(article_object_id),
+                            'concept_id': concept_id
+                        })
+
+                        if not existing_instance:
+                            # Create new tag instance with correct field names
+                            tag_instance = {
+                                'concept_id': concept_id,
+                                'content_type': 'article',  # Matches faceted-search query
+                                'content_id': str(article_object_id),  # Matches faceted-search query
+                                'tag_slug': slug,
+                                'display_name': display_name,
+                                'tag_type': 'entity',  # Mark as entity-extracted tag
+                                'created_at': datetime.utcnow(),
+                                'created_by': user
+                            }
+                            db.tag_instances.insert_one(tag_instance)
+                            print(f"Added tag '{display_name}' to article {article_id}")
+                            processed_count += 1
                         else:
-                            failed_count += 1
+                            print(f"Tag '{display_name}' already exists on article {article_id}")
+                            processed_count += 1  # Already exists, count as processed
                     else:
                         # Just save to ontology without article association
                         if concept:
@@ -307,32 +335,25 @@ def bulk_entity_action(
                             failed_count += 1
                 except Exception as e:
                     print(f"Error processing entity: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     failed_count += 1
         else:
             # Fallback: just count as processed for now
             processed_count = len(request.entity_ids)
-        
-        # Commit all changes
-        try:
-            db.commit()
-            results["processed"] = processed_count
-            results["failed"] = failed_count
-            results["message"] = f"Accepted {processed_count} entities, {failed_count} failed"
-        except Exception as e:
-            db.rollback()
-            results["processed"] = 0
-            results["failed"] = len(request.entity_ids)
-            results["message"] = f"Failed to save entities: {str(e)}"
-    
+
+        results["processed"] = processed_count
+        results["failed"] = failed_count
+        results["message"] = f"Accepted {processed_count} entities, {failed_count} failed"
+
     elif request.action == "reject_all":
         results["processed"] = len(request.entity_ids)
         results["message"] = f"Rejected {len(request.entity_ids)} entities"
-    
+
     else:
         raise HTTPException(status_code=400, detail=f"Invalid bulk action: {request.action}")
-    
-    return results
 
+    return results
 
 @router.get("/schema")
 def get_entity_schema():
@@ -340,15 +361,27 @@ def get_entity_schema():
     Get the current entity type schema from top_level.json
     """
     import json
-    with open('top_level.json', 'r') as f:
-        schema = json.load(f)
-    
-    return {
-        "version": schema.get("version"),
-        "entity_types": schema.get("entity_types"),
-        "extraction_config": schema.get("extraction_config")
-    }
+    import os
 
+    # Get the correct path to top_level.json
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    schema_path = os.path.join(base_dir, 'top_level.json')
+
+    try:
+        with open(schema_path, 'r') as f:
+            schema = json.load(f)
+
+        return {
+            "version": schema.get("version"),
+            "entity_types": schema.get("entity_types"),
+            "extraction_config": schema.get("extraction_config")
+        }
+    except FileNotFoundError:
+        return {
+            "version": "1.0",
+            "entity_types": [],
+            "extraction_config": {}
+        }
 
 @router.post("/validate/{entity_id}")
 def validate_entity(
@@ -356,7 +389,6 @@ def validate_entity(
     entity_type: str = Query(...),
     entity_text: str = Query(...),
     context: str = Query(default=""),
-    db: Session = Depends(get_db)
 ):
     """
     Validate an entity extraction using AI
@@ -367,10 +399,10 @@ def validate_entity(
         confidence=0.8,
         context=context
     )
-    
+
     service = EntityExtractionService()
     is_valid, suggested_type, reasoning = service.validate_entity(entity, context)
-    
+
     return {
         "entity_id": entity_id,
         "valid": is_valid,
@@ -379,37 +411,61 @@ def validate_entity(
         "original_type": entity_type
     }
 
-
 @router.get("/stats")
 def get_extraction_stats(
-    db: Session = Depends(get_db),
     days: int = Query(default=7)
 ):
     """
-    Get statistics about entity extractions
+    Get statistics about entity extractions from MongoDB
     """
-    # This would query actual extraction logs
-    # For now, return mock stats
-    return {
-        "period_days": days,
-        "total_extractions": 156,
-        "total_entities": 1432,
-        "by_type": {
-            "person": 234,
-            "organisation": 189,
-            "model": 156,
-            "method": 123,
-            "dataset": 89,
-            "benchmark": 67,
-            "location": 45,
-            "event": 34,
-            "research-topic": 234,
-            "metric": 89
-        },
-        "by_source": {
-            "articles": 892,
-            "tweets": 540
-        },
-        "avg_confidence": 0.82,
-        "acceptance_rate": 0.75
-    }
+    db = get_database()
+
+    try:
+        # Calculate date threshold
+        from datetime import timedelta
+        threshold_date = datetime.utcnow() - timedelta(days=days)
+
+        # Count tag instances with entity type created in the period
+        entity_instances = list(db.tag_instances.find({
+            'tag_type': 'entity',
+            'created_at': {'$gte': threshold_date}
+        }))
+
+        total_entities = len(entity_instances)
+
+        # Calculate by_type stats
+        by_type = {}
+        for instance in entity_instances:
+            # Get concept to find entity type
+            concept = db.tag_concepts_v2.find_one({'_id': instance.get('concept_id')})
+            if concept:
+                entity_type = concept.get('entity_type', 'unknown')
+                by_type[entity_type] = by_type.get(entity_type, 0) + 1
+
+        # Calculate by_source stats
+        by_source = {}
+        for instance in entity_instances:
+            source_type = instance.get('source_type', 'unknown')
+            by_source[source_type] = by_source.get(source_type, 0) + 1
+
+        return {
+            "period_days": days,
+            "total_extractions": total_entities,
+            "total_entities": total_entities,
+            "by_type": by_type,
+            "by_source": by_source,
+            "avg_confidence": 0.82,  # Would need to track this separately
+            "acceptance_rate": 0.75  # Would need to track this separately
+        }
+    except Exception as e:
+        # Return fallback stats if error
+        return {
+            "period_days": days,
+            "total_extractions": 0,
+            "total_entities": 0,
+            "by_type": {},
+            "by_source": {},
+            "avg_confidence": 0.0,
+            "acceptance_rate": 0.0,
+            "error": str(e)
+        }

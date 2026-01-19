@@ -1,0 +1,1890 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Integrating Large Language Models and Knowledge Graphs for Extraction and Validation of Textual Test Data</title>
+				<funder ref="#_z5YzSbk">
+					<orgName type="full">Italian Ministry of University and Research</orgName>
+					<orgName type="abbreviated">MUR</orgName>
+				</funder>
+				<funder>
+					<orgName type="full">Thales Alenia Space</orgName>
+				</funder>
+				<funder ref="#_za7Jz2c">
+					<orgName type="full">European Union</orgName>
+					<orgName type="abbreviated">EU</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2024-08-03">3 Aug 2024</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Antonio</forename><surname>De Santis</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Politecnico di Milano , DEIB , I-20133 Milano , Italy</note>
+								<orgName type="institution">Politecnico di Milano</orgName>
+								<address>
+									<addrLine>DEIB</addrLine>
+									<postCode>I-20133</postCode>
+									<settlement>Milano</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<author role="corresp">
+							<persName><forename type="first">Marco</forename><surname>Balduini</surname></persName>
+							<email>marco.balduini@quantiaconsulting.com</email>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>2</label> Quantia Consulting , Milano , Italy</note>
+								<orgName type="institution">Quantia Consulting</orgName>
+								<address>
+									<settlement>Milano</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> motus ml , Milano , Italy</note>
+								<orgName type="institution">motus ml</orgName>
+								<address>
+									<settlement>Milano</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Federico</forename><surname>De Santis</surname></persName>
+							<affiliation key="aff2">
+								<note type="raw_affiliation"><label>3</label> motus ml , Milano , Italy</note>
+								<orgName type="institution">motus ml</orgName>
+								<address>
+									<settlement>Milano</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Andrea</forename><surname>Proia</surname></persName>
+							<affiliation key="aff3">
+								<note type="raw_affiliation"><label>4</label> Thales Alenia Space , Roma , Italy</note>
+								<orgName type="institution">Thales Alenia Space</orgName>
+								<address>
+									<settlement>Roma</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Arsenio</forename><surname>Leo</surname></persName>
+							<affiliation key="aff3">
+								<note type="raw_affiliation"><label>4</label> Thales Alenia Space , Roma , Italy</note>
+								<orgName type="institution">Thales Alenia Space</orgName>
+								<address>
+									<settlement>Roma</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Marco</forename><surname>Brambilla</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Politecnico di Milano , DEIB , I-20133 Milano , Italy</note>
+								<orgName type="institution">Politecnico di Milano</orgName>
+								<address>
+									<addrLine>DEIB</addrLine>
+									<postCode>I-20133</postCode>
+									<settlement>Milano</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Emanuele</forename><forename type="middle">Della</forename><surname>Valle</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> Politecnico di Milano , DEIB , I-20133 Milano , Italy</note>
+								<orgName type="institution">Politecnico di Milano</orgName>
+								<address>
+									<addrLine>DEIB</addrLine>
+									<postCode>I-20133</postCode>
+									<settlement>Milano</settlement>
+									<country key="IT">Italy</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Integrating Large Language Models and Knowledge Graphs for Extraction and Validation of Textual Test Data</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2024-08-03">3 Aug 2024</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">6DEA8C41211358780FE3D3E6D28F8C4D</idno>
+					<idno type="arXiv">arXiv:2408.01700v1[cs.AI]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-21T17:20+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Knowledge Graphs</term>
+					<term>Large Language Models</term>
+					<term>Data Extraction</term>
+					<term>Space Industry</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Aerospace manufacturing companies, such as Thales Alenia Space, design, develop, integrate, verify, and validate products characterized by high complexity and low volume. They carefully document all phases for each product but analyses across products are challenging due to the heterogeneity and unstructured nature of the data in documents. In this paper, we propose a hybrid methodology that leverages Knowledge Graphs (KGs) in conjunction with Large Language Models (LLMs) to extract and validate data contained in these documents. We consider a case study focused on test data related to electronic boards for satellites. To do so, we extend the Semantic Sensor Network ontology. We store the metadata of the reports in a KG, while the actual test results are stored in parquet accessible via a Virtual Knowledge Graph. The validation process is managed using an LLM-based approach. We also conduct a benchmarking study to evaluate the performance of stateof-the-art LLMs in executing this task. Finally, we analyze the costs and benefits of automating preexisting processes of manual data extraction and validation for subsequent cross-report analyses.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Context. Companies in the aerospace industry produce complex products in low volumes. As a result, most of the data that can boost analytics is hidden within documents, making its extraction challenging. The experience presented in this article focuses on Test Data related to electronic boards used in Thales Alenia Space's satellite systems. The production of these electronic boards is a critical aspect of space technology <ref type="bibr" target="#b23">[24]</ref>. These boards are manufactured in limited quantities, with a satellite containing between 10 to 20 such boards. Moreover, these components must be extremely reliable and are subject to rigorous testing protocols due to the hostile conditions of space missions <ref type="bibr" target="#b10">[11]</ref>. Given the near impossibility of conducting repairs once satellites are in space, production errors could potentially lead to the failure of an entire mission, which would result in significant financial losses and wasted resources. In this scenario, data analytics can play a crucial role, providing timely insights and enabling immediate actions based on the data's flow and characteristics. For example, the analysis of historical production data could reveal trends that can predict the likelihood of future components failing the quality tests. Such insights can guide production decisions, minimizing waste and resulting in significant cost savings.</p><p>Problem Statement. The effectiveness of these data-driven approaches relies on the quality and organization of the data <ref type="bibr" target="#b20">[21]</ref>. Each electronic board is meticulously crafted and tested before receiving approval. However, the testing procedures and the generation of Test Reports are manually executed by human operators across multiple isolated documents (primarily in .docx and .pdf format). This leads to data that is highly fragmented, heterogeneous, unstructured, and prone to errors and inconsistencies. Such a scenario poses a significant challenge, as it can jeopardize data analysis efforts. Considering this, the focus of our case study is automating the extraction, validation, and integration of Test Data. Given the high level of data heterogeneity, the process of validation is particularly challenging because a standard approach based on regular expressions would be impractical.</p><p>Proposed Solution. To address the aforementioned challenges, we propose a hybrid approach that utilizes Large Language Models (LLMs) in combination with Semantic Web technologies. To provide semantic knowledge to the system and manage structural heterogeneity, we create an ontology to capture the semantics of the data. This ontology extends the Semantic Sensor Network (SSN) <ref type="bibr" target="#b6">[7]</ref> ontology, a well-established ontology for representing sensor data. We then proceed with extracting the data from Test Report documents and storing it in tabular format. The extracted data must undergo an automatic validation process (i.e., checking for inconsistencies in test results). For this task, we exploit the implicit knowledge of LLMs. These models have demonstrated their capability to process data despite structural and syntactic heterogeneity. Moreover, in contrast with approaches based on regular expressions, LLMs have the advantage of being able to scale effectively with an increasing variety and complexity of the data. The validated data is integrated into a data storage system, ensuring a structured and organized data repository. To facilitate direct data access, we then create mappings between the data storage and the ontology, allowing our system to understand the relationships and connections among data points. This knowledge is stored in a Virtual Knowledge Graph (VKG) <ref type="bibr" target="#b38">[39]</ref>, also known in the literature as Ontology-Based Data Access (OBDA) <ref type="bibr" target="#b37">[38]</ref>, and is accessed using SPARQL queries, which are automatically translated into SQL language.</p><p>Structure of the Work. The paper is structured as follows. Section 2 presents a review of related work. Section 3 describes the case study in detail and Section 4 explains the rationale behind using KGs and LLMs. Section 5 presents our methodology, whose implementation and evaluation are detailed in Section 6. Section 7 discusses the uptake of our work and the lessons learned, while Section 8 concludes the paper, providing directions for future work.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>Industrial deployment of VKGs. Semantic Web technologies have been successfully applied in several industrial contexts <ref type="bibr" target="#b31">[32,</ref><ref type="bibr" target="#b11">12,</ref><ref type="bibr" target="#b4">5]</ref> as they simplify data access by providing an abstraction layer (i.e., an ontology) that integrates data from semantically and physically different sources. Siemens uses an OBDA for managing the temperature data of trains and turbines and developed a semantic rule-based diagnostic system <ref type="bibr" target="#b17">[18,</ref><ref type="bibr" target="#b16">17,</ref><ref type="bibr" target="#b3">4]</ref>. Statoil has implemented an OBDA using the Ontop <ref type="bibr" target="#b30">[31]</ref> framework for integrating multiple data sources <ref type="bibr" target="#b15">[16]</ref>. This system has enhanced the efficiency of data collection for geologists in the field of oil and gas exploration and production. Similarly, Ontop was used to realize a semantic information model for managing machine data <ref type="bibr" target="#b27">[28]</ref>. Moreover, Ford Motor Company also stores knowledge about manufacturing processes in an ontology <ref type="bibr" target="#b32">[33]</ref>. This allows their internally developed AI system to handle the planning of vehicle assembly processes. They have also explored the use of federated ontologies to identify potential risks in the supply chain <ref type="bibr" target="#b25">[26,</ref><ref type="bibr" target="#b18">19]</ref>. Bosch also has utilized ontology-based approaches for data access. They applied knowledge graph embedding <ref type="bibr" target="#b33">[34]</ref> and ontology reshaping <ref type="bibr" target="#b40">[41]</ref> for automatic knowledge graph (KG) construction in a case related to welding quality monitoring.</p><p>LLMs for Data Management. In recent years, the field of language models has experienced substantial progress due to the introduction of LLMs such as GPT-3.5 <ref type="bibr" target="#b39">[40]</ref> and GPT-4 <ref type="bibr" target="#b24">[25]</ref>, developed by OpenAI, Meta's Llama 1 <ref type="bibr" target="#b34">[35]</ref> and Llama 2 <ref type="bibr" target="#b35">[36]</ref>, Claude 3 <ref type="bibr" target="#b1">[2]</ref> from Anthropic, Google's Gemini <ref type="bibr" target="#b12">[13]</ref>, and Mixtral <ref type="bibr" target="#b13">[14]</ref>, from Mistral AI. These models have been utilized in a variety of data management tasks <ref type="bibr" target="#b41">[42,</ref><ref type="bibr" target="#b42">43]</ref> due to their ability to extract knowledge from unstructured data sources <ref type="bibr" target="#b0">[1]</ref> and to understand the data without the need for explicit modeling <ref type="bibr" target="#b9">[10]</ref>. From a data validation perspective, LLMs have demonstrated close to human-level capabilities in detecting inconsistencies in text summaries <ref type="bibr" target="#b19">[20]</ref>. In the context of the Semantic Web, LLMs can also be used to automate KG completion and construction <ref type="bibr" target="#b26">[27]</ref>. For instance, GPT-4 was used for automatic ontology and KG construction for large amounts of unstructured sustainabilityrelated data <ref type="bibr" target="#b36">[37]</ref>. Moreover, LLMs have been effectively utilized to assist with data preparation tasks required before performing business analytics <ref type="bibr" target="#b22">[23]</ref>. More specifically, GPT-4 was used to translate product names, assign product categories, classify customer sentiment, and extract repair requests and their causes from customer service logs. Regarding real industry scenarios, there is currently limited evidence, to our knowledge, of LLMs being utilized in conjunction with semantic technologies for data validation in large manufacturing companies. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Case Study: Testing of Electronic Boards</head><p>In this section, we discuss our case study in greater detail and describe the structure and characteristics of Thales Alenia Space's Test Reports.</p><p>Electronic Boards Test Data. Our case study involves Test Data for electronic boards, primarily Printed Circuit Boards (PCBs) used in satellite systems. Testing these products is a critical process in the space industry, ensuring that all technological processes meet specific mission requirements and comply with standards established by the European Space Agency (ESA) and the European Cooperation for Space Standardization (ECSS). The tests involve measuring parameters such as voltage, resistance, or power, and comparing the results to a predefined expected range, which represents the acceptable limits within which the parameter should fall for the PCB to operate correctly. Test engineers conduct these tests, which are documented in Test Reports. These documents, which are primarily in .docx and .pdf format, are manually filled by the engineers and exhibit a high degree of heterogeneity. In Figure <ref type="figure" target="#fig_0">1</ref>, we show a color-coded spreadsheet to illustrate the heterogeneity within these documents. The actual test results in the reports are organized within manually filled tables. The "acceptance limits" column is pre-filled and the engineers have to fill in the measured value and a "successful" column based on the test outcome. In this study, we consider Point-of-Load (POL) Voltage Verification, Preliminary Power Consumption, and Isolation (both external and internal) as representative types of tests. Figure <ref type="figure" target="#fig_1">2</ref> provides an example of tables for these types of tests, emphasizing the unstructured and heterogeneous nature of the data which manifests in several ways: Syntactic Heterogeneity. This is seen in the different formatting of the data. The range of acceptance limits is represented in various ways. For instance, " <ref type="bibr">[3.198,</ref>  3.532] V" and "1.1M -1.9MΩ" both indicate a range of acceptance. In some cases, the measured value and the acceptance limits are indicated with different units of measure. Additionally, in the "successful" column, the absence of a value or the presence of a "-" both indicate a lack of success.</p><p>Structural Heterogeneity. This is evident in the inconsistent organization and naming of the tables. For instance, some tables have a single "successful" cell in a different part of the document and therefore lack a dedicated "successful" column. Furthermore, a column labeled "Acceptance limits" in one table might be labeled as "Expected Values" in another. The unit of measure can be included in the table title as well as written with the values or even absent. Another form of structural heterogeneity can be observed in the use of row span, which is used to indicate that the same value applies to multiple rows.</p><p>Semantic Heterogeneity. There is an implicit hierarchical structure within the reports as there are various representations for the concept of a "Test", such as "Internal Isolation", "External Isolation" or "POL Voltage". These test types share many properties, but they are categorized separately due to their specific aspects. Similarly, Internal and External Isolation fall under the category of Isolation tests, each possessing properties specific to Isolation testing. Despite this, they are represented differently, introducing a semantic heterogeneity. This leads to the requirement of modeling what is a "Test" or an "Isolation test".</p><p>The preexisting manual approach (see Figure <ref type="figure" target="#fig_2">3</ref>) for data extraction and validation is costly, time-consuming, and allows for limited cross-report analyses, but automating these processes isn't straightforward. Although a human operator can intuitively understand that, for example, "Acceptance limits" has the same meaning as "Expected values", this poses a challenge for an automated system. Data Obfuscation. Data is not disclosed in its original form to protect Thales Alenia Space's privacy. We added noise to the values, ensuring the structure and syntax remained intact without disclosing any confidential information.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Motivation</head><p>In this section, we aim to clarify our motivation by addressing two key questions:</p><p>(1) Why do we need KGs? and (2) Why integrate them with LLMs?</p><p>Motivation for Knowledge Graphs. The motivation for choosing KGs and OBDA systems lies in their ability to handle heterogeneous and physically distributed information, a common challenge in knowledge-intensive industries such as aerospace. KGs effectively accommodate the high diversity and low volume of data in the space industry, which produces hundreds of PCB families (with similar but not identical designs) but only a few dozen PCBs. The industry also deals with a diverse array of tests due to the intricate nature of PCBs, which include passive and active electrical components, as well as digital electronics like RAM, CPUs, and FPGAs. Leveraging and extending resources such as the SSN ontology can facilitate the modeling process in this case. Furthermore, a graph-based representation allows for a more explicit data repository, reducing the reliance on tacit knowledge held by domain experts. This is crucial in aerospace where semantic coherence is key for managing complex systems such as satellites.</p><p>Integrating LLMs with KGs. Consider the detailed RDF representation in Listing 1.1 that includes the QUDT (Quantities, Units, Dimensions, and Types) <ref type="bibr" target="#b8">[9]</ref> ontology for the units of measurement. Annotating data in this way would require a large amount of manual work at the level of the template of the Test Report. This can be challenging and time-consuming when dealing with complex and diverse data. Moreover, the complexity grows with the number of different templates of Test Reports the company introduces (i.e., one per PCB family). See once again Figure <ref type="figure" target="#fig_0">1</ref> to feel the degree of heterogeneity at the level of the sections of the reports. However, LLM's ability in natural language understanding can determine whether a measured value falls within an expected range, even if the syntax changes or the units of measurement differ. Therefore, it can assist in error detection and simplify the modeling process. This leads to a lightweight annotation of the data (see Listing 1.2) using the Unified Code for Units of Measure (UCUM) <ref type="bibr" target="#b21">[22]</ref>, allowing data engineers to focus on the conceptual model and semantic meaning of the data, without having to account for every minor syntactic heterogeneity.  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Methodology</head><p>In this section, we describe the methodology of our approach for extraction, validation, and integration of Test Data from unstructured Test Reports. As depicted in Figure <ref type="figure" target="#fig_3">4</ref>, the process is divided into several phases. The validation process is managed using an LLM-based approach. On the other hand, data integration is accomplished through KGs, enabling access to heterogeneous data. More specifically, the process is structured on three levels:</p><p>-Data Extraction: Test Reports' metadata and the test types they contain are extracted and stored in a KG using an ontology. -LLM-Based Compliance Checking: LLMs are used to validate that test results are consistent with their respective acceptance limits. -Ontology-Based Data Access: A VKG is used to mediate the actual access to the test results.</p><p>Data Extraction. The first step in our process is to extract the textual data within the Test Reports and transform it into a machine-readable format. This transformation is facilitated by a one-time ontology engineering process that defines the concepts, categories, and relationships embedded within the data. A KG is used for this purpose. The ontology used in this KG is an extension of the SSN ontology (see Figure <ref type="figure" target="#fig_4">5</ref>) and maps the information related to Test Reports and observable properties found within these reports, which refer to the property being tested (i.e., the test type) and the related test table structure description in terms of its columns. All tests are of type sosa:ObservableProperty with their respective hierarchy. For instance, &lt;POLVoltage&gt; and &lt;Isolation&gt; are defined as sosa:ObservableProperty. &lt;InternalIsolation&gt; and &lt;ExternalIsolation&gt; are defined as sub-classes of &lt;Isolation&gt;. The RDF fragment provided in Listing 2 is an example of how a Test Report is modeled. An additional property tasi:reports has been added due to the absence of a Test Report concept in the SSN ontology. A Test Report is defined as &lt;TestReport&gt; and is associated with the observable properties such as &lt;InternalIsolation&gt;, &lt;ExternalIsolation&gt; and &lt;POLVoltage&gt;. The metadata of the report is modeled using additional properties such as testReportDate, testReportLocation, testReportName, testReportReference and testReportValidation. The latter is used to indicate whether the whole Test Report is valid.</p><p>Using the ontology definition as a basis, we can streamline the extraction process. The procedure begins with parsing the Test Reports to identify relevant sections. These reports are then extracted along with their observable properties, such as POL Voltage, using the KG test table structure definition to automatically identify the purpose of each column (i.e., for the POLVoltage table, Voltage Measurements [V] contains the test data entry, while Acceptance Limits contains the entry validation range). Subsequently, this data is transformed into RDF triples and stored in the KG. The creation of these RDF triples is guided by the ontology, ensuring that the resulting data is both structured and machinereadable. The actual observations, which correspond to the rows in the tables, are extracted and temporarily stored in a data repository for subsequent validation. @prefix tasi: &lt;http<ref type="url" target="://www.semanticweb.org/ontologies/tasi#">://www.semanticweb.org/ontologies/tasi#</ref>&gt; .</p><p>tasi:POLVoltage a sosa:ObservableProperty ; rdfs:label "P.O.L. Voltage"@en . tasi:obsPropertyAccLimLocation "VALIDATED/ist/TASI-1234-ist_pol.csv" ; tasi:obsPropertyResultsLocation "/VALIDATED/pol/pol.parquet" . tasi:Isolation a sosa:ObservableProperty ; rdfs:label "Isolation"@en . tasi:InternalIsolation rdfs:subClassOf tasi:Isolation ; rdfs:label "Internal Isolation"@en . tasi:obsPropertyAccLimLocation "VALIDATED/ist/TASI-1234-ist_al.csv" ; tasi:obsPropertyResultsLocation "VALIDATED/ist/ist.parquet" . tasi:ExternalIsolation rdfs:subClassOf tasi:Isolation ; rdfs:label "External Isolation"@en .</p><p>&lt;http<ref type="url" target="://tasi.com#TASI-1234&gt;">://tasi.com#TASI-1234&gt;</ref> a tasi:TestReport ; tasi:reports tasi:POLVoltage, tasi:InternalIsolation ; tasi:testReportDate "2023-06-15"^^xsd:dateTime ; tasi:testReportName "test_report_xy" ; tasi:testReportReference "TASI-1234" ; tasi:testReportValidation "OK" ; tasi:testReportLocation "path/to/test_report_file.docx" . Listing 2. An example of a Test Report modeled using an extension of the SSN ontology that contains valid data for the POLVoltage and InternalIsolation tests.</p><p>LLM-Based Compliance Checking. The primary challenge in managing Test Data lies in the expensive and time-consuming task of compliance checking. This process is difficult to automate algorithmically due to the high heterogeneity in observed values and the wide variety of formats used for the acceptance limits. However, compliance checking can be automated using LLMs, as these models are capable of handling data with syntactic and structural heterogeneity. This ability makes the compliance checking process applicable across a broad spectrum of testing scenarios. Consequently, data engineers can focus only on a small subset of tests that the LLM identifies as anomalous. The validation process is conducted row by row, rather than for the whole table at once, to prevent disclosing confidential information. For each test result, we prompt the LLM to determine whether the measured value is within the acceptance range. The LLM's response is then compared with the "successful" value. If there is a mismatch between these two values, the test is classified as anomalous. A test is considered valid if the measured value is within the predefined acceptance limits and the "successful" column reads "OK", or if the value is outside the range and the "successful" column does not read "OK". The prompt strategy chosen is the Zero-shot <ref type="bibr" target="#b28">[29]</ref> (i.e., direct prompting without any examples) using a task description instead of a role-oriented approach. For data validation tasks, this strategy was shown to be superior, especially for bigger models <ref type="bibr" target="#b19">[20]</ref>. This is consistent with previous findings showing that zeroshot prompts are best when the task involves utilizing pre-existing knowledge embedded within the model, as opposed to learning from examples <ref type="bibr" target="#b29">[30]</ref>. Furthermore, we designed the prompt in a way that it can be applied across all types of tests and is robust to heterogeneity in the acceptance limits. It is structured to ask a simple "True" or "False" zero-shot question that is framed as follows: "Evaluate the following electrical measure observation statement. Answer with just one "True" or "False" statement at the beginning of the answer. Is [measured value] [acceptance limits] ?". The LLM response is parsed, and the first "True" or "False" encountered is taken as the response, as sometimes the LLM might continue discussing and explaining the reasoning behind its decision.</p><p>Ontology-Based Data Access. We utilize a VKG to facilitate data access and manage structural heterogeneity. This VKG maps the validated Test Data storage to the ontology (refer to Figure <ref type="figure" target="#fig_4">5</ref>). The knowledge within the virtualized semantic layer can be accessed via SPARQL queries, which are automatically translated into SQL. Listing 1.2 shows an RDF fragment modeling a POL Voltage Observation, which represents a row in the test table (refer to Figure <ref type="figure" target="#fig_1">2</ref>). Each row is a sosa:Observation with a sosa:hasSimpleResult value. For instance, &lt;http<ref type="url" target="://tasi.com/pol#TASI-1234-Core1&gt;">://tasi.com/pol#TASI-1234-Core1&gt;</ref> is a sosa:Observation with a sosa:hasSimpleResult of "1.097 V". This observation is associated with the sosa:observedProperty &lt;POLVoltage&gt;. The SSN ontology has been extended with two properties to accommodate the specific needs of our case study. The tasi:reportedIn property links the observation to the corresponding Test Report, while the tasi:hasAcceptanceLimits property specifies the acceptable range for the observed property. For example, tasi:hasAcceptanceLimits "[1.076, 1.224] V" indicates that the acceptable voltage range for the POL Voltage Observation is between 1.076V and 1.224V. The tasi:hasTestResult property reports the "successful" value. For instance, a successful test is indicated by tasi:hasTestResult "OK". To populate the ontology, we establish a series of mappings. These mappings create connections between the ontology and the underlying data storage, thereby providing semantic meaning to the Test Data. An example of mapping for a POLVoltageObservation is provided in Listing 3. The mapping is defined with a mappingId of POL Voltage Verification, which corresponds to the type of test being performed. The target of the mapping is a URI that represents a sosa:Observation in the ontology. The source is a SQL query that retrieves the necessary data from the POL Voltage Verification table in the test results storage. The variables in the source query correspond to the placeholders in the target. Once the mapping is executed, these placeholders are replaced with the actual values retrieved by the source query. This allows us to virtually represent the storage as an RDF graph, integrating different data sources into a unified view.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Implementation and Evaluation</head><p>In this section, we delve into the specifics of our system's implementation and the technologies used. Following this, we present a benchmarking study of various state-of-the-art LLMs to evaluate their capability of performing automated compliance checking. An evaluation of the whole methodology from a cost-benefit perspective is provided in Section 7.</p><p>Implementation details. An Apache Airflow DAG (Directed Acyclic Graph) was designed to orchestrate the entire process. Apache Airflow is a popular opensource tool for creating, scheduling, and monitoring data pipelines. For modeling the Test Reports and their properties, we implemented the KG using Apache Jena Fuseki, a server that allows for querying and updating the KG using the SPARQL query language. The test results are stored in an Apache Parquet, a free and open-source column-oriented data storage, which allows handling large volumes of data while maintaining high performance. The VKG was implemented using OntopSpark <ref type="bibr" target="#b2">[3]</ref>, an extension developed by Politecnico di Milano of Ontop <ref type="bibr" target="#b30">[31]</ref>, an open-source OBDA system that allows for querying relational data sources through an ontology via R2RML <ref type="bibr" target="#b7">[8]</ref> mappings. We do not report a detailed analysis of Ontop performances since it was benchmarked in several other papers <ref type="bibr" target="#b5">[6,</ref><ref type="bibr" target="#b14">15]</ref>. We present a discussion about the effort to solve the problem with and without our solution in Section 7.</p><p>LLMs Benchmarking. A benchmarking study was carried out to assess the performance of state-of-the-art LLMs in automated compliance checking. The models tested included GPT-3.5 <ref type="bibr" target="#b39">[40]</ref>, GPT-4 <ref type="bibr" target="#b24">[25]</ref>, Gemini Ultra <ref type="bibr" target="#b12">[13]</ref>, Mixtral 8x7B <ref type="bibr" target="#b13">[14]</ref>, LLama 2 70B <ref type="bibr" target="#b35">[36]</ref>, and Claude 3 Opus <ref type="bibr" target="#b1">[2]</ref>. Performance was measured using standard metrics such as accuracy, precision, recall, and F1-score. The positive class was considered when the measured values fell outside the acceptance limit range, which is also the less represented class. The models were tested across three test categories: POL Voltage Verification, Internal Isolation, and External Isolation.</p><p>Table <ref type="table">1</ref>. The results of the comparative analysis on state-of-the-art LLMs for compliance checking, highlighting the superior performance of GPT-4 and Gemini Ultra.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Model</head><p>Test Type #Tests Accuracy Precision Recall F1-Score GPT-3.5  <ref type="table">1</ref> presents the benchmarking results, showing a clear distinction in performance among the tested LLMs. GPT-4 and Gemini Ultra are the top performers across all test categories, with GPT-4 achieving the highest overall accuracy, precision, and F1-score. Gemini Ultra, on the other hand, achieved perfect scores in the POL Voltage and Internal Isolation tests and had the highest overall recall. In contrast, GPT-3.5, Mixtral 8x7B, and LLama 2 70B consistently underperformed compared to the top models, rendering them unsuitable for our task. Claude 3 Opus demonstrated strong performance in the POL Voltage test but had lower precision in the Internal Isolation and External Isolation tests due to its inability to handle cases where the test result's unit of measure was absent, a frequent scenario in the Isolation tests. This benchmarking study provides strong evidence supporting the effectiveness of an LLM-based approach for automated compliance checking using state-of-the-art LLMs. The performance of GPT-4 and Gemini Ultra underscores the potential of these models in managing complex data validation tasks.</p><p>7 Discussion on Uptake and Lessons Learned Benefits and Scalability. The transition from the current method to the proposed solution suggests a significant reduction in the effort measured in persondays required to complete and validate Test Reports before extracting longitudinal Test Data to analyze. The existing procedure necessitates substantial manual work for tasks such as creating Test Report templates, instantiating Test Reports, filling in the test results and checking the compliance with the acceptance limits, reviewing the Test Data and their coherence with the reported success, looking for errors and correcting them, and extract/transform data to perform longitudinal analysis (see Figure <ref type="figure" target="#fig_2">3</ref>). The proposed solution, while requiring the modeling and maintenance of an ontology that encapsulates various test types (refer to Figure <ref type="figure" target="#fig_0">1</ref>), and the annotation of the template with semantic tags that define each section, is fully automated (see Figure <ref type="figure" target="#fig_3">4</ref>). This includes the extraction of test results and acceptance limits, error isolation, requests for manual review and correction, and data accessibility for longitudinal analysis. We developed a cost model based on the experience documented in this paper. This model estimates the effort involved as a product of three factors: the number of different Test Report templates, the average number of Test Reports per template, and the number of test types (e.g., POL Voltage Verification, Preliminary Power Consumption) per report. Comparing the effort required to model, compile, and validate from 1 to 10 Test Report templates, each with an average of 30 types of test per report (refer to Figure <ref type="figure" target="#fig_5">6</ref>), we derive that as the number of reports (on the x-axis) increases:</p><p>-For a single Test Report template (n=1), benefits start to appear after the 6th report. -For five templates (n=5), benefits are seen after the 3rd report.</p><p>-For ten templates (n=10), the benefits are obtained at the 2nd report.</p><p>As the number of Test Report templates (n) increases, the number of Test Reports (on the x-axis) needed to see the benefits of using KG and LLMs is significantly reduced, with potential time savings of more than 50%. The right part of Figure <ref type="figure" target="#fig_5">6</ref> illustrates the break-even points for an increasing number of Test Reports in detail.</p><p>Next Steps for Large Scale Deployment. The proof-of-concept of the proposed solution was well received by Thales Alenia Space, but additional efforts are needed for the transition to a large-scale deployment. We are currently engaged in a feasibility study to port the solution to the other five nations in which Thales Alenia Space operates (France, Belgium, Spain, Switzerland, and the UK). Since the scenarios can vary significantly in these different divisions, this can potentially broaden adoption across the aerospace industry through further development and demonstration of value in diverse operational environments. Furthermore, despite the proposed solution focusing on a specialized case study, the principle of data validation via LLMs, to simplify the conceptual modeling process and reduce manual work, could potentially be extended to other scenarios such as mechanical and electrical qualification, given the ability of KGs and LLMs to adapt to different tasks and data types. However, it's true that to apply this approach in different contexts, slight reconfigurations would be necessary. Furthermore, it would be essential to establish benchmarks for each specific use case to evaluate the applicability in a new scenario. Given the significant savings, Thales Alenia Space expresses its intention to continue prototyping for other types of tests on PCBs, extend to the other product lines, and eventually deploy to all product lines. Preliminary experiments in this direction have already produced some promising results.</p><p>Lessons Learned. The development of the proposed solution revealed several key lessons. Firstly, the success of the implementation heavily relied on a well-structured ontology and clean mappings. The initial investment in modeling proved beneficial, as it minimized downstream efforts. Additionally, the integration of LLMs streamlined data validation, drastically reducing the need for manual intervention. Identified best practices include the necessity for iterative development and validation of the ontology and its corresponding mappings. This ensures accurate modeling of test template reports. Moreover, it is crucial to conduct a comparative evaluation of alternative LLMs to stay updated with the evolving heterogeneities in Test Data, acceptance limits, and report requirements. Collaboration with stakeholders and domain experts was also essential for fine-tuning the KG and LLM prompts for optimal performance, and ensuring that confidentiality requirements were met while incorporating closed-source LLMs in the pipeline. As we move forward, these insights will guide our efforts to extend the solution to other product lines and further enhance the system's performance and reliability.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="8">Conclusion and Future Work</head><p>In this paper, we demonstrated a successful application of Semantic Web technologies combined with LLMs for integrating and validating heterogeneous and unstructured industrial data through a use case related to Test Reports of electronic boards used in Thales Alenia Space's satellite systems. Our benchmarking study revealed that GPT-4 and Google Gemini possess remarkable abilities in automating the process of compliance checking. Considering that LLMs are still in the early stages of their development, it's reasonable to expect their performance to improve further, enabling them to handle even more complex data validation tasks in the near future. Overall, the proposed solution demonstrates a clear cost-benefit advantage over the existing document-centric solution. The potential efficiency gains underscore the value of investing in advanced AI-driven automation for such data-intensive tasks.</p><p>As future work, we intend to investigate whether the use of LLMs can be extended to perform automatic ontology construction, utilizing document tags, and also data homogenization. This would involve parsing the test results and the acceptance limits through an LLM-based approach. Additionally, we aim to further enhance data access by employing LLMs to convert natural language into SPARQL queries, thereby enabling Thales Alenia Space engineers to access knowledge directly using natural language.</p><p>Supplemental Material Statement: The obfuscated dataset and the code used to benchmark the Large Language Models are made available for enhancing the reproducibility of the study and potential reuse for future research. However, please note that the code and data related to other steps of the methodology are not provided as they comprise confidential information belonging to Thales Alenia Space. The available resources can be accessed in our GitHub Repository at <ref type="url" target="https://github.com/Antonio-Dee/tasi-testdata">https://github.com/Antonio-Dee/tasi-testdata</ref>.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Fig. 1 .</head><label>1</label><figDesc>Fig. 1. A portion of a color-coded spreadsheet that visually represents the heterogeneity within Test Reports, which typically contain around 23 sections. Green denotes uniform sections, while yellow represents variable ones. White cells indicate the absence of a section. Titles are intentionally obscured to protect confidential information.</figDesc><graphic coords="4,136.49,115.83,342.34,152.75" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Fig. 2 .</head><label>2</label><figDesc>Fig. 2. Examples of test results tables that illustrate the challenges of syntactic (shown in green), structural (shown in yellow), and semantic (shown in purple) heterogeneity.</figDesc><graphic coords="5,134.77,115.83,345.80,180.68" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Fig. 3 .</head><label>3</label><figDesc>Fig. 3. The preexisting manual data processing workflow in which potentially anomalous reports are subjected to manual extraction, cleaning, and validation.</figDesc><graphic coords="6,138.22,115.84,338.90,127.68" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>Fig. 4 .</head><label>4</label><figDesc>Fig.4. A flowchart representation of the proposed methodology. The process begins with the input of a set of potentially anomalous Test Reports, from which the data is extracted and transformed into a machine-readable format. The documents' metadata is integrated into a KG, while the test results undergo LLM-based compliance checking and anomalies are handled by an on-demand reviewer. The validated data is accessed through a VKG, enabling access to heterogeneous data and facilitating cross-report analyses. The whole process is guided by a one-time ontology engineering process.</figDesc><graphic coords="8,134.77,115.83,345.82,153.78" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>Fig. 5 .</head><label>5</label><figDesc>Fig.5. The figure provides a visual representation of our ontology. This ontology is an extension of the well-established SSN ontology, which is denoted by the sosa prefix and the red color. Our additions include new classes and properties, which are identified by the tasi prefix and the blue color. The ontology's components used for modeling Test report metadata are enclosed within a purple rectangle, and this metadata is stored within a KG. The modeling of test results, represented by an orange rectangle, is stored in a structured data repository and made accessible via a VKG.</figDesc><graphic coords="9,134.77,115.84,345.84,161.95" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>Fig. 6 .</head><label>6</label><figDesc>Fig.6. Comparison of effort reduction between our solution (KG+LLM) and the current method (AS-IS). The effort depends on the number of templates (n), the number of reports (x-axis), and the test types per report which for simplicity are set to 30.</figDesc><graphic coords="14,134.77,471.95,345.82,145.89" type="bitmap" /></figure>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><p>Acknowledgments. <rs type="person">Antonio De Santis</rs>'s doctoral scholarship is funded by the <rs type="funder">Italian Ministry of University and Research (MUR)</rs> under the <rs type="programName">National Recovery and Resilience Plan</rs> (NRRP), by <rs type="funder">Thales Alenia Space</rs>, and by the <rs type="funder">European Union (EU)</rs> under the <rs type="projectName">NextGenerationEU</rs> project.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funding" xml:id="_z5YzSbk">
+					<orgName type="program" subtype="full">National Recovery and Resilience Plan</orgName>
+				</org>
+				<org type="funded-project" xml:id="_za7Jz2c">
+					<orgName type="project" subtype="full">NextGenerationEU</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Knowledge Engineering Using Large Language Models</title>
+		<author>
+			<persName><forename type="first">B</forename><forename type="middle">P</forename><surname>Allen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Stork</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Groth</surname></persName>
+		</author>
+		<idno type="DOI">10.4230/TGDK.1.1.3</idno>
+		<ptr target="https://drops-dev.dagstuhl.de/entities/document/10.4230/TGDK.1.1.3" />
+	</analytic>
+	<monogr>
+		<title level="j">Transactions on Graph Data and Knowledge</title>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="3" />
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Allen, B.P., Stork, L., Groth, P.: Knowledge Engineering Using Large Language Models. Transactions on Graph Data and Knowledge 1(1), 3:1-3:19 (2023). https://doi.org/10.4230/TGDK.1.1.3, https://drops- dev.dagstuhl.de/entities/document/10.4230/TGDK.1.1.3</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Diagnostic performances of Claude 3 Opus and Claude 3.5 Sonnet from patient history and key images in Radiology’s “Diagnosis Please” cases</title>
+		<author>
+			<persName><forename type="first">Ryo</forename><surname>Kurokawa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuji</forename><surname>Ohizumi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jun</forename><surname>Kanzawa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mariko</forename><surname>Kurokawa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuki</forename><surname>Sonoda</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuta</forename><surname>Nakamura</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Takao</forename><surname>Kiguchi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wataru</forename><surname>Gonoi</surname></persName>
+			<idno type="ORCID">0000-0002-5018-4683</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Osamu</forename><surname>Abe</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s11604-024-01634-z</idno>
+		<ptr target="https://paperswithcode.com/paper/the-claude-3-model-family-opus-sonnet-haiku" />
+	</analytic>
+	<monogr>
+		<title level="j">Japanese Journal of Radiology</title>
+		<title level="j" type="abbrev">Jpn J Radiol</title>
+		<idno type="ISSN">1867-1071</idno>
+		<idno type="ISSNe">1867-108X</idno>
+		<imprint>
+			<biblScope unit="volume">42</biblScope>
+			<biblScope unit="issue">12</biblScope>
+			<biblScope unit="page" from="1399" to="1402" />
+			<date type="published" when="2024-08-03">2024</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Anthropic: The claude 3 model family: Opus, sonnet, haiku (2024), https://paperswithcode.com/paper/the-claude-3-model-family-opus-sonnet-haiku</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Chimera: A Bridge Between Big Data Analytics and Semantic Technologies</title>
+		<author>
+			<persName><forename type="first">Matteo</forename><surname>Belcao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emanuele</forename><surname>Falzone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Enea</forename><surname>Bionda</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emanuele</forename><forename type="middle">Della</forename><surname>Valle</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-030-88361-4_27</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2021">October 24-28, 2021. 2021</date>
+			<biblScope unit="volume">20</biblScope>
+			<biblScope unit="page" from="463" to="479" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Belcao, M., Falzone, E., Bionda, E., Valle, E.D.: Chimera: a bridge between big data analytics and semantic technologies. In: The Semantic Web-ISWC 2021: 20th International Semantic Web Conference, ISWC 2021, Virtual Event, October 24- 28, 2021, Proceedings 20. pp. 463-479. Springer (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Ontology-based integration of streaming and static relational data with optique</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Brandt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Neuenstadt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ö</forename><surname>Özçep</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Pinkel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zheleznyakov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Horrocks</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Möller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Jiménez-Ruiz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Kotidis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Lamparter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Mailis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Svingos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Ioannidis</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2882903.2899385</idno>
+		<ptr target="https://doi.org/10.1145/2882903.2899385" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the ACM SIG-MOD International Conference on Management of Data</title>
+		<meeting>the ACM SIG-MOD International Conference on Management of Data</meeting>
+		<imprint>
+			<date type="published" when="2016">2016</date>
+			<biblScope unit="page" from="2109" to="2112" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Brandt, S., Neuenstadt, C., Özçep, Ö., Pinkel, C., Zheleznyakov, D., Horrocks, I., Möller, R., Kharlamov, E., Jiménez-Ruiz, E., Kotidis, Y., Lamparter, S., Mailis, T., Svingos, C., Ioannidis, Y.: Ontology-based integration of stream- ing and static relational data with optique. In: Proceedings of the ACM SIG- MOD International Conference on Management of Data. pp. 2109-2112 (2016). https://doi.org/10.1145/2882903.2899385</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">Extracting semantic information for e-commerce</title>
+		<author>
+			<persName><forename type="first">B</forename><surname>Charron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Hirate</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Purcell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Rezk</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-46547-027</idno>
+		<ptr target="https://doi.org/10.1007/978-3-319-46547-027" />
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2016: 15th International Semantic Web Conference</title>
+		<meeting><address><addrLine>Kobe, Japan; Berlin, Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer-Verlag</publisher>
+			<date type="published" when="2016">October 17-21, 2016. 2016</date>
+			<biblScope unit="page" from="273" to="290" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Charron, B., Hirate, Y., Purcell, D., Rezk, M.: Extracting semantic information for e-commerce. In: The Semantic Web -ISWC 2016: 15th International Seman- tic Web Conference, Kobe, Japan, October 17-21, 2016, Proceedings, Part II. p. 273-290. Springer-Verlag, Berlin, Heidelberg (2016). https://doi.org/10.1007/978- 3-319-46547-0 27, https://doi.org/10.1007/978-3-319-46547-0 27</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">GTFS-Madrid-Bench: A benchmark for virtual knowledge graph access in the transport domain</title>
+		<author>
+			<persName><forename type="first">David</forename><surname>Chaves-Fraga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Freddy</forename><surname>Priyatna</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrea</forename><surname>Cimmino</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jhon</forename><surname>Toledo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edna</forename><surname>Ruckhaus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oscar</forename><surname>Corcho</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.websem.2020.100596</idno>
+		<ptr target="https://www.sciencedirect.com/science/article/pii/S1570826820300354" />
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Web Semantics</title>
+		<title level="j" type="abbrev">Journal of Web Semantics</title>
+		<idno type="ISSN">1570-8268</idno>
+		<imprint>
+			<biblScope unit="volume">65</biblScope>
+			<biblScope unit="page">100596</biblScope>
+			<date type="published" when="2020-12">2020</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chaves-Fraga, D., Priyatna, F., Cimmino, A., Toledo, J., Ruckhaus, E., Corcho, O.: Gtfs-madrid-bench: A benchmark for virtual knowledge graph access in the transport domain. Journal of Web Semantics 65, 100596 (2020). https://doi.org/https://doi.org/10.1016/j.websem.2020.100596, https://www.sciencedirect.com/science/article/pii/S1570826820300354</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">The SSN ontology of the W3C semantic sensor network incubator group</title>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Compton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Payam</forename><surname>Barnaghi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luis</forename><surname>Bermudez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Raúl</forename><surname>García-Castro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oscar</forename><surname>Corcho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Simon</forename><surname>Cox</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Graybeal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Manfred</forename><surname>Hauswirth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cory</forename><surname>Henson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arthur</forename><surname>Herzog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krzysztof</forename><surname>Janowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">David</forename><surname>Kelsey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Danh</forename><surname>Le Phuoc</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Laurent</forename><surname>Lefort</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Myriam</forename><surname>Leggieri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Holger</forename><surname>Neuhaus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andriy</forename><surname>Nikolov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Page</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexandre</forename><surname>Passant</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amit</forename><surname>Sheth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kerry</forename><surname>Taylor</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.websem.2012.05.003</idno>
+		<ptr target="https://www.sciencedirect.com/science/article/pii/S1570826812000571" />
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Web Semantics</title>
+		<title level="j" type="abbrev">Journal of Web Semantics</title>
+		<idno type="ISSN">1570-8268</idno>
+		<imprint>
+			<biblScope unit="volume">17</biblScope>
+			<biblScope unit="page" from="25" to="32" />
+			<date type="published" when="2012-12">2012</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Compton, M., et al.: The ssn ontology of the w3c semantic sen- sor network incubator group. Journal of Web Semantics 17, 25-32 (2012). https://doi.org/https://doi.org/10.1016/j.websem.2012.05.003, https://www.sciencedirect.com/science/article/pii/S1570826812000571</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<monogr>
+		<author>
+			<persName><forename type="first">S</forename><surname>Das</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Sundara</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Cyganiak</surname></persName>
+		</author>
+		<ptr target="https://www.w3.org/TR/r2rml/" />
+		<title level="m">R2RML: RDB to RDF mapping language</title>
+		<imprint>
+			<date type="published" when="2012">2012</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Das, S., Sundara, S., Cyganiak, R.: R2RML: RDB to RDF mapping language. https://www.w3.org/TR/r2rml/ (2012)</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<monogr>
+		<author>
+			<persName><surname>Fairsharing</surname></persName>
+		</author>
+		<idno type="DOI">10.25504/FAIRsharing.d3pqw7</idno>
+		<ptr target="https://doi.org/10.25504/FAIRsharing.d3pqw7" />
+		<title level="m">Quantities, units, dimensions and types (qudt)</title>
+		<imprint>
+			<date type="published" when="2014">2014</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">FAIRsharing.org: Quantities, units, dimensions and types (qudt). https://doi.org/10.25504/FAIRsharing.d3pqw7 (2014)</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">How Large Language Models Will Disrupt Data Management</title>
+		<author>
+			<persName><forename type="first">Raul</forename><forename type="middle">Castro</forename><surname>Fernandez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aaron</forename><forename type="middle">J</forename><surname>Elmore</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><forename type="middle">J</forename><surname>Franklin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sanjay</forename><surname>Krishnan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chenhao</forename><surname>Tan</surname></persName>
+		</author>
+		<idno type="DOI">10.14778/3611479.3611527</idno>
+		<ptr target="https://doi.org/10.14778/3611479.3611527" />
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the VLDB Endowment</title>
+		<title level="j" type="abbrev">Proc. VLDB Endow.</title>
+		<idno type="ISSN">2150-8097</idno>
+		<imprint>
+			<biblScope unit="volume">16</biblScope>
+			<biblScope unit="issue">11</biblScope>
+			<biblScope unit="page" from="3302" to="3309" />
+			<date type="published" when="2023-07">jul 2023</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fernandez, R.C., Elmore, A.J., Franklin, M.J., Krishnan, S., Tan, C.: How large language models will disrupt data management. Proc. VLDB En- dow. 16(11), 3302-3309 (jul 2023). https://doi.org/10.14778/3611479.3611527, https://doi.org/10.14778/3611479.3611527</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">Materials for space exploration and settlement</title>
+		<author>
+			<persName><forename type="first">Tommaso</forename><surname>Ghidini</surname></persName>
+		</author>
+		<idno type="DOI">10.1038/s41563-018-0184-4</idno>
+		<ptr target="https://doi.org/10.1038/s41563-018-0184-4" />
+	</analytic>
+	<monogr>
+		<title level="j">Nature Materials</title>
+		<title level="j" type="abbrev">Nature Mater</title>
+		<idno type="ISSN">1476-1122</idno>
+		<idno type="ISSNe">1476-4660</idno>
+		<imprint>
+			<biblScope unit="volume">17</biblScope>
+			<biblScope unit="issue">10</biblScope>
+			<biblScope unit="page" from="846" to="850" />
+			<date type="published" when="2018-09-24">Sep 2018</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ghidini, T.: Materials for space exploration and settlement. Nature Materials 17(10), 846-850 (Sep 2018). https://doi.org/10.1038/s41563-018-0184-4</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">Building and exploiting ontologies for an automobile project memory</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Golebiowska</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Dieng-Kuntz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Corby</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Mousseau</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/500737.500749</idno>
+		<ptr target="https://doi.org/10.1145/500737.500749" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st International Conference on Knowledge Capture</title>
+		<meeting>the 1st International Conference on Knowledge Capture<address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computing Machinery</publisher>
+			<date type="published" when="2001">2001</date>
+			<biblScope unit="page" from="52" to="59" />
+		</imprint>
+	</monogr>
+	<note>K-CAP &apos;01</note>
+	<note type="raw_reference">Golebiowska, J., Dieng-Kuntz, R., Corby, O., Mousseau, D.: Building and exploiting ontologies for an automobile project memory. In: Proceedings of the 1st International Conference on Knowledge Capture. p. 52-59. K-CAP &apos;01, Association for Computing Machinery, New York, NY, USA (2001). https://doi.org/10.1145/500737.500749, https://doi.org/10.1145/500737.500749</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<monogr>
+		<ptr target="https://arxiv.org/abs/2312.11805" />
+		<title level="m">Google: Gemini: A family of highly capable multimodal models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Google: Gemini: A family of highly capable multimodal models (2023), https://arxiv.org/abs/2312.11805</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<monogr>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">Q</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Sablayrolles</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Roux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Mensch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Savary</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Bamford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">S</forename><surname>Chaplot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>De Las Casas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">B</forename><surname>Hanna</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Bressand</surname></persName>
+		</author>
+		<ptr target="https://arxiv.org/abs/2401.04088" />
+		<title level="m">Mixtral of experts</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jiang, A.Q., Sablayrolles, A., Roux, A., Mensch, A., Savary, B., Bamford, C., Chaplot, D.S., de las Casas, D., Hanna, E.B., Bressand, F., et al.: Mixtral of experts (2024), https://arxiv.org/abs/2401.04088</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Semantic integration of bosch manufacturing data using virtual knowledge graphs</title>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">G</forename><surname>Kalaycı</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Grangel González</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Lösch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Xiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ul Mehdi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Calvanese</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2020</title>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">Z</forename><surname>Pan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Tamma</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Amato</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">B</forename><surname>Fu</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Polleres</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><surname>Seneviratne</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Kagal</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="464" to="481" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kalaycı, E.G., Grangel González, I., Lösch, F., Xiao, G., ul Mehdi, A., Kharlamov, E., Calvanese, D.: Semantic integration of bosch manufacturing data using virtual knowledge graphs. In: Pan, J.Z., Tamma, V., d&apos;Amato, C., Janowicz, K., Fu, B., Polleres, A., Seneviratne, O., Kagal, L. (eds.) The Semantic Web -ISWC 2020. pp. 464-481. Springer International Publishing, Cham (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Ontology Based Access to Exploration Data at Statoil</title>
+		<author>
+			<persName><forename type="first">Evgeny</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dag</forename><surname>Hovland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ernesto</forename><surname>Jiménez-Ruiz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Davide</forename><surname>Lanti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hallstein</forename><surname>Lie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christoph</forename><surname>Pinkel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Martin</forename><surname>Rezk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Martin</forename><forename type="middle">G</forename><surname>Skjæveland</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evgenij</forename><surname>Thorstensen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guohui</forename><surname>Xiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dmitriy</forename><surname>Zheleznyakov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ian</forename><surname>Horrocks</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-25010-6_6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Arenas</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">O</forename><surname>Corcho</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">E</forename><surname>Simperl</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Strohmaier</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>D'aquin</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Srinivas</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Groth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Dumontier</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Heflin</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Thirunarayan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2015">2015</date>
+			<biblScope unit="page" from="93" to="112" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kharlamov, E., Hovland, D., Jiménez-Ruiz, E., Lanti, D., Lie, H., Pinkel, C., Rezk, M., Skjaeveland, M.G., Thorstensen, E., Xiao, G., Zheleznyakov, D., Horrocks, I.: Ontology based access to exploration data at statoil. In: Arenas, M., Corcho, O., Simperl, E., Strohmaier, M., d&apos;Aquin, M., Srinivas, K., Groth, P., Dumontier, M., Heflin, J., Thirunarayan, K., Staab, S. (eds.) The Semantic Web -ISWC 2015. pp. 93-112. Springer International Publishing, Cham (2015)</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Semantic access to streaming and static data at Siemens</title>
+		<author>
+			<persName><forename type="first">Evgeny</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Theofilos</forename><surname>Mailis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gulnar</forename><surname>Mehdi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christian</forename><surname>Neuenstadt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Özgür</forename><surname>Özçep</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mikhail</forename><surname>Roshchin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nina</forename><surname>Solomakhina</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmet</forename><surname>Soylu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christoforos</forename><surname>Svingos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Brandt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Martin</forename><surname>Giese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yannis</forename><surname>Ioannidis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steffen</forename><surname>Lamparter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ralf</forename><surname>Möller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yannis</forename><surname>Kotidis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arild</forename><surname>Waaler</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.websem.2017.02.001</idno>
+		<ptr target="https://www.sciencedirect.com/science/article/pii/S1570826817300124,industry" />
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Web Semantics</title>
+		<title level="j" type="abbrev">Journal of Web Semantics</title>
+		<idno type="ISSN">1570-8268</idno>
+		<imprint>
+			<biblScope unit="volume">44</biblScope>
+			<biblScope unit="page" from="54" to="74" />
+			<date type="published" when="2017-05">2017</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kharlamov, E., Mailis, T., Mehdi, G., Neuenstadt, C., Özgür Özçep, Roshchin, M., Solomakhina, N., Soylu, A., Svingos, C., Brandt, S., Giese, M., Ioan- nidis, Y., Lamparter, S., Möller, R., Kotidis, Y., Waaler, A.: Semantic ac- cess to streaming and static data at siemens. Journal of Web Semantics 44, 54-74 (2017). https://doi.org/https://doi.org/10.1016/j.websem.2017.02.001, https://www.sciencedirect.com/science/article/pii/S1570826817300124, industry and In-use Applications of Semantic Technologies</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Semantically-enhanced rule-based diagnostics for industrial Internet of Things: The SDRL language and case study for Siemens trains and turbines</title>
+		<author>
+			<persName><forename type="first">Evgeny</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gulnar</forename><surname>Mehdi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ognjen</forename><surname>Savković</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guohui</forename><surname>Xiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Elem</forename><forename type="middle">Güzel</forename><surname>Kalaycı</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mikhail</forename><surname>Roshchin</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.websem.2018.10.004</idno>
+		<ptr target="https://www.sciencedirect.com/science/article/pii/S1570826818300520" />
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Web Semantics</title>
+		<title level="j" type="abbrev">Journal of Web Semantics</title>
+		<idno type="ISSN">1570-8268</idno>
+		<imprint>
+			<biblScope unit="volume">56</biblScope>
+			<biblScope unit="page" from="11" to="29" />
+			<date type="published" when="2019-05">2019</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kharlamov, E., Mehdi, G., Savković, O., Xiao, G., Kalaycı, E.G., Roshchin, M.: Semantically-enhanced rule-based diagnostics for in- dustrial internet of things: The sdrl language and case study for siemens trains and turbines. Journal of Web Semantics 56, 11-29 (2019). https://doi.org/https://doi.org/10.1016/j.websem.2018.10.004, https://www.sciencedirect.com/science/article/pii/S1570826818300520</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Technology outlook : Federated ontologies and industrial applications</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">T</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Ostrowski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Rychtyckyj</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Macneille</surname></persName>
+		</author>
+		<idno type="DOI">10.1142/S1793351X1650001X</idno>
+		<ptr target="https://doi.org/10.1142/S1793351X1650001X" />
+	</analytic>
+	<monogr>
+		<title level="j">International Journal of Semantic Computing</title>
+		<imprint>
+			<biblScope unit="volume">10</biblScope>
+			<biblScope unit="page" from="101" to="120" />
+			<date type="published" when="2016">03 2016</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kim, M., Wang, S.T., Ostrowski, D., Rychtyckyj, N., Macneille, P.: Technology outlook : Federated ontologies and industrial applications. International Journal of Semantic Computing 10, 101-120 (03 2016). https://doi.org/10.1142/S1793351X1650001X</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<monogr>
+		<author>
+			<persName><forename type="first">P</forename><surname>Laban</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Kryściński</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">R</forename><surname>Fabbri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Xiong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Joty</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">S</forename><surname>Wu</surname></persName>
+		</author>
+		<title level="m">Llms as factual reasoners: Insights from existing benchmarks and beyond</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Laban, P., Kryściński, W., Agarwal, D., Fabbri, A.R., Xiong, C., Joty, S., Wu, C.S.: Llms as factual reasoners: Insights from existing benchmarks and beyond (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">A Survey on Data Quality: Classifying Poor Data</title>
+		<author>
+			<persName><forename type="first">Nuno</forename><surname>Laranjeiro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Seyma</forename><forename type="middle">Nur</forename><surname>Soydemir</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jorge</forename><surname>Bernardino</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/prdc.2015.41</idno>
+		<ptr target="https://doi.org/10.1109/PRDC.2015.41" />
+	</analytic>
+	<monogr>
+		<title level="m">2015 IEEE 21st Pacific Rim International Symposium on Dependable Computing (PRDC)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2015-11">2015. 2015</date>
+			<biblScope unit="page" from="179" to="188" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Laranjeiro, N., Soydemir, S.N., Bernardino, J.: A survey on data qual- ity: Classifying poor data. In: 2015 IEEE 21st Pacific Rim Interna- tional Symposium on Dependable Computing (PRDC). pp. 179-188 (2015). https://doi.org/10.1109/PRDC.2015.41</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">The Unified Code for Units of Measure in RDF: cdt:ucum and other UCUM Datatypes</title>
+		<author>
+			<persName><forename type="first">Maxime</forename><surname>Lefrançois</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Antoine</forename><surname>Zimmermann</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-98192-5_37</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Gangemi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">L</forename><surname>Gentile</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><forename type="middle">G</forename><surname>Nuzzolese</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Rudolph</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Maleshkova</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">Z</forename><surname>Pan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Alam</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2018">2018</date>
+			<biblScope unit="page" from="196" to="201" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lefrançois, M., Zimmermann, A.: The unified code for units of measure in rdf: cdt:ucum and other ucum datatypes. In: Gangemi, A., Gentile, A.L., Nuzzolese, A.G., Rudolph, S., Maleshkova, M., Paulheim, H., Pan, J.Z., Alam, M. (eds.) The Semantic Web: ESWC 2018 Satellite Events. pp. 196-201. Springer International Publishing, Cham (2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Applications of large language models (llms) in business analyticsexemplary use cases in data preparation tasks</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Nasseri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Brandtner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Zimmermann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Falatouri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Darbanian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Obinwanne</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">HCI International 2023 -Late Breaking Papers</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Degen</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Ntoa</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Moallem</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Switzerland, Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer Nature</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="182" to="198" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nasseri, M., Brandtner, P., Zimmermann, R., Falatouri, T., Darbanian, F., Obin- wanne, T.: Applications of large language models (llms) in business analytics - exemplary use cases in data preparation tasks. In: Degen, H., Ntoa, S., Moallem, A. (eds.) HCI International 2023 -Late Breaking Papers. pp. 182-198. Springer Nature Switzerland, Cham (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Advanced manufacturing for space applications</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Norman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Das</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rohr</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Ghidini</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s12567-022-00477-6</idno>
+		<ptr target="https://doi.org/10.1007/s12567-022-00477-6" />
+	</analytic>
+	<monogr>
+		<title level="j">CEAS Space Journal</title>
+		<imprint>
+			<biblScope unit="volume">15</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="6" />
+			<date type="published" when="2023-01">Jan 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Norman, A., Das, S., Rohr, T., Ghidini, T.: Advanced manufacturing for space applications. CEAS Space Journal 15(1), 1-6 (Jan 2023). https://doi.org/10.1007/s12567-022-00477-6</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Building a Research Integrity Advisor with OpenAI GPT Builder</title>
+		<author>
+			<persName><forename type="first">Ka</forename><forename type="middle">Ching</forename><surname>Chan</surname></persName>
+		</author>
+		<idno type="DOI">10.2139/ssrn.4884418</idno>
+		<ptr target="https://arxiv.org/abs/2303.08774" />
+	</analytic>
+	<monogr>
+		<title level="j">OpenAI</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="report_type">Gpt-4 technical report</note>
+	<note type="raw_reference">OpenAI: Gpt-4 technical report (2024), https://arxiv.org/abs/2303.08774</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<monogr>
+		<title level="m" type="main">Integration of big data using semantic web technologies</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Ostrowski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Rychtyckyj</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Macneille</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Kim</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/ICSC.2016.101</idno>
+		<ptr target="https://doi.org/10.1109/ICSC.2016.101" />
+		<imprint>
+			<date type="published" when="2016-02">02 2016</date>
+			<biblScope unit="page" from="382" to="385" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ostrowski, D., Rychtyckyj, N., Macneille, P., Kim, M.: Integration of big data using semantic web technologies. pp. 382-385 (02 2016). https://doi.org/10.1109/ICSC.2016.101</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">Unifying large language models and knowledge graphs: A roadmap</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wu</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/tkde.2024.3352100</idno>
+		<ptr target="http://dx.doi.org/10.1109/TKDE.2024.3352100" />
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Knowledge and Data Engineering</title>
+		<imprint>
+			<biblScope unit="page" from="1" to="20" />
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Pan, S., Luo, L., Wang, Y., Chen, C., Wang, J., Wu, X.: Unifying large lan- guage models and knowledge graphs: A roadmap. IEEE Transactions on Knowledge and Data Engineering p. 1-20 (2024). https://doi.org/10.1109/tkde.2024.3352100, http://dx.doi.org/10.1109/TKDE.2024.3352100</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Realizing an RDF-Based Information Model for a Manufacturing Company – A Case Study</title>
+		<author>
+			<persName><forename type="first">Niklas</forename><surname>Petersen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lavdim</forename><surname>Halilaj</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Irlán</forename><surname>Grangel-González</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steffen</forename><surname>Lohmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christoph</forename><surname>Lange</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sören</forename><surname>Auer</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-68204-4_31</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Amato</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Fernandez</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Tamma</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">F</forename><surname>Lecue</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Cudré-Mauroux</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Sequeda</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Lange</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Heflin</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="350" to="366" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Petersen, N., Halilaj, L., Grangel-González, I., Lohmann, S., Lange, C., Auer, S.: Realizing an rdf-based information model for a manufacturing company -a case study. In: d&apos;Amato, C., Fernandez, M., Tamma, V., Lecue, F., Cudré-Mauroux, P., Sequeda, J., Lange, C., Heflin, J. (eds.) The Semantic Web -ISWC 2017. pp. 350-366. Springer International Publishing, Cham (2017)</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">Proceedings of the 5th symposium on Operating systems design and implementation - OSDI &apos;02</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Luan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Amodei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Sutskever</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Dean</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Ghemawat</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/1060289</idno>
+	</analytic>
+	<monogr>
+		<title level="m">OSDI&apos;04: Sixth Symposium on Operating System Design and Implementation</title>
+		<imprint>
+			<publisher>ACM Press</publisher>
+			<date type="published" when="2018">2018</date>
+			<biblScope unit="page" from="137" to="150" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., Sutskever, I., Dean, J., Ghemawat, S.: Language models are unsupervised multitask learners. In: OSDI&apos;04: Sixth Symposium on Operating System Design and Implementation. pp. 137-150 (2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Prompt Programming for Large Language Models: Beyond the Few-Shot Paradigm</title>
+		<author>
+			<persName><forename type="first">Laria</forename><surname>Reynolds</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kyle</forename><surname>Mcdonell</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3411763.3451760</idno>
+		<ptr target="https://doi.org/10.1145/3411763.3451760" />
+	</analytic>
+	<monogr>
+		<title level="m">Extended Abstracts of the 2021 CHI Conference on Human Factors in Computing Systems</title>
+		<meeting><address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2021-05-08">2021</date>
+			<biblScope unit="page" from="1" to="7" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Reynolds, L., McDonell, K.: Prompt programming for large language models: Be- yond the few-shot paradigm. In: Extended Abstracts of the 2021 CHI Conference on Human Factors in Computing Systems. CHI EA &apos;21, Association for Computing Machinery, New York, NY, USA (2021). https://doi.org/10.1145/3411763.3451760, https://doi.org/10.1145/3411763.3451760</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">Ontology-based data access: Ontop of databases</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Rodríguez-Muro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Kontchakov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Zakharyaschev</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2013</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Alani</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Kagal</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Fokoue</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Groth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Biemann</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">X</forename><surname>Parreira</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Aroyo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Noy</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Welty</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Berlin Heidelberg, Berlin, Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2013">2013</date>
+			<biblScope unit="page" from="558" to="573" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rodríguez-Muro, M., Kontchakov, R., Zakharyaschev, M.: Ontology-based data ac- cess: Ontop of databases. In: Alani, H., Kagal, L., Fokoue, A., Groth, P., Biemann, C., Parreira, J.X., Aroyo, L., Noy, N., Welty, C., Janowicz, K. (eds.) The Semantic Web -ISWC 2013. pp. 558-573. Springer Berlin Heidelberg, Berlin, Heidelberg (2013)</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Leveraging semantic technologies for digital interoperability in the European railway domain</title>
+		<author>
+			<persName><forename type="first">Rojas</forename><surname>Melendez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julian</forename><surname>Andres</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marina</forename><surname>Aguado</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Polymnia</forename><surname>Vasilopoulou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ivo</forename><surname>Velitchkov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Van</forename><surname>Assche</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dylan</forename><surname>Colpaert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pieter</forename><surname>Verborgh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruben</forename></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-030-88361-438</idno>
+		<ptr target="http://doi.org/10.1007/978-3-030-88361-438" />
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2021</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="volume">12922</biblScope>
+			<biblScope unit="page" from="648" to="664" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rojas Melendez, Julian Andres and Aguado, Marina and Vasilopoulou, Polymnia and Velitchkov, Ivo and Van Assche, Dylan and Colpaert, Pieter and Verborgh, Ruben: Leveraging semantic technologies for digital interoperability in the Euro- pean railway domain. In: The Semantic Web -ISWC 2021. vol. 12922, pp. 648-664 (2021), http://doi.org/10.1007/978-3-030-88361-4 38</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">Ontology re-engineering: A case study from the automotive industry</title>
+		<author>
+			<persName><forename type="first">N</forename><surname>Rychtyckyj</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Raman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Sankaranarayanan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><forename type="middle">S</forename><surname>Kuma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Khemani</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aimag.v38i1.2712</idno>
+		<ptr target="https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/2712" />
+	</analytic>
+	<monogr>
+		<title level="j">AI Magazine</title>
+		<imprint>
+			<biblScope unit="volume">38</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="49" to="60" />
+			<date type="published" when="2017-03">Mar 2017</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rychtyckyj, N., Raman, V., Sankaranarayanan, B., Kuma, P.S., Khemani, D.: Ontology re-engineering: A case study from the automotive industry. AI Magazine 38(1), 49-60 (Mar 2017). https://doi.org/10.1609/aimag.v38i1.2712, https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/2712</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Literal-Aware Knowledge Graph Embedding for Welding Quality Monitoring: A Bosch Case</title>
+		<author>
+			<persName><forename type="first">Zhipeng</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Baifan</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhuoxun</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ognjen</forename><surname>Savkovic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ziqi</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Irlan-Grangel</forename><surname>Gonzalez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmet</forename><surname>Soylu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evgeny</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-47243-5_25</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">T</forename><forename type="middle">R</forename><surname>Payne</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Qi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Poveda-Villalón</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Stoilos</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">L</forename><surname>Hollink</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">Z</forename><surname>Kaoudi</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Cheng</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><surname>Li</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Switzerland, Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer Nature Switzerland</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="453" to="471" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tan, Z., Zhou, B., Zheng, Z., Savkovic, O., Huang, Z., Gonzalez, I.G., Soylu, A., Kharlamov, E.: Literal-aware knowledge graph embedding for welding quality mon- itoring: A bosch case. In: Payne, T.R., Presutti, V., Qi, G., Poveda-Villalón, M., Stoilos, G., Hollink, L., Kaoudi, Z., Cheng, G., Li, J. (eds.) The Semantic Web - ISWC 2023. pp. 453-471. Springer Nature Switzerland, Cham (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">ResMLP: Feedforward Networks for Image Classification With Data-Efficient Training</title>
+		<author>
+			<persName><forename type="first">Hugo</forename><surname>Touvron</surname></persName>
+			<idno type="ORCID">0000-0003-1678-392X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Piotr</forename><surname>Bojanowski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mathilde</forename><surname>Caron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthieu</forename><surname>Cord</surname></persName>
+			<idno type="ORCID">0000-0002-0627-5844</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Alaaeldin</forename><surname>El-Nouby</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edouard</forename><surname>Grave</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gautier</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Armand</forename><surname>Joulin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gabriel</forename><surname>Synnaeve</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jakob</forename><surname>Verbeek</surname></persName>
+			<idno type="ORCID">0000-0003-1419-1816</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hervé</forename><surname>Jégou</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/tpami.2022.3206148</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Pattern Analysis and Machine Intelligence</title>
+		<title level="j" type="abbrev">IEEE Trans. Pattern Anal. Mach. Intell.</title>
+		<idno type="ISSN">0162-8828</idno>
+		<idno type="ISSNe">1939-3539</idno>
+		<imprint>
+			<biblScope unit="volume">45</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="5314" to="5321" />
+			<date type="published" when="2023-04-01">2023</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux, M.A., Lacroix, T., Rozière, B., Goyal, N., Hambro, E., Azhar, F., Rodriguez, A., Joulin, A., Grave, E., Lample, G.: Llama: Open and efficient foundation language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><surname>Touvron</surname></persName>
+		</author>
+		<title level="m">Llama 2: Open foundation and fine-tuned chat models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Touvron, H., et al.: Llama 2: Open foundation and fine-tuned chat models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<monogr>
+		<author>
+			<persName><forename type="first">M</forename><surname>Trajanoska</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Stojanov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Trajanov</surname></persName>
+		</author>
+		<title level="m">Enhancing knowledge graph construction using large language models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Trajanoska, M., Stojanov, R., Trajanov, D.: Enhancing knowledge graph construc- tion using large language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Ontology-Based Data Access: A Survey</title>
+		<author>
+			<persName><forename type="first">Guohui</forename><surname>Xiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diego</forename><surname>Calvanese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roman</forename><surname>Kontchakov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Domenico</forename><surname>Lembo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Antonella</forename><surname>Poggi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Riccardo</forename><surname>Rosati</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Zakharyaschev</surname></persName>
+		</author>
+		<idno type="DOI">10.24963/ijcai.2018/777</idno>
+		<ptr target="https://doi.org/10.24963/ijcai.2018/777" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Twenty-Seventh International Joint Conference on Artificial Intelligence</title>
+		<title level="s">International Joint Conferences on Artificial Intelligence Organization</title>
+		<meeting>the Twenty-Seventh International Joint Conference on Artificial Intelligence</meeting>
+		<imprint>
+			<publisher>International Joint Conferences on Artificial Intelligence Organization</publisher>
+			<date type="published" when="2018-07">7 2018</date>
+			<biblScope unit="page" from="5511" to="5519" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xiao, G., Calvanese, D., Kontchakov, R., Lembo, D., Poggi, A., Rosati, R., Zakharyaschev, M.: Ontology-based data access: A survey. In: Proceed- ings of the Twenty-Seventh International Joint Conference on Artificial Intel- ligence, IJCAI-18. pp. 5511-5519. International Joint Conferences on Artifi- cial Intelligence Organization (7 2018). https://doi.org/10.24963/ijcai.2018/777, https://doi.org/10.24963/ijcai.2018/777</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">Virtual Knowledge Graphs: An Overview of Systems and Use Cases</title>
+		<author>
+			<persName><forename type="first">G</forename><surname>Xiao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Ding</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Cogrel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Calvanese</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/dinta00011</idno>
+		<ptr target="https://doi.org/10.1162/dinta00011" />
+	</analytic>
+	<monogr>
+		<title level="j">Data Intelligence</title>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="201" to="223" />
+			<date type="published" when="2019-06">06 2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xiao, G., Ding, L., Cogrel, B., Calvanese, D.: Virtual Knowledge Graphs: An Overview of Systems and Use Cases. Data Intelligence 1(3), 201-223 (06 2019). https://doi.org/10.1162/dint a 00011, https://doi.org/10.1162/dint a 00011</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<monogr>
+		<title level="m" type="main">A comprehensive capability analysis of gpt-3 and gpt-3.5 series models</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Ye</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Zu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Shao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Gui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Huang</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ye, J., Chen, X., Xu, N., Zu, C., Shao, Z., Liu, S., Cui, Y., Zhou, Z., Gong, C., Shen, Y., Zhou, J., Chen, S., Gui, T., Zhang, Q., Huang, X.: A comprehensive capability analysis of gpt-3 and gpt-3.5 series models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Ontology Reshaping for Knowledge Graph Construction: Applied on Bosch Welding Case</title>
+		<author>
+			<persName><forename type="first">Dongzhuoran</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Baifan</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhuoxun</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmet</forename><surname>Soylu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gong</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ernesto</forename><surname>Jimenez-Ruiz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Egor</forename><forename type="middle">V</forename><surname>Kostylev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Evgeny</forename><surname>Kharlamov</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-19433-7_44</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<editor>
+			<persName><forename type="first">U</forename><surname>Sattler</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Hogan</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">M</forename><surname>Keet</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">J</forename><forename type="middle">P A</forename><surname>Almeida</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Takeda</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Monnin</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">G</forename><surname>Pirrò</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Amato</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page" from="770" to="790" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhou, D., Zhou, B., Zheng, Z., Soylu, A., Cheng, G., Jimenez-Ruiz, E., Kostylev, E.V., Kharlamov, E.: Ontology reshaping for knowledge graph construction: Ap- plied on bosch welding case. In: Sattler, U., Hogan, A., Keet, M., Presutti, V., Almeida, J.P.A., Takeda, H., Monnin, P., Pirrò, G., d&apos;Amato, C. (eds.) The Se- mantic Web -ISWC 2022. pp. 770-790. Springer International Publishing, Cham (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">DB-GPT: Large Language Model Meets Database</title>
+		<author>
+			<persName><forename type="first">Xuanhe</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhaoyan</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guoliang</forename><surname>Li</surname></persName>
+			<idno type="ORCID">0000-0002-1398-0621</idno>
+		</author>
+		<idno type="DOI">10.1007/s41019-023-00235-6</idno>
+		<ptr target="https://doi.org/10.1007/s41019-023-00235-6" />
+	</analytic>
+	<monogr>
+		<title level="j">Data Science and Engineering</title>
+		<title level="j" type="abbrev">Data Sci. Eng.</title>
+		<idno type="ISSN">2364-1185</idno>
+		<idno type="ISSNe">2364-1541</idno>
+		<imprint>
+			<biblScope unit="volume">9</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="102" to="111" />
+			<date type="published" when="2024-01-19">01 2024</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhou, X., Sun, Z., Li, G.: Db-gpt: Large language model meets database. Data Science and Engineering pp. 1-10 (01 2024). https://doi.org/10.1007/s41019-023- 00235-6</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<monogr>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Li</surname></persName>
+		</author>
+		<title level="m">Llm-enhanced data management</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhou, X., Zhao, X., Li, G.: Llm-enhanced data management (2024)</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

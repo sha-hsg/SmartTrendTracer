@@ -10,9 +10,6 @@ from pathlib import Path
 import numpy as np
 import faiss
 from openai import OpenAI
-from sqlalchemy.orm import Session
-
-from app.models.papers import Paper, PaperAuthor, PaperSection, PaperTag
 
 # Get OpenAI API key from environment
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
@@ -162,10 +159,8 @@ class PaperRAGService:
         """Search for papers similar to the query"""
         try:
             # Use the main RAG service for searching
-            from app.models import get_db
             from app.services.rag_service import RAGService
             
-            db = next(get_db())
             rag_service = RAGService(db)
             
             # Search using main RAG service

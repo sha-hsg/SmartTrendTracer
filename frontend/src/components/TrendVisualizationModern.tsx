@@ -2,12 +2,8 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import {
   Chart as ChartJS,
@@ -27,20 +23,13 @@ import {
   TrendingUp,
   TrendingDown,
   Clock,
-  BarChart3,
-  Activity,
   RefreshCw,
   Loader2,
-  AlertCircle,
   Hash,
-  Calendar,
   Users,
   Timer,
-  ChevronRight,
   LineChart,
-  PieChart,
   Zap,
-  Target,
   Twitter,
   FileText
 } from 'lucide-react'
@@ -82,8 +71,16 @@ interface Props {
 }
 
 export default function TrendVisualizationModern({ contentType = 'tweets' }: Props) {
-  const [trendData, setTrendData] = useState<TrendData | null>(null)
-  const [tagData, setTagData] = useState<TagTrendData | null>(null)
+  // Initialize with safe default values
+  const [trendData, setTrendData] = useState<TrendData>({
+    daily: [],
+    hourly: [],
+    by_account: {}
+  })
+  const [tagData, setTagData] = useState<TagTrendData>({
+    top_tags: [],
+    timeline: {}
+  })
   const [timeRange, setTimeRange] = useState('7')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -107,11 +104,11 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
         // Transform the data to match the expected format
         if (trendResponse.data) {
           const data = trendResponse.data
-          // Create a simplified trend data structure
+          // Create a simplified trend data structure with safe defaults
           trendsData = {
-            daily: [], // Substack API doesn't provide daily breakdown
-            hourly: [], // Substack API doesn't provide hourly breakdown
-            by_account: {} // Will use author data instead
+            daily: data.daily || [], // Use data if available
+            hourly: data.hourly || [], // Use data if available
+            by_account: data.by_account || {} // Use data if available
           }
           setTrendData(trendsData)
           
@@ -148,6 +145,16 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
       }
     } catch (error) {
       console.error('Error fetching trends:', error)
+      // Set safe defaults on error
+      setTrendData({
+        daily: [],
+        hourly: [],
+        by_account: {}
+      })
+      setTagData({
+        top_tags: [],
+        timeline: {}
+      })
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -213,13 +220,38 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
     fetchTrendData()
   }
 
-  // Prepare chart data for daily timeline
+  // Prepare chart data for daily timeline with smart labeling based on time range
+  const getTimelineLabels = (data: any[], timeRangeNum: number) => {
+    if (!data || data.length === 0) return []
+    
+    if (timeRangeNum >= 180) {
+      // For half-year and yearly views, show month/year format
+      return data.map(d => new Date(d.date).toLocaleDateString('en-US', { 
+        month: 'short', 
+        year: timeRangeNum >= 365 ? '2-digit' : undefined 
+      }))
+    } else if (timeRangeNum >= 30) {
+      // For monthly views, show month/day
+      return data.map(d => new Date(d.date).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      }))
+    } else {
+      // For shorter periods, show day only or month/day
+      return data.map(d => new Date(d.date).toLocaleDateString('en-US', { 
+        month: timeRangeNum <= 7 ? undefined : 'short',
+        day: 'numeric',
+        weekday: timeRangeNum <= 3 ? 'short' : undefined
+      }))
+    }
+  }
+
   const dailyChartData = {
-    labels: trendData?.daily.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) || [],
+    labels: getTimelineLabels(trendData?.daily || [], parseInt(timeRange)),
     datasets: [
       {
         label: `${contentType === 'articles' ? 'Articles' : 'Tweets'} per Day`,
-        data: trendData?.daily.map(d => d.count) || [],
+        data: trendData?.daily?.map(d => d.count) || [],
         borderColor: contentType === 'articles' ? 'rgb(126, 34, 206)' : 'rgb(29, 161, 242)',
         backgroundColor: contentType === 'articles' ? 'rgba(126, 34, 206, 0.1)' : 'rgba(29, 161, 242, 0.1)',
         tension: 0.3,
@@ -230,14 +262,14 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
 
   // Prepare chart data for hourly timeline
   const hourlyChartData = {
-    labels: trendData?.hourly.map(d => {
+    labels: trendData?.hourly?.map(d => {
       const hour = d.hour.split(' ')[1] || d.hour
       return hour
     }) || [],
     datasets: [
       {
         label: `${contentType === 'articles' ? 'Articles' : 'Tweets'} per Hour`,
-        data: trendData?.hourly.map(d => d.count) || [],
+        data: trendData?.hourly?.map(d => d.count) || [],
         borderColor: 'rgb(255, 99, 132)',
         backgroundColor: 'rgba(255, 99, 132, 0.1)',
         tension: 0.3,
@@ -258,7 +290,7 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
   ]
 
   const accountChartData = {
-    labels: trendData?.daily.map(d => new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) || [],
+    labels: getTimelineLabels(trendData?.daily || [], parseInt(timeRange)),
     datasets: Object.entries(trendData?.by_account || {}).slice(0, 7).map(([ account, data ], index) => ({
       label: `@${account}`,
       data: data.map(d => d.count),
@@ -359,11 +391,16 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
             </h1>
             <p className="text-gray-600">
               Visualize patterns and trends in {contentType === 'articles' ? 'newsletter' : 'social media'} activity
+              {parseInt(timeRange) >= 180 && (
+                <span className="text-sm text-amber-600 block mt-1">
+                  📊 Long-term view: Data may take a moment to load
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-48">
                 <Clock className="h-4 w-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -373,6 +410,9 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
                 <SelectItem value="7">Last 7 days</SelectItem>
                 <SelectItem value="14">Last 14 days</SelectItem>
                 <SelectItem value="30">Last 30 days</SelectItem>
+                <SelectItem value="90">Last quarter (90 days)</SelectItem>
+                <SelectItem value="180">Last half year (180 days)</SelectItem>
+                <SelectItem value="365">Last year (365 days)</SelectItem>
               </SelectContent>
             </Select>
             <Button 
@@ -431,7 +471,7 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="hourly">Hourly</TabsTrigger>
-          <TabsTrigger value="tags">Tags</TabsTrigger>
+          <TabsTrigger value="tags">Concepts</TabsTrigger>
           <TabsTrigger value="accounts">By Account</TabsTrigger>
         </TabsList>
 
@@ -478,10 +518,10 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Hash className="h-5 w-5" />
-                Top Tags Distribution
+                Top Concepts Distribution
               </CardTitle>
               <CardDescription>
-                Most frequently used tags in the selected period
+                Most frequently used concepts in the selected period
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -495,16 +535,15 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
           {tagData?.timeline && Object.keys(tagData.timeline).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Tag Evolution Over Time</CardTitle>
-                <CardDescription>Track how specific tags trend over the period</CardDescription>
+                <CardTitle>Concept Evolution Over Time</CardTitle>
+                <CardDescription>Track how specific concepts trend over the period</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-[400px]">
                   <Line 
                     data={{
-                      labels: Object.values(tagData.timeline)[0]?.map(d => 
-                        new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                      ) || [],
+                      labels: Object.values(tagData.timeline)[0]?.map(d => d.date) ? 
+                        getTimelineLabels(Object.values(tagData.timeline)[0] as any[], parseInt(timeRange)) : [],
                       datasets: Object.entries(tagData.timeline).slice(0, 5).map(([tag, data], index) => ({
                         label: tag,
                         data: data.map(d => d.count),

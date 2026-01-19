@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Retrieval-Augmented Generation for Query Target Type Identification</title>
+				<funder ref="#_rVmkgZn">
+					<orgName type="full">Norwegian Research Council</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Bergen , Norway</note>
+								<orgName type="institution">University of Bergen</orgName>
+								<address>
+									<country key="NO">Norway</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Retrieval-Augmented Generation for Query Target Type Identification</title>
+					</analytic>
+					<monogr>
+						<idno type="ISSN">1613-0073</idno>
+					</monogr>
+					<idno type="MD5">148F9F8592B4B33CC2AD7D2878D99AD9</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T20:01+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>The paradigm shift unleashed by Entity-Oriented Search still characterizes a vast space of the dynamics with which users engage in digital information access, from Web search to e-commerce and social networks. The progress in research around Entity Retrieval tasks has in particular shown the convenience of incorporating type-based information for entities in their methods to provide relevant answers to queries. As types are typically accessible in an ontology of reference within the knowledge base where their assigned entities live, automatically identifying query target types is a relevant problem to tackle. In this work, we propose to address the task of Query Target Type Identification by assessing the capabilities of Large Language Models that have recently shown widespread success. Our experimentation with methods based on Retrieval-Augmented Generation over a purposely built test collection from the literature challenges a well-established closed LLM by presenting it with entity type information from a resource within the core in hubbing Linked Open Data.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1.">Introduction</head><p>The emergence and consolidation of Entity-Oriented Search (EOS) represent a milestone in the evolution of web search paradigms <ref type="bibr" target="#b0">[1]</ref>. The space of services provided by search engines were subtly yet decisively upgraded by offering more direct responses to the user beyond the traditional "blue links. " Indeed, the cognitive workload of finding the actual desired information within relevant documents is alleviated in several scenarios where Search Engine Response Pages (SERPs) provide focused replies, among others, via widgets (like the ones about weather information), entity cards (or infoboxes summarizing factoids, for example, about an artist or a city) and direct answers. In a virtuous cycle, users demand it more often and in more scenarios, by issuing more entity-centric queries, hence the paradigm is reinforced and nowadays as expected as it is ubiquitous. Interwoven with these industrial developments, the focus on entities in research largely established around studying a paradigmatic type of entity, people, in tasks such as expert finding <ref type="bibr" target="#b1">[2]</ref>. It then broadened to all kinds of entities alongside the increasing efforts in Semantic Web to build knowledge bases (KBs) for more and more domains of knowledge, where uniquely identified entities are first-class citizens described by properties and related to other entities. Addressing Entity Retrieval (this is, the problem of ranking relevant entities for an entity-centric query) has enabled a considerable body of research where methods often incorporate information relevant to entities that is stored in KBs <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b3">4]</ref>. Other than properties and relationships as mentioned, a characteristic knowledge item for an entity is its semantic classes or types, typically assigned from an ontology or type taxonomy existing in correspondence to the KB <ref type="bibr" target="#b4">[5]</ref>. As it has been studied, Entity Retrieval (ER) gets benefited from integrating type-based information about the expected entities for the query into the ER approach <ref type="bibr" target="#b5">[6]</ref>. Hence, a related significant problem in Entity-Oriented Search is the one of automatically identifying query target types, i.e. the types of all the entities expected to be relevant for answering the query <ref type="bibr" target="#b6">[7]</ref>. We refer to this problem as Target Type Identification (TTI), and it is the task that we address in this paper.</p><p>To the best of our knowledge, the state-of-the-art TTI approach over the latest developed benchmark is a Learning-to-Rank (LtR) method, where a combination of several kinds of features is manually selected and whose respective importance is then supervisedly learnt <ref type="bibr" target="#b7">[8]</ref>. These features complement each other, as this particular LtR instance brings together query attributes, type attributes, and the scoring from multiple rankings using both traditional lexical matching and Language Models to capture similarity based on distributional semantics in latent space. An attempt to update its performance results into a new state of the art for TTI could exploit modern Large Language Models (LLMs) to replace the more primitive LMs previously used, or even further, possibly replacing many or all previous features with a feature set only made of LLMs. However, although this may indeed improve and, in a way, absorb several of the non-(L)LM features into few modeled by representation -or deep-learning (DL), the feature engineering of the underlying LtR method remains. An alternative consists in re-approaching the TTI task by replacing the feature design altogether with a mechanism that directly uses a single, powerful LLM while integrating the external knowledge that is expected not to be well represented in, or not captured at all by, the billions of an LLM' parameters. The object of experimentation in our work is this alternative by the means of a Retrieval-augmented Generation (RAG) framework <ref type="bibr" target="#b8">[9]</ref> that by design integrates explicit knowledge -here, types in the ontology of a widely known KB-with the parametric knowledge that has shown successful performance in a variety of tasks <ref type="bibr" target="#b9">[10,</ref><ref type="bibr" target="#b10">11,</ref><ref type="bibr" target="#b11">12,</ref><ref type="bibr" target="#b12">13]</ref>. In a series of experimental configurations for RAG-based methods, we assess the abilities exhibited by an established, commercial, closed LLM in identifying target types. Throughout these analyses, we explore an area such as TTI in the encompassing integration of structured entries from a key hub resource in Linked Open Data into the vast space of information technology around LLMs.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.">Query Target Type Identification</head><p>Given an entity-centric or entity-oriented query 𝑞 -this is, a query to be answered with relevant entities-and a type taxonomy 𝑇 , Hierarchical Target Type Identification (TTI) (or Query TTI) <ref type="bibr" target="#b6">[7,</ref><ref type="bibr" target="#b7">8]</ref> is the problem of returning a ranking that lists all the main target types of the query, this is, such that (i) they are the most specific entity classes that are relevant to 𝑞, and (ii) they are not on the same path from the root in the tree 𝑇 two-to-two.</p><p>Since this definition imposes a number of criteria in the way a TTI method is to be assessed, we assume a slightly different set of criteria during evaluation. First, we evaluate a TTI output with set-based metrics, i.e. not order-based as we do not request the LLM to provide a ranking of the correct target types for a query. Also, although requested to the LLM with this definition during augmentation -i.e. regarding the need for being of highest specificity in non-overlapping taxonomy branches-, we do not allow for leniency on the evaluation of this hierarchical nature; the criterion is binary and hence we do not give any sort of discounted scoring for wrongly predicted types that are taxonomically close to the correct one(s).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1.">Retrieval-Augmented Generation</head><p>We consider each of our parameter configurations as a TTI method based on Retrieval-augmented Generation (RAG) <ref type="bibr" target="#b8">[9]</ref>. Following established literature practices <ref type="bibr" target="#b13">[14,</ref><ref type="bibr" target="#b14">15]</ref>, we instantiate the common naive RAG framework with its three distinctive stages, in a similar fashion as done previously for other tasks <ref type="bibr" target="#b12">[13,</ref><ref type="bibr" target="#b15">16]</ref>.</p><p>The first component performs retrieval to obtain a ranked list of target types for each query. This crucial step is the one selecting the items from external information to be then provided explicitly during the following stage, augmentation. As in this work we are interested in assessing the abilities of LLMs to integrate this explicit knowledge with its parametric sources, we assume two possible (near-)optimal retrievers. First, an oracle retrieval assumes the ground-truth ranked target types from the test collection (cf. Section 2.3) as a perfectly informed type ranking. Second, an extension of this oracle, that we refer to as pseudo-oracle, is obtained for each query by adding, after the oracle-given ranked types, all new types coming from the union of the type sets in the ontology for all the top-1,000 entities retrieved with BM25, a solid first-pass retriever <ref type="bibr" target="#b16">[17]</ref>. As we describe below in Section 2.3, the relevance score for each query-type pair in the collection allows us to use the ground-truth target types for each query as an oracle ranking in our experimentation for the retrieval stage. This order is also the by-ranking oracle order of passages in augmentation phase, and the order of the opening sub-sequence (corresponding to this oracle ranking) of the retrieved pseudo-oracle.</p><p>In the second RAG stage, augmentation, we engineer a prompt to provide the retrieved target types for LLM assessment. The prompt starts with a header that describes the task at hand, and the format of the input data and its expected output: " You are an assistant for a question-answering task. You are provided with entity types (or classes) from DBpedia ontology version 2015-10, each type preceded with its corresponding identifier or type ID. Then, you are provided with a user query that has been issued to a search engine. This query is best answered by ranking entities that are relevant to the query. Use the types and the query that you are provided with, to ANSWER the QUESTION to the best of your ability. If you don't know the answer, just say that you don't know. Keep the answer concise. Always mention one or more corresponding type IDs (which must be among the given TYPES) in their correct format (this is, &lt;dbo:X&gt; for a type with name X). Examples are given below, each example between the '&lt;example&gt;' and '&lt;/example&gt;' tags. After that, you are given the query with types so that you answer the question. "</p><p>In the zero-shot prompting scenarios, the part about providing examples (from "as it's done in each example" to "After that, ") is omitted from the prompt. Otherwise, this header above is followed by one or more examples in the same format as the main item of the task. The prompt ends with this main item, i.e. the actual set of retrieved types -provided in a particular order according to an experimental parameter-followed by the query, the main task question for the LLM and an open field "Answer:" to be completed with the generated answer. Each type is given by its ID in a pseudo-URI (Universal Resource Identifier) &lt;dbo:X&gt; for camel-cased type X, and its full type name as a valid expression in natural language. In an augmentation-phase parameter, we experiment with providing also a short description of the type, if available for its URI in DBpedia 2016-04 via the comment predicate, &lt;http<ref type="url" target="://www.w3.org/2000/01/rdf-schema#comment&gt;">://www.w3.org/2000/01/rdf-schema#comment&gt;</ref>. The task question asks to the generator: " Which one(s), if any, of the provided entity type(s) are the main target types of the query, this is, such that (i) they are the most specific category of entities that are relevant to the query, and (ii) they are not on the same path from the root in the tree induced by the DBpedia 2015-10 ontology? "</p><p>The generation phase completes the RAG pipeline. In all our experiments, we input the prompt build during augmentation into GPT-3.5 (gpt-3.5-turbo-0125) <ref type="bibr" target="#b9">[10]</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.2.">Research Questions</head><p>The research questions that guide our experimental analysis in Section 3 are the following:</p><p>• RQ1: How does the LLM perform at assessing the target types given by an optimal or near-optimal retriever? • RQ2: What is the impact of the order in which these retrieved types are in the prompt? • RQ3: Does adding a textual description to each type name help identifying target types? • RQ4: How much do the few-shot examples provided in the prompt contribute? • RQ5: What performance differences are observed across query groups?</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.3.">Experimental Setup</head><p>Test collection. The dataset to evaluate TTI performances is based on DBpedia-Entity, an Entity Retrieval (ER) collection <ref type="bibr" target="#b3">[4]</ref>. DBpedia-Entity contains 485 user queries that aggregate multiple ER benchmarks, where relevance of entities from DBpedia 2015-10 were judged by annotators. The TTI collection <ref type="bibr" target="#b7">[8]</ref> builds on top of it by assigning human judgements of target types from DBpedia 2015-10 ontology for 479 of the 485 DBpedia-Entity queries (the remaining 6 failed to get annotated types). Specifically, 7 annotators judged types pooled by first-pass lexical retrievers. Each query gets then a set of relevant target types, with the number of annotators for each type as its relevance, making the total amount of annotators across all types for a query to be 7. These scores allow for assuming the TTI ground truth as a ranking.</p><p>Evaluation metrics. We measure the performance of a method on each query, in terms of traditional set-based metrics used in Information Retrieval, specifically Precision, Recall, and their harmonic mean F-Score. We report the average performance across a query set, for few query sets of interest: the entire set of 479 queries in the TTI collection, and each of the four query groups in its partition (SemSearch-ES, INEX-LD, QALD2 and ListSearch).</p><p>Method configurations. This is a summary of our experimental parameters:</p><p>• (Retrieval) method: oracle or pseudo-oracle retriever; • (Augmentation) type information -only the name, or name and description-; type order -as given by the ranking, or random-; and few-shot learning -zero-shot or one-shot.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.">Experimental Results</head><p>Table <ref type="table">1</ref> presents the experimental results for all the RAG-based TTI methods given by the parameter configurations described in the previous Section.</p><p>RQ1: Assessing near-perfect type retrieval. We first observe a very high precision for most cases, and especially for one-shot augmentation setting. Yet, in these same results we can verify that this LLM still fails to compare with the perfect retrievers, hurting the performance even further with peudo-oracle retrieval. Recall measurements are clearly underperforming.</p><p>RQ2: Impact of order of retrieved types in prompt. In the majority of the cases of methods and evaluation metrics, the scenario of types ordered by ranking is the best performing, giving weight to observations in the related work regarding artefacts in the LLM favouring the memorization of the typical by-ranking order in RAG. However, for some metrics the best performing method in an entire query group, and in particular for every metric in the measurement for all queries in the collection, performs best with random order of types.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>RQ3: Importance of type description alongside type name in prompt.</head><p>In most cases, we observe that for oracle-based methods, the provision of the type description results slightly detrimental, arguably introducing confusion rather than positively complementing the type name. Instead, for methods using the pseudo-oracle retriever, the type description helps improve the performance, as they possibly add a correction to the misleading types.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>RQ4: Contribution of examples in few-shot learning.</head><p>As expected, the one-shot learning in the prompt benefits almost all the scenarios across methods and metrics, often substantially, and in several cases achieving a performance very close to perfect.</p><p>RQ5: Breakdown by query groups. INEX-LD -general keyword queries-is, overall, as expected, the most challenging group, while ListSearch -entity list queries-and SemSearch-ES -named entity queries-, groups that lend themselves into entity types, the best performing ones.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.">Conclusion and Future Work</head><p>In this work we have addressed Target Type Identification via LLM-powered RAG methods.</p><p>In future lines of work, we aim to experiment with (i) alternative evaluation criteria that take into account the hierarchical nature of TTI, (ii) sub-optimal retrievers to assess the more realistic performance, and (iii) incorporating more aspects of the graph-based nature of both the type system and the knowledge base that hosts the entities.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Table 1</head><p>Experimental results over all the queries in the test collection (first block), as well as over each of its query groups (second to fifth blocks). In each block, the best performance on a metric is shown in bold. </p></div>		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgments</head><p>This work was funded by the <rs type="funder">Norwegian Research Council</rs> grant <rs type="grantNumber">329745</rs> <rs type="grantName">Machine Teaching for Explainable AI</rs>.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funding" xml:id="_rVmkgZn">
+					<idno type="grant-number">329745</idno>
+					<orgName type="grant-name">Machine Teaching for Explainable AI</orgName>
+				</org>
+			</listOrg>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Entity-Oriented Search</title>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-93935-3</idno>
+	</analytic>
+	<monogr>
+		<title level="s">The Information Retrieval Series</title>
+		<idno type="ISSN">1387-5264</idno>
+		<imprint>
+			<biblScope unit="volume">39</biblScope>
+			<date type="published" when="2018">2018</date>
+			<publisher>Springer International Publishing</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K. Balog, Entity-Oriented Search, volume 39 of The Information Retrieval Series, Springer, 2018.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">A language modeling framework for expert finding</title>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Leif</forename><surname>Azzopardi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>De Rijke</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.ipm.2008.06.003</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Information Processing &amp; Management</title>
+		<title level="j" type="abbrev">Information Processing &amp; Management</title>
+		<idno type="ISSN">0306-4573</idno>
+		<imprint>
+			<biblScope unit="volume">45</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="19" />
+			<date type="published" when="2009-01">2009</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K. Balog, L. Azzopardi, M. de Rijke, A language modeling framework for expert finding, Information Processing &amp; Management 45 (2009) 1-19.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Query modeling for entity search based on terms, categories, and examples</title>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marc</forename><surname>Bron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maarten</forename><surname>De Rijke</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2037661.2037667</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Transactions on Information Systems</title>
+		<title level="j" type="abbrev">ACM Trans. Inf. Syst.</title>
+		<idno type="ISSN">1046-8188</idno>
+		<idno type="ISSNe">1558-2868</idno>
+		<imprint>
+			<biblScope unit="volume">29</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="1" to="31" />
+			<date type="published" when="2011-12">2011</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K. Balog, M. Bron, M. de Rijke, Query modeling for entity search based on terms, categories, and examples, ACM Trans. Inf. Syst. 29 (2011) 1-31.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">A test collection for entity search in DBpedia</title>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Neumayer</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2484028.2484165</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 36th international ACM SIGIR conference on Research and development in information retrieval</title>
+		<meeting>the 36th international ACM SIGIR conference on Research and development in information retrieval</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2013-07-28">2013</date>
+			<biblScope unit="page" from="737" to="740" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K. Balog, R. Neumayer, A test collection for entity search in DBpedia, in: Proceedings of the 36th international ACM SIGIR conference on Research and development in Information Retrieval, SIGIR &apos;13, 2013, pp. 737-740.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">On Type-Aware Entity Retrieval</title>
+		<author>
+			<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3121050.3121054</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the ACM SIGIR International Conference on Theory of Information Retrieval</title>
+		<meeting>the ACM SIGIR International Conference on Theory of Information Retrieval</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2017-10">2017</date>
+			<biblScope unit="page" from="27" to="34" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, K. Balog, On type-aware entity retrieval, in: Proceedings of the 2017 ACM International Conference on Theory of Information Retrieval, ICTIR &apos;17, 2017, pp. 27-34.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Identifying and exploiting target entity type information for ad hoc entity retrieval</title>
+		<author>
+			<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+			<idno type="ORCID">0000-0002-0331-000X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Faegheh</forename><surname>Hasibi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s10791-018-9346-x</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Information Retrieval Journal</title>
+		<title level="j" type="abbrev">Inf Retrieval J</title>
+		<idno type="ISSN">1386-4564</idno>
+		<idno type="ISSNe">1573-7659</idno>
+		<imprint>
+			<biblScope unit="volume">22</biblScope>
+			<biblScope unit="issue">3-4</biblScope>
+			<biblScope unit="page" from="285" to="323" />
+			<date type="published" when="2019">2019</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, F. Hasibi, K. Balog, Identifying and exploiting target entity type information for ad hoc entity retrieval, Information Retrieval Journal 22 (2019) 285-323.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Hierarchical target type identification for entity-oriented queries</title>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Neumayer</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2396761.2398648</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 21st ACM international conference on Information and knowledge management</title>
+		<meeting>the 21st ACM international conference on Information and knowledge management</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2012-10-29">2012</date>
+			<biblScope unit="page" from="2391" to="2394" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">K. Balog, R. Neumayer, Hierarchical target type identification for entity-oriented queries, in: Proceedings of the 21st ACM International Conference on Information and Knowledge Management, CIKM &apos;12, 2012, pp. 2391-2394.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Target Type Identification for Entity-Bearing Queries</title>
+		<author>
+			<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Faegheh</forename><surname>Hasibi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krisztian</forename><surname>Balog</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3077136.3080659</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 40th International ACM SIGIR Conference on Research and Development in Information Retrieval</title>
+		<meeting>the 40th International ACM SIGIR Conference on Research and Development in Information Retrieval</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2017-08-07">2017</date>
+			<biblScope unit="page" from="845" to="848" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, F. Hasibi, K. Balog, Target type identification for entity-bearing queries, in: Proceedings of the 40th International ACM SIGIR Conference on Research and Develop- ment in Information Retrieval, SIGIR &apos;17, 2017, pp. 845-848.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledgeintensive nlp tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>-T. Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Kiela</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="9459" to="9474" />
+			<date type="published" when="2020">2020</date>
+			<publisher>Curran Associates, Inc</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W.-t. Yih, T. Rocktäschel, S. Riedel, D. Kiela, Retrieval-augmented generation for knowledge- intensive nlp tasks, in: Advances in Neural Information Processing Systems, volume 33, Curran Associates, Inc., 2020, pp. 9459-9474.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Language models are unsupervised multitask learners</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Luan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Amodei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Sutskever</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever, Language models are unsupervised multitask learners, 2019.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<monogr>
+		<title level="m" type="main">Llama 2: Open Foundation and Fine-Tuned Chat Models</title>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">T</forename></persName>
+		</author>
+		<idno>ArXiv abs/2307.09288</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">H. T. et al., Llama 2: Open Foundation and Fine-Tuned Chat Models, ArXiv abs/2307.09288 (2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">An Empirical Study of Instruction-tuning Large Language Models in Chinese</title>
+		<author>
+			<persName><forename type="first">Qingyi</forename><surname>Si</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tong</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zheng</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xu</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanan</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weiping</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.findings-emnlp.269</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2023</title>
+		<meeting><address><addrLine>Singapore</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="4086" to="4107" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Q. Si, T. Wang, Z. Lin, X. Zhang, Y. Cao, W. Wang, An empirical study of instruction-tuning large language models in Chinese, in: Findings of the Association for Computational Linguistics: EMNLP 2023, Association for Computational Linguistics, Singapore, 2023, pp. 4086-4107.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">SDG target detection in environmental reports using Retrieval-augmented Generation with LLMs</title>
+		<author>
+			<persName><forename type="first">Dario</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.climatenlp-1.19</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st Workshop on Natural Language Processing Meets Climate Change (ClimateNLP 2024)</title>
+		<meeting>the 1st Workshop on Natural Language Processing Meets Climate Change (ClimateNLP 2024)<address><addrLine>Bangkok, Thailand</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="241" to="250" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, SDG target detection in environmental reports using retrieval-augmented generation with LLMs, in: Proceedings of ClimateNLP, Association for Computational Linguistics, Bangkok, Thailand, 2024, pp. 241-250.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Enabling Large Language Models to Generate Text with Citations</title>
+		<author>
+			<persName><forename type="first">Tianyu</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Howard</forename><surname>Yen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiatong</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Danqi</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.emnlp-main.398</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</title>
+		<editor>
+			<persName><forename type="first">H</forename><surname>Bouamor</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Bali</surname></persName>
+		</editor>
+		<meeting>the 2023 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Singapore</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="6465" to="6488" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">T. Gao, H. Yen, J. Yu, D. Chen, Enabling large language models to generate text with citations, in: H. Bouamor, K. Bali (Eds.), Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, Association for Computational Linguistics, Singapore, 2023, pp. 6465-6488.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Leveraging Large Language Models: Enhancing Retrieval-Augmented Generation with ScaNN and Gemma for Superior AI Response</title>
+		<author>
+			<persName><forename type="first">Min</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peiqing</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zihao</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaowei</forename><surname>Bi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fa</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/icmlca63499.2024.10753879</idno>
+		<idno type="arXiv">arXiv:2312.10997</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2024 5th International Conference on Machine Learning and Computer Application (ICMLCA)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2024-10-18">2024</date>
+			<biblScope unit="page" from="619" to="622" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Y. Gao, Y. Xiong, X. Gao, K. Jia, J. Pan, Y. Bi, Y. Dai, J. Sun, M. Wang, H. Wang, Retrieval- augmented generation for large language models: A survey, 2024. arXiv:2312.10997.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">EquinorQA: Large Language Models for Question Answering Over Proprietary Data</title>
+		<author>
+			<persName><forename type="first">Darío</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bjarte</forename><surname>Johansen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jakob</forename><surname>Vigerust Kallestad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Seong-Eun</forename><surname>Cho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cèsar</forename><surname>Ferri</surname></persName>
+		</author>
+		<idno type="DOI">10.3233/faia241049</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Frontiers in Artificial Intelligence and Applications</title>
+		<imprint>
+			<publisher>IOS Press</publisher>
+			<date type="published" when="2024-10-16">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Garigliotti, B. Johansen, J. V. Kallestad, S.-E. Cho, C. Ferri, EquinorQA: Large Language Models for Question Answering over proprietary data, in: ECAI 2024 -27th European Con- ference on Artificial Intelligence -Including 13th Conference on Prestigious Applications of Intelligent Systems (PAIS 2024), IOS Press, 2024.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">THE PROBABILITY RANKING PRINCIPLE IN IR</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">E</forename><surname>Robertson</surname></persName>
+		</author>
+		<idno type="DOI">10.1108/eb026647</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Documentation</title>
+		<idno type="ISSN">0022-0418</idno>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="294" to="304" />
+			<date type="published" when="1977-04-01">1977</date>
+			<publisher>Emerald</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">S. Robertson, The probability ranking principle in IR, Journal of Documentation 33 (1977) 294-304.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

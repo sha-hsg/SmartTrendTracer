@@ -2,12 +2,8 @@
 API endpoints for managing tag ontology and hierarchical relationships
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
 from pydantic import BaseModel
-
-from app.models import get_db, TagConcept, TagSynonym, TagMapping, TagOntologyService
-from app.models import Tag, Tweet
 
 router = APIRouter()
 
@@ -70,7 +66,6 @@ class TreeNode(BaseModel):
 TreeNode.model_rebuild()
 
 @router.get("/tree", response_model=List[TreeNode])
-def get_ontology_tree(db: Session = Depends(get_db)):
     """Get the complete tag hierarchy as a tree"""
     service = TagOntologyService(db)
     return service.get_hierarchy_tree()
@@ -79,7 +74,6 @@ def get_ontology_tree(db: Session = Depends(get_db)):
 def get_all_concepts(
     parent_id: Optional[int] = Query(None),
     level: Optional[int] = Query(None),
-    db: Session = Depends(get_db)
 ):
     """Get all tag concepts, optionally filtered by parent or level"""
     query = db.query(TagConcept)
@@ -108,7 +102,6 @@ def get_all_concepts(
     ]
 
 @router.get("/concept/{concept_id}", response_model=ConceptResponse)
-def get_concept(concept_id: int, db: Session = Depends(get_db)):
     """Get a specific tag concept by ID with extended information"""
     concept = db.query(TagConcept).filter(TagConcept.id == concept_id).first()
     if not concept:
@@ -184,7 +177,6 @@ def get_concept(concept_id: int, db: Session = Depends(get_db)):
     )
 
 @router.post("/concept", response_model=ConceptResponse)
-def create_concept(concept: ConceptCreate, db: Session = Depends(get_db)):
     """Create a new tag concept"""
     # Check if tag already exists
     existing = db.query(TagConcept).filter(TagConcept.tag == concept.tag.lower().replace(' ', '-')).first()
@@ -223,7 +215,6 @@ def create_concept(concept: ConceptCreate, db: Session = Depends(get_db)):
 def update_concept(
     concept_id: int,
     update: ConceptUpdate,
-    db: Session = Depends(get_db)
 ):
     """Update a tag concept"""
     concept = db.query(TagConcept).filter(TagConcept.id == concept_id).first()
@@ -264,7 +255,6 @@ def update_concept(
     )
 
 @router.delete("/concept/{concept_id}")
-def delete_concept(concept_id: int, db: Session = Depends(get_db)):
     """Delete a tag concept and all its relationships"""
     concept = db.query(TagConcept).filter(TagConcept.id == concept_id).first()
     if not concept:
@@ -286,7 +276,6 @@ def delete_concept(concept_id: int, db: Session = Depends(get_db)):
 def add_synonym(
     concept_id: int,
     synonym: SynonymCreate,
-    db: Session = Depends(get_db)
 ):
     """Add a synonym to a concept"""
     concept = db.query(TagConcept).filter(TagConcept.id == concept_id).first()
@@ -313,7 +302,6 @@ def add_synonym(
     return {"message": "Synonym added successfully", "synonym": new_synonym.synonym_tag}
 
 @router.delete("/synonym/{synonym_id}")
-def delete_synonym(synonym_id: int, db: Session = Depends(get_db)):
     """Delete a synonym"""
     synonym = db.query(TagSynonym).filter(TagSynonym.id == synonym_id).first()
     if not synonym:
@@ -328,7 +316,6 @@ def delete_synonym(synonym_id: int, db: Session = Depends(get_db)):
     return {"message": "Synonym deleted successfully"}
 
 @router.get("/resolve/{tag}")
-def resolve_tag(tag: str, db: Session = Depends(get_db)):
     """Resolve a tag to its canonical concept and get all related tags"""
     normalized_tag = tag.lower().replace(' ', '-')
     
@@ -374,7 +361,6 @@ def resolve_tag(tag: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/filter-tags/{tag}")
-def get_filter_tags(tag: str, db: Session = Depends(get_db)):
     """Get all tags to use when filtering by a specific tag"""
     service = TagOntologyService(db)
     tags = service.get_tags_for_filtering(tag)
@@ -386,13 +372,11 @@ def get_filter_tags(tag: str, db: Session = Depends(get_db)):
     return {"source_tag": tag, "filter_tags": tags}
 
 @router.post("/rebuild-mappings")
-def rebuild_mappings(db: Session = Depends(get_db)):
     """Rebuild the tag mapping cache (admin operation)"""
     TagMapping.rebuild_mappings(db)
     return {"message": "Tag mappings rebuilt successfully"}
 
 @router.get("/stats")
-def get_ontology_stats(db: Session = Depends(get_db)):
     """Get statistics about the tag ontology"""
     total_concepts = db.query(TagConcept).count()
     total_synonyms = db.query(TagSynonym).count()
@@ -429,7 +413,6 @@ def get_ontology_stats(db: Session = Depends(get_db)):
     }
 
 @router.post("/import-existing-tags")
-def import_existing_tags(db: Session = Depends(get_db)):
     """Import existing tags as uncategorized concepts"""
     # Get all unique tags from the Tag table
     existing_tags = db.query(Tag.tag).distinct().all()

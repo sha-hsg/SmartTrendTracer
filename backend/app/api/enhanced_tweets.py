@@ -2,13 +2,8 @@
 Enhanced Tweets API with faceted browsing
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, func, and_, or_, distinct
 from typing import List, Optional, Dict
 from pydantic import BaseModel
-
-from app.models import get_db, Tweet, Tag
-from app.models.tag_ontology import TagOntologyService, TagConcept
 
 router = APIRouter()
 
@@ -34,7 +29,6 @@ def faceted_search_tweets(
     tags: Optional[List[str]] = Query(None),
     search: Optional[str] = None,
     exclude_retweets: bool = Query(False),
-    db: Session = Depends(get_db)
 ):
     """
     Faceted search for tweets
@@ -164,7 +158,6 @@ def faceted_search_tweets(
     )
 
 @router.get("/tweets/hierarchy-facets")
-def get_hierarchy_facets(db: Session = Depends(get_db)):
     """Get tag hierarchy concepts with tweet counts for faceted browsing"""
     
     ontology_service = TagOntologyService(db)
@@ -207,7 +200,6 @@ def get_tweets_by_author(
     page_size: int = Query(50, ge=1, le=200),
     tags: Optional[List[str]] = Query(None),
     exclude_retweets: bool = Query(False),
-    db: Session = Depends(get_db)
 ):
     """Get tweets from a specific author with optional tag filtering"""
     
@@ -289,7 +281,6 @@ def get_tweets_by_tags(
     page_size: int = Query(50, ge=1, le=200),
     authors: Optional[List[str]] = Query(None),
     exclude_retweets: bool = Query(False),
-    db: Session = Depends(get_db)
 ):
     """
     Get tweets by tags
@@ -369,7 +360,6 @@ def get_tweets_by_tags(
     }
 
 @router.get("/authors")
-def get_all_authors(db: Session = Depends(get_db)):
     """Get all tweet authors with their tweet counts"""
     
     authors = db.query(

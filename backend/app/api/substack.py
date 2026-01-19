@@ -2,13 +2,9 @@
 Substack API endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import desc, func
 from typing import List, Optional
 from datetime import datetime, timedelta
-from pydantic import BaseModel
 
-from app.models import get_db
 from app.models.substack import (
     SubstackAuthor, 
     SubstackArticle, 
@@ -19,16 +15,15 @@ from app.models.substack import (
 from app.services.article_summarizer import ArticleSummarizer
 from app.analyzers.substack_trend_analyzer import SubstackTrendAnalyzer
 from app.services.unified_tag_service import UnifiedTagService
+from app.services.vector_store_openai import get_vector_store
 
 router = APIRouter()
 
 # Pydantic models for request/response
-class ArticleTagCreate(BaseModel):
     tag: str
     tag_type: str = 'manual'
     confidence: float = 1.0
 
-class SnippetCreate(BaseModel):
     text: str
     start_offset: Optional[int] = None
     end_offset: Optional[int] = None
@@ -37,15 +32,12 @@ class SnippetCreate(BaseModel):
     importance: int = 3
     tags: List[str] = []
 
-class SnippetUpdate(BaseModel):
     annotation: Optional[str] = None
     category: Optional[str] = None
     importance: Optional[int] = None
 
-class ArticleDateUpdate(BaseModel):
     published_at: datetime
 
-class ArticleUrlUpdate(BaseModel):
     url: str
 
 @router.get("/articles")
@@ -56,7 +48,6 @@ def get_articles(
     search: Optional[str] = None,
     tag: Optional[str] = None,
     use_ontology: bool = Query(True, description="Use tag ontology for hierarchical filtering"),
-    db: Session = Depends(get_db)
 ):
     """Get Substack articles with pagination and filters"""
     import logging
@@ -134,7 +125,6 @@ def get_articles(
     }
 
 @router.get("/articles/{article_id}")
-def get_article(article_id: int, db: Session = Depends(get_db)):
     """Get full article content with markdown"""
     article = db.query(SubstackArticle).options(
         joinedload(SubstackArticle.author),
@@ -191,7 +181,6 @@ def get_article(article_id: int, db: Session = Depends(get_db)):
     }
 
 @router.get("/authors")
-def get_authors(db: Session = Depends(get_db)):
     """Get all Substack authors with article counts"""
     authors = db.query(
         SubstackAuthor,
@@ -221,7 +210,6 @@ def get_authors(db: Session = Depends(get_db)):
 def add_article_tag(
     article_id: int,
     tag_data: ArticleTagCreate,
-    db: Session = Depends(get_db)
 ):
     """Add tag to article"""
     # Check article exists
@@ -248,13 +236,22 @@ def add_article_tag(
     db.add(tag)
     db.commit()
     
+    # Update vector store with new tag
+    try:
+        vector_store = get_vector_store()
+        # Get article title and subtitle for context
+        context = f"{article.title}: {article.subtitle[:100] if article.subtitle else ''}"
+        vector_store.update_tag_incrementally(tag_data.tag, 'article', context)
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Failed to update vector store for article tag '{tag_data.tag}': {e}")
+    
     return {"message": "Tag added successfully", "tag": tag_data.tag}
 
 @router.delete("/articles/{article_id}/tags/{tag}")
 def remove_article_tag(
     article_id: int,
     tag: str,
-    db: Session = Depends(get_db)
 ):
     """Remove tag from article"""
     tag_entry = db.query(ArticleTag).filter(
@@ -274,7 +271,6 @@ def remove_article_tag(
 def update_article_date(
     article_id: int,
     date_data: ArticleDateUpdate,
-    db: Session = Depends(get_db)
 ):
     """Update the published date of an article"""
     # Get the article
@@ -295,7 +291,6 @@ def update_article_date(
 def update_article_url(
     article_id: int,
     url_data: ArticleUrlUpdate,
-    db: Session = Depends(get_db)
 ):
     """Update the URL of an article"""
     # Get the article
@@ -316,7 +311,6 @@ def update_article_url(
 def create_snippet(
     article_id: int,
     snippet_data: SnippetCreate,
-    db: Session = Depends(get_db)
 ):
     """Create a new snippet for an article"""
     # Check article exists
@@ -360,7 +354,6 @@ def create_snippet(
 def update_snippet(
     snippet_id: int,
     update_data: SnippetUpdate,
-    db: Session = Depends(get_db)
 ):
     """Update snippet annotation or metadata"""
     snippet = db.query(ArticleSnippet).filter(ArticleSnippet.id == snippet_id).first()
@@ -383,7 +376,6 @@ def update_snippet(
     
     return {"message": "Snippet updated successfully"}
 
-class ArticleUpdate(BaseModel):
     title: Optional[str] = None
     content_markdown: Optional[str] = None
     subtitle: Optional[str] = None
@@ -392,7 +384,6 @@ class ArticleUpdate(BaseModel):
 def update_article(
     article_id: int,
     update_data: ArticleUpdate,
-    db: Session = Depends(get_db)
 ):
     """Update article title, content, or subtitle"""
     article = db.query(SubstackArticle).filter(SubstackArticle.id == article_id).first()
@@ -417,7 +408,6 @@ def update_article(
     return {"message": "Article updated successfully", "id": article_id}
 
 @router.delete("/articles/{article_id}")
-def soft_delete_article(article_id: int, db: Session = Depends(get_db)):
     """Soft delete an article (mark as deleted but keep in database)"""
     article = db.query(SubstackArticle).filter(SubstackArticle.id == article_id).first()
     
@@ -433,7 +423,6 @@ def soft_delete_article(article_id: int, db: Session = Depends(get_db)):
 def delete_author_and_articles(
     author_id: int,
     keep_author: bool = Query(False, description="Keep author, only delete articles"),
-    db: Session = Depends(get_db)
 ):
     """Delete all articles from an author and optionally the author itself"""
     # Find the author
@@ -491,7 +480,6 @@ def delete_author_and_articles(
     }
 
 @router.post("/articles/{article_id}/restore")
-def restore_article(article_id: int, db: Session = Depends(get_db)):
     """Restore a soft-deleted article"""
     article = db.query(SubstackArticle).filter(SubstackArticle.id == article_id).first()
     
@@ -504,7 +492,6 @@ def restore_article(article_id: int, db: Session = Depends(get_db)):
     return {"message": "Article restored successfully", "id": article_id}
 
 @router.delete("/snippets/{snippet_id}")
-def delete_snippet(snippet_id: int, db: Session = Depends(get_db)):
     """Delete a snippet"""
     snippet = db.query(ArticleSnippet).filter(ArticleSnippet.id == snippet_id).first()
     
@@ -517,7 +504,6 @@ def delete_snippet(snippet_id: int, db: Session = Depends(get_db)):
     return {"message": "Snippet deleted successfully"}
 
 @router.get("/stats")
-def get_substack_stats(db: Session = Depends(get_db)):
     """Get Substack collection statistics"""
     total_articles = db.query(SubstackArticle).count()
     total_authors = db.query(SubstackAuthor).count()
@@ -569,7 +555,6 @@ def get_substack_stats(db: Session = Depends(get_db)):
     }
 
 @router.post("/articles/{article_id}/summarize")
-def summarize_article(article_id: int, db: Session = Depends(get_db)):
     """Generate AI summary for an article"""
     try:
         summarizer = ArticleSummarizer()
@@ -588,12 +573,53 @@ def summarize_article(article_id: int, db: Session = Depends(get_db)):
 @router.get("/trends")
 def get_substack_trends(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
-    db: Session = Depends(get_db)
 ):
     """Get comprehensive Substack trend analysis"""
     try:
         analyzer = SubstackTrendAnalyzer(db)
         trends = analyzer.analyze_trends(days)
+        
+        # Ensure all required fields are present even if empty
+        if not trends or trends.get("status") == "No articles found":
+            from datetime import datetime, timedelta
+            end_date = datetime.utcnow()
+            start_date = end_date - timedelta(days=days)
+            
+            trends = {
+                "period": f"{days} days",
+                "total_articles": 0,
+                "date_range": {
+                    "start": start_date.isoformat(),
+                    "end": end_date.isoformat()
+                },
+                "topic_trends": {
+                    "top_topics": [],
+                    "trending_up": []
+                },
+                "author_trends": {
+                    "most_active": [],
+                    "total_authors": 0,
+                    "avg_articles_per_author": 0
+                },
+                "tag_trends": {
+                    "top_tags": [],
+                    "tag_relationships": [],
+                    "unique_tags": 0
+                },
+                "snippet_insights": {
+                    "categories": {},
+                    "important_highlights": [],
+                    "total_snippets": 0
+                },
+                "velocity_trends": [],
+                "content_clusters": [],
+                "emerging_themes": [],
+                "summary": {
+                    "key_insights": ["No articles found in the specified time period"],
+                    "recommendations": ["Check back later for new content"]
+                }
+            }
+        
         return trends
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to analyze trends: {str(e)}")
@@ -602,7 +628,6 @@ def get_substack_trends(
 def search_articles(
     q: str = Query(..., min_length=2),
     limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
 ):
     """Full-text search across articles"""
     search_term = f"%{q}%"

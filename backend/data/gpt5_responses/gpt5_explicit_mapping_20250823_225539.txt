@@ -1,0 +1,93 @@
+Timestamp: 2025-08-23T22:55:39.495035
+Total concepts sent: 1687
+--------------------------------------------------------------------------------
+{
+  "instructions_followed": false,
+  "error": {
+    "message": "Producing an exact, verified mapping for all 1,687 concepts in a single response exceeds safe message size and reliability constraints (risk of truncation and mismapped IDs). To ensure correctness and preserve every mongodb_id with clear keep/merge/rename actions, please allow batching.",
+    "proposed_process": [
+      "Step 1: Confirm the 12 root categories below (or adjust).",
+      "Step 2: Send the 1,687 concepts in 8-10 batches (e.g., 180-220 concepts per batch) or allow me to stream multiple replies.",
+      "Step 3: I will return for each batch: complete concept_mappings with explicit keep/merge/rename, new_parent_slug, and merge_into_id, plus a per-batch verification.",
+      "Step 4: I will provide a final consolidated verification with output_count=1687 and empty unmapped_ids."
+    ],
+    "batching_options": [
+      "Option A: You provide batches of mongodb_id lists; I map them.",
+      "Option B: I propose deterministic batches (e.g., by first letter of slug or by entity_type) and proceed in sequence."
+    ],
+    "notes": [
+      "Merges will preserve all mongodb_id values; only target concept will receive merges.",
+      "All synonyms/aliases that represent the same semantic concept (e.g., 'LLM', 'LLMs', 'large_language_model') will be merged to a single canonical concept.",
+      "Auto-generated 'topic' duplicates will be resolved into canonical research entities or products where appropriate."
+    ]
+  },
+  "total_concepts_processed": 0,
+  "root_categories": [
+    {
+      "slug": "fundamentals",
+      "display_name": "AI/ML Fundamentals",
+      "description": "Foundational concepts, fields, and theory in AI/ML (e.g., ML, DL, NLP, CV, scaling laws)."
+    },
+    {
+      "slug": "models_and_architectures",
+      "display_name": "Models and Architectures",
+      "description": "Model families (e.g., GPT, Llama, Claude, Gemini) and core architectures (Transformer, SSM, CNN, RNN, Diffusion)."
+    },
+    {
+      "slug": "techniques_and_methods",
+      "display_name": "Techniques and Methods",
+      "description": "Training/inference techniques, optimization, prompting, RAG, quantization, distillation, decoding strategies."
+    },
+    {
+      "slug": "training_and_post_training",
+      "display_name": "Training and Post-Training",
+      "description": "Pre-training, fine-tuning, instruction-tuning, post-training (RLHF/DPO/GRPO), PEFT methods like LoRA."
+    },
+    {
+      "slug": "data_and_datasets",
+      "display_name": "Data and Datasets",
+      "description": "Datasets, data sources, data curation/filtering, licenses, and data standards."
+    },
+    {
+      "slug": "evaluation_and_benchmarks",
+      "display_name": "Evaluation and Benchmarks",
+      "description": "Benchmarks, metrics, evaluation practices, leaderboards, and model comparison methodology."
+    },
+    {
+      "slug": "applications_and_tasks",
+      "display_name": "Applications and Tasks",
+      "description": "Downstream tasks (QA, NER, MT, ASR, OCR, code gen) and product/application use-cases."
+    },
+    {
+      "slug": "modalities_and_multimodal",
+      "display_name": "Modalities and Multimodal",
+      "description": "Modalities (text, image, audio, video) and multimodal models (VLMs) and pipelines."
+    },
+    {
+      "slug": "responsible_ai_and_governance",
+      "display_name": "Responsible AI and Governance",
+      "description": "Safety, ethics, interpretability, privacy, red-teaming, environmental impact, governance."
+    },
+    {
+      "slug": "ecosystem_and_industry",
+      "display_name": "Ecosystem and Industry",
+      "description": "Organizations, events, releases, market dynamics, industry news."
+    },
+    {
+      "slug": "tools_libraries_and_standards",
+      "display_name": "Tools, Libraries, and Standards",
+      "description": "Software/frameworks (e.g., PyTorch, Transformers), formats (GGUF), and standards (OWL, SPARQL, RDFS)."
+    },
+    {
+      "slug": "named_and_research_entities",
+      "display_name": "Named & Research Entities",
+      "description": "People, organizations, locations, products, research entities (models, methods, benchmarks, metrics, tasks)."
+    }
+  ],
+  "concept_mappings": [],
+  "verification": {
+    "input_count": 1687,
+    "output_count": 0,
+    "unmapped_ids": []
+  }
+}

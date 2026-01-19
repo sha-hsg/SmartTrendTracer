@@ -1,0 +1,2552 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">LLMs4OL: Large Language Models for Ontology Learning</title>
+				<funder ref="#_tsafeyr">
+					<orgName type="full">ERC ScienceGraph</orgName>
+				</funder>
+				<funder ref="#_DYSN54t #_dnxanny">
+					<orgName type="full">DFG NFDI4DataScience</orgName>
+				</funder>
+				<funder ref="#_dH4kzCg">
+					<orgName type="full">German BMBF</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2023-08-02">2 Aug 2023</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Hamed</forename><forename type="middle">Babaei</forename><surname>Giglou</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">TIB Leibniz Information Centre for Science and Technology , Hannover , Germany</note>
+								<orgName type="institution">TIB Leibniz Information Centre for Science and Technology</orgName>
+								<address>
+									<settlement>Hannover</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Jennifer</forename><forename type="middle">D'</forename><surname>Souza</surname></persName>
+							<email>jennifer.dsouza@tib.eu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">TIB Leibniz Information Centre for Science and Technology , Hannover , Germany</note>
+								<orgName type="institution">TIB Leibniz Information Centre for Science and Technology</orgName>
+								<address>
+									<settlement>Hannover</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Sören</forename><surname>Auer</surname></persName>
+							<email>auer@tib.eu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">TIB Leibniz Information Centre for Science and Technology , Hannover , Germany</note>
+								<orgName type="institution">TIB Leibniz Information Centre for Science and Technology</orgName>
+								<address>
+									<settlement>Hannover</settlement>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">LLMs4OL: Large Language Models for Ontology Learning</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2023-08-02">2 Aug 2023</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">96E4C5026DC1B4FD242A38C02E78FE9E</idno>
+					<idno type="arXiv">arXiv:2307.16648v2[cs.AI]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-21T17:03+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Large Language Models</term>
+					<term>LLMs</term>
+					<term>Ontologies</term>
+					<term>Ontology Learning</term>
+					<term>Prompting</term>
+					<term>Prompt-based Learning</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>We propose the LLMs4OL approach, which utilizes Large Language Models (LLMs) for Ontology Learning (OL). LLMs have shown significant advancements in natural language processing, demonstrating their ability to capture complex language patterns in different knowledge domains. Our LLMs4OL paradigm investigates the following hypothesis: Can LLMs effectively apply their language pattern capturing capability to OL, which involves automatically extracting and structuring knowledge from natural language text? To test this hypothesis, we conduct a comprehensive evaluation using the zero-shot prompting method. We evaluate nine different LLM model families for three main OL tasks: term typing, taxonomy discovery, and extraction of non-taxonomic relations. Additionally, the evaluations encompass diverse genres of ontological knowledge, including lexicosemantic knowledge in WordNet, geographical knowledge in GeoNames, and medical knowledge in UMLS. The obtained empirical results show that foundational LLMs are not sufficiently suitable for ontology construction that entails a high degree of reasoning skills and domain expertise. Nevertheless, when effectively fine-tuned they just might work as suitable assistants, alleviating the knowledge acquisition bottleneck, for ontology construction.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Ontology Learning (OL) is an important field of research in artificial intelligence (AI) and knowledge engineering, as it addresses the challenge of knowledge acquisition and representation in a variety of domains. OL involves automatically identifying terms, types, relations, and potentially axioms from textual information to construct an ontology <ref type="bibr" target="#b27">[29]</ref>. Numerous examples of human-expert created ontologies exist, ranging from general-purpose ontologies to domain-specific ones, e.g., Unified Medical Language System (UMLS) <ref type="bibr" target="#b7">[8]</ref>, WordNet <ref type="bibr" target="#b37">[40]</ref>, GeoNames <ref type="bibr" target="#b48">[52]</ref>, Dublin Core Metadata Initiative (DCMI) <ref type="bibr" target="#b61">[64]</ref>, schema.org <ref type="bibr" target="#b18">[19]</ref>, etc. Traditional ontology creation relies on manual specification by domain experts, which can be time-consuming, costly, error-prone, and impractical when knowledge constantly evolves or domain experts are unavailable. Consequently, OL techniques have emerged to automatically acquire knowledge from unstructured or semi-structured sources, such as text documents and the web, and transform it into a structured ontology. A quick review of the field shows that traditional approaches to OL are based on lexico-syntactic pattern mining and clustering <ref type="bibr" target="#b62">[65,</ref><ref type="bibr" target="#b38">41,</ref><ref type="bibr" target="#b34">36,</ref><ref type="bibr" target="#b24">25,</ref><ref type="bibr" target="#b3">4,</ref><ref type="bibr" target="#b19">20,</ref><ref type="bibr" target="#b55">59,</ref><ref type="bibr" target="#b49">53,</ref><ref type="bibr">27,</ref><ref type="bibr" target="#b1">2,</ref><ref type="bibr" target="#b22">23,</ref><ref type="bibr" target="#b21">22]</ref>. In contrast, recent advances in natural language processing (NLP) through Large Language Models (LLMs) <ref type="bibr" target="#b41">[45]</ref> offer a promising alternative to traditional OL methods. The ultimate goal of OL is to provide a cost-effective and scalable solution for knowledge acquisition and representation, enabling more efficient and effective decision-making in a range of domains. To this end, we introduce the LLMs4OL paradigm and empirically ground it as a foundational first step.</p><p>Currently, there is no research explicitly training LLMs for OL. Thus to test LLMs for OL for the first time, we made some experimental considerations. The first being: Do the characteristics of LLMs justify ontology learning? First, LLMs are trained on extensive and diverse text, similar to domain-specific knowledge bases <ref type="bibr" target="#b46">[50]</ref>. This aligns with the need for ontology developers to have extensive domain knowledge. Second, LLMs are built on the core technology of transformers that have enabled their higher language modeling complexity by facilitating the rapid scaling of their parameters. These parameters represent connections between words, enabling LLMs to comprehend the meaning of unstructured text like sentences or paragraphs. Further, by extrapolating complex linguistic patterns from word connections, LLMs exhibit human-like response capabilities across various tasks, as observed in the field of "emergent" AI. This behavior entails performing tasks beyond their explicit training, such as generating executable code, diverse genre text, and accurate text summaries <ref type="bibr" target="#b53">[57,</ref><ref type="bibr" target="#b58">62]</ref>. Such ability of LLMs to extrapolate patterns from simple word connections, encoding language semantics, is crucial for OL. Ontologies often rely on analyzing and extrapolating structured information connections, such as term-type taxonomies and relations, from unstructured text <ref type="bibr" target="#b16">[17]</ref>. Thus LLMs4OL hypothesis of LLMs' fruitful application for OL appeared conceptually justified.</p><p>LLMs are being developed at a rapid pace. At the time of writing of this work, at least 60 different LLMs are reported <ref type="bibr" target="#b4">[5]</ref>. This led to our second main experimental consideration. Which LLMs to test for the LLMs4OL task hypothesis? Empirical validation of various LLMs is crucial for NLP advancements and selecting suitable models for research tasks. Despite impressive performances in diverse NLP tasks, LLM effectiveness varies. For the foundational groundwork of LLMs4OL, we comprehensively selected eight diverse model families based on architecture and reported state-of-the-art performances at the time of this writing. The three main LLM architectures are encoder, decoder, and encoder-decoder. The selected LLMs for validation are: BERT <ref type="bibr" target="#b14">[15]</ref> (encoder-only); BLOOM <ref type="bibr" target="#b51">[55]</ref>, MetaAI's LLaMA <ref type="bibr" target="#b54">[58]</ref>, OpenAI's GPT-3 <ref type="bibr" target="#b8">[9]</ref>, GPT-3.5 <ref type="bibr" target="#b41">[45]</ref>,  (all decoder-only); and BART <ref type="bibr" target="#b30">[32]</ref> and Google's Flan-T5 <ref type="bibr" target="#b9">[10]</ref> (encoder-decoder). Recent studies show that BERT excels in text classification and named entity recognition <ref type="bibr" target="#b14">[15]</ref>, BART is effective in text generation and summarization <ref type="bibr" target="#b30">[32]</ref>, and LLaMA demonstrates high accuracy in various NLP tasks, including reason-ing, question answering, and code generation <ref type="bibr" target="#b54">[58]</ref>. Flan-T5 emphasizes instruction tuning and exhibits strong multi-task performance <ref type="bibr" target="#b9">[10]</ref>. BLOOM's unique multilingual approach achieves robust performance in tasks like text classification and sequence tagging <ref type="bibr" target="#b51">[55]</ref>. Lastly, the GPT series stands out for its humanlike text generation abilities <ref type="bibr" target="#b8">[9,</ref><ref type="bibr" target="#b41">45,</ref><ref type="bibr">46]</ref>. In this work, we aim to comprehensively unify these LLMs for their effectiveness under the LLMs4OL paradigm for the first time.</p><p>With the two experimental considerations in place, we now introduce the LLMs4OL paradigm and highlight our contributions. LLMs4OL is centered around the development of ontologies that comprise the following primitives <ref type="bibr" target="#b36">[38]</ref>: 1. a set of strings that describe terminological lexical entries L for conceptual types; 2. a set of conceptual types T ; 3. a taxonomy of types in a hierarchy H T ; 4. a set of non-taxonomic relations R described by their domain and range restrictions arranged in a heterarchy of relations H R ; and 5. a set of axioms A that describe additional constraints on the ontology and make implicit facts explicit. The LLMs4OL paradigm, introduced in this work, addresses three core aspects of OL as tasks, outlined as the following research questions (RQs).</p><p>-RQ1: Term Typing Task -How effective are LLMs for automated type discovery to construct an ontology? -RQ2: Type Taxonomy Discovery Task -How effective are LLMs to recognize a type taxonomy i.e. the "is-a" hierarchy between types? -RQ3: Type Non-Taxonomic Relation Extraction Task -How effective are LLMs to discover non-taxonomic relations between types?</p><p>The diversity of the empirical tests of this work are not only w.r.t. LLMs considered, but also the ontological knowledge domains tested for. Specifically, we test LLMs for lexico-semantic knowledge in WordNet <ref type="bibr" target="#b37">[40]</ref>, geographical knowledge in GeoNames <ref type="bibr" target="#b0">[1]</ref>, biomedical knowledge in UMLS <ref type="bibr">[7]</ref>, and web content type representations in schema.org <ref type="bibr" target="#b43">[47]</ref>. For our empirical validation of LLMs4OL, we seize the opportunity to include PubMedBERT <ref type="bibr" target="#b17">[18]</ref>, a domain-specific LLM designed solely for the biomedical domain and thus applicable only to UMLS. This addition complements the eight domain-independent model families introduced earlier as a ninth model type. Summarily, our main contributions are:</p><p>-The LLMs4OL task paradigm as a conceptual framework for leveraging LLMs for OL. -An implementation of the LLMs4OL concept leveraging tailored prompt templates for zero-shot OL in the context of three specific tasks, viz. term typing, type taxonomic relation discovery, and type non-taxonomic relation discovery. These tasks are evaluated across unique ontological sources wellknown in the community. Our code source with templates and datasets per task are released here <ref type="url" target="https://github.com/HamedBabaei/LLMs4OL">https://github.com/HamedBabaei/LLMs4OL</ref>. -A thorough out-of-the-box empirical evaluation of eight state-of-the-art domainindependent LLM types (10 models) and a ninth biomedical domain-specific LLM type (11th model) for their suitability to the various OL tasks considered in this work. Furthermore, the most effective overall LLM is finetuned and subsequently finetuned LLM results are reported for our three OL tasks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>There are three avenues of related research: ontology learning from text, prompting LLMs for knowledge, and LLM prompting methods or prompt engineering.</p><p>Ontology Learning from Text. One of the earliest approaches <ref type="bibr" target="#b21">[22]</ref> used lexicosyntactic patterns to extract new lexicosemantic concepts and relations from large collections of unstructured text, enhancing WordNet <ref type="bibr" target="#b37">[40]</ref>. WordNet is a lexical database comprising a lexical ontology of concepts (nouns, verbs, etc.) and lexico-semantic relations (synonymy, hyponymy, etc.). Hwang <ref type="bibr" target="#b22">[23]</ref> proposed an alternative approach for constructing a dynamic ontology specific to an application domain. The method involved iteratively discovering types and taxonomy from unstructured text using a seed set of terms representing high-level domain types. In each iteration, newly discovered specialized types were incorporated, and the algorithm detected relations between linguistic features. The approach utilized a simple ontology algebra based on inheritance hierarchy and set operations. Agirre et al. <ref type="bibr" target="#b1">[2]</ref> enhanced WordNet by extracting topically related words from web documents. This unique approach added topical signatures to enrich WordNet. Kietz et al. <ref type="bibr">[27]</ref> introduced the On-To-Knowledge system, which utilized a generic core ontology like GermaNet <ref type="bibr" target="#b20">[21]</ref> or WordNet as the foundational structure. It aimed to discover a domain-specific ontology from corporate intranet text resources. For concept extraction and pruning, it employed statistical term frequency count heuristics, while association rules were applied for relation identification in corporate texts. Roux et al. <ref type="bibr" target="#b49">[53]</ref> proposed a method to expand a genetics ontology by reusing existing domain ontologies and enhancing concepts through verb patterns extracted from unstructured text. Their system utilized linguistic tools like part-of-speech taggers and syntactic parsers. Wagner <ref type="bibr" target="#b55">[59]</ref> employed statistical analysis of corpora to enrich WordNet in non-English languages by discovering relations, adding new terms to concepts, and acquiring concepts through the automatic acquisition of verb preferences. Moldovan and Girju <ref type="bibr" target="#b39">[42]</ref> introduced the Knowledge Acquisition from Text (KAT) system to enrich WordNet's finance domain coverage. Their method involved four stages:</p><p>(1) discovering new concepts from a seed set of terms, expanding the concept list using dictionaries; (2) identifying lexical patterns from new concepts; (3) discovering relations from lexical patterns; and (4) integrating extracted information into WordNet using a knowledge classification algorithm. In <ref type="bibr" target="#b3">[4]</ref>, an unsupervised method is presented to enhance ontologies with domain-specific information using NLP techniques such as NER and WSD. The method utilizes a general NER system to uncover a taxonomic hierarchy and employs WSD to enrich existing synsets by querying the internet for new terms and disambiguating them through cooccurrence frequency. Khan and Luo <ref type="bibr" target="#b24">[25]</ref> employed clustering techniques to find new terms, utilizing WordNet for typing. They used the self-organizing tree algorithm <ref type="bibr" target="#b15">[16]</ref>, inspired by molecular evolution, to establish an ontology hierarchy. Additionally, Xu et al. <ref type="bibr" target="#b62">[65]</ref> focused on automatically acquiring domainspecific terms and relations through a TFIDF-based single-word term classifier, a lexico-syntactic pattern finder based on known relations and collocations, and a relation extractor utilizing discovered lexico-syntactic patterns.</p><p>Predominantly, the approaches for OL <ref type="bibr" target="#b56">[60]</ref> that stand out so far are based on lexico-syntactic patterns for term and relation extraction as well as clustering for type discovery. Otherwise, they build on seed-term-based bootstrapping methods. The reader is referred to further detailed reviews <ref type="bibr" target="#b5">[6,</ref><ref type="bibr" target="#b35">37]</ref> on this theme for a comprehensive overall methodological picture for OL. Traditional NLP was defined by modular pipelines by which machines were equipped step-wise with annotations at the linguistic, syntactic, and semantic levels to process text. LLMs have ushered in a new era of possibilities for AI systems that obviate the need for modular NLP systems to understand natural language which we tap into for the first time for the OL task in this work.</p><p>Prompting LLMs for Knowledge. LLMs can process and retrieve facts based on their knowledge which makes them good zero-shot learners for various NLP tasks. Prompting LLMs means feeding an input x using a template function f prompt (x), a textual string prompt input that has some unfilled slots, and then the LLMs are used to probabilistically fill the unfilled information to obtain a final string x ′ , from which the final output y can be derived <ref type="bibr" target="#b32">[34]</ref>. The LAMA: LAnguage Model Analysis <ref type="bibr" target="#b47">[51]</ref> benchmark has been introduced as a probing technique for analyzing the factual and commonsense knowledge contained in unidirectional LMs (i.e. Transformer-XL <ref type="bibr" target="#b11">[12]</ref>) and bidirectional LMs (i.e. BERT and ELMo <ref type="bibr" target="#b44">[48]</ref>) with cloze prompt templates from knowledge triples. They demonstrated the potential of pre-trained language models (PLMs) in probing factswhere facts are taken into account as subject-relation-object triples or questionanswer pairs -with querying LLMs by converting facts into a cloze template which is used as an input for the LM to fill the missing token. Further studies extended LAMA by the automated discovery of prompts <ref type="bibr" target="#b23">[24]</ref>, finetuning LLMs for better probing <ref type="bibr" target="#b2">[3,</ref><ref type="bibr" target="#b29">31,</ref><ref type="bibr" target="#b63">66]</ref>, or a purely unsupervised way of probing knowledge from LMs <ref type="bibr" target="#b45">[49]</ref>. These studies analyzed LLMs for their ability to encode various linguistic and non-linguistic facts. This analysis was limited to predefined facts that reinforce the traditional linguistic knowledge of the LLMs, and as a result do not reflect how concepts are learned by the LLMs. In response to this limitation, Dalvi et al. <ref type="bibr" target="#b12">[13]</ref> put forward a proposal to explore and examine the latent concepts learned by LLMs, offering a fresh perspective on BERT. They defined concepts as "a group of words that are meaningful," i.e. that can be clustered based on relations such as lexical, morphological, etc. In another study <ref type="bibr" target="#b50">[54]</ref>, they propose the framework ConceptX by extending their studies on seven LLMs in latent space analysis with the alignment of the grouped concepts to human-defined concepts. These works show that using LLMs and accessing the concept's latent spaces, allows us to group concepts and align them to predefined types and type relations discovery.</p><p>Prompt Engineering. As a novel discipline, prompt engineering focuses on designing optimal instructions for LLMs to enable successful task performance. Standard prompting <ref type="bibr" target="#b57">[61]</ref> represents a fundamental approach for instructing LLMs. It allows users to craft their own customized "self-designed prompts" to effectively interact with LLMs <ref type="bibr" target="#b8">[9]</ref> and prompt them to respond to the given prompt instruction straightaway with an answer. Consider the manually crafted FLAN collection <ref type="bibr" target="#b33">[35]</ref> addressing diverse NLP tasks other than OL as an exemplar. Notably, the nature of some problems naturally encompass a step-by-step thought process for arriving at the answer. In other words, the problem to be solved can be decomposed as a series of preceding intermediate steps before arriving at the final solution. E.g., arithmetic or reasoning problems. Toward explainability and providing language models in a sense "time to think" helping it respond more accurately, there are advanced prompt engineering methods as well. As a first, as per the Chain-of-Thought (CoT) <ref type="bibr" target="#b59">[63]</ref> prompting method, the prompt instruction is so crafted that the LLM is instructed to break down complex tasks as a series of incremental steps leading to the solution. This helps the LLM to reason stepby-step and arrive at a more accurate and logical conclusion. On the other hand Tree-of-Thoughts (ToT) <ref type="bibr" target="#b64">[67]</ref> has been introduced for tasks that require exploration or strategic lookahead. ToT generalizes over CoT prompting by exploring thoughts that serve as intermediate steps for general problem-solving with LLMs. Both CoT and ToT unlock complex reasoning capabilities through intermediate reasoning steps in combination with few-shot or zero-shot <ref type="bibr" target="#b26">[28]</ref> prompting. Another approach for solving more complex tasks is using decomposed prompting <ref type="bibr" target="#b25">[26]</ref>, where we can further decompose tasks that are hard for LLMs into simpler solvable sub-tasks and delegate these to sub-task-specific LLMs.</p><p>Given the LLMs4OL task paradigm introduced in this work, complex prompting is not a primary concern, as our current focus is on the initial exploration of the task to identify the areas where we need further improvement. We want to understand how much we have accomplished so far before delving into more complex techniques like CoT, ToT, and decomposed prompting. Once we have a clearer picture of the model's capabilities and limitations in a standard prompting setting, we can then consider other than standard prompt engineering approaches by formulating OL as a stepwise reasoning task.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">The LLMs4OL Task Paradigm</head><p>The Large Language Models for Ontology Learning (LLMs4OL) task paradigm offers a conceptual framework to accelerate the time-consuming and expensive construction of ontologies exclusively by domain experts to a level playing field involving powerful AI methods such as LLMs for high-quality OL results; consequently and ideally involving domains experts only in validation cycles. In theory, with the right formulations, all tasks pertinent to OL fit within the LLMs4OL task paradigm. OL tasks are based on ontology primitives <ref type="bibr" target="#b36">[38]</ref>, including lexical entries L, conceptual types T , a hierarchical taxonomy of types H T , non-taxonomic relations R in a heterarchy H R , and a set of axioms A to describe the ontology's constraints and inference rules. To address these primitives, OL tasks <ref type="bibr" target="#b40">[44]</ref> include: 1) Corpus preparation -selecting and collecting source texts for ontology building. 2) Terminology extraction -identifying and extracting relevant terms. 3) Term typing -grouping similar terms into conceptual types. 4) Taxonomy construction -establishing "is-a" hierarchies between types. 5) Relationship extraction -identifying semantic relationships beyond "is- a." 6) Axiom discovery -finding constraints and inference rules for the ontology. This set of six tasks forms the LLMs4OL task paradigm. See Figure <ref type="figure" target="#fig_0">1</ref> for the proposed LLMs4OL conceptual framework.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Corpus Preparation</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Conceptualization</head><p>In this work, we empirically ground three core OL tasks using LLMs as a foundational basis for future research. However, traditional AI paradigms rely on testing models only on explicitly trained tasks, which is not the case for LLMs. Instead, we test LLMs for OL as an "emergent" behavior <ref type="bibr" target="#b53">[57,</ref><ref type="bibr" target="#b58">62]</ref>, where they demonstrate the capacity to generate responses on a wide range of tasks despite lacking explicit training. The key to unraveling the emergent abilities of LLMs is to prompt them for their knowledge, as popularized by GPT-3 <ref type="bibr" target="#b8">[9]</ref>, via carefully designed prompts. As discussed earlier (see section 2), prompt engineering for LLMs is a new AI sub-discipline. In this process, a pre-trained language model receives a prompt, such as a natural language statement, to generate responses without further training or gradient updates to its parameters <ref type="bibr" target="#b32">[34]</ref>. Prompts can be designed in two main types based on the underlying LLM pretraining objective: cloze prompts <ref type="bibr" target="#b46">[50,</ref><ref type="bibr" target="#b10">11]</ref>, which involve filling in blanks in an incomplete sentence or passage and suit masked language modeling pre-training; and prefix prompts <ref type="bibr" target="#b31">[33,</ref><ref type="bibr" target="#b28">30]</ref>, which generate text following a given starting phrase and offer more design adaptability to the underlying model. The earlier introduced LLMs4OL paradigm is empirically validated for three select OL tasks using respective prompt functions f prompt (.) suited to each task and model. Task A -Term Typing. A generalized type is discovered for a lexical term.</p><p>The generic cloze prompt template is</p><formula xml:id="formula_0">f A c-prompt (L) := [S?]. [L] [P domain ] is a [M ASK].</formula><p>where S is an optional context sentence, L is the lexical term prompted for, P domain is a domain specification, and the special M ASK token is the type output expected from the model. Since prompt design is an important factor that determines how the LLM responds, eight different prompt template instantiations of the generic template were leveraged with final results reported for the best template. E.g., if WordNet is the base ontology, the part-of-speech type for the lexical term is prompted. In this case, template 1 is " <ref type="bibr">[S]</ref>. <ref type="bibr">[L]</ref> POS is a <ref type="bibr">[MASK]</ref>." Note here "[P domain ]" is POS. Template 2 is " <ref type="bibr">[S]</ref>. <ref type="bibr">[L]</ref> part of speech is a <ref type="bibr">[MASK]</ref>." Note here "[P domain ]" is "part of speech." In a similar manner, eight different prompt variants from the generic template were created. However, the specification of "[P domain ]" depended on the ontology's knowledge domain.</p><p>The prefix prompt template reuses the cloze prompt template but appends an additional "instruction" sentence and replaces the special [MASK] token with a blank or a "?" symbol. Generically, it is</p><formula xml:id="formula_1">f A p-prompt (T ) = [instruction] + f A c-prompt (T )</formula><p>, where the instruction is "Perform a sentence completion on the following sentence:" Based on the eight variations created from the generic cloze template prompt, subsequently eight template variations were created for the prefix prompting of the LLMs as well with best template results reported. The prefix prompt template, similarly, reuses the cloze prompt template with the [MASK] token replaced with a blank or "?" symbol. It is <ref type="bibr">(a, b)</ref>, with instruction "Identify whether the following statement is true or false:" Task C -Non-Taxonomic Relation Extraction. This task discovers non-taxonomic semantic heterarchical relations between types.</p><formula xml:id="formula_2">f B p-prompt (a, b) = [instruction] + f B c-prompt</formula></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>The cloze prompt template is f</head><formula xml:id="formula_3">C c-prompt (h, r, t) := [h] is [r] [t]. T his statement is [M ASK].</formula><p>Where h is a head type, t is a tail type, and r is a non-taxonomic relationship between h and r. To support the discovery of a heterarchy that can consist of a 1-M relational cardinality, for a given relation, all possible type pairs of the ontology were created. The expected output for the [MASK] token was again true or false. Note, unlike in Task A and B, the given template was used as is and no variations of it were created.</p><p>Again, the prefix prompt template reuses the cloze prompt template as the other tasks, with instructions similar to task B. It is</p><formula xml:id="formula_4">f C p-prompt (h, r, t) = [instruction] + f C c-prompt (h, r, t)</formula><p>4 LLMs4OL -Three Ontology Learning Tasks Evaluations</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Evaluation Datasets -Ontological Knowledge Sources</head><p>To comprehensively assess LLMs for the three OL tasks presented in the previous section, we cover a variety of ontological knowledge domain sources. Generally, across the tasks, four knowledge domains are represented, i.e. lexicosemantic -WordNet <ref type="bibr" target="#b37">[40]</ref>, geographical -GeoNames <ref type="bibr" target="#b0">[1]</ref>, biomedicine -Unified Medical Language System (UMLS) <ref type="bibr">[7]</ref> teased out as the National Cancer Institute (NCI) [43], MEDCIN [39], and Systematized Nomenclature of Medicine -Clinical Terms United States (SNOMEDCT US) <ref type="bibr" target="#b52">[56]</ref> subontologies, and content representations in the web -schema.org <ref type="bibr" target="#b43">[47]</ref>. Tasks A, B, and C applied only to UMLS. In other words, the ontology has a supporting knowledge base with terms that can be leveraged in the test prompts for term typing as Task A, taxonomic hierarchical relational prompts as Task B, and non-taxonomic heterarchical relational prompts as Task C. The GeoNames source came with a knowledge base of terms instantiated for types and taxonomic relations, therefore, was leveraged in the Task A and B as OL tests with LLMs of this work. The WordNet source could be leveraged only in Task A since it came with an instantiated collection of lexical terms for syntactic types. It was not applicable in the Tasks B and C for OL defined in this work since the semantic relations in WordNet are lexicosemantic, in other words, between terms directly and not their types. Finally, since the schema.org source offered only typed taxonomies as standardized downloads, it was leveraged only in the OL Task B of this work. In this case, we refrained from scraping the web for instantiations of the schema.org taxonomy. For all other ontological knowledge sources considered in this work that were relevant to Task A, the term instantiations were obtained directly from the source. This facilitates replicating our Task A dataset easily. Detailed information on the ontological knowledge sources per task with relevant dataset statistics are presented next. Task A Datasets. Table <ref type="table" target="#tab_0">1</ref> shows statistical insights for the Task A dataset where we used terms from WordNet, GeoNames, and UMLS. For WordNet we used the WN18RR data dump <ref type="bibr" target="#b13">[14]</ref> that is derived from the original WordNet but released as a benchmark dataset with precreated train and test splits. Overall, it consists of 40,943 terms with 18 different relation types between the terms and four term types (noun, verb, adverb, adjective). We combined the original validation and test sets as a single test dataset. GeoNames comprises 680 categories of geographical locations, which are classified into 9 higher-level categories, e.g. H for stream, lake, and sea, and R for road and railroad. UMLS contains almost three million concepts from various sources which are linked together by semantic relationships. UMLS is unique in that it is a greater semantic ontological network that subsumes other biomedical problem-domain restricted subontolo- gies. We grounded the term typing task to the semantic spaces of three select subontological sources,i.e. NCI, MEDCIN, and SNOMEDCT US. The train datasets were reserved for LLM fine-tuning. Among the 11 models, we selected the most promising one based on its zero-shot performance. The test datasets were used for evaluations in both zero-shot and fine-tuned settings. Task B Datasets. From GeoNames, UMLS, and schema.org we obtained 689, 127, and 797 term types forming type taxonomies. Our test dataset was constructed as type pairs, where half represented the taxonomic hierarchy while the other half were not in a taxonomy. This is based on the following formulations.</p><formula xml:id="formula_5">∀(a ∈ T n , b ∈ T n+1 ) -→ (aRb ∧ b¬Ra) ∀(a ∈ T n , b ∈ T n+1 , c ∈ T n+2 ); (aRb ∧ bRc) -→ aRc ∀(a ∈ T n , b ∈ T n+1 , c ∈ T n+2 ); (c¬Rb ∧ b¬Ra) -→ c¬Ra</formula><p>Where a, b, and c are types at different levels in the hierarchy. T is a collection of types at a particular level in the taxonomy, where n + 2 &gt; n + 1 &gt; n and n is the root. The symbol R represents "a is a super class of type b" as a true taxonomic relation. Conversely, the ¬R represents "b is a super class of type a" as a false taxonomic relation. Furthermore, transitive taxonomic relations, (aRb ∧ bRc) -→ aRc, were also extracted as true relations, while their converse, i.e. (c¬Rb ∧ b¬Ra) -→ c¬Ra were false relations. Task C Datasets. As alluded to earlier, Task C evaluations, i.e. non-taxonomic relations discovery, were relegated to the only available ontological knowledge source among those we considered i.e. UMLS. It reports 53 non-taxonomic relations across its 127 term types. The testing dataset comprised all pairs of types for each relation, where for any given relation some pairs are true while the rest are false candidates. Task B and Task C datasets' statistics are in Table <ref type="table" target="#tab_1">2</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Evaluation Models -Large Language Models (LLMs)</head><p>As already introduced earlier, in this work, we comprehensively evaluate eight main types of domain-independent LLMs reported as state-of-the-art for different tasks in the community. They are: BERT <ref type="bibr" target="#b14">[15]</ref> as an encoder-only architecture, BLOOM <ref type="bibr" target="#b51">[55]</ref>, LLaMA <ref type="bibr" target="#b54">[58]</ref>, GPT-3 <ref type="bibr" target="#b8">[9]</ref>, GPT-3.5 <ref type="bibr" target="#b41">[45]</ref>, and  as decoderonly models, and finally BART <ref type="bibr" target="#b30">[32]</ref> and Flan-T5 <ref type="bibr" target="#b9">[10]</ref> as encoder-decoder models. Flan-T5-XL (3B), 5. BLOOM-1b7 (1.7B), 6. BLOOM-3b (3B), 7. GPT-3 (175B), 8. GPT-3.5 (174B), 9. LLaMA (7B), and GPT-4 (&gt;1T). Additionally, we also test an eleventh biomedical domain-specific model PubMedBERT <ref type="bibr" target="#b17">[18]</ref>. In this work, since we propose the LLMs4OL paradigm for the first time, in a sense postulating OL as an emergent ability of LLMs, it is important for us to test different LLMs on the new task. Evaluating different LLMs supports: 1) Performance comparison -this allows us to identify which models are effective for OL, 2) Model improvement -toward OL one can identify areas where the models need improvement, and 3) Research advancement -with our results from testing and comparing different models, researchers interested in OL could potentially identify new areas of research and develop new techniques for improving LLMs.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">Evaluations</head><p>Metrics. Evaluations for Task A are reported as the mean average precision at k (MAP@K), where k = 1, since this metric was noted as being best suited to the task. Specifically, in our case, for term typing, MAP@1 measures the average precision of the top-1 ranked term types returned by an LLM for prompts initialized with terms from the evaluation set. And evaluations for Tasks B and C are reported in terms of the standard F1-score based on precision and recall.</p><p>Results -Three Ontology Learning Tasks Zero-shot Evaluations. The per task overall evaluations are reported in Table <ref type="table" target="#tab_2">3</ref>. The three main rows of the table marked by alphabets A, B, and C correspond to term typing, type taxonomy discovery, and type non-taxonomic relational hetrarchy discovery results, respectively. The five subrows against Task A shows term typing results for Word-Net, GeoNames, and the three UMLS subontologies, viz. NCI, SNOMEDCT US, and MEDCIN. The three subrows against Task B shows type taxonomy discovery results for GeoNames, UMLS, and schema.org, respectively. Task C evaluation results are provided only for UMLS. We first examine the results in the zero-shot setting, i.e. for LLMs evaluated out-of-the-box, w.r.t. three RQs. RQ1: How effective are LLMs for Task A, i.e. automated type discovery? We examine this question given the results in 5 subrows against the row A, i.e. corresponding to the various ontological datasets evaluated for Task A.</p><p>Of the five ontological sources, the highest term typing results were achieved on the 4-typed WordNet at 91.7% MAP@1 by GPT-3.5. This high performance can be attributed in part to the simple type space of WordNet with only 4 types. However, looking across the other LLMs evaluated on WordNet, in particular even GPT-3, scores in the range of 30% MAP@1 seem to be the norm with a low of 2.2% by BART-Large. Thus LLMs that report high scores on WordNet should be seen as more amenable to syntactic typing regardless of the WordNet simple type space. Considering all the ontological sources, Geonames presents the most fine-grained types taxonomy of 680 types. Despite this, the best result obtained on this source is 39.4% from GPT-4 with BERT-Large second at a close 38.3%. This is better than the typing evaluations on the three biomedical datasets. Even the domain-specific PubMedBERT underperforms. In this regard, domain-independent models with large-scale parameters such a BLOOM (3B) are more amenable to this complex task. Since biomedicine entails deeper domain-specific semantics, we hypothesize better performance not just from domain-specific finetuning but also strategically for task-specific reasoning. The results overview is: 91.7% WordNet by GPT-3.5 &gt; 39.4% GeoNames by GPT-4 &gt; 37.7% SNOMEDCT US by BLOOM-3b &gt; 29.8% MEDCIN by BLOOM-3b &gt; 16.1% NCI by GPT-4.</p><p>RQ2: How effective are LLMs to recognize a type taxonomy i.e. the "is-a" hierarchy between types? We examine this question given the results in the 3 subrows against the main row B, i.e. corresponding to the three ontological sources evaluated for Task B. The highest result was achieved for UMLS by GPT-4 at 78.1%. Of the open-source models, Flan-T5-XL achieved the best result at 64.3%. Thus for the term taxonomy discovery LLMs on average have proven most effective in the zero-shot setting on the biomedical domain.</p><p>The results overview is: 78.1% UMLS by GPT-4 &gt; 74.4% schema.org by GPT-3.5 &gt; 67.8% GeoNames by GPT-3.5. Note the three GPT models were not open-sourced and thus we tested them with a paid subscription. For the opensource models, the results overview is: 64.3% UMLS by Flan-T5-XL &gt; 59.6% GeoNames by Flan-T5-XL &gt; 54.8% schema.org by Flan-T5-Large. RQ3: How effective are LLMs to discover non-taxonomic relations between types? We examine this question given the results in Table <ref type="table" target="#tab_2">3</ref> row for Task C, i.e. for UMLS. The best result achieved is 49.5% by Flan-T5-XL. We consider this a fairly good result over a sizeable set of 7,537 type pairs that are in true non-taxonomic relations or are false pairs.</p><p>Finally, over all the three tasks considered under the LLMs4OL paradigm, term typing proved the hardest obtaining the lowest overall results for most of its ontological sources tested including the biomedical domain in particular. Additionally in our analysis, GPT, Flan-T5, and BLOOM variants showed improved scores with increase in parameters, respectively. This held true for the closed-sourced GPT models, i.e. GPT-3 (175B) and GPT-3.5 (175B) to GPT-4 (&gt;1T) and the open-sourced models, i.e. Flan-T5-Large (780M) to Flan-T5-XL (3B) and BLOOM from 1.7B to 3B. Thus it seems apparent that with an increased number of LLM parameters, we can expect an improvement in ontology learning.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Task X Training Dataset</head><p>Task X Specific Functions</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Integration</head><p>If " <ref type="bibr">[S]</ref> Flan-T5 Fig. <ref type="figure">2</ref>. An illustration of the LLM finetuning workflow on tasks for ontology learning.</p><p>Results -Three Ontology Learning Tasks Finetuned LLM Evaluations.</p><p>Our zero-shot test results indicate that while LLMs seem promising for OL they would need task-specific finetuning to be a practically viable solution. To this end, we adopt the method of "instruction tuning" proposed as the FLAN collection which is the only known systematically deconstructed, effective way to finetune LLMs <ref type="bibr" target="#b33">[35]</ref>. For finetuning, we choose the Flan-T5 LMM for two reasons: 1) it is open-source: we intend to foster future research directions for models unhidden behind paywalls to aid in democratizing LLM research, and 2) it showed consistently good performance across all tasks. The finetuning instructions were instantiated from a small selection of eight samples of each knowledge source' reserved training set and fed in a finetuning workflow shown in Figure <ref type="figure">2</ref>. The finetuned Flan models' results (see last two columns in Table <ref type="table" target="#tab_2">3</ref>) are significantly boosted across almost all tasks. For task A, we observed an average improvement of 25% from zero-shot to the finetuned model for both Flan-T5 variants. Notably, SNOMEDCT US showed least improvement of 9%, while the WordNet showed the most improvement of 45%. For task B we marked an average improvement of 18%, and for task C 3%. Given an illustration of the results in ?? shows that on average finetuned models, even with fewer parameters outperforms models with 1000x or more parameters across the three OL tasks. These insights appear crucial to expedite developmental research progress for practical tools for OL using LLMs which we plan to leverage in our future work.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Conclusions and Future Directions</head><p>Various initiatives benchmark LLM performance, revealing new task abilities <ref type="bibr" target="#b53">[57,</ref><ref type="bibr" target="#b58">62]</ref>. These benchmarks advance computer science's understanding of LLMs. We explore LLMs' potential for Ontology Learning <ref type="bibr" target="#b16">[17,</ref><ref type="bibr" target="#b36">38]</ref> through our introduced conceptual framework, LLMs4OL. Extensive experiments on 11 LLMs across three OL tasks demonstrate the paradigm's proof of concept. Our codebase facilitates replication and extension of methods for testing new LLMs. Our empirical results are promising to pave future work for OL. Future research directions in the field of OL with LLMs can focus on several key areas. First, there is a need to enhance LLMs specifically for ontology learning tasks, exploring novel architectures and fine-tuning to capture ontological structures better. Second, expanding the evaluation to cover diverse knowledge domains beyond the ones examined in the current work would provide a broader understanding of LLMs' generalizability. Third, hybrid approaches that combine LLMs with traditional ontology learning techniques, such as lexico-syntactic pattern mining and clustering, could lead to more accurate and comprehensive ontologies. Fourth, further research can delve into the extraction of specific semantic relations, like part-whole relationships or causality, to enhance the expressiveness of learned ontologies. Standardizing evaluation metrics, creating benchmark datasets, exploring dynamic ontology evolution, and domain-specific learning are important directions. Additionally, integrating human-in-the-loop approaches with expert involvement would enhance ontology relevance and accuracy. Exploring these research directions will advance LLM-based ontology learning, enhancing knowledge acquisition and representation across domains.</p><p>Supplemental Material Statement: Our LLM templates, detailed results, and codebase are publicly released as supplemental material on Github <ref type="url" target="https://github.com/HamedBabaei/LLMs4OL">https:// github.com/HamedBabaei/LLMs4OL</ref>. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>LLMs</head><p>Prompt Templates BERT/BART</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B Flan-T5 Training Setups and Hyperparameters</head><p>We finetune Flan-T5 LM on three tasks and evaluate them on all three tasks using zero-shot testing. It involved employing different sources, i.e. WordNet (task A), GeoNames (task A and B), UMLS (the NCI source representing medical sources in task A, B, and C), and schema.org (task B). Considering task A as an 8-shot instance for training we combined samples task B and C training with the condition that only samples that are in the task A 8-shot instances are considered for inclusion. Next, using task-specific prompt templates, Flan-T5 inputs are generated for finetuning. Following, using designed prompt templates Flan-T5 is fine-tuned.</p><p>We utilized a consistent training strategy for all datasets and models, except for a few hyperparameters: batch size and finetuning steps. All the models were trained using AdamW optimizer with a learning rate of 1e-5. For the Flan-T5-Large model, a batch size of 8 is used during training, while for the Flan-T5-XL model, a batch size of 4 is employed on all datasets. The WordNet and Schema.Org datasets were finetuned for 5 training epochs on both models, similarly, UMLS was finetuned using 10 epochs, while GeoNames was finetuned on Flan-T5-Large for 10 epochs and on Flan-T5-XL for 6 epochs.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C Detailed Results</head><p>The Table <ref type="table" target="#tab_5">8</ref> and Table <ref type="table" target="#tab_6">9</ref> represent prompt template results across all the templates and LLMs for term typing. While the Table <ref type="table" target="#tab_7">10</ref> represents prompt template results across all the templates and LLMs for taxonomy discovery. </p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Fig. 1 .</head><label>1</label><figDesc>Fig. 1. The LLMs4OL task paradigm is an end-to-end framework for ontology learning in various knowledge domains, i.e. lexicosemantics (WordNet), geography (GeoNames), biomedicine (NCI, MEDICIN, SNOMEDCT), and web content types (schema.org). The three OL tasks empirically validated in this work are depicted within the blue arrow, aligned with the greater LLMs4OL paradigm.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head></head><label></label><figDesc>Task B -Taxonomy Discovery. Here a taxonomic hierarchy between pairs of types is discovered.The generic cloze prompt template is f B c-prompt (a, b) := [a|b] is [P hierarchy ] of [b|a]. T his statement is [M ASK].Where(a, b)  or (b, a) are type pairs, P hierarchy indicates superclass relations if the template is initialized for top-down taxonomy discovery, otherwise indicates subclass relations if the template is initialized for bottom-up taxonomy discovery. In Task B, the expected model output for the special [MASK] token for a given type pair was true or false.Similar to term typing, eight template variations of the generic template were created. Four of which were predicated on the top-down taxonomy discovery. E.g., "[a]  is the superclass of [b]. This statement is[MASK]." Note here, [P hierarchy ] is "superclass". Other three templates were based on [P hierarchy ] ∈ parent class, supertype, ancestor class. And four more template instantiations predicated on the bottom-up taxonomy discovery were based on [P hierarchy ] ∈ subclass, child class, subtype, descendant class. Thus eight experiments per template instantiation for the applicable LLM were run and the results from the best template were reported.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 .</head><label>1</label><figDesc>Task A term typing dataset counts across three core ontological knowledge sources, i.e. WordNet, GeoNames, and UMLS, where for Task A UMLS is represented only by the NCI, MEDCIN, and SNOMEDCT US subontological sources. The unique term types per source that defined Task A Ontology Learning is also provided.</figDesc><table><row><cell>Parameter</cell><cell cols="5">WordNet GeoNames NCI MEDCIN SNOMEDCT US</cell></row><row><cell>Train Set Size</cell><cell>40,559</cell><cell cols="2">8,078,865 96,177</cell><cell>277,028</cell><cell>278,374</cell></row><row><cell>Test Set Size</cell><cell>9,470</cell><cell cols="2">702,510 24,045</cell><cell>69,258</cell><cell>69,594</cell></row><row><cell>Types</cell><cell>4</cell><cell>680</cell><cell>125</cell><cell>87</cell><cell>125</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2 .</head><label>2</label><figDesc>Dataset statistics as counts per reported parameter for Task B type taxonomic hierarchy discovery and Task C type non-taxonomic heterarchy discovery across the pertinent ontological knowledge sources respectively per task.</figDesc><table><row><cell cols="2">Task Parameter</cell><cell cols="3">GeoNames UMLS schema.org</cell></row><row><cell></cell><cell>Types</cell><cell>689</cell><cell>127</cell><cell>797</cell></row><row><cell>Task B</cell><cell cols="2">Levels Positive/Negative Samples 680/680 2</cell><cell cols="2">3 254/254 2,670/2,670 6</cell></row><row><cell></cell><cell>Train/Test split</cell><cell>272/1,088</cell><cell cols="2">101/407 1,086/4,727</cell></row><row><cell></cell><cell>Non-Taxonomic Relations</cell><cell>-</cell><cell>53</cell><cell>-</cell></row><row><cell>Task C</cell><cell>Positive/Negative Samples</cell><cell>-</cell><cell>5,641/1,896</cell><cell>-</cell></row><row><cell></cell><cell>Train/Test Split</cell><cell>-</cell><cell>1,507/6,030</cell><cell>-</cell></row></table><note><p>Note these LLMs are released at varying parameter sizes. Thus qualified by the size in terms of parameters written in parenthesis, in all, we evaluate seven LLMs: 1. BERT-Large (340M), 2. BART-Large (400M), 3. Flan-T5-Large (780M), 4.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 3 .</head><label>3</label><figDesc>Zero-shot results across 11 LLMs and finetuned Flan-T5-Large and Flan-T5-XL LLMs results reported for ontology learning Task A i.e. term typing in MAP@1, and as F1-score for Task B i.e. type taxonomy discovery, and Task C i.e. type nontaxonomic relation extraction. The results are in percentages. NCI 11.1 5.9 9.9 9.0 9.8 12.4 15.6 12.7 14.7 7.7 16.1 31.9 32.8 SNOMEDCT US 21.1 28.5 19.8 24.3 31.6 37.0 37.7 24.4 25.0 13.8 27.8 33.4 43.4 MEDCIN 8.7 15.6 12.7 13.0 18.5 28.8 29.8 25.7 23.9 4.9 23.7 38.4 51.8</figDesc><table><row><cell>Zero-Shot Testing</cell><cell>Finetuned</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_4"><head>Table 4 .</head><label>4</label><figDesc>The WordNet zero-shot testing prompt templates for task A. L represents lexical entries, S represents sentence containing L. In the BERT/BART LLMs, for BART the [M ASK] is being replaced by &lt; mask &gt; ".</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head>Table 8 .</head><label>8</label><figDesc>The detailed results of zero-shot testing and finetuning across seven LLMs reported for ontology learning Task A, term typing in MAP@1. The results are in percentages. The * denotes finetuning model results. Results for WordNet and GeoName datasets. Large 0.17 19.70 5.54 31.26 0.0 3.03 5.70 26.80 BLOOM-1b7 66.83 71.53 79.20 76.84 40.08 61.96 68.39 70.03 Flan-T5-XL 2.81 40.26 17.83 52.21 0.01 7.75 18.47 18.85 BLOOM-3b 63.33 75.29 79.08 77.06 37.40 65.32 68.99 71.62 LLaMA-7B 37.26 74.61 70.16 75.97 24.28 76.61 67.41 81.38 GPT-3 15.32 26.55 37.86 27.57 8.47 27.13 27.51 24.65 GPT-3.5 24.27 80.81 89.46 91.72 0.81 60.76 49.38 82.41 Large * 73.32 76.74 54.57 76.90 10.83 61.36 54.29 69.32 Flan-T5-XL * 84.51 84.77 77.27 86.28 50.23 76.46 72.38 80.51 GeoNames BERT-Large 38.34 29.79 30.86 35.32 23.61 25.66 11.32 30.44 BART-Large 8.47 0.57 2.23 0.98 21.48 20.51 7.83 23.21 Flan-T5-Large 11.55 3.57 13.16 4.68 9.45 6.05 8.17 7.38 BLOOM-1b7 2.71 2.54 2.89 3.20 28.51 18.38 25.86 19.80 Flan-T5-XL 33.81 15.71 19.77 20.78 15.36 12.41 18.43 15.82 BLOOM-3b 3.76 4.70 2.64 3.43 28.84 18.08 25.64 20.71 LLaMA-7B 29.49 14.16 25.54 15.95 13.91 9.44 17.79 16.79 Large * 15.08 15.17 14.93 15.12 15.77 16.28 15.93 16.91 Flan-T5-XL * 18.35 18.12 18.12 17.91 17.26 17.32 17.45 17.64</figDesc><table><row><cell cols="2">Dataset LLMs</cell><cell>t1</cell><cell>t2</cell><cell cols="4">Prompt Templates t3 t4 t5 t6</cell><cell>t7</cell><cell>t8</cell></row><row><cell></cell><cell>BERT-Large</cell><cell cols="8">2.19 9.36 9.18 19.41 4.72 19.34 9.93 27.85</cell></row><row><cell></cell><cell>BART-Large</cell><cell cols="8">0.01 0.28 0.22 2.16 0.01 0.03 0.0 0.19</cell></row><row><cell>WordNet</cell><cell>Flan-T5-GPT-4</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>90.11</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>Flan-T5-GPT-3</cell><cell cols="2">22.42 8.72</cell><cell>-</cell><cell>7.50</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>GPT-3.5</cell><cell>35.00</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>GPT-4</cell><cell>43.28</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>Flan-T5-</cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_6"><head>Table 9 .</head><label>9</label><figDesc>The detailed results of zero-shot testing and finetuning across seven LLMs reported for ontology learning Task A, term typing in MAP@1. The results are in percentages. The * denotes finetuning model results. Results for NCI, SNOMEDCT US, and MEDCIN datasets. .76 2.61 2.90 11.09 10.96 1.12 1.36 PubMedBERT 5.87 5.36 4.52 2.79 3.36 1.61 1.33 0.65 BART-Large 7.09 7.87 5.14 6.32 9.10 9.94 7.24 8.26 Flan-T5-Large 4.59 5.06 7.53 8.96 3.06 4.25 5.48 5.84 BLOOM-1b7 12.03 12.10 11.22 12.43 10.95 10.45 11.13 11.49 Flan-T5-XL 4.44 5.65 7.41 9.83 2.12 3.29 3.87 6.28 BLOOM-3b 13.77 14.35 12.94 14.41 14.26 14.06 14.92 15.56 LLaMA-7B 3.78 4.05 3.24 4.77 3.67 3.92 5.25 7.71 GPT-3 9.30 9.17 11.03 12.74 9.37 8.75 9.14 9.11 GPT-3.5 11.04 9.52 14.70 14.22 8.56 8.13 12.68 11.24 Large * 30.60 31.59 31.32 31.92 29.11 29.28 31.29 30.79 Flan-T5-XL * 31.51 30.99 32.78 32.05 30.01 29.70 31.76 31.35 SNOMEDCT BERT-Large 19.83 8.02 1.06 0.12 21.10 12.76 0.45 0.04 PubMedBERT 28.48 22.47 13.91 5.70 7.96 3.58 2.29 1.51 BART-Large 19.16 19.81 4.16 4.04 17.54 17.89 10.06 9.43 Flan-T5-Large 19.26 19.89 21.04 24.32 8.07 8.90 11.54 12.92 BLOOM-1b7 32.43 37.02 13.78 19.97 29.48 30.40 31.24 33.86 Flan-T5-XL 25.21 26.23 30.09 31.65 7.21 8.22 15.58 17.22 BLOOM-3b 34.26 37.69 27.18 27.87 31.06 32.21 33.29 35.47 Large * 32.27 31.99 31.56 31.36 32.00 31.50 33.39 33.05 Flan-T5-XL * 43.39 42.03 42.76 41.75 40.89 40.31 42.60 42.48 MEDCIN BERT-Large 7.33 1.25 0.14 0.05 8.71 1.19 0.08 0.01 PubMedBERT 15.62 9.71 5.20 1.58 5.68 2.32 1.27 0.61 BART-Large 11.67 12.65 2.27 2.31 9.40 9.22 5.47 4.82 Flan-T5-Large 9.30 8.08 10.97 12.96 2.89 3.59 6.71 6.78 BLOOM-1b7 27.58 28.67 2.70 4.97 26.38 28.76 26.89 26.69 Flan-T5-XL 15.24 15.89 18.04 18.51 4.47 5.44 11.14 11.09 BLOOM-3b 23.05 28.31 14.39 10.82 22.58 24.23 27.30 29.81 LLaMA-7B 3.40 2.80 3.37 3.73 4.90 4.47 3.17 3.80 GPT-3 22.40 22.56 25.72 24.91 19.75 17.80 19.92 18.57 GPT-3.5 22.51 22.06 23.92 23.58 20.46 19.84 22.37 20.23 Large * 38.37 36.37 37.43 35.86 31.26 30.00 33.11 31.91 Flan-T5-XL * 51.80 50.90 51.80 51.16 47.88 45.38 49.86 49.09</figDesc><table><row><cell>Dataset</cell><cell>LLMs</cell><cell>t1</cell><cell>t2</cell><cell cols="4">Prompt Templates t3 t4 t5 t6</cell><cell>t7</cell><cell>t8</cell></row><row><cell>NCI</cell><cell cols="2">BERT-Large 9.94 9GPT-4 -</cell><cell>-</cell><cell>16.05</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>Flan-T5-LLaMA-7B</cell><cell cols="8">7.56 6.75 7.89 8.06 10.74 10.80 13.15 13.81</cell></row><row><cell></cell><cell>GPT-3</cell><cell cols="8">21.06 20.33 22.73 24.36 19.20 18.99 20.20 20.09</cell></row><row><cell></cell><cell>GPT-3.5</cell><cell cols="8">21.81 17.99 25.02 24.50 18.24 15.71 22.71 19.87</cell></row><row><cell></cell><cell>GPT-4</cell><cell>-</cell><cell>-</cell><cell cols="2">22.36 27.83</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>Flan-T5-GPT-4</cell><cell>-</cell><cell>-</cell><cell cols="2">21.25 23.61</cell><cell>-</cell><cell>-</cell><cell>-</cell><cell>-</cell></row><row><cell></cell><cell>Flan-T5-</cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_7"><head>Table 10 .</head><label>10</label><figDesc>The detailed results of zero-shot testing and finetuning across seven LLMs reported for ontology learning Task B, type taxonomy discovery in F1-score. The results are in percentages. The * denotes finetuning model results.</figDesc><table><row><cell>Dataset LLMs</cell><cell>t1</cell><cell>t2</cell><cell>Prompt Templates t3 t4 t5 t6</cell><cell>t7</cell><cell>t8</cell></row></table></figure>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgements</head><p><rs type="grantNumber">A 16</rs>-page final version of this paper has been accepted for publication in the research track of the 22nd International Semantic Web Conference (ISWC 2023). We thank the anonymous reviewers for their detailed and insightful comments on an earlier draft of the paper. This work was jointly supported by the <rs type="funder">German BMBF</rs> project <rs type="projectName">SCINEXT</rs> (<rs type="grantNumber">ID 01lS22070</rs>), <rs type="funder">DFG NFDI4DataScience</rs> (<rs type="grantNumber">ID 460234259</rs>), and <rs type="funder">ERC ScienceGraph</rs> (<rs type="grantNumber">ID 819536</rs>).</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funded-project" xml:id="_dH4kzCg">
+					<idno type="grant-number">A 16</idno>
+					<orgName type="project" subtype="full">SCINEXT</orgName>
+				</org>
+				<org type="funding" xml:id="_DYSN54t">
+					<idno type="grant-number">ID 01lS22070</idno>
+				</org>
+				<org type="funding" xml:id="_dnxanny">
+					<idno type="grant-number">ID 460234259</idno>
+				</org>
+				<org type="funding" xml:id="_tsafeyr">
+					<idno type="grant-number">ID 819536</idno>
+				</org>
+			</listOrg>
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Author Contributions</head><note type="other">Hamed</note></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A Apendix</head><p>A.1 Task A Prompt Templates for WordNet Dataset. Templates for WordNet in zeroshot testing for Task A are presented in Table <ref type="table">4</ref>.</p><p>Prompt Templates for GeoNames Dataset. Templates for GeoNames in zero-shot testing for Task A are presented in Table <ref type="table">5</ref>. As a sentence S, we used <ref type="bibr">[L]</ref> </p><p>Prompt Templates for UMLS Dataset. Templates for UMLS sources (NCI, MEDCIN, and SNOMEDCT US) in zero-shot testing for Task A are presented in Table <ref type="table">6</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.2 Task B</head><p>Templates for GeoNames, UMLS, and Schema.Org in zero-shot testing for Task B is for LLMs are presented in Table <ref type="table">7</ref>.</p></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<monogr>
+		<ptr target="http://www.geonames.org/" />
+		<title level="m">Geonames geographical database</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Geonames geographical database (2023), http://www.geonames.org/</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Enriching very large ontologies using the www</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Agirre</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Ansa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Hovy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Martínez</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the First International Conference on Ontology Learning</title>
+		<meeting>the First International Conference on Ontology Learning</meeting>
+		<imprint>
+			<date type="published" when="2000">2000</date>
+			<biblScope unit="volume">31</biblScope>
+			<biblScope unit="page" from="25" to="30" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Agirre, E., Ansa, O., Hovy, E., Martínez, D.: Enriching very large ontologies us- ing the www. In: Proceedings of the First International Conference on Ontology Learning-Volume 31. pp. 25-30 (2000)</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Applying BERT to document retrieval with birch</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Akkalyoncu Yilmaz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Lin</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/D19-3004</idno>
+		<ptr target="https://aclanthology.org/D19-3004" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP): System Demonstrations</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP): System Demonstrations<address><addrLine>Hong Kong, China</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019-11">Nov 2019</date>
+			<biblScope unit="page" from="19" to="24" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Akkalyoncu Yilmaz, Z., Wang, S., Yang, W., Zhang, H., Lin, J.: Applying BERT to document retrieval with birch. In: Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Confer- ence on Natural Language Processing (EMNLP-IJCNLP): System Demonstrations. pp. 19-24. Association for Computational Linguistics, Hong Kong, China (Nov 2019). https://doi.org/10.18653/v1/D19-3004, https://aclanthology.org/D19-3004</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">An unsupervised method for general named entity recognition and automated concept discovery</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Alfonseca</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Manandhar</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st international conference on general WordNet</title>
+		<meeting>the 1st international conference on general WordNet<address><addrLine>Mysore, India</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2002">2002</date>
+			<biblScope unit="page" from="34" to="43" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Alfonseca, E., Manandhar, S.: An unsupervised method for general named entity recognition and automated concept discovery. In: Proceedings of the 1st interna- tional conference on general WordNet, Mysore, India. pp. 34-43 (2002)</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<monogr>
+		<author>
+			<persName><forename type="first">X</forename><surname>Amatriain</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2302.07730</idno>
+		<title level="m">Transformer models: an introduction and catalog</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Amatriain, X.: Transformer models: an introduction and catalog. arXiv preprint arXiv:2302.07730 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">A survey of ontology learning techniques and applications</title>
+		<author>
+			<persName><forename type="first">Muhammad</forename><forename type="middle">Nabeel</forename><surname>Asim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Muhammad</forename><surname>Wasim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Muhammad</forename><forename type="middle">Usman Ghani</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Waqar</forename><surname>Mahmood</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hafiza</forename><forename type="middle">Mahnoor</forename><surname>Abbasi</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/database/bay101</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Database</title>
+		<idno type="ISSNe">1758-0463</idno>
+		<imprint>
+			<biblScope unit="volume">2018</biblScope>
+			<biblScope unit="page">101</biblScope>
+			<date type="published" when="2018-01-01">2018. 2018</date>
+			<publisher>Oxford University Press (OUP)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Asim, M.N., Wasim, M., Khan, M.U.G., Mahmood, W., Abbasi, H.M.: A survey of ontology learning techniques and applications. Database 2018, bay101 (2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">The Unified Medical Language System (UMLS): integrating biomedical terminology</title>
+		<author>
+			<persName><forename type="first">O</forename><surname>Bodenreider</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/nar/gkh061</idno>
+		<ptr target="https://doi.org/10.1093/nar/gkh061" />
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic Acids Research</title>
+		<imprint>
+			<biblScope unit="volume">32</biblScope>
+			<biblScope unit="issue">suppl 1</biblScope>
+			<biblScope unit="page" from="267" to="D270" />
+			<date type="published" when="2004-01">01 2004</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bodenreider, O.: The Unified Medical Language System (UMLS): integrating biomedical terminology. Nucleic Acids Research 32(suppl 1), D267-D270 (01 2004). https://doi.org/10.1093/nar/gkh061, https://doi.org/10.1093/nar/gkh061</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">The unified medical language system (umls): integrating biomedical terminology</title>
+		<author>
+			<persName><forename type="first">O</forename><surname>Bodenreider</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Nucleic acids research</title>
+		<imprint>
+			<biblScope unit="volume">32</biblScope>
+			<biblScope unit="issue">suppl 1</biblScope>
+			<biblScope unit="page" from="267" to="D270" />
+			<date type="published" when="2004">2004</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bodenreider, O.: The unified medical language system (umls): integrating biomed- ical terminology. Nucleic acids research 32(suppl 1), D267-D270 (2004)</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<monogr>
+		<title level="m" type="main">Language models are few-shot learners</title>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">B</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Askell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Herbert-Voss</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Krueger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Henighan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Child</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Ramesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">M</forename><surname>Ziegler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Winter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Hesse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Sigler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Litwin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Gray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Berner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Mccandlish</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Sutskever</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Amodei</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Brown, T.B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., Nee- lakantan, A., Shyam, P., Sastry, G., Askell, A., Agarwal, S., Herbert-Voss, A., Krueger, G., Henighan, T., Child, R., Ramesh, A., Ziegler, D.M., Wu, J., Win- ter, C., Hesse, C., Chen, M., Sigler, E., Litwin, M., Gray, S., Chess, B., Clark, J., Berner, C., McCandlish, S., Radford, A., Sutskever, I., Amodei, D.: Language models are few-shot learners (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">W</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Longpre</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>Fedus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Dehghani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Brahma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Webson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Suzgun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Chowdhery</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Castro-Ros</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Pellat</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Robinson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Valter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Mishra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Petrov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><forename type="middle">H</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Dean</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<title level="m">Scaling instructionfinetuned language models</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chung, H.W., Hou, L., Longpre, S., Zoph, B., Tay, Y., Fedus, W., Li, Y., Wang, X., Dehghani, M., Brahma, S., Webson, A., Gu, S.S., Dai, Z., Suzgun, M., Chen, X., Chowdhery, A., Castro-Ros, A., Pellat, M., Robinson, K., Valter, D., Narang, S., Mishra, G., Yu, A., Zhao, V., Huang, Y., Dai, A., Yu, H., Petrov, S., Chi, E.H., Dean, J., Devlin, J., Roberts, A., Zhou, D., Le, Q.V., Wei, J.: Scaling instruction- finetuned language models (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<monogr>
+		<author>
+			<persName><forename type="first">L</forename><surname>Cui</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2106.01760</idno>
+		<title level="m">Template-based named entity recognition using bart</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Cui, L., Wu, Y., Liu, J., Yang, S., Zhang, Y.: Template-based named entity recog- nition using bart. arXiv preprint arXiv:2106.01760 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Carbonell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Salakhutdinov</surname></persName>
+		</author>
+		<title level="m">Transformer-xl: Attentive language models beyond a fixed-length context</title>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Dai, Z., Yang, Z., Yang, Y., Carbonell, J., Le, Q.V., Salakhutdinov, R.: Transformer-xl: Attentive language models beyond a fixed-length context (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">Discovering latent concepts learned in BERT</title>
+		<author>
+			<persName><forename type="first">F</forename><surname>Dalvi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">R</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Alam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Durrani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Sajjad</surname></persName>
+		</author>
+		<ptr target="https://openreview.net/forum?id=POTMtpYI1xH" />
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Dalvi, F., Khan, A.R., Alam, F., Durrani, N., Xu, J., Sajjad, H.: Discovering latent concepts learned in BERT. In: International Conference on Learning Representa- tions (2022), https://openreview.net/forum?id=POTMtpYI1xH</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Convolutional 2d knowledge graph embeddings</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Dettmers</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Pasquale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Pontus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<ptr target="https://arxiv.org/abs/1707.01476" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 32th AAAI Conference on Artificial Intelligence</title>
+		<meeting>the 32th AAAI Conference on Artificial Intelligence</meeting>
+		<imprint>
+			<date type="published" when="2018-02">February 2018</date>
+			<biblScope unit="page" from="1811" to="1818" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Dettmers, T., Pasquale, M., Pontus, S., Riedel, S.: Convolutional 2d knowledge graph embeddings. In: Proceedings of the 32th AAAI Conference on Artificial Intelligence. pp. 1811-1818 (February 2018), https://arxiv.org/abs/1707.01476</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<monogr>
+		<author>
+			<persName><forename type="first">J</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">W</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Toutanova</surname></persName>
+		</author>
+		<title level="m">Bert: Pre-training of deep bidirectional transformers for language understanding</title>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Devlin, J., Chang, M.W., Lee, K., Toutanova, K.: Bert: Pre-training of deep bidi- rectional transformers for language understanding (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Phylogenetic reconstruction using an unsupervised growing neural network that adopts the topology of a phylogenetic tree</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Dopazo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">M</forename><surname>Carazo</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of molecular evolution</title>
+		<imprint>
+			<biblScope unit="volume">44</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="226" to="233" />
+			<date type="published" when="1997">1997</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Dopazo, J., Carazo, J.M.: Phylogenetic reconstruction using an unsupervised grow- ing neural network that adopts the topology of a phylogenetic tree. Journal of molecular evolution 44(2), 226-233 (1997)</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Toward principles for the design of ontologies used for knowledge sharing?</title>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">R</forename><surname>Gruber</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">International journal of human-computer studies</title>
+		<imprint>
+			<biblScope unit="volume">43</biblScope>
+			<biblScope unit="issue">5-6</biblScope>
+			<biblScope unit="page" from="907" to="928" />
+			<date type="published" when="1995">1995</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gruber, T.R.: Toward principles for the design of ontologies used for knowledge sharing? International journal of human-computer studies 43(5-6), 907-928 (1995)</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Domain-specific language model pretraining for biomedical natural language processing</title>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Tinn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lucas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Usuyama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Naumann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Poon</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Transactions on Computing for Healthcare (HEALTH)</title>
+		<imprint>
+			<biblScope unit="volume">3</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="23" />
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Gu, Y., Tinn, R., Cheng, H., Lucas, M., Usuyama, N., Liu, X., Naumann, T., Gao, J., Poon, H.: Domain-specific language model pretraining for biomedical natural language processing. ACM Transactions on Computing for Healthcare (HEALTH) 3(1), 1-23 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Schema. org: evolution of structured data on the web</title>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">V</forename><surname>Guha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Brickley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Macbeth</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Communications of the ACM</title>
+		<imprint>
+			<biblScope unit="volume">59</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="44" to="51" />
+			<date type="published" when="2016">2016</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Guha, R.V., Brickley, D., Macbeth, S.: Schema. org: evolution of structured data on the web. Communications of the ACM 59(2), 44-51 (2016)</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Joint knowledge capture for grammars and ontologies</title>
+		<author>
+			<persName><forename type="first">U</forename><surname>Hahn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><forename type="middle">G</forename><surname>Markó</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st international conference on Knowledge capture</title>
+		<meeting>the 1st international conference on Knowledge capture</meeting>
+		<imprint>
+			<date type="published" when="2001">2001</date>
+			<biblScope unit="page" from="68" to="75" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hahn, U., Markó, K.G.: Joint knowledge capture for grammars and ontologies. In: Proceedings of the 1st international conference on Knowledge capture. pp. 68-75 (2001)</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Germanet-a lexical-semantic net for german</title>
+		<author>
+			<persName><forename type="first">B</forename><surname>Hamp</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Feldweg</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Automatic information extraction and building of lexical semantic resources for NLP applications</title>
+		<imprint>
+			<date type="published" when="1997">1997</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hamp, B., Feldweg, H.: Germanet-a lexical-semantic net for german. In: Auto- matic information extraction and building of lexical semantic resources for NLP applications (1997)</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<monogr>
+		<title level="m" type="main">Automated discovery of wordnet relations</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Hearst</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="1998">1998</date>
+			<biblScope unit="volume">2</biblScope>
+		</imprint>
+	</monogr>
+	<note>WordNet: an electronic lexical database</note>
+	<note type="raw_reference">Hearst, M.A.: Automated discovery of wordnet relations. WordNet: an electronic lexical database 2 (1998)</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Incompletely and imprecisely speaking: using dynamic ontologies for representing and retrieving information</title>
+		<author>
+			<persName><forename type="first">C</forename><forename type="middle">H</forename><surname>Hwang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">KRDB</title>
+		<imprint>
+			<biblScope unit="volume">21</biblScope>
+			<biblScope unit="page" from="14" to="20" />
+			<date type="published" when="1999">1999</date>
+			<publisher>Citeseer</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hwang, C.H.: Incompletely and imprecisely speaking: using dynamic ontologies for representing and retrieving information. In: KRDB. vol. 21, pp. 14-20. Citeseer (1999)</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">How can we know what language models know</title>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><forename type="middle">F</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Araki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Neubig</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00324</idno>
+		<ptr target="https://aclanthology.org/2020.tacl-1.28" />
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="page" from="423" to="438" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jiang, Z., Xu, F.F., Araki, J., Neubig, G.: How can we know what language mod- els know? Transactions of the Association for Computational Linguistics 8, 423- 438 (2020). https://doi.org/10.1162/tacl a 00324, https://aclanthology.org/2020. tacl-1.28</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Ontology construction for information selection</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Luo</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">14th IEEE International Conference on Tools with Artificial Intelligence</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2002">2002. 2002</date>
+			<biblScope unit="page" from="122" to="127" />
+		</imprint>
+	</monogr>
+	<note>ICTAI 2002). Proceedings</note>
+	<note type="raw_reference">Khan, L., Luo, F.: Ontology construction for information selection. In: 14th IEEE International Conference on Tools with Artificial Intelligence, 2002.(ICTAI 2002). Proceedings. pp. 122-127. IEEE (2002)</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Decomposed prompting: A modular approach for solving complex tasks</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Khot</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Trivedi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Finlayson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Richardson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Sabharwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">U</forename><surname>Kietz</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">A method for semi-automatic ontology acquisition from a corporate intranet</title>
+		<meeting><address><addrLine>Juan-Les-Pins, France</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2000">2023. October 2000 (2000</date>
+		</imprint>
+	</monogr>
+	<note>EKAW-2000 Workshop &quot;Ontologies and Text</note>
+	<note type="raw_reference">Khot, T., Trivedi, H., Finlayson, M., Fu, Y., Richardson, K., Clark, P., Sabharwal, A.: Decomposed prompting: A modular approach for solving complex tasks (2023) 27. Kietz, J.U., Maedche, A., Volz, R.: A method for semi-automatic ontology acquisi- tion from a corporate intranet. In: EKAW-2000 Workshop &quot;Ontologies and Text&quot;, Juan-Les-Pins, France, October 2000 (2000)</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<monogr>
+		<author>
+			<persName><forename type="first">T</forename><surname>Kojima</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">S</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Reid</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Matsuo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Iwasawa</surname></persName>
+		</author>
+		<title level="m">Large language models are zero-shot reasoners</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kojima, T., Gu, S.S., Reid, M., Matsuo, Y., Iwasawa, Y.: Large language models are zero-shot reasoners (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Knowledge Repository of Ontology Learning Tools from Text</title>
+		<author>
+			<persName><forename type="first">Agnieszka</forename><surname>Konys</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/j.procs.2019.09.332</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Procedia Computer Science</title>
+		<title level="j" type="abbrev">Procedia Computer Science</title>
+		<idno type="ISSN">1877-0509</idno>
+		<imprint>
+			<biblScope unit="volume">159</biblScope>
+			<biblScope unit="page" from="1614" to="1628" />
+			<date type="published" when="2019">2019</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Konys, A.: Knowledge repository of ontology learning tools from text. Procedia Computer Science 159, 1614-1628 (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<monogr>
+		<author>
+			<persName><forename type="first">B</forename><surname>Lester</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Al-Rfou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Constant</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2104.08691</idno>
+		<title level="m">The power of scale for parameter-efficient prompt tuning</title>
+		<imprint>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Lester, B., Al-Rfou, R., Constant, N.: The power of scale for parameter-efficient prompt tuning. arXiv preprint arXiv:2104.08691 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Zero-shot relation extraction via reading comprehension</title>
+		<author>
+			<persName><forename type="first">O</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Seo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/K17-1034</idno>
+		<ptr target="https://aclanthology.org/K17-1034" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 21st Conference on Computational Natural Language Learning (CoNLL 2017)</title>
+		<meeting>the 21st Conference on Computational Natural Language Learning (CoNLL 2017)<address><addrLine>Vancouver, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2017-08">Aug 2017</date>
+			<biblScope unit="page" from="333" to="342" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Levy, O., Seo, M., Choi, E., Zettlemoyer, L.: Zero-shot relation extraction via read- ing comprehension. In: Proceedings of the 21st Conference on Computational Natu- ral Language Learning (CoNLL 2017). pp. 333-342. Association for Computational Linguistics, Vancouver, Canada (Aug 2017). https://doi.org/10.18653/v1/K17- 1034, https://aclanthology.org/K17-1034</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<monogr>
+		<title level="m" type="main">Bart: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ghazvininejad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Mohamed</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Stoyanov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lewis, M., Liu, Y., Goyal, N., Ghazvininejad, M., Mohamed, A., Levy, O., Stoy- anov, V., Zettlemoyer, L.: Bart: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Prefix-Tuning: Optimizing Continuous Prompts for Generation</title>
+		<author>
+			<persName><forename type="first">Xiang</forename><forename type="middle">Lisa</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Liang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.acl-long.353</idno>
+		<idno type="arXiv">arXiv:2101.00190</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)</title>
+		<meeting>the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Li, X.L., Liang, P.: Prefix-tuning: Optimizing continuous prompts for generation. arXiv preprint arXiv:2101.00190 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">Pre-train, Prompt, and Predict: A Systematic Survey of Prompting Methods in Natural Language Processing</title>
+		<author>
+			<persName><forename type="first">Pengfei</forename><surname>Liu</surname></persName>
+			<idno type="ORCID">0000-0001-9030-1875</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Weizhe</forename><surname>Yuan</surname></persName>
+			<idno type="ORCID">0000-0002-6117-9417</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jinlan</forename><surname>Fu</surname></persName>
+			<idno type="ORCID">0000-0002-0370-1238</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Zhengbao</forename><surname>Jiang</surname></persName>
+			<idno type="ORCID">0000-0002-0315-6727</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hiroaki</forename><surname>Hayashi</surname></persName>
+			<idno type="ORCID">0000-0002-6875-7443</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Graham</forename><surname>Neubig</surname></persName>
+			<idno type="ORCID">0000-0002-2072-3789</idno>
+		</author>
+		<idno type="DOI">10.1145/3560815</idno>
+		<ptr target="https://doi.org/10.1145/3560815" />
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">55</biblScope>
+			<biblScope unit="issue">9</biblScope>
+			<biblScope unit="page" from="1" to="35" />
+			<date type="published" when="2023-01-16">jan 2023</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Liu, P., Yuan, W., Fu, J., Jiang, Z., Hayashi, H., Neubig, G.: Pre-train, prompt, and predict: A systematic survey of prompting methods in natural language processing. ACM Comput. Surv. 55(9) (jan 2023). https://doi.org/10.1145/3560815, https: //doi.org/10.1145/3560815</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<monogr>
+		<title level="m" type="main">The flan collection: Designing data and methods for effective instruction tuning</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Longpre</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Vu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Webson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">W</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2301.13688</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Longpre, S., Hou, L., Vu, T., Webson, A., Chung, H.W., Tay, Y., Zhou, D., Le, Q.V., Zoph, B., Wei, J., et al.: The flan collection: Designing data and methods for effective instruction tuning. arXiv preprint arXiv:2301.13688 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">Peppering knowledge sources with salt: Boosting conceptual content for ontology generation</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Lonsdale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Ding</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">W</forename><surname>Embley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Melby</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the AAAI Workshop on Semantic Web Meets Language Resources</title>
+		<meeting>the AAAI Workshop on Semantic Web Meets Language Resources<address><addrLine>Edmonton, Alberta, Canada</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2002">2002</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lonsdale, D., Ding, Y., Embley, D.W., Melby, A.: Peppering knowledge sources with salt: Boosting conceptual content for ontology generation. In: Proceedings of the AAAI Workshop on Semantic Web Meets Language Resources, Edmonton, Alberta, Canada (2002)</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">A survey on methods of ontology learning from text</title>
+		<author>
+			<persName><forename type="first">R</forename><surname>Lourdusamy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Abraham</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Intelligent Computing Paradigm and Cutting-edge Technologies: Proceedings of the First International Conference on Innovative Computing and Cutting-edge Technologies (ICICCT 2019)</title>
+		<meeting><address><addrLine>Istanbul, Turkey</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2020">October 30-31, 2019 1. 2020</date>
+			<biblScope unit="page" from="113" to="123" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lourdusamy, R., Abraham, S.: A survey on methods of ontology learning from text. In: Intelligent Computing Paradigm and Cutting-edge Technologies: Proceedings of the First International Conference on Innovative Computing and Cutting-edge Technologies (ICICCT 2019), Istanbul, Turkey, October 30-31, 2019 1. pp. 113-123. Springer (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">Ontology learning for the semantic web</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Maedche</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Staab</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Intelligent systems</title>
+		<imprint>
+			<biblScope unit="volume">16</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="72" to="79" />
+			<date type="published" when="2001">2001</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Maedche, A., Staab, S.: Ontology learning for the semantic web. IEEE Intelligent systems 16(2), 72-79 (2001)</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Wordnet: a lexical database for english</title>
+		<author>
+			<persName><forename type="first">G</forename><forename type="middle">A</forename><surname>Miller</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Communications of the ACM</title>
+		<imprint>
+			<biblScope unit="volume">38</biblScope>
+			<biblScope unit="issue">11</biblScope>
+			<biblScope unit="page" from="39" to="41" />
+			<date type="published" when="1995">1995</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Miller, G.A.: Wordnet: a lexical database for english. Communications of the ACM 38(11), 39-41 (1995)</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">The usable ontology: An environment for building and assessing a domain ontology</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Missikoff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Navigli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Velardi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web-ISWC 2002: First International Semantic Web Conference</title>
+		<meeting><address><addrLine>Sardinia, Italy</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2002">June 9-12, 2002. 2002</date>
+			<biblScope unit="page" from="39" to="53" />
+		</imprint>
+	</monogr>
+	<note>Proceedings</note>
+	<note type="raw_reference">Missikoff, M., Navigli, R., Velardi, P.: The usable ontology: An environment for building and assessing a domain ontology. In: The Semantic Web-ISWC 2002: First International Semantic Web Conference Sardinia, Italy, June 9-12, 2002 Pro- ceedings. pp. 39-53. Springer (2002)</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">An interactive tool for the rapid development of knowledge bases</title>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">I</forename><surname>Moldovan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">C</forename><surname>Girju</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">International Journal on Artificial Intelligence Tools</title>
+		<imprint>
+			<biblScope unit="volume">10</biblScope>
+			<biblScope unit="issue">01n02</biblScope>
+			<biblScope unit="page" from="65" to="86" />
+			<date type="published" when="2001">2001</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Moldovan, D.I., GiRJU, R.C.: An interactive tool for the rapid development of knowledge bases. International Journal on Artificial Intelligence Tools 10(01n02), 65-86 (2001)</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<monogr>
+		<author>
+			<persName><forename type="first">N</forename><forename type="middle">F</forename><surname>Noy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">L</forename><surname>Mcguinness</surname></persName>
+		</author>
+		<title level="m">Ontology development 101: A guide to creating your first ontology</title>
+		<imprint>
+			<date type="published" when="2001">2001</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Noy, N.F., McGuinness, D.L., et al.: Ontology development 101: A guide to creating your first ontology (2001)</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<monogr>
+		<ptr target="https://openai.com/chat-gpt/" />
+		<title level="m">OpenAI: Chatgpt</title>
+		<imprint>
+			<date type="published" when="2023-05-05">2023. May 5, 2023 46</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">OpenAI: Chatgpt. https://openai.com/chat-gpt/ (2023), accessed May 5, 2023 46</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title/>
+	</analytic>
+	<monogr>
+		<title level="j">OpenAI</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Gpt-4 technical report</note>
+	<note type="raw_reference">OpenAI: Gpt-4 technical report (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Analyzing schema.org</title>
+		<author>
+			<persName><forename type="first">P</forename><forename type="middle">F</forename><surname>Patel-Schneider</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web -ISWC 2014</title>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Mika</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">T</forename><surname>Tudorache</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Bernstein</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Welty</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Knoblock</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Vrandečić</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">P</forename><surname>Groth</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">N</forename><surname>Noy</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Janowicz</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">C</forename><surname>Goble</surname></persName>
+		</editor>
+		<meeting><address><addrLine>Cham</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2014">2014</date>
+			<biblScope unit="page" from="261" to="276" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Patel-Schneider, P.F.: Analyzing schema.org. In: Mika, P., Tudorache, T., Bern- stein, A., Welty, C., Knoblock, C., Vrandečić, D., Groth, P., Noy, N., Janowicz, K., Goble, C. (eds.) The Semantic Web -ISWC 2014. pp. 261-276. Springer Interna- tional Publishing, Cham (2014)</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">Deep contextualized word representations</title>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">E</forename><surname>Peters</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Neumann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Iyyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Gardner</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/N18-1202</idno>
+		<ptr target="https://aclanthology.org/N18-1202" />
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>New Orleans, Louisiana</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2018-06">Jun 2018</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="2227" to="2237" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Peters, M.E., Neumann, M., Iyyer, M., Gardner, M., Clark, C., Lee, K., Zettle- moyer, L.: Deep contextualized word representations. In: Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long Papers). pp. 2227- 2237. Association for Computational Linguistics, New Orleans, Louisiana (Jun 2018). https://doi.org/10.18653/v1/N18-1202, https://aclanthology.org/N18-1202</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">How context affects language models&apos; factual predictions</title>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">H</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<ptr target="https://openreview.net/forum?id=025X0zPfn" />
+	</analytic>
+	<monogr>
+		<title level="m">Automated Knowledge Base Construction</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Petroni, F., Lewis, P., Piktus, A., Rocktäschel, T., Wu, Y., Miller, A.H., Riedel, S.: How context affects language models&apos; factual predictions. In: Automated Knowl- edge Base Construction (2020), https://openreview.net/forum?id=025X0zPfn</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<monogr>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Bakhtin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">H</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1909.01066</idno>
+		<title level="m">Language models as knowledge bases?</title>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Petroni, F., Rocktäschel, T., Lewis, P., Bakhtin, A., Wu, Y., Miller, A.H., Riedel, S.: Language models as knowledge bases? arXiv preprint arXiv:1909.01066 (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<analytic>
+		<title level="a" type="main">Language models as knowledge bases?</title>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Bakhtin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Miller</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP). Association for Computational Linguistics</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP). Association for Computational Linguistics</meeting>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Petroni, F., Rocktäschel, T., Riedel, S., Lewis, P., Bakhtin, A., Wu, Y., Miller, A.: Language models as knowledge bases? In: Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP). Association for Computational Linguistics (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<analytic>
+		<title level="a" type="main">Yago: A multilingual knowledge base from wikipedia, wordnet, and geonames</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rebele</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Suchanek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Hoffart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Biega</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Kuzey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Weikum</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web-ISWC 2016: 15th International Semantic Web Conference</title>
+		<meeting><address><addrLine>Kobe, Japan</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2016">October 17-21, 2016. 2016</date>
+			<biblScope unit="volume">15</biblScope>
+			<biblScope unit="page" from="177" to="185" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Rebele, T., Suchanek, F., Hoffart, J., Biega, J., Kuzey, E., Weikum, G.: Yago: A multilingual knowledge base from wikipedia, wordnet, and geonames. In: The Semantic Web-ISWC 2016: 15th International Semantic Web Conference, Kobe, Japan, October 17-21, 2016, Proceedings, Part II 15. pp. 177-185. Springer (2016)</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<analytic>
+		<title level="a" type="main">An ontology enrichment method for a pragmatic information extraction system gathering data on genetic interactions</title>
+		<author>
+			<persName><forename type="first">C</forename><surname>Roux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Proux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Rechenmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Julliard</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">ECAI Workshop on Ontology Learning</title>
+		<imprint>
+			<date type="published" when="2000">2000</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Roux, C., Proux, D., Rechenmann, F., Julliard, L.: An ontology enrichment method for a pragmatic information extraction system gathering data on genetic interac- tions. In: ECAI Workshop on Ontology Learning (2000)</note>
+</biblStruct>
+
+<biblStruct xml:id="b50">
+	<monogr>
+		<title level="m" type="main">Analyzing encoded concepts in transformer language models</title>
+		<author>
+			<persName><forename type="first">H</forename><surname>Sajjad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Durrani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Dalvi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Alam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">R</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Xu</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sajjad, H., Durrani, N., Dalvi, F., Alam, F., Khan, A.R., Xu, J.: Analyzing encoded concepts in transformer language models (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b51">
+	<monogr>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">L</forename><surname>Scao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Akiki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Pavlick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Ilić</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Hesslow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Castagné</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">S</forename><surname>Luccioni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Yvon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Gallé</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2211.05100</idno>
+		<title level="m">Bloom: A 176b-parameter open-access multilingual language model</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Scao, T.L., Fan, A., Akiki, C., Pavlick, E., Ilić, S., Hesslow, D., Castagné, R., Luccioni, A.S., Yvon, F., Gallé, M., et al.: Bloom: A 176b-parameter open-access multilingual language model. arXiv preprint arXiv:2211.05100 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b52">
+	<monogr>
+		<ptr target="https://www.nlm.nih.gov/healthit/snomedct/usedition.html" />
+		<title level="m">SNOMED International: US Edition of SNOMED CT</title>
+		<imprint>
+			<date type="published" when="2023-03">March 2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">SNOMED International: US Edition of SNOMED CT (March 2023), https://www. nlm.nih.gov/healthit/snomedct/us edition.html</note>
+</biblStruct>
+
+<biblStruct xml:id="b53">
+	<monogr>
+		<title level="m" type="main">Beyond the imitation game: Quantifying and extrapolating the capabilities of language models</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Srivastava</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Rastogi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Rao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">A M</forename><surname>Shoeb</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Abid</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Fisch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">R</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Santoro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gupta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Garriga-Alonso</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2206.04615</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Srivastava, A., Rastogi, A., Rao, A., Shoeb, A.A.M., Abid, A., Fisch, A., Brown, A.R., Santoro, A., Gupta, A., Garriga-Alonso, A., et al.: Beyond the imitation game: Quantifying and extrapolating the capabilities of language models. arXiv preprint arXiv:2206.04615 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b54">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Lacroix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Rozière</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Hambro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Azhar</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2302.13971</idno>
+		<title level="m">Llama: Open and efficient foundation language models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux, M.A., Lacroix, T., Rozière, B., Goyal, N., Hambro, E., Azhar, F., et al.: Llama: Open and efficient foundation language models. arXiv preprint arXiv:2302.13971 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b55">
+	<analytic>
+		<title level="a" type="main">Enriching a lexical semantic net with selectional preferences by means of statistical corpus analysis</title>
+		<author>
+			<persName><forename type="first">A</forename><surname>Wagner</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">ECAI Workshop on Ontology Learning</title>
+		<imprint>
+			<publisher>Citeseer</publisher>
+			<date type="published" when="2000">2000</date>
+			<biblScope unit="volume">61</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wagner, A.: Enriching a lexical semantic net with selectional preferences by means of statistical corpus analysis. In: ECAI Workshop on Ontology Learning. vol. 61. Citeseer (2000)</note>
+</biblStruct>
+
+<biblStruct xml:id="b56">
+	<analytic>
+		<title level="a" type="main">Ontology learning methods from text-an extensive knowledge-based approach</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Watróbski</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Procedia Computer Science</title>
+		<imprint>
+			<biblScope unit="volume">176</biblScope>
+			<biblScope unit="page" from="3356" to="3368" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Watróbski, J.: Ontology learning methods from text-an extensive knowledge-based approach. Procedia Computer Science 176, 3356-3368 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b57">
+	<analytic>
+		<title level="a" type="main">Finetuned language models are zero-shot learners</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Guu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">W</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Lester</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">M</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<ptr target="https://openreview.net/forum?id=gEZrGCozdqR" />
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Bosma, M., Zhao, V., Guu, K., Yu, A.W., Lester, B., Du, N., Dai, A.M., Le, Q.V.: Finetuned language models are zero-shot learners. In: International Con- ference on Learning Representations (2022), https://openreview.net/forum?id= gEZrGCozdqR</note>
+</biblStruct>
+
+<biblStruct xml:id="b58">
+	<monogr>
+		<title level="m" type="main">Emergent abilities of large language models</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Bommasani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Borgeaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Yogatama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Metzler</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2206.07682</idno>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wei, J., Tay, Y., Bommasani, R., Raffel, C., Zoph, B., Borgeaud, S., Yogatama, D., Bosma, M., Zhou, D., Metzler, D., et al.: Emergent abilities of large language models. arXiv preprint arXiv:2206.07682 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b59">
+	<analytic>
+		<title level="a" type="main">Chain-of-thought prompting elicits reasoning in large language models</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Schuurmans</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Bosma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Xia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><forename type="middle">V</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Zhou</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Advances in Neural Information Processing Systems</title>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Koyejo</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">S</forename><surname>Mohamed</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Agarwal</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">D</forename><surname>Belgrave</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">K</forename><surname>Cho</surname></persName>
+		</editor>
+		<editor>
+			<persName><forename type="first">A</forename><surname>Oh</surname></persName>
+		</editor>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page" from="24824" to="24837" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei, J., Wang, X., Schuurmans, D., Bosma, M., ichter, b., Xia, F., Chi, E., Le, Q.V., Zhou, D.: Chain-of-thought prompting elicits reasoning in large language models. In: Koyejo, S., Mohamed, S., Agarwal, A., Belgrave, D., Cho, K., Oh, A. (eds.) Advances in Neural Information Processing Systems. vol. 35, pp. 24824- 24837.</note>
+</biblStruct>
+
+<biblStruct xml:id="b60">
+	<monogr>
+		<title/>
+		<author>
+			<persName><surname>Curran Associates</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Inc</surname></persName>
+		</author>
+		<ptr target="https://proceedings.neurips.cc/paperfiles/paper/2022/file/9d5609613524ecf4f15af0f7b31abca4-Paper-Conference.pdf" />
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Curran Associates, Inc. (2022), https://proceedings.neurips.cc/paper files/ paper/2022/file/9d5609613524ecf4f15af0f7b31abca4-Paper-Conference.pdf</note>
+</biblStruct>
+
+<biblStruct xml:id="b61">
+	<analytic>
+		<title level="a" type="main">The dublin core metadata initiative</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">L</forename><surname>Weibel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Koch</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">D-lib magazine</title>
+		<imprint>
+			<biblScope unit="volume">6</biblScope>
+			<biblScope unit="issue">12</biblScope>
+			<biblScope unit="page" from="1082" to="9873" />
+			<date type="published" when="2000">2000</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Weibel, S.L., Koch, T.: The dublin core metadata initiative. D-lib magazine 6(12), 1082-9873 (2000)</note>
+</biblStruct>
+
+<biblStruct xml:id="b62">
+	<analytic>
+		<title level="a" type="main">A domain adaptive approach to automatic acquisition of domain relevant terms and their relations with bootstrapping</title>
+		<author>
+			<persName><forename type="first">F</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Kurz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Piskorski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Schmeier</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">LREC</title>
+		<imprint>
+			<date type="published" when="2002">2002</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Xu, F., Kurz, D., Piskorski, J., Schmeier, S.: A domain adaptive approach to auto- matic acquisition of domain relevant terms and their relations with bootstrapping. In: LREC (2002)</note>
+</biblStruct>
+
+<biblStruct xml:id="b63">
+	<monogr>
+		<title level="m" type="main">Simple applications of bert for ad hoc document retrieval</title>
+		<author>
+			<persName><forename type="first">W</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Lin</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yang, W., Zhang, H., Lin, J.: Simple applications of bert for ad hoc document retrieval (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b64">
+	<monogr>
+		<author>
+			<persName><forename type="first">S</forename><surname>Yao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Shafran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><forename type="middle">L</forename><surname>Griffiths</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Narasimhan</surname></persName>
+		</author>
+		<title level="m">Tree of thoughts: Deliberate problem solving with large language models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yao, S., Yu, D., Zhao, J., Shafran, I., Griffiths, T.L., Cao, Y., Narasimhan, K.: Tree of thoughts: Deliberate problem solving with large language models (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b65">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">S</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">S].</note>
+</biblStruct>
+
+<biblStruct xml:id="b66">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">POS is</orgName>
+			</affiliation>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">POS is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b67">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+		<imprint/>
+		<respStmt>
+			<orgName>M ASK</orgName>
+		</respStmt>
+	</monogr>
+	<note type="raw_reference">L] part of speech is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b68">
+	<analytic>
+		<title level="a" type="main">POS is a</title>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos;[L]&apos; POS is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b69">
+	<analytic>
+		<title level="a" type="main">part of speech is a</title>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos;[L]&apos; part of speech is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b70">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+			<affiliation>
+				<orgName type="collaboration">POS is</orgName>
+			</affiliation>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">POS is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b71">
+	<monogr>
+		<title level="m" type="main">POS is a</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos; POS is a [M ASK] . &apos;</note>
+</biblStruct>
+
+<biblStruct xml:id="b72">
+	<analytic>
+		<title level="a" type="main">part of speech is a</title>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Flan-T5</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">L]&apos; part of speech is a [M ASK] . Flan-T5</note>
+</biblStruct>
+
+<biblStruct xml:id="b73">
+	<monogr>
+		<title level="m" type="main">Figure 3—source data 1. MAGeCK Gene Analysis (Positive) of ZAP-KO THP-1 PIKAHIV HIV-1LAI/VSVG Screen.</title>
+		<idno type="DOI">10.7554/elife.39823.014</idno>
+		<imprint>
+			<date>null</date>
+			<publisher>eLife Sciences Publications, Ltd</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">POS is a ?</note>
+</biblStruct>
+
+<biblStruct xml:id="b74">
+	<monogr>
+		<title level="m" type="main">L] part of speech is a ?</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">L] part of speech is a ?</note>
+</biblStruct>
+
+<biblStruct xml:id="b75">
+	<monogr>
+		<title level="m" type="main">POS is a ?</title>
+		<author>
+			<persName><forename type="first">S</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note>L</note>
+	<note type="raw_reference">S]. &apos;[L]&apos; POS is a ?</note>
+</biblStruct>
+
+<biblStruct xml:id="b76">
+	<monogr>
+		<title level="m" type="main">L]&apos; part of speech is a ?</title>
+		<author>
+			<persName><forename type="first">S</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">S]. &apos;[L]&apos; part of speech is a ?</note>
+</biblStruct>
+
+<biblStruct xml:id="b77">
+	<analytic>
+		<title level="a" type="main">Sentence Completion</title>
+		<author>
+			<persName><surname>Pos</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/springerreference_184648</idno>
+	</analytic>
+	<monogr>
+		<title level="m">The answer is Perform a sentence completion on the following sentence</title>
+		<imprint>
+			<publisher>Springer-Verlag</publisher>
+			<date>null</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">POS is a . \n The answer is Perform a sentence completion on the following sentence: [S].</note>
+</biblStruct>
+
+<biblStruct xml:id="b78">
+	<monogr>
+		<title level="m">The answer is Perform a sentence completion on the following sentence</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos; POS is a . \n The answer is Perform a sentence completion on the following sentence: [S]. &apos;</note>
+</biblStruct>
+
+<biblStruct xml:id="b79">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b80">
+	<analytic>
+		<title level="a" type="main">6. Infringement of patents on geographically divisible inventions</title>
+		<idno type="DOI">10.3726/978-3-653-04732-5/20</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Enforcement of Patents on Geographically Divisible Inventions</title>
+		<imprint>
+			<publisher>Peter Lang</publisher>
+			<date>null</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">geographically is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b81">
+	<analytic>
+		<title/>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos;[L]&apos; is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b82">
+	<analytic>
+		<title level="a" type="main">geographically is a</title>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos;[L]&apos; geographically is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b83">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b84">
+	<analytic>
+		<title/>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">geographically is a [M ASK] . &apos;</note>
+</biblStruct>
+
+<biblStruct xml:id="b85">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos; is a [M ASK] . &apos;</note>
+</biblStruct>
+
+<biblStruct xml:id="b86">
+	<analytic>
+		<title level="a" type="main">geographically is a</title>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Flan-T5</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">L]&apos; geographically is a [M ASK] . Flan-T5</note>
+</biblStruct>
+
+<biblStruct xml:id="b87">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">S</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">S].</note>
+</biblStruct>
+
+<biblStruct xml:id="b88">
+	<monogr>
+		<title level="m" type="main">L]&apos; geographically is a ?</title>
+		<author>
+			<persName><forename type="first">S</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">S]. &apos;[L]&apos; geographically is a ?</note>
+</biblStruct>
+
+<biblStruct xml:id="b89">
+	<analytic>
+		<title level="a" type="main">Sentence Completion</title>
+		<idno type="DOI">10.1007/springerreference_184648</idno>
+	</analytic>
+	<monogr>
+		<title level="m">The answer is Perform a sentence completion on the following sentence</title>
+		<imprint>
+			<publisher>Springer-Verlag</publisher>
+			<date>null</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">is a . \n The answer is Perform a sentence completion on the following sentence: [S].</note>
+</biblStruct>
+
+<biblStruct xml:id="b90">
+	<monogr>
+		<title level="m">The answer is Perform a sentence completion on the following sentence</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos; is a . \n The answer is Perform a sentence completion on the following sentence: \n [S]. &apos;</note>
+</biblStruct>
+
+<biblStruct xml:id="b91">
+	<analytic>
+		<title/>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">L] in medicine is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b92">
+	<analytic>
+		<title/>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">L] in biomedicine is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b93">
+	<analytic>
+		<title/>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos;[L]&apos; in medicine is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b94">
+	<analytic>
+		<title/>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos;[L]&apos; in biomedicine is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b95">
+	<analytic>
+		<title/>
+	</analytic>
+	<monogr>
+		<title level="j">M ASK</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">in medicine is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b96">
+	<analytic>
+		<title level="a" type="main">L]&apos; in biomedicine is a</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ask</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Flan-T5</title>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">&apos; is a [M ASK] . &apos;[L]&apos; in biomedicine is a [M ASK] . Flan-T5</note>
+</biblStruct>
+
+<biblStruct xml:id="b97">
+	<monogr>
+		<title level="m" type="main">L] in medicine is a ?</title>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">]</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">S]. [L] in medicine is a ?</note>
+</biblStruct>
+
+<biblStruct xml:id="b98">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">L</forename></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note>biomedicine is a ?. in medicine is a ?. in biomedicine is a ? [L] in medicine is a ? [L] in biomedicine is a ? &apos;[L]&apos; in medicine is a ? &apos;[L]&apos; in biomedicine is a ? BLOOM/GPT-3 Perform a sentence completion on the following sentence: \n Sentence:. in medicine is a Perform a sentence completion on the following sentence: \n Sentence: [S].. in biomedicine is a Perform a sentence completion on the following sentence: \n Sentence: [S]. &apos;[L]&apos; in medicine is a Perform a sentence completion on the following sentence: \n Sentence: [S]. &apos;[L]&apos; in biomedicine is a Perform a sentence completion on the following sentence: \n Sentence: [L] in medicine is a Perform a sentence completion on the following sentence: \n Sentence: [L] in biomedicine is a Perform a sentence completion on the following sentence: \n Sentence: &apos;[L]&apos; in medicine is a Perform a sentence completion on the following sentence: \n Sentence: &apos;[L]&apos; in biomedicine is a LLaMA Perform a sentence completion on the following sentence: Sentence: [S].. in medicine is a . \n The answer is Perform a sentence completion on the following sentence: [S].. in biomedicine is a . \n The answer is Perform a sentence completion on the following sentence: [S]. &apos;]&apos; in medicine is a . \n The answer is Perform a sentence completion on the following sentence: [S]. &apos;. in biomedicine is a . \n The answer is Perform a sentence completion on the following sentence: [L] in medicine is a . \n The answer is Perform a sentence completion on the following sentence: [L] in biomedicine is a . \n The answer is Perform a sentence completion on the following sentence: &apos;[L]&apos; in medicine is a . \n The answer is Perform a sentence completion on the following sentence: &apos;[L]&apos; in biomedicine is a . \n The answer is Table</note>
+	<note type="raw_reference">L] in biomedicine is a ? []. &apos;[L]&apos; in medicine is a ? [S]. &apos;[L]&apos; in biomedicine is a ? [L] in medicine is a ? [L] in biomedicine is a ? &apos;[L]&apos; in medicine is a ? &apos;[L]&apos; in biomedicine is a ? BLOOM/GPT-3 Perform a sentence completion on the following sentence: \n Sentence: []. [] in medicine is a Perform a sentence completion on the following sentence: \n Sentence: [S]. [] in biomedicine is a Perform a sentence completion on the following sentence: \n Sentence: [S]. &apos;[L]&apos; in medicine is a Perform a sentence completion on the following sentence: \n Sentence: [S]. &apos;[L]&apos; in biomedicine is a Perform a sentence completion on the following sentence: \n Sentence: [L] in medicine is a Perform a sentence completion on the following sentence: \n Sentence: [L] in biomedicine is a Perform a sentence completion on the following sentence: \n Sentence: &apos;[L]&apos; in medicine is a Perform a sentence completion on the following sentence: \n Sentence: &apos;[L]&apos; in biomedicine is a LLaMA Perform a sentence completion on the following sentence: Sen- tence: [S]. [] in medicine is a . \n The answer is Perform a sentence completion on the following sentence: [S]. [] in biomedicine is a . \n The answer is Perform a sentence completion on the following sentence: [S]. &apos;]&apos; in medicine is a . \n The answer is Perform a sentence completion on the following sentence: [S]. &apos;[]&apos; in biomedicine is a . \n The answer is Perform a sentence completion on the following sentence: [L] in medicine is a . \n The answer is Perform a sentence completion on the following sentence: [L] in biomedicine is a . \n The answer is Perform a sentence completion on the following sentence: &apos;[L]&apos; in medicine is a . \n The answer is Perform a sentence completion on the following sentence: &apos;[L]&apos; in biomedicine is a . \n The answer is Table</note>
+</biblStruct>
+
+<biblStruct xml:id="b99">
+	<monogr>
+		<title level="m" type="main">Org zero-shot testing prompt templates for task B. In the type pairs (a, b)</title>
+		<author>
+			<persName><forename type="first">The</forename><surname>Geonames</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Umls</forename><surname>Schema</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note>or (b, a), where a is parent and b is child. LLMs Prompt Templates BERT [a] is the superclass of [b]. This statement is a [M ASK</note>
+	<note type="raw_reference">The GeoNames, UMLS, and Schema.Org zero-shot testing prompt templates for task B. In the type pairs (a, b) or (b, a), where a is parent and b is child. LLMs Prompt Templates BERT [a] is the superclass of [b]. This statement is a [M ASK] .</note>
+</biblStruct>
+
+<biblStruct xml:id="b100">
+	<monogr>
+		<title level="m" type="main">supertype of</title>
+		<imprint/>
+	</monogr>
+	<note>statement is a &lt; mask</note>
+	<note type="raw_reference">supertype of [statement is a &lt; mask &gt; .</note>
+</biblStruct>
+
+<biblStruct xml:id="b101">
+	<analytic>
+		<title/>
+		<idno>36.02 48.21 41.42 49.90 39.37 47.47 42.39 45.46 Flan-T5-</idno>
+	</analytic>
+	<monogr>
+		<title level="j">UMLS</title>
+		<imprint>
+			<biblScope unit="page" from="55" to="103" />
+		</imprint>
+	</monogr>
+	<note>a subtype of. \nThis statement is a Identify whether the following statement is true or false. a] is an ancestor class of. This statement is a Identify whether the following statement is true or false: \n Statement: [bis a descendant class of [a. This statement is a GeoNames BERT-Large 41.00 51.69 40.</note>
+	<note type="raw_reference">a subtype of [a]. \nThis statement is a Identify whether the following statement is true or false: \n Statement: [a] is an ancestor class of [b]. \n This statement is a Identify whether the following statement is true or false: \n Statement: [bis a descendant class of [a]. \n This statement is a GeoNames BERT-Large 41.00 51.69 40.55 48.70 37.16 41.07 41.70 54.54 BART-Large 38.11 41.03 40.55 52.50 39.09 45.80 36.67 55.40 Flan-T5-Large 59.63 48.24 54.08 48.24 44.40 51.30 36.40 38.44 BLOOM-1b7 33.16 31.04 33.16 32.83 33.77 33.53 36.67 32.92 Flan-T5-XL 49.37 44.05 45.09 52.41 43.92 46.34 49.98 44.29 BLOOM-3b 35.85 39.12 53.92 30.22 35.62 33.60 48.26 37.73 LLaMA-7B 33.49 33.49 33.49 33.49 33.49 33.49 33.49 33.49 GPT-3 43.43 51.74 42.70 53.20 46.04 52.56 45.49 52.62 GPT-3.5 59.40 47.79 67.78 41.95 48.02 51.72 45.25 43.86 GPT-4 38.56 52.46 34.00 38.89 44.06 55.43 33.78 36.23 Flan-T5-Large * 42.53 59.40 40.29 62.46 46.03 57.41 42.49 62.04 Flan-T5-XL * 48.41 34.80 55.23 46.96 57.48 36.29 59.05 49.26 UMLS BERT-Large 48.21 38.84 41.46 40.41 45.88 40.91 41.04 42.92 PubMedBERT 33.71 33.71 33.71 33.71 33.71 33.71 33.71 33.71 BART-Large 36.02 48.21 41.42 49.90 39.37 47.47 42.39 45.46 Flan-T5-Large 47.55 51.22 55.32 40.94 49.45 50.87 44.23 42.90 BLOOM-1b7 33.71 36.18 33.71 38.26 33.71 35.89 33.27 33.60 Flan-T5-XL 64.25 46.53 51.00 41.54 60.07 42.83 51.25 41.18 BLOOM-3b 33.16 37.23 34.82 35.77 33.16 35.89 33.05 37.48 LLaMA-7B 32.94 32.94 32.94 32.94 32.94 32.94 32.94 32.94 GPT-3 51.58 49.41 49.86 42.90 50.57 46.07 45.36 46.72 GPT-3.5 61.38 70.38 63.91 66.82 63.14 67.27 56.64 64.41 GPT-4 41.19 76.99 42.55 63.88 50.28 78.11 36.59 60.72 Flan-T5-Large * 37.17 48.66 36.07 42.12 48.39 46.65 53.42 35.97 Flan-T5-XL * 63.69 50.04 36.91 41.34 78.12 50.12 79.25 39.27 schema.org BERT-Large 43.85 41.17 44.06 43.20 43.70 40.05 42.15 43.72 BART-Large 34.62 38.69 39.28 52.90 38.20 41.17 43.26 42.74 Flan-T5-Large 46.98 49.92 46.11 54.78 40.27 54.47 42.06 47.93 BLOOM-1b7 33.39 47.83 33.39 39.77 38.92 48.56 44.35 39.57 Flan-T5-XL 42.70 33.45 33.59 42.76 36.69 34.04 33.75 36.45 BLOOM-3b 41.64 47.16 47.98 45.25 39.73 40.75 51.28 48.73 LLaMA-7B 33.37 33.37 33.37 33.37 33.37 33.37 33.37 33.37 GPT-3 49.64 49.28 50.97 48.03 47.19 48.63 48.87 49.48 GPT-3.5 56.84 74.38 58.52 70.16 53.35 72.35 54.16 71.03 GPT-4 58.47 72.82 65.83 63.30 50.56 74.24 57.45 63.69 Flan-T5-Large * 35.35 85.43 29.82 89.24 41.30 91.68 42.46 56.39 Flan-T5-XL * 91.06 57.46 74.68 65.32 91.54 50.63 91.70 33.33</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

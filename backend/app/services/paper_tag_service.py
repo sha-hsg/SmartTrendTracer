@@ -1,19 +1,30 @@
 """
 Service for paper tag suggestions and management
 """
+import json
 import logging
 from typing import List, Dict, Optional
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from pathlib import Path
 
-from app.models.papers import Paper, PaperTag, PaperSection
-from app.services.llm_service import LLMService
+from app.services.llm_manager import get_llm_manager
 
 logger = logging.getLogger(__name__)
 
 class PaperTagService:
-    def __init__(self):
-        self.llm_service = LLMService()
+    def __init__(self, user_id: str = "default"):
+        self.llm_manager = get_llm_manager()
+        self.user_id = user_id
+        self.task_type = 'paper_tag_suggestion'
+        self.prompts = self._load_prompts()
+
+    def _load_prompts(self) -> Dict:
+        """Load prompts from configuration"""
+        prompts_path = Path(__file__).parent.parent.parent / 'prompts_config.json'
+        if prompts_path.exists():
+            with open(prompts_path, 'r') as f:
+                all_prompts = json.load(f)
+                return all_prompts.get('paper_tag_suggestion', {})
+        return {}
     
     def suggest_tags_from_paper(self, db: Session, paper_id: int, max_tags: int = 10) -> List[Dict[str, any]]:
         """
@@ -45,29 +56,28 @@ class PaperTagService:
                     content_parts.append(f"{section.title}: {section.content[:500]}")
             
             full_content = "\n\n".join(content_parts)
-            
-            # Use LLM to generate tags
-            prompt = f"""
-            Analyze this research paper and suggest relevant tags.
-            Generate tags for:
-            1. Main research topic
-            2. Methodology used
-            3. Key concepts
-            4. Application areas
-            5. Technologies mentioned
-            
-            Paper content:
-            {full_content[:3000]}
-            
-            Return {max_tags} tags as a comma-separated list.
-            Tags should be lowercase with hyphens (e.g., machine-learning, neural-networks).
-            """
-            
-            # Get model config for tag suggestion
-            model_config = self.llm_service.llm_config['models'].get('tag_suggestion')
-            
+
+            # Use LLM to generate tags via LLMManager
+            system_prompt = self.prompts.get('system', '')
+            user_template = self.prompts.get('user_template', '')
+            user_prompt = user_template.format(
+                author=paper.authors if hasattr(paper, 'authors') else 'Unknown',
+                text=full_content[:3000],
+                max_tags=max_tags
+            )
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
+
             try:
-                response = self.llm_service._call_llm(prompt, model_config)
+                llm_response = self.llm_manager.completion_sync(
+                    task_type=self.task_type,
+                    messages=messages,
+                    user_id=self.user_id
+                )
+                response = llm_response.choices[0].message.content
                 
                 # Parse tags from response
                 tags = []

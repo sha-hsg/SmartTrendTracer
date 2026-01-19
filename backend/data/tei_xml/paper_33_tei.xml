@@ -1,0 +1,2011 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">LLMs can Perform Multi-Dimensional Analytic Writing Assessments: A Case Study of L2 Graduate-Level Academic English Writing</title>
+				<funder ref="#_NW8MNdx #_QEhdZcb">
+					<orgName type="full">unknown</orgName>
+				</funder>
+				<funder ref="#_FpteBzV">
+					<orgName type="full">Defense Advanced Research Projects Agency</orgName>
+					<orgName type="abbreviated">DARPA</orgName>
+				</funder>
+				<funder ref="#_VH2GQQ5">
+					<orgName type="full">Institute for Advanced Computational Science</orgName>
+					<orgName type="abbreviated">IACS</orgName>
+				</funder>
+				<funder ref="#_hMMTVfv">
+					<orgName type="full">Social Sciences and Humanities Research Council of Canada</orgName>
+					<orgName type="abbreviated">SSHRC</orgName>
+				</funder>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author role="corresp">
+							<persName><forename type="first">Zhengxiang</forename><surname>Wang</surname></persName>
+							<email>zhengxiang.wang@stonybrook.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>†</label> Department of Linguistics &amp; Institute for Advanced Computational Science , Stony Brook University</note>
+								<orgName type="department">Department of Linguistics &amp; Institute for Advanced Computational Science</orgName>
+								<orgName type="institution">Stony Brook University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Veronika</forename><surname>Makarova</surname></persName>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>‡</label> Department of Linguistics , University of Saskatchewan</note>
+								<orgName type="department">Department of Linguistics</orgName>
+								<orgName type="institution">University of Saskatchewan</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Zhi</forename><surname>Li</surname></persName>
+							<affiliation key="aff1">
+								<note type="raw_affiliation"><label>‡</label> Department of Linguistics , University of Saskatchewan</note>
+								<orgName type="department">Department of Linguistics</orgName>
+								<orgName type="institution">University of Saskatchewan</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Jordan</forename><surname>Kodner</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>†</label> Department of Linguistics &amp; Institute for Advanced Computational Science , Stony Brook University</note>
+								<orgName type="department">Department of Linguistics &amp; Institute for Advanced Computational Science</orgName>
+								<orgName type="institution">Stony Brook University</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Owen</forename><surname>Rambow</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>†</label> Department of Linguistics &amp; Institute for Advanced Computational Science , Stony Brook University</note>
+								<orgName type="department">Department of Linguistics &amp; Institute for Advanced Computational Science</orgName>
+								<orgName type="institution">Stony Brook University</orgName>
+							</affiliation>
+						</author>
+						<title level="a" type="main">LLMs can Perform Multi-Dimensional Analytic Writing Assessments: A Case Study of L2 Graduate-Level Academic English Writing</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">148FF4A9720BE848ADB499D4DA153822</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-21T11:25+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>The paper explores the performance of LLMs in the context of multi-dimensional analytic writing assessments, i.e. their ability to provide both scores and comments based on multiple assessment criteria. Using a corpus of literature reviews written by L2 graduate students and assessed by human experts against 9 analytic criteria, we prompt several popular LLMs to perform the same task under various conditions. To evaluate the quality of feedback comments, we apply a novel feedback comment quality evaluation framework. This framework is interpretable, cost-efficient, scalable, and reproducible, compared to existing methods that rely on manual judgments. We find that LLMs can generate reasonably good and generally reliable multi-dimensional analytic assessments. We release our corpus and code 1 for reproducibility.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Assessing the writing quality of essays manually is both time-consuming and labor-intensive. This task becomes even more demanding and challenging due to high cognitive load <ref type="bibr" target="#b6">(Cai, 2015)</ref>, when assessors have to assign scores and provide comments based on multi-dimensional analytic criteria, referred to here as multi-dimensional analytic assessments (see Fig. <ref type="figure" target="#fig_0">1</ref> for an illustration). For evaluation of non-native language (L2) learners' writing, such precise and multi-dimensional assessments are highly valuable and desirable, but they are often not provided, due to the significant time, cost, and expertise required to produce them. This is also evidenced by the dearth of publicly available L2 writing corpora annotated with multi-dimensional analytic assessments <ref type="bibr" target="#b2">(Banno et al., 2024)</ref>. In recent years, large language models (LLMs) have emerged as promising tools for self-regulated writing assessments among L2 learners. A growing number of studies <ref type="bibr" target="#b7">(Chiang and Lee, 2023;</ref><ref type="bibr" target="#b26">Mizumoto and Eguchi, 2023;</ref><ref type="bibr" target="#b14">Han et al., 2024;</ref><ref type="bibr">Yancey et al., 2023, i.a.)</ref> have indicated the general usefulness of LLMs for automated writing assessments. Given their increasing use for this task, the following question remains understudied: can LLMs provide reasonably good multi-dimensional analytic writing assessments? We use the phrase "reasonably good" intentionally, given the open-ended nature of the task, particularly generating essay-level feedback comments. <ref type="foot" target="#foot_1">2</ref>To address this question, we utilize an Englishlanguage corpus of literature reviews written by L2 graduate students and assessed by human experts on 9 analytic assessment criteria. We prompt various popular LLMs to assess the corpus using the same criteria under various conditions, and we examine the quality of their generated assessments compared to human-generated assessments.</p><p>Our study makes three primary contributions:</p><p>1. We provide empirical evidence that LLMs can generate reasonably good and generally reliable multi-dimensional analytic writing assessments. This is the primary goal of this study; we do not argue in favor of a specific LLM, nor do we advocate replacing humans with LLMs for this task.</p><p>2. We release a corpus of L2 English graduatelevel literature reviews, annotated with multidimensional analytic assessments, which will facilitate future studies.</p><p>3. We propose and validate a novel LLM-based framework, ProEval, for evaluating the quality of feedback comments. ProEval is timeand cost-efficient, scalable, and reproducible, compared to manual judgments. It is also interpretable and fine-grained, compared to direct quality ratings.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>Automated Writing Evaluation (AWE) We use AWE to include both automated essay scoring (AES)<ref type="foot" target="#foot_2">foot_2</ref> and feedback comment generation <ref type="bibr">(Shermis and Burstein, 2013)</ref>. AWE systems have existed since the 1960s <ref type="bibr" target="#b34">(Page, 1966)</ref> and have evolved over time with a predominant focus on AES <ref type="bibr" target="#b20">(Ke and Ng, 2019;</ref><ref type="bibr" target="#b17">Hussein et al., 2019;</ref><ref type="bibr" target="#b52">Zhang and Zou, 2020;</ref><ref type="bibr" target="#b42">Uto, 2021;</ref><ref type="bibr" target="#b21">Lagakis and Demetriadis, 2021)</ref>.</p><p>Modern AWE systems use deep neural networks for scoring <ref type="bibr" target="#b41">(Taghipour and Ng, 2016;</ref><ref type="bibr" target="#b0">Alikaniotis et al., 2016;</ref><ref type="bibr" target="#b9">Dong et al., 2017;</ref><ref type="bibr" target="#b36">Rodriguez et al., 2019;</ref><ref type="bibr" target="#b47">Yang et al., 2020;</ref><ref type="bibr" target="#b45">Xie et al., 2022)</ref> and feedback comment generation <ref type="bibr" target="#b28">(Nagata, 2019;</ref><ref type="bibr" target="#b15">Han et al., 2019;</ref><ref type="bibr" target="#b1">Babakov et al., 2023)</ref>. The latter task typically focuses on sentence-level grammatical error identification and correction <ref type="bibr">(Behzad et al., 2024b)</ref>.</p><p>Existing non-LLM AWE systems mainly provide holistic assessment, with some specialized systems offering uni-dimensional analytic assessment based on a specific dimension of writing quality <ref type="bibr" target="#b20">(Ke and Ng, 2019;</ref><ref type="bibr" target="#b19">Jong et al., 2023;</ref><ref type="bibr" target="#b2">Banno et al., 2024)</ref>.</p><p>LLMs used for AWE Unlike prior AWE systems, LLMs can be prompted in natural language to jointly score and comment on a given essay. A growing body of research has explored the use of LLMs for assessing L2 writing. For AES, LLMs have been examined for holistic scoring <ref type="bibr" target="#b26">(Mizumoto and Eguchi, 2023;</ref><ref type="bibr" target="#b46">Yancey et al., 2023;</ref><ref type="bibr" target="#b44">Wang and Gayed, 2024)</ref>, discourse coherence scoring <ref type="bibr" target="#b29">(Naismith et al., 2023)</ref>, and multi-dimensional analytic scoring <ref type="bibr" target="#b51">(Yavuz et al., 2024;</ref><ref type="bibr" target="#b2">Banno et al., 2024)</ref>. For feedback comment generation, LLMs have been studied for generating corrective comments <ref type="bibr" target="#b27">(Mizumoto et al., 2024;</ref><ref type="bibr" target="#b39">Song et al., 2024)</ref>, holistic comments <ref type="bibr">(Behzad et al., 2024a,b)</ref>, and multi-dimensional analytic comments <ref type="bibr" target="#b13">(Guo and Wang, 2024;</ref><ref type="bibr">Behzad et al., 2024a;</ref><ref type="bibr" target="#b14">Han et al., 2024)</ref>. <ref type="bibr" target="#b40">Stahl et al. (2024)</ref> is the only study we know of which explores LLMs jointly performing scoring and feedback comment generation, but holistically. Moreover, the ASAP<ref type="foot" target="#foot_3">foot_3</ref> corpus they use contains short essays by native speakers from Grade 7 to Grade 10 and has no human reference comments.</p><p>Related Corpora Major L2 writing corpora include TOEFL11 <ref type="bibr" target="#b5">(Blanchard et al., 2013)</ref>, which contains scored essays from TOEFL tests, and CLC-FCE <ref type="bibr" target="#b48">(Yannakoudakis et al., 2011)</ref>, which includes error-annotated short texts in response to exam prompts. Other notable corpora are derived from online language learning platforms, such as EFCAMDAT <ref type="bibr" target="#b43">(van Rooy, 2015)</ref>, Write &amp; Improve <ref type="bibr" target="#b50">(Yannakoudakis et al., 2018)</ref>, and LEAF <ref type="bibr">(Behzad et al., 2024b)</ref>, focusing on scoring, grammatical error correction, and personalized feedback, respectively. We are not aware of any publicly available corpora annotated with multi-dimensional analytic scores and comments jointly.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Corpus</head><p>Overview Our corpus consists of 141 literature reviews written in English by 51 L2 graduate students, with an average word count of 1321 (930 excluding references). The reviews cover five broad topics from the humanities and social sciences, chosen to minimize the need for specialized disciplinary knowledge: (1) the social consequences of legalized cannabis, (2) the Canadian linguistic landscape, (3) online learning, (4) lessons from the COVID-19 pandemic, and (5) pacifism. Essays on topics 1, 3, and 5 were written individually, while those on topics 2 and 4 were completed collaboratively by 2-4 authors.</p><p>The corpus is a result of a large research project conducted at the University of Saskatchewan, a Canadian public research university, in 2021 with an aim to examine the developmental trajectory of literature review writing skills among L2 graduate students. The project involved three rounds of a 5-unit online tutorial series conducted over the course of 2021, with each round lasting 13 weeks (see Appendix A for details). Participation was voluntary, with 31 participants completing all five writing tasks across all rounds, and 20 further students completing at least one task before withdrawing.</p><p>Our Previous Studies The corpus has been used in our previous studies <ref type="bibr">(Li et al., 2023a,b;</ref><ref type="bibr" target="#b25">Makarova et al., 2024)</ref>, although it has not been made public until now. These three studies only use a subset of the corpus, namely essays written individually or those based on topics 1, 3, and 5.</p><p>Among these studies, <ref type="bibr">Li et al. (2023a,b)</ref> focus on individual writing development without examining feedback comments, placing their work within English for Academic Purposes rather than AWE. While <ref type="bibr" target="#b25">Makarova et al. (2024)</ref> explore ChatGPT's ability to assess L2 academic writing, they only compare model output to averaged human scores and aggregated comments, lacking criterion-level analysis. Their analysis is limited to surface features (e.g., word count, type-token ratio, comment length) and does not consider different prompting conditions. In contrast, this study offers a broader evaluation using the full corpus, distinct methodologies, and a more fine-grained analysis, with no substantial overlap with our prior work.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Essay Authors</head><p>The corpus authors comprise a diverse group of L2 learners, representing a wide range of first languages and enrolled in graduate programs across various disciplines at multiple Canadian universities. Their English proficiency ranged from upper-intermediate to advanced, with an average score equivalent to IELTS band score<ref type="foot" target="#foot_4">foot_4</ref> 7 based on conversions from various standardized English language tests. Scores varied from IELTS 6.5 to 8.5, with a standard deviation of 0.55.</p><p>To support their writing, authors received a curated bibliography for each writing task, designed to facilitate literature review writing while reducing the burden of bibliographic searches. Before submitting their final drafts for expert assessments, they participated in peer review (for topics 1, 3, and 5) or group collaboration (for topics 2 and 4). These two measures were intended to enhance the overall quality of the submitted essays. Human Assessments Most essays in the corpus were assessed by three (94.3%) or two (5.0%) independent human experts. As illustrated in Fig. <ref type="figure" target="#fig_0">1</ref>, the assessments consist of scores on a 10-point scale and comments based on 9 analytic assessment criteria. While scores were required, comments were optional for the assessors. Six assessors with professional experience in English language teaching assessed at different stages of the research project.</p><p>Table <ref type="table">1</ref> provides basic information about them. The 9 assessment criteria include: (C1) material selection; (C2) material integration and citation; (C3) quality of key components; (C4) logic of structure; (C5) content and clarity of ideas; (C6) coherence (flow of ideas) ; (C7) cohesion (use of connectors); (C8) grammar and sentence structure; and (C9) academic vocabulary. Comparatively, criteria C2, C8, and C9 are more technical and objective, since there are clearer rules and conventions governing proper citation practices, grammatical correctness, and appropriate academic word usage. In contrast, other criteria require more interpretive judgment, making them relatively more subjective in nature. See Table <ref type="table" target="#tab_8">7</ref> in Appendix A.3 for details about these criteria.</p><p>Assessment Quality The 31 students who completed all writing tasks evaluated the quality of human assessments on a 4-point scale in an anonymous final project survey. Based on the 30 submitted survey responses, all participants agreed that the assessments were at least "useful" (rating = 3), with 24 participants (80%) rating them as "very useful" (rating = 4).</p><p>Data Contamination Since the corpus was created prior to the release of ChatGPT and has never been made public, it contains no LLM-generated contents and is free from the risk of data contamination <ref type="bibr" target="#b18">(Jacovi et al., 2023;</ref><ref type="bibr" target="#b37">Sainz et al., 2023)</ref>, making it an ideal resource for LLM evaluation. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">ProEval: A Novel Feedback Comment Quality Evaluation Framework</head><p>A common approach to evaluating feedback comment quality for an essay uses manual judgments (e.g., rating on a Likert scale), since generating essay-level feedback is an open-ended task. However, this approach is expensive, time-consuming, not scalable, and may not always be reproducible. For L2-related feedback comments, common criteria for assessing comment quality include specificity, relevance, helpfulness <ref type="bibr" target="#b14">(Han et al., 2024;</ref><ref type="bibr" target="#b40">Stahl et al., 2024;</ref><ref type="bibr">Behzad et al., 2024a,b)</ref>, and the ability to identify writing problems <ref type="bibr" target="#b40">(Stahl et al., 2024;</ref><ref type="bibr">Behzad et al., 2024a,b)</ref>. These criteria reflect a common and practical need of L2 learners to be shown specific problems in their essays and how to correct them to improve their writing quality.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">The Framework</head><p>To address the issues of manual judgment, we propose ProEval, an automatic problem-focused evaluation framework that evaluates the quality of a feedback comment in terms of its ability to effectively identify relevant writing problems within the assessed essay. As illustrated in Fig. <ref type="figure" target="#fig_1">2</ref> (left), the framework utilizes LLMs to extract problems identified in feedback comments and to characterize their specificity and potential helpfulness. Rather than prompting an LLM to directly rate comment quality, which raises concerns about the reliability of LLM-based evaluators <ref type="bibr" target="#b8">(Doddapaneni et al., 2024)</ref>, our approach prioritizes transparency and interpretability by grounding evaluation in concrete, observable features.</p><p>More concretely, ProEval consists of the following three steps, with the first two steps automated by <ref type="bibr">GPT-4O-2024</ref><ref type="bibr">-11-20 (OpenAI et al., 2024a)</ref> and the last step by <ref type="bibr">GPT-4-TURBO-2024</ref><ref type="bibr">-04-09 (OpenAI, 2023)</ref>. See Appendix B for additional details and explanations.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Problem Extraction</head><p>We start out by extracting any writing problems stated or implied in assessment comments, along with any relevant contextual information for each problem, such as further explanations, suggestions for improvement, concrete corrections, or clarifying questions. We define a problem as any writing-related issue that affects the quality of the writing, such as citation errors, logical flaws, or grammatical mistakes.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Problem Classification</head><p>The extracted problems are further characterized along three dimensions: whether an extracted problem (1) points to a specific part of the essay, (2) includes any form of suggestion (general or specific), and (3) provides a concrete correction that can be directly applied to fix an identified problem. These classifications offer a quantifiable way to assess the specificity and potential helpfulness of related comments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Correction Relevance Check</head><p>We perform a sanity check to determine whether the proposed correction (and thus the comment) is in fact relevant to the original essay. The Correction Relevance Check also contains three binary classification questions for a more nuanced relevance analysis: (1) does the problem indicated in the correction exist in the essay? (2) is the indicated problem related to the given assessment question? and (3) is the correction correct?</p><p>The results show that both human-and LLMprovided corrections are highly relevant, with answers to those three questions being "Yes" typically above 90% time (see Table <ref type="table" target="#tab_3">10 in Appendix B.3</ref>). We thus focus on the Problem Classification results in the next two sections.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Validations of the Framework</head><p>The basic idea of ProEval is to break down a complex and inherently subjective evaluation task into multi-level subtasks that are easy for humans to verify and well-suited for LLMs to perform. To validate that, the first author and a paid graduate student in Linguistics (native speaker) first annotated some held-out samples for training and developing the annotation guidelines. Each then independently annotated at least another 200 samples containing human-and LLM-generated comments or problems for Problem Extraction and Problem Classification. Afterward, they met to resolve disagreements before the inter-annotator agreement (IAA) was calculated.</p><p>We measure IAA using Cohen's Kappa. As is known <ref type="bibr" target="#b10">(Feinstein and Cicchetti, 1990</ref>), Cohen's Kappa can provide misleading values with highly imbalanced class distributions. We therefore also provide exact match rates which have not been corrected for random agreement. Fig. <ref type="figure" target="#fig_1">2</ref> (right) shows that the IAA is typically high. When the Cohen's Kappa is low due to class imbalance (i.e., problems being incorrectly or not extracted is uncommon or rare and nearly all extracted problems contain a suggestion), the exact match rates are high. LLM task performance, evaluated based on the resolved annotations, is also notably high (e.g., 0.92 F1 for Problem Extraction and at least 87% accuracy for the classification tasks in Problem Classification).</p><p>We automatically evaluate LLM performance on the Correction Relevance Check by assuming that human-identified corrections are generally relevant. Specifically, we assess whether the LLM classifies these corrections as mostly relevant when presented with their corresponding essays and assessment questions (positive samples), and as mostly irrelevant when paired with random essays and questions (negative samples). As shown in Fig. <ref type="figure" target="#fig_1">2</ref> (right), our results confirm this expectation.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Experiments</head><p>This sections describes and presents the main experiments conducted and the results obtained.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.1">LLM Prompting</head><p>List of LLMs We evaluate variants of three popular LLMs: GPT-4O-2024-08-06 <ref type="bibr">(GPT-4o, OpenAI et al., 2024a)</ref>, GEMINI-1.5-FLASH (Gemini-1.5, Gemini <ref type="bibr" target="#b11">Team et al., 2024), and</ref><ref type="bibr">LLAMA-3 70B-INSTRUCT (Llama-3, Grattafiori et al., 2024)</ref>.</p><p>Default Prompt Setting All prompts contain a system prompt, an input essay, and an assessment instruction. There are four default conditions.</p><p>(1) The system prompt contains not only essential background information, such as writing topic, but also helpful information regarding the L2 nature of the input essay, year of writing, the same general assessment guidance used by human assessors. (2) The input essay always includes references. (3) LLMs are instructed to produce a score before an optional comment for each assessment question (4) via greedy decoding, i.e., with temperature set to 0. Conditions 1-3 are used to maximize the alignment between human and LLM assessment conditions.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Interaction Modes</head><p>We consider three possible user-LLM interaction modes, depending on how the 9 assessment questions are presented. In Interaction Mode 1 (IM 1), all questions are prompted at once in a single-turn conversation, where all LLM assessments are generated in a single response. In Interaction Mode 2 (IM 2), the questions are asked one at a time, with an LLM generating answers to each question in corresponding turns in a multiturn conversation. In Interaction Mode 3 (IM 3), however, the assessment questions are provided independently of one another in 9 separate prompts to elicit 9 separate outputs from an LLM.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.2">Baselines</head><p>Given the open-ended nature of the task, we compare raw assessments produced across individual assessors to understand the assessment patterns and behaviors of humans and LLMs. For a more robust statistical analysis, we only consider raw assessments made by assessors B, C, and F, since the essays they each assessed and co-assessed both cover at least half of the corpus (at least 78 essays between assessors C and F). See Table <ref type="table">11</ref> in Appendix C.1 for exact numbers of essays all assessor pairs (including LLM assessors) co-assessed. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.3">Evaluation of Scores</head><p>Quadratic Weighted Kappa (QWK) This is a metric for rating inter-rater agreement. It ranges from 0 (random agreement) to 1 (perfect agreement), though it can be negative when agreement is worse than chance. QWK places higher penalties for larger score mismatches, but can yield misleadingly high or low values due to chance correction when the distribution of scores is highly skewed <ref type="bibr" target="#b49">(Yannakoudakis and Cummins, 2015)</ref>.</p><p>Adjacent Agreement Rate (AAR) AAR measures the percentage of scores (from two raters) that lie within a specified threshold k of one another. When k = 0, it assesses exact matches. For this study, we set k = 1 (AAR1), meaning raters' scores are treated as matching or equivalent as long as they differ by no greater than 1.</p><p>We use AAR1 in addition to QWK to account for the limitation of QWK's chance correction, as we observe that both human-and LLM-assigned scores are highly biased toward the respective means. AAR1 also helps address observed scoring inconsistency issues (often by 1 point) by humans. See Appendix C.2 for more details and discussions.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.4">Results</head><p>We compare human-and LLM-generated assessments in terms of scores, comments, and the interaction between scores and comments. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.4.1">Scores</head><p>Fig. <ref type="figure" target="#fig_2">3</ref> illustrates the overall scoring agreement between all pairs of assessors.</p><p>Humans score more like humans and LLMs score more like LLMs. More concretely, humanhuman QWK and AAR1 are almost always higher than the corresponding human-LLM agreement. Similarly, LLM-LLM agreement exceeds human-LLM agreement in virtually all cases, with a much larger margin, suggesting that LLMs may resemble each other in scoring more closely than humans resemble each other. This may be attributed to the substantial overlap in LLM training data, in contrast to the broader variability in human linguistic experiences, which contributes to greater divergence in human scoring patterns. Criterionlevel agreement between human/LLM assessors shows similar patterns, as shown in Fig. <ref type="figure" target="#fig_3">4</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>LLMs can score approximately like humans.</head><p>The best human-LLM AAR1 for the three LLMs ranges from 0.59 to 0.88, with all LLMs achieving an AAR1 above 0.5 with assessor F (Fig. <ref type="figure" target="#fig_2">3</ref>). Moreover, the AAR1 scores between GPT-4o and assessor B and between Llama-3 and assessors B and C are always greater than 0.5. Overall, it shows that LLMs can generate sensible or reasonably good scores, often differing by no more than 1 point from the corresponding human-generated scores.</p><p>Human-LLM agreement tends to be higher when LLMs respond to each assessment criterion separately under IM 3. This is particularly true compared to when LLMs respond to all criteria at once under IM 1, since IM 3 exhibits a generally higher agreement level (Fig. <ref type="figure" target="#fig_2">3</ref>). This result may imply that, while human assessors score the 9 assessment criteria sequentially, they effectively make independent scoring decisions based on the specifics of each assessment question. That said, the effect of interaction modes is overall limited, given the fairly close scores (i.e., high QWK/AAR1) assigned across them for each LLM. Therefore, we average human-LLM agreement for each LLM across the three interaction modes to obtain human-LLM agreement in Fig. <ref type="figure" target="#fig_3">4</ref>.</p><p>The degree of human-LLM agreement varies across assessment criteria. For example, Fig. <ref type="figure" target="#fig_3">4</ref> shows that LLM-assigned scores are relatively closer to human-assigned scores on assessment criteria C1 (material selection), C2 (material integration and citation), C8 (grammar and sentence structure), and C9 (academic vocabulary) than the other criteria. Among criteria C3-C7, LLMs and humans agree rather poorly on C7 (use of connectors), with LLMs consistently assigning scores more than 1 point away from human-assigned ones.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.4.2">Comments</head><p>Table <ref type="table" target="#tab_1">2</ref> shows the percentage of time an assessor provided a comment, and when they did, the average length of these comments, the percentage of comments identifying a problem, and the average number of problems identified in each comment.</p><p>LLMs always provide comments and identify problems, but humans do not. This is an apparent advantage of LLMs since, unlike humans, they do not experience practical constraints like mental fatigue and limited time for writing comments.</p><p>While humans show different tendencies in comment writing, they tend to write more comments and/or identify more problems (with longer comments) on criteria that are technical and objective, including C2, C8, and C9, also mentioned in the end of Section 5.4.1. See Appendix C.3 for details.</p><p>Interacting with LLMs one question at a time leads to more elaborate, specific, and helpful comments. LLM comments are much longer and identify more problems in IM 2 and IM 3 than in IM 1 (see Table <ref type="table" target="#tab_1">2</ref>). Additionally, Fig. <ref type="figure" target="#fig_4">5</ref> shows that comments generated in IM 1 are also less likely to refer to a specific essay part and offer a concrete correction than those generated in IM 2 and IM 3 or human-generated comments. This suggests that IM 2 and IM 3 provide higher levels of elaboration than IM 1. Furthermore, IM 3 produces more corrections than both IM 2 and humans across all assessment criteria, except C1, for which a correction is unlikely since it is about evaluating the relevance of cited references. In other words, LLMs can be more elaborate, specific, and potentially helpful than humans in their comments.</p><p>LLMs can be more specific than humans on assessing subjective criteria. While humans and LLMs (in IM 3) are comparably likely to include a correction in their comments for objective criteria C2, C8, and C9, LLMs' comments (in IM 3) tend to offer more corrections on other subjective criteria (e.g., C3: quality of key components, C4: logic of structure etc.), except for C1 (see above). This aligns with the observation that humans tend to comment more on objective criteria, since commenting on subjective criteria requires more explanations and can thus be more demanding to do.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.4.3">Score-Comment Interaction</head><p>Since lower scores reflect a perception of more writing problems, an assessor typically needs to provide a more extensive feedback comment to both cover the identified problems and justify their low scores. We highlight this score-comment interaction by measuring the correlations between scores and the token counts of or the numbers of identified problems in the related comments.</p><p>As expected, the last column in Table <ref type="table" target="#tab_1">2</ref> shows strongly negative score-comment correlations across both human-and LLM-generated assessments. The fact that these negative correlations are generally much stronger when measured with the number of identified problems suggests that it is a more fine-grained metric than comment length and also indicates the usefulness of our framework (ProEval) proposed in Section 4. See Fig. <ref type="figure" target="#fig_7">6</ref> in Appendix C.4 for full results of the correlations.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5.5">Summary</head><p>We show that LLMs can generate sensible scores, typically within 1 point of human-generated ones on a 10-point scale, and feedback comments that identify more writing problems than human assessors that are specific, and potentially helpful. This is particularly true when LLMs are prompted in IM 3 where each assessment question is asked independently of each other. Moreover, like humans, LLMs also generate assessments that exhibit an expected and negative score-comment correlation, justifying the validity of their assessments. Overall, these results highlight that LLMs can generate reasonably good multi-dimensional analytic assessments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Further Analyses</head><p>This section reexamines the assumption underlying our proposed feedback comment quality evaluation framework, i.e., ProEval, and evaluates the reliability of LLM-generated assessments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6.1">Re-examining Our Assumption about Feedback Comment Quality</head><p>ProEval assumes that the quality of a feedback comment is related to how well it identifies relevant writing problems of an assessed essay. The framework extracts and characterizes problems of assessed essays identified in comments to evaluate the specificity and helpfulness of these comments.</p><p>To assess this assumption, we adopt an LLM-asa-judge approach <ref type="bibr" target="#b54">(Zheng et al., 2023)</ref>   <ref type="bibr">et al., 2024b)</ref> to directly assess the specificity and helpfulness of a feedback comment, given the corresponding essay and assessment question on a 10-point scale. We do not define specificity and helpfulness to avoid injecting biases and choose all comments, generated by humans and LLMs, from one subjective criterion (C6: coherence or flow of ideas) and one objective criterion (C9: academic vocabulary) to balance our examination. We then calculate the average Spearman rank correlations between these two scores produced by o1-mini and the number of different types of problems identified by ProEval under varying conditions. The results in Table <ref type="table" target="#tab_3">3</ref> shows that the characteristics extractable from applying ProEval correlate very well with the o1-mini-assigned specificity and helpfulness scores. In particular, the number of problems that mention specific essay parts and offer corrections appears to be overall stronger signals of specificity and helpfulness than the mere number of problems, which shows negligible correlations for comments from IM 1 or IM 2. This shows the potential of ProEval in providing a more fine-grained and interpretable measurement of specificity and helpfulness levels of comments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6.2">Reliability of LLM-generated Assessments</head><p>We evaluate the reliability of LLM-generated assessments across different realistic conditions that mirror potential real-world use cases. To prevent experimental confounding, we change only one condition at a time for a given LLM in a specific interaction mode, assuming that users tend to interact with their chosen LLM in a consistent manner. First, we consider GPT-4O-2024-08-06 (GPT-4o-Aug) in IM 1 with the default prompt setting from Section 5.1 as the baseline. To test the effect of model variant, we run the same experiment but with GPT-4O-2024-05-13 (GPT-4o-May). We also prompt GPT-4o-Aug while varying one of the four conditions in the default prompt setting (see Section 5.1) by ( <ref type="formula">1</ref>) removing the helpful information from the system prompt, (2) excluding references in the input essays, (3) instructing LLMs to produce a comment before a score, or (4) setting temperature to 1 to increase output randomness.</p><p>To ensure the comprehensiveness of our experiments, we prompt GPT-4o-May in IM 2 and IM 3 under default prompt setting to study the effect of model variant under other interaction modes. We also prompt Llama-3 in IM 1 changing the first three conditions in the default prompt setting mentioned in the last paragraph. The baselines here are GPT-4o-Aug and Llama-3 prompted under respective interaction modes from Section 5.1.</p><p>We use QWK and AAR1 and three widely adopted machine translation metrics, i.e., BLEU <ref type="bibr" target="#b35">(Papineni et al., 2002)</ref>, ROUGE-L <ref type="bibr" target="#b24">(Lin, 2004)</ref>, and BERTScore <ref type="bibr">(Zhang et al., 2020)</ref>, to evaluate the reliability of the generated scores and comments between contrastive condition pairs, respectively.</p><p>The results in Table <ref type="table">4</ref> show that LLMs are capable of generating highly stable scores, with an AAR1 score at least 0.81 and mostly above 0.9 across all conditions. Their generated comments are also decently similar with BERTScore typically no lower than 0.67. A small-scale manual check and a correlation analysis performed in Appendix D further verify the validity of BERTScore in measuring comment similarity.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="7">Conclusion</head><p>This study provides evidence that LLMs can generate reasonably good and generally reliable multidimensional analytic assessments. Our findings highlight the promising role of LLMs in assessing academic English writing, especially for graduatelevel literature reviews, which is a highly technical genre. In short, LLMs show strong pedagogical potential, benefiting both L2 learners and instructors for self-regulated learning or teaching assistance. We propose and validate a novel problem-focused evaluation framework, namely ProEval, to facilitate our analysis. Our stduy demonstrates that ProEval is time-and cost-efficient, scalable, and reproducible, compared to manual judgments. It is also interpretable and fine-grained, compared to direct quality ratings.</p><p>Looking ahead, future studies could further characterize and compare the writing problems identified by human-versus LLM-generated comments, offering deeper qualitative insights. Additionally, it would be valuable to develop a metric grounded in our proposed framework that can directly compare the relative quality of two sets of comments. We release our corpus to support continued research in this area.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Limitations</head><p>Generality of Findings This study focuses on L2 graduate-level academic writing, specifically literature reviews in the humanities and social sciences. While this domain represents a significant subset of academic writing, the findings may not generalize to other genres (e.g., technical reports, creative writing) or proficiency levels (e.g., undergraduate or professional writers). Additionally, our study is limited to English, a high-resource language, which means our results may not be indicative of LLMs' capabilities in other languages, particularly lowresource ones. Future research should explore the applicability of our findings across diverse writing contexts and linguistic backgrounds.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Weakness of Our Assumption About Feedback</head><p>Quality A key limitation of our approach is that it does not account for other factors that may influence the perceived quality of a feedback comment, such as politeness (e.g., rude comments may not be well received) or the logical coherence of the argument (e.g., illogical comments could be misleading). However, this concern is less pronounced for LLM-generated feedback comments, as LLMs are trained to align with human preferences and social norms <ref type="bibr" target="#b33">(Ouyang et al., 2022)</ref>. Moreover, these factors could potentially be incorporated into our framework by adding additional steps focused on politeness and argumentation etc.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Indirect Evaluation of Feedback Quality</head><p>While our approach to measuring the general quality of LLM-generated assessments is intuitive and simple, it is inherently indirect. A large-scale manual evaluation remains necessary to more accurately assess and compare the quality of humanand LLM-generated multi-dimensional analytic assessments. Due to resource constraints, we leave this investigation to future studies.</p><p>Limited Validation and Reliability Testing Due to time and resource constraints, we were unable to comprehensively validate our proposed feedback comment quality evaluation framework. As a result, we may have overlooked some potential issues with the framework or the LLM outputs. Similarly, the reliability assessments we conducted are limited, with only one factor being changed at a time in each evaluation. More extensive experiments are needed to further validate our claim that LLM-generated assessments are generally reliable and to explore the conditions influencing this reliability.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Ethical Considerations</head><p>Corpus Creation The research project that led to the construction of the corpus was ethically reviewed and received approval from the University of Saskatchewan for involving human participants. Participants provided informed consent to allow the use of their materials, with the option to withdraw at any time.</p><p>Human Annotations We compensated the hired annotator at a rate of approximately US$25 per hour, which exceeds the minimum wage in the region where the annotations took place.</p><p>Potential Biases in LLM Assessments LLMs are trained on large-scale datasets that may contain inherent biases, which can be reflected in their as-sessments. For example, they might systematically favor certain writing styles, linguistic structures, or cultural conventions, leading to biased evaluations. However, we argue that in contexts where human assessments are not readily accessible, the benefits of LLM-generated feedback -particularly for L2 learners -may outweigh potential biases. Furthermore, bias mitigation strategies, such as improved prompting techniques or advancements in LLM development, could help reduce these concerns.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A Corpus</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.1 Basic Corpus Statistics</head><p>Table <ref type="table" target="#tab_6">5</ref> provides the basic statistics of the corpus. Note that throughout this study, we use the default word tokenizer of NLTK to compute word counts. See: <ref type="url" target="https://www.nltk.org/api/nltk.tokenize.html">https://www.nltk.org/api/nltk. tokenize.html</ref>.  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.2 Details of the 5-Unit Tutorial Series</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.3 Assessment Criteria</head><p>The 9 assessment criteria/questions provided to human assessors are detailed in Table <ref type="table" target="#tab_8">7</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B Feedback Comment Quality Evaluation Framework B.1 Implementation</head><p>The framework is implemented using LLMs. More concretely, we used GPT-4O-2024-11-20 for Problem Extraction and Problem Classification, and GPT-4-TURBO-2024-04-09 for Correction Relevance Check. An example implementation of our framework can be found in Table <ref type="table" target="#tab_9">8</ref>. Related prompts used for implementing our framework can be found in Appendix E.1.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B.2 Annotation</head><p>Guidelines Table <ref type="table">9</ref> provides explanations and examples of what is considered as a problem for Problem Extraction, and the three characteristics relevant to Problem Classification: whether an extracted problem (1) refers to a specific part of the essay, (2) provides a suggestion (general or specific), and (3) offers a concrete correction.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Samples for Problem Extraction</head><p>We employed stratified sampling to randomly select 100 humangenerated feedback comments and 108 LLMgenerated feedback comments. In total, there are 208 comments for manual annotations.</p><p>For LLM-generated comments, half of them were generated under Interaction Mode 1 and the other half under Interaction Modes 2 and 3. Comments from Interaction Modes 2 and 3 were sampled together to reduce manual annotation effort, as these comments tend to be lengthy. The sampling covered the 9 assessment criteria, with 2 comments from each of the 3 LLMs used, resulting in 9 * 3 * 2 = 54 comments from Interaction Mode 1 and another 54 comments from the combined Interaction Modes 2 and 3.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Samples for Problem Classification</head><p>We randomly sampled 100 problems extracted from both human-and LLM-generated comments, resulting in 200 problems for annotations.</p><p>Since the distribution of extracted problems across the nine assessment criteria are highly skewed, we ensured that there were at least 5 problems for each assessment criterion.</p><p>Problem Extraction For each feedback comment, the two annotators were provided with LLMextracted problems and asked to identify the number of correctly extracted problems (true positives), the number of incorrectly extracted problems (false positives), and the number of problems not extracted (false negatives). The number of true negatives is always set to 0, as there is no negative prediction in problem extraction.</p><p>A problem is considered correctly extracted if the LLM output contains the exact or paraphrased problem stated or implied in the feedback comment. It is acceptable if additional information relevant to the problem, such as elaborations, suggestions, clarifying questions, or quoted text from the assessed essay, is not included in the LLM-identified problems, which appears to be uncommon based on our annotations. However, if the problem and relevant additional information are extracted as separate problems, only the stated or implied problem is counted as a true positive, and the relevant information is treated as a false positive. This oversegmentation is the primary source of errors in LLM-extracted problems.</p><p>Problem Classification For each extracted problem, the two annotators were asked to answer the three classification problems based on Table <ref type="table">9</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>B.3 Correction Relevance Check</head><p>Table <ref type="table">10</ref> demonstrates that comments generated by both humans and LLMs are overall highly relevant. However, human-generated comments tend to exhibit slightly lower relevance-either broadly or strictly-compared to those generated by LLMs.</p><p>We conducted a small-scale error analysis to investigate the reasons behind the 8%, 15%, and 9% of human-identified problems that GPT-4 incorrectly classified as not present in the essays, not adhering to the assessment criteria, and being incorrect, respectively.</p><p>Problems not Present in Essays We randomly selected 10 problems identified by GPT-4 as not present in the assessed essays. Upon reviewing each human-identified problem in the original es-  2. Yes, the problem pointed out in the excerpt is relevant to the corresponding assessment question.</p><p>The assessment question asks to evaluate the essay based on the integration of source materials and citation practices. The excerpt directly addresses an issue with citation practices, which is a key aspect of the assessment question.</p><p>3. Yes, the correction of the problem pointed out in the excerpt is correct. The suggested correction to change " <ref type="bibr">Wilkinson ST, et al., 2015</ref><ref type="bibr">" to "Wilkinson et al., 2015"</ref> aligns with APA style guidelines, which recommend using only the surname of the first author followed by "et al." for works authored by multiple people, without including initials unless necessary to distinguish between authors with the same surname.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Final answers: Yes, Yes, Yes</head><p>There are some inconsistencies in the reference list (e.g., some sources have DOIs, while others do not).</p><p>1. No -The excerpt does not refer to a specific part of the essay, as it does not point to a particular location or provide a specific example from the reference list.</p><p>2. Yes -The excerpt suggests that the student should address the inconsistencies in the reference list, such as ensuring uniformity in the inclusion of DOIs.</p><p>3. No -The excerpt does not provide a concrete correction, as it does not specify exactly how to fix the inconsistencies or what the corrected references should look like.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Final answers: No, Yes, No</head><p>The author could benefit from using more precise language when describing the findings of the studies, rather than relying on general statements.</p><p>1. No -The excerpt does not refer to a specific part of the essay. It does not mention a concrete location or provide any referencable details about where the issue occurs.</p><p>2. Yes -The excerpt offers a general suggestion for improvement by advising the author to use more precise language when describing the findings of the studies.</p><p>3. No -The excerpt does not provide a concrete correction or specific example of how to fix the issue.  </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Positive Examples</head><p>• Specify what the abbreviation "THC" stands for. (Implied problem: "THC" is unspecified) • There was a redundant use of "the legalization of cannabis".</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Negative Examples</head><p>• Great grammatical skills, well done! • Final references are well formatted. In-text references are well integrated.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>If a problem points to a specific part of the essay</head><p>A specific part refers to a part of the essay that is easily locatable.</p><p>(1) It can be a specific word, phrase, sentence, paragraph, reference etc. used in the essay.</p><p>(2) It can be a concrete location, such as "sentence 2 in paragraph 2," "in paragraph 6," "the first citation," or "the first sentence of the paper" and so on. (3) A less concrete location, such as "the introduction," or "the conclusion," is also considered a specific part if it is accompanied by some referenceable details.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Positive Examples</head><p>• In Paragraph 2, the word "decay" is likely a mistake and should be replaced with "decade". • The sentence "This theory still is under debate even with many authors provide a justification for that" contains a grammatical error. The verb "provide" should be corrected to "providing."</p><p>Negative Examples</p><p>• Some of the sentences are a bit too long and fall apart a little. • Your paper would benefit from the use of expressions such as "as a result" or "the result" where cause and consequence are important.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>If a problem offers some form of suggestions, general or specific</head><p>A suggestion indicates or implies ares of improvement. If the problem only contains a problem statement and it is unclear what direction the student should take to improve it, then there is no suggestion. A concrete correction is always considered a suggestion.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Positive Examples</head><p>• Some sentences could be a bit shorter.</p><p>• The use of a topic sentence for each paragraph in the main body could be improved.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Negative Examples</head><p>• The beginning of the literature review could be changed slightly. • The first sentence of the paper is confusing.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>If a problem provides a concrete correction for an identified writing issue</head><p>A concrete correction is something that can be directly applied to an essay to fix a writing problem. Corrections should not require thinking to implement, i.e. text that can be copy-pasted, or actions that can be taken following an instruction (e.g., capitalize the first letter).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Positive Examples</head><p>• The citation "(Toronto Star December 2016)" should be revised to "(Toronto Star 2016)" to align with proper citation practices. • "The advance of technologies" should be corrected to "the advancement of technologies".</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Negative Examples</head><p>• The significance of South Australian policy is unclear, as it is the first citation and the only one in the Introduction. • The conclusion is a little too short.</p><p>Table <ref type="table">9</ref>: Explanations and illustrative examples of "problems" and their characterizations. say, we found that 6 of these problems were indeed present, while 4 were not. Of the 4 problems that did not exist in the essays, 3 appeared to be misassigned comments (2 of these 3 were extracted from the same comment), while the remaining one seemed to be an assessor error. Among the 6 problems that GPT-4 misclassified, 4 were due to GPT-4 misunderstanding the identified problems, 1 was due to GPT-4 failing to locate a quoted word in the essay, and 1 was because GPT-4 mistakenly deemed the identified problem not to be a problem, despite its presence in the essay.</p><p>Problems not Adherent to the Assessment Criteria We randomly selected 10 problems identified by GPT-4 as not adhering to the assessment criteria. Of these, 9 were related to C8 (grammar &amp; sentence structure), and 1 was related to C9 (academic vocabulary). Our manual validation showed that 7 of the problems were less related to grammar and sentence structure but more related to word choice or clarity of expression. The remaining 3 were misclassified by GPT-4, mostly due to its requirement that problems be explicitly related to both grammar and sentence structure in order to adhere to C8.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Correction being Incorrect</head><p>We randomly selected 10 problems containing corrections identified by GPT-4 as incorrect. We found that 5 of these problems involved accurate corrections, all related to grammar. There were 2 corrections proposed to be suggestions and 3 corrections that require subjective judgments to determine their correctness.</p><p>Remarks Based on this error analysis, we can attributed the discrepancy in relevance to two primary reasons: (1) human comments often include (inconsistent use of) diacritics that complicate problem extraction and characterization, and (2) human assessors may occasionally deviate from instructions, providing corrections unrelated to the assessment question. These issues are less frequent in LLM-generated comments, which benefit from their strong adherence to instructions and the ability to handle extended context windows. That said, both human-and LLM-identified problems are highly relevant.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C Results</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C.1 Number of Co-Assessed Essays</head><p>Table <ref type="table">11</ref> shows the number of essays co-assessed by different assessor pairs.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C.2 Scores</head><p>Scoring Ranges Table <ref type="table" target="#tab_12">12</ref> summarizes the scoring ranges, in the form of means and standard deviations for each assessment criterion, as produced by three human assessors and the three LLMs under three interaction modes.</p><p>Full QWK/AAR1 Table <ref type="table" target="#tab_3">13</ref> presents the full results for Quadratic Weighted Kappa (QWK) and Table <ref type="table">14</ref> presents the full results for AAR1.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Inconsistencies in Scoring by Human Assessors</head><p>First, there is an instance in the corpus, where assessor B accidentally assessed the same essay twice on separate days. <ref type="foot" target="#foot_5">6</ref> While assessor B provided identical scores for 5 out of the 9 assessment criteria, discrepancies of 1 point occurred for the remaining 4 criteria, with scores alternating between (8, 7), (8, 7), (4, 5), and (7, 8).</p><p>Second, we observe that human assessors assigned different scores to identical or similar comments, mostly within 1-point differences. For example, assessor F gave the same comment "Decent number of citations" three times but assigned three different scores: 6, 7, and 8. Similarly, assessor C assigned scores of 7 and 8 to the comment "Appropriate use of connectors." However, when the same comment is repeated, scores tend to be very close, typically within one point. For instance, assessor A assigned a score of 8 to the comment "Great use of academic words and formal tone" five times, and there was only one more instance where the score was 9.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C.3 Comments</head><p>Table <ref type="table" target="#tab_13">15</ref> presents the general statistics of feedback comments generated by human assessors and LLMs under the three interaction modes.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>C.4 Score-Comment Interaction</head><p>Fig. <ref type="figure" target="#fig_7">6</ref> provides the full results of the correlations measured between scores and the token counts of or the numbers of identified problems in the related comments.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>D Further Analyses</head><p>Table <ref type="table" target="#tab_14">16</ref> provides five random example comment pairs sampled from GPT-4o-Aug and GPT-4o-May prompted under default prompt setting specified in Section 5.1. We find that when BERTScore is Table <ref type="table">10</ref>: Overall Correction Relevance Check results (%), representing the percentage of instances each attribute is true for corrections made by an assessor. "In Essay": whether the problem indicated in the correction exists in the essay. "In Question": whether the correction relates to the assessment question. "Is Correct": whether the correction is correct. "Broadly Relevant": applicable when both "In Essay" and "Is Correct" are true. "Strictly Revelant": applicable when both "Broadly Relevant" and "In Question" are true.</p><p>Human B Human C Human F Llama-3 (IM 1) Gemini-1. Table <ref type="table">11</ref>: Number of essays co-assessed by different assessor pairs. We only show three LLMs, which failed to generate assessments for all 141 essays in the corpus for some reason (e.g., content moderation, exceeding context window). We omit the other LLMs since they assessed all essays and the numbers of essays they co-assessed with the five assessors in the table excluding human B are identical to those between human B and those five assessors.</p><p>The number of essays the omitted LLMs and human B co-assessed is always 141.</p><formula xml:id="formula_0">Assessor C1 C2 C3 C4 C5 C6 C7 C8 C9</formula><p>Human B 6.7±0.9 6.5±1.2 7.5±1.2 7.7±1.1 7.7±1.1 7.6±1.1 7.3±1.1 7.2±1.1 7.5±1.1 Human C 7.8±1.3 7.6±1.3 7.9±1.0 7.8±1.3 7.8±1.1 7.9±1.1 8.1±0.9 7.7±1.1 8.2±0.9 Human F 7.0±1.0 6.6±1.0 6.9±0.9 7.0±0.8 7.1±0.8 7.1±0.8 7.2±0.8 7.3±0.7 7.0±0.8</p><p>GPT-4o (IM 1) 7.4±0.7 6.4±0.7 5.7±0.8 5.7±0.9 6.3±0.7 5.4±0.7 5.5±0.8 6.4±0.9 6.7±0.8 GPT-4o (IM 2) 6.9±0.7 6.0±0.8 6.0±0.8 5.6±1.1 6.2±0.8 5.4±0.9 4.9±0.8 6.2±0.9 6.8±0.9 GPT-4o (IM 3) 6.9±0.7 6.4±0.7 6.0±0.7 6.2±0.7 6.4±0.6 6.1±0.7 6.0±0.7 6.7±0.7 6.8±0.6</p><p>Gemini-1.5 (IM 1) 6.3±0.8 5.4±0.7 5.5±0.7 5.5±1.0 6.0±0.8 4.9±0.8 4.5±0.9 5.7±0.8 6.1±0.8 Gemini-1.5 (IM 2) 6.4±0.6 6.3±0.9 5.5±0.7 5.8±0.8 6.0±0.5 5.4±0.7 5.2±0.8 6.4±0.6 6.5±0.6 Gemini-1.5 (IM 3) 6.4±0.6 5.8±0.6 5.5±0.6 5.6±0.5 5.7±0.5 5.5±0.6 5.4±0.5 6.0±0.6 6.1±0.6</p><p>Llama-3 (IM 1) 7.5±0.5 7.4±0.7 6.4±0.9 6.4±1.2 7.1±0.7 6.2±0.8 5.2±0.7 7.8±0.5 7.1±0.7 Llama-3 (IM 2) 7.2±0.6 6.8±1.0 6.1±1.1 6.4±1.4 6.7±1.1 6.2±1.4 4.9±1.4 7.3±0.9 7.2±0.8 Llama-3 (IM 3) 7.2±0.5 6.9±0.5 6.4±0.6 6.7±0.6 6.8±0.4 6.7±0.6 5.9±0.6 6.8±0.4 6.8±0.5    low (the last row), the comment pair is less similar compared to other pairs. While other two metrics (BLEU and ROUGE-L) are highly correlated with BERTScore (BLUE: 0.78, ROUGE-L: 0.88, Pearson), they consistently yield lower values than BERTScore. This indicates that these two lexical overlap-based metrics may be less effective at measuring comment reliability compared to the semantic similarity captured by BERTScore.</p><formula xml:id="formula_1">17±23 104±122 39±38 56±77 112±102 38±69 26±39 103±88 65±94 Human F 26±40 77±75 51±30 30±39 51±57 31±31 27±33 52±67 79±92 GPT-4o (IM 1) 79±10 82±13 72±8 59±7 61±10 53±7 55±9 59±12 67±10 Gemini-1.5 (IM 1) 98±22 126±29 120±33 82±19 91±27 84±22 85±24 90±26 99±49 Llama-3 (IM 1) 90±13 91±18 87±14 60±10 64±15 54±12 52±15 56±13 62±13 GPT-4o (IM 2) 291±44 353±40 332±30 333±37 374±39 362±42 347±36 370±45 357±42 Gemini-1.5 (IM 2) 378±88 446±111 512±106 399±103 425±121 397±109 867±2032 468±148 400±107 Llama-3 (IM 2) 331±35 368±41 438±111 466±197 357±68 351±107 317±88 345±82 355±97 GPT-4o (IM 3) 295±40 437±40 372±51 380±40 444±37 402±39 358±60 422±50 321±40 Gemini-1.5 (IM 3) 374±86 654±107 689±110 592±94 655±102 559±125 473±109 642±131 505±343 Llama-3 (IM 3) 333±35 425±53 409±49 378±51 481±56 389±51 366±58<label>445±62</label></formula></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E Prompts</head><p>Note that, any word followed by a dollar sign "$" is a placeholder for all prompt templates included in this section. For example, "$comment" is a placeholder for a comment.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.1 Prompts for the Feedback Comment Quality Evaluation Framework ProEval</head><p>The full prompt templates for the three steps in the pipeline of the feedback comment quality evaluation framework are given below. Among these three prompts, the prompt for Problem Extraction contains three in-context exemplars, whereas the prompts for the other two steps are zero-shot prompts.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.1.1 Prompt for Problem Extraction</head><p>You will be given a feedback comment written for a student's essay. Your task is to identify and extract all the writing-related problems mentioned or implied in the comment, along with any explanations, suggestions, corrections, questions, quotations, or other relevant information provided in the comment for each extracted problem.</p><p>A writing-related problem is any issue that affects the quality of the writing, such as citation errors, logical flaws, coherence issues, grammatical mistakes, or inappropriate word choices, among others.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>### Extraction Instructions</head><p>-Each extracted problem must be clear and can be understood without the need to refer to the original comment.</p><p>-Each extracted problem must faithfully reflect the provided comment by including any relevant information. Relevant information includes a further explanation or an elaboration of the problem, a suggestion for improvement, a concrete correction, a clarifying question, an excerpt (possibly without quotation marks) from the student's essay, or any other relevant information that helps to understand the problem.</p><p>-Whenever possible, extract each problem and the relevant information as they are written in the Criterion GPT-4o-Aug GPT-4o-May BLEU ROUGE-L BERTScore</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Content &amp; clarity of ideas</head><p>The content is generally relevant, but the clarity of ideas could be improved. Some sentences are complex and could be simplified for better understanding. For example, the sentence discussing Olson (2012) and Sanner ( <ref type="formula">2008</ref>) could be broken down into shorter, more concise statements. Additionally, the review could benefit from more explicit explanations of key concepts, such as acculturation.</p><p>The content is relevant and covers important aspects of the topic. However, some ideas are not clearly articulated. For example, the sentence "This is made worse because 'the nursing profession faces increased numbers of linguistically and culturally diverse patients who speak little or no English'" could be rephrased for clarity. Additionally, some sentences are overly complex and could be simplified for better understanding.</p><p>0.20 0.30 0.63</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Logic of structure</head><p>The logical structure of the literature review could be improved. The review jumps between different topics without clear transitions, making it difficult for the reader to follow the argument. A more organized structure with clear subheadings and a logical flow of ideas would enhance readability.</p><p>The logical structure of the literature review needs improvement. While the review covers important aspects of the psychological impact of COVID-19, the organization of the content is somewhat disjointed. Clearer subheadings and a more logical flow of ideas would help guide the reader through the review. For example, separating the discussion of different demographic groups or types of psychological impacts into distinct sections could enhance readability.</p><p>0.17 0.41 0.70</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Quality of key components</head><p>The introduction provides a general overview of the topic but lacks a clear statement of the significance of the issue or specific research questions. The body of the literature review presents some relevant ideas but lacks a clear organization and focus on the pros and cons of online learning. The conclusion is missing, which is a significant omission as it should summarize key findings and highlight contributions or gaps in the literature.</p><p>The introduction lacks a clear thesis statement and does not adequately set up the significance of the topic. The body of the review presents relevant ideas but lacks a clear structure and flow. The conclusion is weak and does not effectively summarize the key points or identify research trends or gaps.</p><p>A more structured approach with clear sections and subheadings would improve readability and coherence.</p><p>0.22 0.44 0.73</p><p>Grammar &amp; sentence structure</p><p>The draft contains several grammatical errors and awkward sentence structures. For example, "The among of time is short considering the kind of assignments..." should be "The amount of time is short considering the type of assignments...". Varying sentence length and structure could also improve readability.</p><p>The draft has several grammatical errors and issues with sentence structure. For example, "The among of time is short considering the kind of assignments" should be "The amount of time is short considering the type of assignments." Additionally, varying sentence length and structure would make the writing more engaging. Proofreading for grammatical accuracy and sentence variety is recommended. The grammatical accuracy is generally acceptable, but there are instances of awkward phrasing and run-on sentences. Varying sentence length and structure could improve readability. Additionally, ensuring subject-verb agreement and correct punctuation would enhance grammatical accuracy.</p><p>-Positive: The grammar is generally accurate.</p><p>-Improvement: Sentence length and variety need improvement. Some sentences are too long and complex, making them difficult to read.</p><p>-Example: "The health arguments against the use of cannabis include its addictive nature <ref type="bibr">(Hurd et al., 2014)</ref> . It has also been directly linked to a range of adverse outcomes in physical health, which include lung cancer <ref type="bibr">(Aldington et al., 2008)</ref>, impaired respiratory function, cardiovascular disease, elevated systolic blood pressure, stroke <ref type="bibr">(Singh et al., 2012</ref><ref type="bibr">), mental disorders (Saban et al., 2014)</ref>, which include schizophrenia, especially amongst young people <ref type="bibr">(Casadio et al., 2011)</ref>, undesirable cognitive changes <ref type="bibr">(Crean et al., 2011)</ref>." This could be broken down into shorter sentences. 0.00 0.12 0.49 ### Output Instructions -Output each extracted problem along with their relevant information line by line headed by "-". -Output "None" if no writing-related problems are mentioned or implied in the comment.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>### Examples</head><p>Example 1 input:</p><p>The content is generally informative and relevant, but the clarity of ideas could be improved. Some sentences are overly complex and could be simplified for better understanding. For instance, the sentence "Gandhi's Satyagraha as an adequate substitute for violent methods of conducting social conflict in an early and thorough philosophical examination of Gandhi's attitude to violence in extreme group conflict" is difficult to parse and could be rephrased for clarity.</p><p>Example 1 output:</p><p>-The clarity of ideas could be improved. Some sentences are overly complex and could be simplified for better understanding. For instance, the sentence "Gandhi's Satyagraha as an adequate substitute for violent methods of conducting social conflict in an early and thorough philosophical examination of Gandhi's attitude to violence in extreme group conflict" is difficult to parse and could be rephrased for clarity.</p><p>Example 2 input:</p><p>The content and clarity of ideas are generally good, but there are some areas where the author could provide more depth or analysis. For example, the author could have explored the potential reasons why students in India may be more vulnerable to substance abuse, or discussed the implications of legalization for public health policy. To improve, the author could revisit the body of the literature review and provide more nuanced analysis of the findings.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Example 2 output:</head><p>-There are some areas where the author could provide more depth or analysis. For example, the author could have explored the potential reasons why students in India may be more vulnerable to substance abuse, or discussed the implications of legalization for public health policy. To improve, the author could revisit the body of the literature review and provide more nuanced analysis of the findings.</p><p>Example 3 input:</p><p>The author has generally done a good job of integrating source materials and presenting information clearly. However, there are some instances where the connections between ideas could be more explicitly stated, and the citation practices could be more consistent (e.g., some sources are cited with author names, while others are cited with only the year).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Example 3 output:</head><p>-There are some instances where the connections between ideas could be more explicitly stated.</p><p>-The citation practices could be more consistent (e.g., some sources are cited with author names, while others are cited with only the year).</p><p>### Input $comment ### Output</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.1.2 Prompt for Problem Classification</head><p>You will be given an excerpt of a feedback comment written for a student's essay. Your task is to answer the following questions:</p><p>1. Does the excerpt refer to a specific part of the essay? A specific part refers to a part of the essay that can be easily located by the student. For example, it can be a specific word, phrase, sentence, paragraph, reference etc. used in the essay. It can be a concrete location, such as "sentence 2 in paragraph 2," "in paragraph 6," "the first citation," or "the first sentence of the paper" and so on. A less concrete location, such as "the introduction," or "the conclusion," is also considered a specific part if it is accompanied by some referenceable details, such as "The significance of South Australian policy is unclear, as it is the first citation and the only one in the Introduction." Note that the excerpt may only contain a quoted text from the essay, in which case, the quoted text is considered a specific part.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>2.</head><p>Does the excerpt offer some form of suggestions, general or specific, for the student to improve the essay? If the excerpt only describes a problem and it is unclear what the student should do to fix it, then there is no suggestion. If the excerpt provides a concrete correction, it is considered a suggestion.</p><p>3. Does the excerpt provide a concrete correction for the student to apply? Note that when the excerpt only contains a quoted text from the essay and there are some notes indicating a correction (e.g., adding/removing a punctuation, correcting a spelling), this is considered a correction.</p><p>Answer each question with "Yes" or "No" based on the content of the excerpt and briefly justify your answer. After answering all the questions, produce your final answers in a newline separated by commas.</p><p>Excerpt: $excerpt</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.1.3 Prompt for Correction Relevancy Check</head><p>You will be given an excerpt of a feedback comment written for a student's essay according to an assessment question. Your task is to answer the following questions:</p><p>1. Does the problem pointed out in the excerpt exist in the corresponding essay? If the excerpt uses a quoted text to point out a problem, check if the quoted text is present in the essay. Please note that the quoted text may not be an exact match either due to misspellings, capitalization errors etc., or because the quoted already contains the correction in place.</p><p>2. Is the problem pointed out in the excerpt relevant to the corresponding assessment question? Check if the excerpt is broadly related to any aspect of the assessment question.</p><p>3. Is the correction of the problem pointed out in the excerpt correct? If the problem does exist in the essay, check if the correction fixes the problem or presents a plausible solution or improvement.</p><p>Here is the essay:</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>$essay</head><p>Here is the assessment question:</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>$question</head><p>Here is the excerpt: $excerpt Answer each question with "Yes" or "No" utilizing all the information provided and briefly justify your answer. After answering all the questions, produce your final answers in a newline separated by commas.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.2 Prompts for the Main Experiments</head><p>Our prompts consist of three parts: (1) a system prompt part that provides general background information and specifies the writing topic and some general assessment guidance; (2) a writing part that includes an entire literature review (with references); (3) an assessment instruction part, where one or multiple assessment questions (see Table <ref type="table" target="#tab_8">7</ref>) are asked in various manners according to the interaction modes.</p><p>We keep the system prompt fixed across the three interaction modes. For the main experiments, the system prompt is as follows:</p><p>You are an expert academic writing instructor specializing in graduate-level work, with particular experience supporting students who speak English as an additional language. You have been asked to evaluate a literature review submitted by a graduate student on the following topic: $Topic. The review was written in 2021, so references after this year are not expected.</p><p>When assessing the student's writing, please strictly follow the instruction provided to you and make sure your score/feedback is carefully considered and constructive. Please provide your comments and/or suggestions with as much detail and specificity as possible. Please provide specific examples of sentences, paragraphs or sections that you think could use improvement. If you write comments, please start them with something positive. Please proceed with things that could be improved, would make things clearer for the reader, would make the text flow better, etc.</p><p>For the writing part, we explicitly mark the beginning and end of the writing for clarity:</p><formula xml:id="formula_2">########## Writing starts ########## $writing ########## Writing ends ##########</formula><p>The specifics of how the assessment instruction part is constructed are detailed below.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.2.1 Interaction Mode 1</head><p>In Interaction Mode 1, all assessment questions (see Table7) are asked at once: Q1: {Assessment question 1} Q2: {Assessment question 2} ...</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Q9: {Assessment question 9}</head><p>After these assessment questions is an answer instruction:</p><p>For each of the 9 questions above, provide your comments or suggestions if any, followed by your score out of 10. Please indicate which question you are providing feedback for by starting your response with 'A1:', 'A2:', etc. Each response should use the following format: Score: ... Comments or suggestions: ... Note that we use "if any" to denote the optionality of the comments and suggestions. We tried putting "(Optional)" after "Comments or suggestions," but that does not make a difference.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Figure 1 :</head><label>1</label><figDesc>Figure 1: Multi-dimensional analytic assessments relevant to the corpus used in the study, where each assessment contains a score and a comment.</figDesc><graphic coords="1,306.14,219.92,218.27,145.51" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Figure 2 :</head><label>2</label><figDesc>Figure 2: Left: Pipeline of the proposed feedback comment quality evaluation framework. The input and output for each step of the pipeline are illustrated using a human-generated comment on the use of academic vocabulary, with related tasks performed by an LLM. Answers to the 6 classification questions from the last two steps are highlighted in bold. Right: Validation results for the pipeline, where IAA (inter-annotator agreement) and exact match rate are measured between raw annotations by two annotators. See Appendix B for further details.</figDesc><graphic coords="4,70.86,70.85,453.57,159.97" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Figure 3 :</head><label>3</label><figDesc>Figure 3: Heatmaps of overall QWK (bottom, green) and AAR1 (top, blue) among assessors. Darker shades indicate a higher degree of agreement.</figDesc><graphic coords="6,70.86,70.84,218.28,218.28" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>Figure 4 :</head><label>4</label><figDesc>Figure 4: Criterion-level AAR1 between average human scores ("Human Avg") and human or LLM assessors. See Appendix C.2 for full results for QWK and AAR1.</figDesc><graphic coords="6,311.60,70.84,207.37,155.53" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>Figure 5 :</head><label>5</label><figDesc>Figure 5: Percentage of comments identifying a problem that mentions a specific essay part (left), offers a comment (middle), and offers a concrete correction (right) across assessment criteria by different assessors.</figDesc><graphic coords="8,70.86,70.85,453.57,151.19" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>Final</head><label></label><figDesc></figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_6"><head></head><label></label><figDesc>AL: average length (measured in tokens) of the provided comments (excluding cases where comments are not given), along with their respective standard deviations. PR (%): problem rate, i.e., the percentage of time a problem is mentioned or implied in the provided comments. AP: average number of problems identified in the provided comments, along with their respective standard deviations. "All LLMs" means all three LLMs across the three interaction modes. C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_7"><head>Figure 6 :</head><label>6</label><figDesc>Figure 6: Heatmaps showing score-comment correlations between scores and the length of the related comments (left) and between scores and the number of problems identified in the related comments (right). Darker blue shades indicate a stronger negative correlation and darker orange shades a stronger positive correlation, with gray-ish colors indicating negligible correlations. To ensure meaningful analysis, correlations are calculated only when at least 10 score-comment pairs are available. C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.</figDesc><graphic coords="23,70.86,70.85,453.56,226.78" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2 :</head><label>2</label><figDesc>Overall statistics of feedback comments generated by human and LLM assessors. The last column shows the Spearman Rank correlations measured between scores and related comments (length / number of identified problems). Stronger negative correlations (smaller numbers) in each number pair are in bold.</figDesc><table><row><cell>Assessor</cell><cell cols="2">Avg Comment Rate Len</cell><cell cols="2">Avg Problem Rate Num</cell><cell>Avg Corr Score -Cmt</cell></row><row><cell>Human B Human C Human F</cell><cell>0.24 1.00 0.90</cell><cell>104±85 62±85 47±58</cell><cell>0.97 0.56 0.63</cell><cell>3.8±3.5 1.3±1.8 1.3±1.6</cell><cell>-0.20 / -0.17 -0.40 / -0.46 -0.37 / -0.47</cell></row><row><cell cols="2">GPT-4o (IM 1) Gemini-1.5 (IM 1) 1.00 1.00 Llama-3 (IM 1) 1.00</cell><cell>65±14 97±33 68±20</cell><cell>1.00 1.00 1.00</cell><cell cols="2">2.1±0.9 2.4±1.00 -0.05 / -0.46 -0.11 / -0.48 2.2±0.8 0.01 / -0.27</cell></row><row><cell cols="2">GPT-4o (IM 2) Gemini-1.5 (IM 2) 1.00 1.00 Llama-3 (IM 2) 1.00</cell><cell cols="2">347±46 477±698 1.00 1.00 370±112 1.00</cell><cell>5.0±1.2 5.9±2.7 6.6±2.8</cell><cell>-0.37 / -0.38 -0.29 / -0.56 -0.04 / -0.42</cell></row><row><cell cols="2">GPT-4o (IM 3) Gemini-1.5 (IM 3) 1.00 1.00 Llama-3 (IM 3) 1.00</cell><cell cols="2">381±65 571±182 1.00 1.00 399±67 1.00</cell><cell>6.1±2.0 8.2±3.3 6.4±2.3</cell><cell>-0.34 / -0.51 -0.21 / -0.48 -0.04 / -0.23</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 3 :</head><label>3</label><figDesc></figDesc><table /><note><p>Spearman Rank correlations between the specificity and helpfulness scores and the number of different types of problems identified by our framework under different conditions. Corrections with number of problems making a suggestion are omitted as they are nearly identical to those with "#Problems." OPENAI-O1-MINI-2024-09-12 (o1-mini, OpenAI</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head></head><label></label><figDesc>Table6presents details of the 5-unit tutorial series, including the themes, notions, activities, duration, and writing task for each unit.</figDesc><table><row><cell>T1</cell><cell>T2</cell><cell>T3</cell><cell>T4</cell><cell>T5</cell></row><row><cell cols="5"># Essays Avg WC (w/o refs) 845 50 Avg WC (w/ refs) 1232 1583 1347 1666 1159 16 31 13 31 1169 926 1079 887</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_6"><head>Table 5 :</head><label>5</label><figDesc>Basic statistics of the corpus. "T" in each column stands for "Topic." "WC" means "word count."</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_7"><head>Table 6 :</head><label>6</label><figDesc>Details of the 5-unit online tutorial series.</figDesc><table><row><cell>Unit</cell><cell>Key notions</cell><cell>Activities</cell><cell></cell><cell>Duration</cell><cell>Writing task</cell></row><row><cell>1. Genre of literature review</cell><cell>Components in literature review writing, material selection, citation practices</cell><cell cols="2">Interactive e-book, review, Discussion forum, quiz Peer-</cell><cell>3 weeks</cell><cell>Individual writing on the social con-sequences of legalized cannabis</cell></row><row><cell>2. logic in literature re-Structure and view</cell><cell>Types of logic structure, terms and abbreviations, coherence, cohesion</cell><cell cols="2">Interactive e-book, Discussion forum, quiz</cell><cell>2 weeks</cell><cell>Collaborative writing on Canadian linguistic landscape</cell></row><row><cell>3. Sentence struc-tures</cell><cell>Sentence structures and variety, nominalization, Phrase Bank and Space) model Swales' CARS (Creating a Research</cell><cell cols="2">Interactive e-book, review, Discussion forum, quiz Peer-</cell><cell>3 weeks</cell><cell>Individual writing on the pros and cons of online learning</cell></row><row><cell>4. Academic vocab-ulary</cell><cell>Academic formulaic expressions and their functions</cell><cell cols="2">Interactive e-book, Discussion forum, quiz</cell><cell>2 weeks</cell><cell>Collaborative writing on lessons from the COVID-19 pandemic</cell></row><row><cell>5. Grammar of re-ported speech</cell><cell>Direct vs. indirect speech, reporting verbs and expressions, verb tenses, modal verbs</cell><cell cols="2">Interactive e-book, review, Discussion forum, quiz Peer-</cell><cell>3 weeks</cell><cell>Individual writing on pacifism, peace-making, or just/justifiable war</cell></row><row><cell>Aspect</cell><cell>Criterion</cell><cell></cell><cell>Question</cell><cell></cell></row><row><cell>Selection of materials and citation practices</cell><cell>1. Material selection 2. Material integration and citation</cell><cell></cell><cell cols="3">On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the author's selection of source materials in terms of relevance, quality, and quantity of the materials? Note: "If the draft has a noticeable issue regarding the number or the quality of the papers reviewed, please comment on the issue." On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the writing for its integration of source materials (e.The conclusion(s) may identify research trends or controver-sies and highlight the contribution of this literature review.</cell></row><row><cell></cell><cell>4. Logic of structure</cell><cell></cell><cell cols="3">On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the logical structure of this literature review?</cell></row><row><cell></cell><cell cols="5">5. Content and clarity of ideas On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the content and clarity of ideas expressed in this literature review?</cell></row><row><cell>Coherence and cohesion</cell><cell>6. Coherence</cell><cell></cell><cell cols="3">On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the literature review for the quality of coherence (e.g., the connectivity and the naturalness of the flow of ideas in this draft)?</cell></row><row><cell></cell><cell>7. Cohesion</cell><cell></cell><cell cols="3">On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the literature review for the use of connectors (e.g., 'because,' 'therefore,' 'however,' 'likewise', and 'similarly') to link sentences in this draft?</cell></row><row><cell>Grammar and vocabulary</cell><cell cols="2">8. Grammatical and sentence structure</cell><cell cols="3">On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the draft for grammatical accuracy, sentence length and sentence type variety?</cell></row><row><cell></cell><cell>9. Academy vocabulary</cell><cell></cell><cell cols="3">On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the draft for vocabulary quality (e.g., use of academic</cell></row></table><note><p><p>g., clarity of presenting information) and citation practices (e.g., use of APA or other style in both in-text citations and reference list)? Overall structure 3. Quality of key components On a scale of 10 (1: Very poor, 10: Excellent), how would you evaluate the writing for the quality or effectiveness of each component (i.e., Introduction, Body, and Conclusions)? Note:</p>The introduction is expected to introduce a research area, identify issue(s), and/or state the significance of the issue(s). The body of literature review should present the relevant ideas or findings of the reviewed studies and/or identify a research gap. expressions, the correctness of word choice, the naturalness of collocations, the complexity of vocabulary, the use of stylistically acceptable vocabulary-not too colloquial, not excessively formal or not overusing terms)?</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_8"><head>Table 7 :</head><label>7</label><figDesc>The 9 assessment criteria/questions, reflecting 4 general aspects of writing quality.</figDesc><table><row><cell>Comment</cell><cell>Problem Extraction</cell><cell>Problem Classification</cell><cell>Correction Relevance Check</cell></row><row><cell>The author has generally done a good job of integrating the source materials into the text, with clear summaries and explanations of the findings. However, there are some ar-eas where the citation practices could be improved. For ex-ample, some of the in-text ci-tations are not formatted cor-rectly (e.g., "Wilkinson ST, et son et al., 2015"), and there are statements. rather than relying on general ing the findings of the studies, precise language when describ-could benefit from using more not). Additionally, the author have DOIs, while others do erence list (e.g., some sources some inconsistencies in the ref-al., 2015" should be "Wilkin-</cell><cell>There are some areas where the citation practices could be im-proved. For example, some of the in-text citations are not for-matted correctly (e.g., "Wilkin-son ST, et al., 2015" should be "Wilkinson et al., 2015").</cell><cell>Final answers: Yes, Yes, Yes 1. Yes. The excerpt refers to a specific part of the essay by mentioning the in-text citation "Wilkinson ST, et al., 2015" and how it should be formatted. 2. Yes. The excerpt offers a suggestion by indicating that the in-text citation formatting should be corrected. 3. Yes. The excerpt provides a concrete correction by specifying the correct al., 2015." format for the citation as "Wilkinson et</cell><cell>1. Yes, the problem pointed out in the excerpt exists in the corresponding essay. The excerpt mentions that the citation "Wilkinson ST, et al., 2015" is incorrectly formatted and should be "Wilkinson et al., 2015". In the essay, the citation appears as "Wilkinson ST, et al., 2015", which is indeed not formatted correctly according to APA style guidelines that recommend omitting the first names and middle initials of authors in in-text citations.</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_9"><head>Table 8 :</head><label>8</label><figDesc>An example implementation of our framework ProEval on a feedback comment on the second assessment criteria, i.e., material integration &amp; citation, which is about citation practices. ProEval correctly identifies three problems (color-coded) identified in the comment and performs Problem Classification on each one of them, of which only the first problem offers a concrete correction. The Correction Relevance Check is thus only performed on the first extracted problem.</figDesc><table><row><cell>Characteristic</cell><cell>Explanation</cell><cell>Examples</cell></row><row><cell>If a problem is stated or implied in a com-ment</cell><cell>A problem is any writing-related issue that affects the quality of the writing, such as citation er-rors, logical flaws, coherence issues, grammatical mistakes, or inappropriate word choices, among others. The problem can be mentioned or implied in a given comment.</cell><cell></cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_12"><head>Table 12 :</head><label>12</label><figDesc>Means and standard deviations of scores assigned by three human assessors and three LLMs prompted under three interaction modes (IM), denoted by "IM" in parentheses. C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.</figDesc><table><row><cell cols="2">Attr Assessor</cell><cell>C1</cell><cell>C2</cell><cell>C3</cell><cell>C4</cell><cell>C5</cell><cell>C6</cell><cell>C7</cell><cell>C8</cell><cell>C9</cell></row><row><cell>CR</cell><cell>Human B Human C Human F All LLMs</cell><cell>5.6 100 99.1 100</cell><cell>28.2 100 97.2 100</cell><cell>2.8 100 96.2 100</cell><cell>0.7 98.9 80.2 100</cell><cell>2.1 100 87.7 100</cell><cell>3.5 98.9 83.0 100</cell><cell>13.4 100 89.6 100</cell><cell>91.5 100 90.6 100</cell><cell>66.2 100 82.1 100</cell></row><row><cell>AL</cell><cell>Human B Human C</cell><cell>26±23</cell><cell>43±32</cell><cell>59±33</cell><cell>45±0</cell><cell>50±53</cell><cell>34±26</cell><cell>46±24</cell><cell>147±83</cell><cell>97±85</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_13"><head>Table 15 :</head><label>15</label><figDesc>General statistics of feedback comments generated by human and LLM assessors. CR (%): comment rate, i.e., the percentage of time a comment is provided.</figDesc><table><row><cell>362±44</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_14"><head>Table 16 :</head><label>16</label><figDesc>Five random example comment pairs with their BLEU, ROUGE-L, and BERTScore scores provided.</figDesc><table><row><cell>8660</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" xml:id="foot_0"><p>* Zhengxiang Wang was a research assistant at the University of Saskatchewan for the research project that led to the creation of the corpus.1 https://github.com/jaaack-wang/ multi-dimensional-analytic-writing-assessments.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_1"><p>Strictly speaking, there are two types of feedback: quantitative feedback (scores) and qualitative feedback (comments). We use "feedback comments" to refer to qualitative feedback.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_2"><p>AES is sometimes conflated with AWE in the literature<ref type="bibr" target="#b16">(Hockly, 2019)</ref>. We distinguish them.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="4" xml:id="foot_3"><p>https://www.kaggle.com/competitions/asap-aes</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="5" xml:id="foot_4"><p>https://ielts.org/take-a-test/your-results/ ielts-scoring-in-detail.</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="6" xml:id="foot_5"><p>Four days apart and assessor B had no access to their earlier assessments.</p></note>
+		</body>
+		<back>
+
+			<div type="acknowledgement">
+<div><head>Acknowledgments</head><p><rs type="person">Zhengxiang Wang</rs>, <rs type="person">Veronika Makarova</rs>, and <rs type="person">Zhi Li</rs> would like to thank <rs type="funder">Social Sciences and Humanities Research Council of Canada (SSHRC)</rs> for funding the writing project ("<rs type="projectName">Collaborative development of written academic genre awareness by international graduate students</rs>") under the <rs type="grantName">Insight Development Grants</rs> (<rs type="grantNumber">430-2020-00179</rs>). They also appreciate three graduate students, i.e., <rs type="person">Leslee G. Mann</rs>, <rs type="person">Abdelrahman Alqudah</rs>, and <rs type="person">Hanh Pham</rs> who expertly assessed the participants' submitted writings, and the participants who participated in the project.</p><p><rs type="person">Zhengxiang Wang</rs> and <rs type="person">Owen Rambow</rs> were supported in part by funding from the <rs type="funder">Defense Advanced Research Projects Agency (DARPA)</rs> under Contracts No.<rs type="grantNumber">HR01121C0186</rs>, No. <rs type="grantNumber">HR001120C0037</rs>, and PR No. <rs type="grantNumber">HR0011154158</rs>. Any opinions, findings and conclusions or recommendations expressed in this material are those of the authors and do not necessarily reflect the views of <rs type="institution">DARPA</rs>.</p><p><rs type="person">Zhengxiang Wang</rs>, <rs type="person">Jordan Kodner</rs>, and <rs type="person">Owen Rambow</rs> are grateful for the supports from the <rs type="funder">Institute for Advanced Computational Science (IACS)</rs> at <rs type="institution">Stony Brook University</rs>, in particular the free GPT access it provides. <rs type="person">Zhengxiang Wang</rs> is supported by <rs type="grantName">IACS's Junior Researcher Award</rs> since Fall 2024.</p><p>We thank <rs type="person">Yongjun Zhang</rs> and the three anonymous reviewers for their valuable feedback. This work was presented at several venues, including All Things Language and Computation (ATLAC) at <rs type="affiliation">Stony Brook University</rs>, the <rs type="institution">Mid-Atlantic Student Colloquium on AI</rs>, Language, and <rs type="institution">Learning (MASC-ALL)</rs> at <rs type="institution">Penn State University</rs>, and the <rs type="institution">New England NLP Meeting Series (NENLP)</rs> at <rs type="institution">Yale University</rs>. We are grateful for the insightful discussions and feedback received from the audiences at these events.</p><p>We thank <rs type="person">Hannah Stortz</rs> for providing manual annotations for our study.</p></div>
+			</div>
+			<listOrg type="funding">
+				<org type="funded-project" xml:id="_hMMTVfv">
+					<idno type="grant-number">430-2020-00179</idno>
+					<orgName type="grant-name">Insight Development Grants</orgName>
+					<orgName type="project" subtype="full">Collaborative development of written academic genre awareness by international graduate students</orgName>
+				</org>
+				<org type="funding" xml:id="_FpteBzV">
+					<idno type="grant-number">HR01121C0186</idno>
+				</org>
+				<org type="funding" xml:id="_NW8MNdx">
+					<idno type="grant-number">HR001120C0037</idno>
+				</org>
+				<org type="funding" xml:id="_QEhdZcb">
+					<idno type="grant-number">HR0011154158</idno>
+				</org>
+				<org type="funding" xml:id="_VH2GQQ5">
+					<orgName type="grant-name">IACS&apos;s Junior Researcher Award</orgName>
+				</org>
+			</listOrg>
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>0.22 0.21 0.22 0.05 0.07 0.26 0.16 Human F vs. Llama-3 (IM 3) 0.50 0.21 0.27 0.35 0.19 0.25 0.04 0.05 0.12 0.18 GPT-4o (IM 1) vs. Llama-3 (IM 1) 0.59 0.01 0.35 0.30 0.28 0.20 0.36 0.07 0.41 0.45 GPT-4o (IM 1) vs. Gemini-1.5 (IM 1) 0.33 0.38 0.65 0.64 0.59 0.58 0.34 0.51 0.51 0.60 Llama-3 (IM 1) vs. Gemini-1. Table <ref type="table">13</ref>: Full QWK (Quadratic Weighted Kappa) results between all assessor pairs, evaluated at the level of each assessment criterion and the whole essay ("Overall"). C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.2.2 Interaction Mode 2</head><p>In Interaction Mode 2, the assessment questions are presented sequentially and one at a time. Below is the basic structure:</p><p>Qi: {The ith assessment question.} {Answer instruction}</p><p>Ai:</p><p>The answer instruction resembles the one used in the Interaction Mode 1.</p><p>Provide your score out of 10, followed by comments or suggestions if any. Your response should use the following format: Score: ... Comments or suggestions: ... Note that, we append LLM's response to the ith assessment question to the original prompt to form a new prompt, to which the next assessment question is added. This way, the writing is only provided once (at the beginning), but the LLM will have access to previous assessment questions as well as its answers to those questions.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.2.3 Interaction Mode 3</head><p>In Interaction Mode 3, each assessment question is asked independently, so there are 9 separate prompts for each essay.</p><p>The structure for the assessment part of the prompt is similar to that in Interaction Mode 2, but without indexation and prefix "Q/A": {An assessment question.} {Answer instruction}</p><p>The answer instruction works exactly the same as in Interaction Mode 2.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.3 Prompts for the Follow-Up Experiments</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.3.1 System Prompt Simplification</head><p>Below is a simplified system prompt removing the helpful information from the default system prompt used in Section 5.</p><p>You are an expert academic writing instructor for graduate students. You have been asked to evaluate a literature review submitted by a student below. The writing is broadly related to the following topic: $Topic.</p><p>When assessing the student's writing, please strictly follow the instruction provided to you and make sure your score/feedback is carefully considered and constructive.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>E.4 Prompts for Assessing Specificity and Helpfulness</head><p>You will be given a feedback comment written for a student's essay according to an assessment question. Your task is to rate the feedback comment on (1) specificity and (2) helpfulness, using a scale from 1 to 10, where 1 is the lowest and 10 is the highest. Conclude your response with the final ratings in this format: "Specificity: X, Helpfulness: X" (where X is a score from 1 to 10).</p><p>Here is the essay:</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>$essay</head><p>Here is the assessment question:</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>$question</head><p>Here is the feedback comment:</p><p>$feedback</p><p>Please rate the specificity and helpfulness of the feedback comment.</p></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Automatic Text Scoring Using Neural Networks</title>
+		<author>
+			<persName><forename type="first">Dimitrios</forename><surname>Alikaniotis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Helen</forename><surname>Yannakoudakis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marek</forename><surname>Rei</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p16-1068</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 54th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Berlin, Germany</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2016">2016</date>
+			<biblScope unit="page" from="715" to="725" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Dimitrios Alikaniotis, Helen Yannakoudakis, and Marek Rei. 2016. Automatic text scoring using neural net- works. In Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (Vol- ume 1: Long Papers), pages 715-725, Berlin, Ger- many. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">Error syntax aware augmentation of feedback comment generation dataset</title>
+		<author>
+			<persName><forename type="first">Nikolay</forename><surname>Babakov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maria</forename><surname>Lysyuk</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Shvets</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lilya</forename><surname>Kazakova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Panchenko</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.inlg-genchal.6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 16th International Natural Language Generation Conference: Generation Challenges</title>
+		<meeting>the 16th International Natural Language Generation Conference: Generation Challenges<address><addrLine>Prague, Czechia</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="37" to="44" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nikolay Babakov, Maria Lysyuk, Alexander Shvets, Lilya Kazakova, and Alexander Panchenko. 2023. Error syntax aware augmentation of feedback com- ment generation dataset. In Proceedings of the 16th International Natural Language Generation Confer- ence: Generation Challenges, pages 37-44, Prague, Czechia. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Can GPT-4 do L2 analytic assessment?</title>
+		<author>
+			<persName><forename type="first">Stefano</forename><surname>Banno</surname></persName>
+			<idno type="ORCID">0000-0002-2799-0601</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Hari</forename><forename type="middle">Krishna</forename><surname>Vydana</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kate</forename><surname>Knill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Gales</surname></persName>
+		</author>
+		<idno type="DOI">10.33774/coe-2024-401fm</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 19th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2024)</title>
+		<meeting>the 19th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2024)<address><addrLine>Mexico City, Mexico</addrLine></address></meeting>
+		<imprint>
+			<publisher>Cambridge University Press (CUP)</publisher>
+			<date type="published" when="2024-11-14">2024</date>
+			<biblScope unit="page" from="149" to="164" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Stefano Banno, Hari Krishna Vydana, Kate Knill, and Mark Gales. 2024. Can GPT-4 do L2 analytic as- sessment? In Proceedings of the 19th Workshop on Innovative Use of NLP for Building Educational Ap- plications (BEA 2024), pages 149-164, Mexico City, Mexico. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">LEAF: Language Learners’ English Essays and Feedback Corpus</title>
+		<author>
+			<persName><forename type="first">Shabnam</forename><surname>Behzad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Omid</forename><surname>Kashefi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Swapna</forename><surname>Somasundaran</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-short.36</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers)</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers)<address><addrLine>Torino, Italia</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="433" to="442" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shabnam Behzad, Omid Kashefi, and Swapna Soma- sundaran. 2024a. Assessing online writing feedback resources: Generative AI vs. good samaritans. In Pro- ceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024), pages 1638- 1644, Torino, Italia. ELRA and ICCL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">LEAF: Language Learners’ English Essays and Feedback Corpus</title>
+		<author>
+			<persName><forename type="first">Shabnam</forename><surname>Behzad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Omid</forename><surname>Kashefi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Swapna</forename><surname>Somasundaran</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-short.36</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers)</title>
+		<title level="s">Short Papers</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers)<address><addrLine>Mexico City, Mexico</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="page" from="433" to="442" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Shabnam Behzad, Omid Kashefi, and Swapna Somasun- daran. 2024b. LEAF: Language learners&apos; English es- says and feedback corpus. In Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 2: Short Papers), pages 433-442, Mexico City, Mexico. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">TOEFL11: A CORPUS OF NON‐NATIVE ENGLISH</title>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Blanchard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joel</forename><surname>Tetreault</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Derrick</forename><surname>Higgins</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aoife</forename><surname>Cahill</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Martin</forename><surname>Chodorow</surname></persName>
+		</author>
+		<idno type="DOI">10.1002/j.2333-8504.2013.tb02331.x</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ETS Research Report Series</title>
+		<title level="j" type="abbrev">ETS Research Report Series</title>
+		<idno type="ISSN">2330-8516</idno>
+		<imprint>
+			<biblScope unit="volume">2013</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page">15</biblScope>
+			<date type="published" when="2013-12">2013. 2013</date>
+			<publisher>Wiley</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Daniel Blanchard, Joel Tetreault, Derrick Higgins, Aoife Cahill, and Martin Chodorow. 2013. Toefl11: A corpus of non-native english. ETS Research Report Series, 2013(2):i-15.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">Weight-Based Classification of Raters and Rater Cognition in an EFL Speaking Test</title>
+		<author>
+			<persName><forename type="first">Hongwen</forename><surname>Cai</surname></persName>
+		</author>
+		<idno type="DOI">10.1080/15434303.2015.1053134</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Language Assessment Quarterly</title>
+		<title level="j" type="abbrev">Language Assessment Quarterly</title>
+		<idno type="ISSN">1543-4303</idno>
+		<idno type="ISSNe">1543-4311</idno>
+		<imprint>
+			<biblScope unit="volume">12</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="262" to="282" />
+			<date type="published" when="2015-07-03">2015</date>
+			<publisher>Informa UK Limited</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hongwen Cai. 2015. Weight-based classification of raters and rater cognition in an efl speaking test. Lan- guage Assessment Quarterly, 12(3):262-282.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Can large language models be an alternative to human evaluations</title>
+		<author>
+			<persName><forename type="first">Cheng-Han</forename><surname>Chiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hung-Yi</forename><surname>Lee</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.870</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="15607" to="15631" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Cheng-Han Chiang and Hung-yi Lee. 2023. Can large language models be an alternative to human evalua- tions? In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Vol- ume 1: Long Papers), pages 15607-15631, Toronto, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Finding Blind Spots in Evaluator LLMs with Interpretable Checklists</title>
+		<author>
+			<persName><forename type="first">Sumanth</forename><surname>Doddapaneni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohammed</forename><forename type="middle">Safi Ur Rahman</forename><surname>Khan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sshubam</forename><surname>Verma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mitesh</forename><forename type="middle">M</forename><surname>Khapra</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.emnlp-main.911</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2024 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Miami, Florida, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="16279" to="16309" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sumanth Doddapaneni, Mohammed Safi Ur Rahman Khan, Sshubam Verma, and Mitesh M Khapra. 2024. Finding blind spots in evaluator LLMs with inter- pretable checklists. In Proceedings of the 2024 Con- ference on Empirical Methods in Natural Language Processing, pages 16279-16309, Miami, Florida, USA. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<analytic>
+		<title level="a" type="main">Attention-based Recurrent Convolutional Neural Network for Automatic Essay Scoring</title>
+		<author>
+			<persName><forename type="first">Fei</forename><surname>Dong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yue</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jie</forename><surname>Yang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/k17-1017</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 21st Conference on Computational Natural Language Learning (CoNLL 2017)</title>
+		<meeting>the 21st Conference on Computational Natural Language Learning (CoNLL 2017)<address><addrLine>Vancouver, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="153" to="162" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fei Dong, Yue Zhang, and Jie Yang. 2017. Attention- based recurrent convolutional neural network for au- tomatic essay scoring. In Proceedings of the 21st Conference on Computational Natural Language Learning (CoNLL 2017), pages 153-162, Vancouver, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">High agreement but low kappa: I. the problems of two paradoxes</title>
+		<author>
+			<persName><forename type="first">R</forename><surname>Alvan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Domenic</forename><forename type="middle">V</forename><surname>Feinstein</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Cicchetti</surname></persName>
+		</author>
+		<idno type="DOI">10.1016/0895-4356(90)90158-l</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Clinical Epidemiology</title>
+		<imprint>
+			<biblScope unit="volume">43</biblScope>
+			<biblScope unit="issue">6</biblScope>
+			<biblScope unit="page" from="543" to="549" />
+			<date type="published" when="1990">1990</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Alvan R. Feinstein and Domenic V. Cicchetti. 1990. High agreement but low kappa: I. the problems of two paradoxes. Journal of Clinical Epidemiology, 43(6):543-549.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<author>
+			<persName><forename type="first">Gemini</forename><surname>Team</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Petko</forename><surname>Georgiev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ian</forename><surname>Ving</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Lei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Libin</forename><surname>Burnell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anmol</forename><surname>Bai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Garrett</forename><surname>Gulati</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Damien</forename><surname>Tanzer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhufeng</forename><surname>Vincent</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shibo</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Soroosh</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yifan</forename><surname>Mariooryad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinyang</forename><surname>Ding</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fred</forename><surname>Geng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roy</forename><surname>Alcober</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Frostig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lexi</forename><surname>Omernick</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cosmin</forename><surname>Walker</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christina</forename><surname>Paduraru</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Sorokin</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2403.05530</idno>
+		<title level="m">Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context</title>
+		<imprint>
+			<date type="published" when="1118">1118. 2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note>others</note>
+	<note type="raw_reference">Gemini Team, Petko Georgiev, Ving Ian Lei, Ryan Burnell, Libin Bai, Anmol Gulati, Garrett Tanzer, Damien Vincent, Zhufeng Pan, Shibo Wang, Soroosh Mariooryad, Yifan Ding, Xinyang Geng, Fred Al- cober, Roy Frostig, Mark Omernick, Lexi Walker, Cosmin Paduraru, Christina Sorokin, and 1118 oth- ers. 2024. Gemini 1.5: Unlocking multimodal un- derstanding across millions of tokens of context. Preprint, arXiv:2403.05530.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<monogr>
+		<author>
+			<persName><forename type="first">Aaron</forename><surname>Grattafiori</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhimanyu</forename><surname>Dubey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhinav</forename><surname>Jauhri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhinav</forename><surname>Pandey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhishek</forename><surname>Kadian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmad</forename><surname>Al-Dahle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aiesha</forename><surname>Letman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Akhil</forename><surname>Mathur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alan</forename><surname>Schelten</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Vaughan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amy</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angela</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anirudh</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anthony</forename><surname>Hartshorn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aobo</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Archi</forename><surname>Mitra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Archie</forename><surname>Sravankumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Artem</forename><surname>Korenev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arthur</forename><surname>Hinsvark</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2407.21783</idno>
+		<title level="m">The llama 3 herd of models</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">542</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note type="raw_reference">Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al- Dahle, Aiesha Letman, Akhil Mathur, Alan Schel- ten, Alex Vaughan, Amy Yang, Angela Fan, Anirudh Goyal, Anthony Hartshorn, Aobo Yang, Archi Mi- tra, Archie Sravankumar, Artem Korenev, Arthur Hinsvark, and 542 others. 2024. The llama 3 herd of models. Preprint, arXiv:2407.21783.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">To resist it or to embrace it? Examining ChatGPT’s potential to support teacher feedback in EFL writing</title>
+		<author>
+			<persName><forename type="first">Kai</forename><surname>Guo</surname></persName>
+			<idno type="ORCID">0000-0001-9699-7527</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Deliang</forename><surname>Wang</surname></persName>
+			<idno type="ORCID">0009-0008-6488-0234</idno>
+		</author>
+		<idno type="DOI">10.1007/s10639-023-12146-0</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Education and Information Technologies</title>
+		<title level="j" type="abbrev">Educ Inf Technol</title>
+		<idno type="ISSN">1360-2357</idno>
+		<idno type="ISSNe">1573-7608</idno>
+		<imprint>
+			<biblScope unit="volume">29</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="8435" to="8463" />
+			<date type="published" when="2024">2024</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kai Guo and Deliang Wang. 2024. To resist it or to em- brace it? examining ChatGPT&apos;s potential to support teacher feedback in EFL writing. Educ. Inf. Technol., 29(7):8435-8463.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">LLM-as-a-tutor in EFL Writing Education: Focusing on Evaluation of Student-LLM Interaction</title>
+		<author>
+			<persName><forename type="first">Jieun</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haneul</forename><surname>Yoo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Junho</forename><surname>Myung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Minsun</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hyunseung</forename><surname>Lim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoonsu</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tak</forename><forename type="middle">Yeon</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hwajung</forename><surname>Hong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Juho</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">So-Yeon</forename><surname>Ahn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alice</forename><surname>Oh</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.customnlp4u-1.21</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st Workshop on Customizable NLP: Progress and Challenges in Customizing NLP for a Domain, Application, Group, or Individual (CustomNLP4U)</title>
+		<meeting>the 1st Workshop on Customizable NLP: Progress and Challenges in Customizing NLP for a Domain, Application, Group, or Individual (CustomNLP4U)<address><addrLine>Miami, Florida, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="284" to="293" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jieun Han, Haneul Yoo, Junho Myung, Minsun Kim, Hyunseung Lim, Yoonsu Kim, Tak Yeon Lee, Hwa- jung Hong, Juho Kim, So-Yeon Ahn, and Alice Oh. 2024. LLM-as-a-tutor in EFL writing education: Fo- cusing on evaluation of student-LLM interaction. In Proceedings of the 1st Workshop on Customizable NLP: Progress and Challenges in Customizing NLP for a Domain, Application, Group, or Individual (CustomNLP4U), pages 284-293, Miami, Florida, USA. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Level-up: Learning to improve proficiency level of essays</title>
+		<author>
+			<persName><forename type="first">Wen-Bin</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jhih-Jie</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chingyu</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Chang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/P19-3033</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics: System Demonstrations</title>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics: System Demonstrations<address><addrLine>Florence, Italy</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="207" to="212" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wen-Bin Han, Jhih-Jie Chen, Chingyu Yang, and Jason Chang. 2019. Level-up: Learning to improve profi- ciency level of essays. In Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics: System Demonstrations, pages 207-212, Florence, Italy. Association for Computational Lin- guistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Automated writing evaluation</title>
+		<author>
+			<persName><forename type="first">Nicky</forename><surname>Hockly</surname></persName>
+		</author>
+		<idno type="DOI">10.1093/elt/ccy044</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ELT Journal</title>
+		<imprint>
+			<biblScope unit="volume">73</biblScope>
+			<biblScope unit="page" from="82" to="88" />
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nicky Hockly. 2019. Automated writing evaluation. ELT Journal, 73:82-88.</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Automated language essay scoring systems: a literature review</title>
+		<author>
+			<persName><forename type="first">Mohamed</forename><forename type="middle">Abdellatif</forename><surname>Hussein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hesham</forename><surname>Hassan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohammad</forename><surname>Nassef</surname></persName>
+		</author>
+		<idno type="DOI">10.7717/peerj-cs.208</idno>
+	</analytic>
+	<monogr>
+		<title level="j">PeerJ Computer Science</title>
+		<idno type="ISSNe">2376-5992</idno>
+		<imprint>
+			<biblScope unit="volume">5</biblScope>
+			<biblScope unit="page">e208</biblScope>
+			<date type="published" when="2019-08-12">2019</date>
+			<publisher>PeerJ</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mohamed Abdellatif Hussein, Hesham Hassan, and Mo- hammad Nassef. 2019. Automated language essay scoring systems: a literature review. PeerJ Computer Science, 5:e208.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">Stop Uploading Test Data in Plain Text: Practical Strategies for Mitigating Data Contamination by Evaluation Benchmarks</title>
+		<author>
+			<persName><forename type="first">Alon</forename><surname>Jacovi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Avi</forename><surname>Caciularu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Omer</forename><surname>Goldman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoav</forename><surname>Goldberg</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.emnlp-main.308</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2023 Conference on Empirical Methods in Natural Language Processing</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="5075" to="5084" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Alon Jacovi, Avi Caciularu, Omer Goldman, and Yoav Goldberg. 2023. Stop uploading test data in plain text: Practical strategies for mitigating data contami- nation by evaluation benchmarks. In Proceedings of the 2023 Conference on Empirical Methods in Natu- ral Language Processing, pages 5075-5084, Singa- pore. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Review of Feedback in Automated Essay Scoring</title>
+		<author>
+			<persName><forename type="first">You-Jin</forename><surname>Jong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yong-Jin</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ok-Chol</forename><surname>Ri</surname></persName>
+		</author>
+		<idno type="DOI">10.2139/ssrn.4462105</idno>
+		<idno type="arXiv">arXiv:2307.05553</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Review of feedback in automated essay scoring</title>
+		<imprint>
+			<publisher>Elsevier BV</publisher>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note type="raw_reference">You-Jin Jong, Yong-Jin Kim, and Ok-Chol Ri. 2023. Review of feedback in automated essay scoring. Preprint, arXiv:2307.05553.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Automated Essay Scoring: A Survey of the State of the Art</title>
+		<author>
+			<persName><forename type="first">Zixuan</forename><surname>Ke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Ng</surname></persName>
+		</author>
+		<idno type="DOI">10.24963/ijcai.2019/879</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Twenty-Eighth International Joint Conference on Artificial Intelligence</title>
+		<meeting>the Twenty-Eighth International Joint Conference on Artificial Intelligence</meeting>
+		<imprint>
+			<publisher>International Joint Conferences on Artificial Intelligence Organization</publisher>
+			<date type="published" when="2019-08">2019</date>
+			<biblScope unit="page" from="6300" to="6308" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zixuan Ke and Vincent Ng. 2019. Automated essay scoring: A survey of the state of the art. In Pro- ceedings of the Twenty-Eighth International Joint Conference on Artificial Intelligence, IJCAI-2019, page 6300-6308. International Joint Conferences on Artificial Intelligence Organization.</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">Automated essay scoring: A review of the field</title>
+		<author>
+			<persName><forename type="first">Paraskevas</forename><surname>Lagakis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stavros</forename><surname>Demetriadis</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/cits52676.2021.9618476</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2021 International Conference on Computer, Information and Telecommunication Systems (CITS)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2021-11-11">2021</date>
+			<biblScope unit="page" from="1" to="6" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Paraskevas Lagakis and Stavros Demetriadis. 2021. Au- tomated essay scoring: A review of the field. In 2021 International Conference on Computer, Information and Telecommunication Systems (CITS), pages 1-6.</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Assessment of academic esl writing in an online tutorial for graduate students</title>
+		<author>
+			<persName><forename type="first">Zhi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Veronika</forename><surname>Makarova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhengxiang</forename><surname>Wang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">22nd European Conference on e-Learning: ECEL 2023. Academic Conferences and publishing limited</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note>a</note>
+	<note type="raw_reference">Zhi Li, Veronika Makarova, and Zhengxiang Wang. 2023a. Assessment of academic esl writing in an on- line tutorial for graduate students. In 22nd European Conference on e-Learning: ECEL 2023. Academic Conferences and publishing limited.</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Developing literature review writing and citation practices through an online writing tutorial series: Corpus-based evidence</title>
+		<author>
+			<persName><forename type="first">Zhi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Veronika</forename><surname>Makarova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhengxiang</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.3389/fcomm.2023.1035394</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Frontiers in Communication</title>
+		<title level="j" type="abbrev">Front. Commun.</title>
+		<idno type="ISSNe">2297-900X</idno>
+		<imprint>
+			<biblScope unit="volume">8</biblScope>
+			<biblScope unit="page">1035394</biblScope>
+			<date type="published" when="2023-03-02">2023</date>
+			<publisher>Frontiers Media SA</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Zhi Li, Veronika Makarova, and Zhengxiang Wang. 2023b. Developing literature review writing and cita- tion practices through an online writing tutorial series: Corpus-based evidence. Frontiers in Communication, 8:1035394.</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">ROUGE: A package for automatic evaluation of summaries</title>
+		<author>
+			<persName><forename type="first">Chin-Yew</forename><surname>Lin</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Text Summarization Branches Out</title>
+		<meeting><address><addrLine>Barcelona, Spain</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2004">2004</date>
+			<biblScope unit="page" from="74" to="81" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chin-Yew Lin. 2004. ROUGE: A package for auto- matic evaluation of summaries. In Text Summariza- tion Branches Out, pages 74-81, Barcelona, Spain. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<analytic>
+		<title level="a" type="main">Can chatgpt grade non-native academic english writing?</title>
+		<author>
+			<persName><forename type="first">Veronika</forename><surname>Makarova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhi</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhengxiang</forename><surname>Wang</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">AI Approaches to Literacy in Higher Education</title>
+		<imprint>
+			<publisher>IGI Global</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="97" to="116" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Veronika Makarova, Zhi Li, and Zhengxiang Wang. 2024. Can chatgpt grade non-native academic en- glish writing? In AI Approaches to Literacy in Higher Education, pages 97-116. IGI Global.</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">Exploring the potential of using an AI language model for automated essay scoring</title>
+		<author>
+			<persName><forename type="first">Atsushi</forename><surname>Mizumoto</surname></persName>
+			<idno type="ORCID">0000-0001-6588-4052</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Masaki</forename><surname>Eguchi</surname></persName>
+			<idno type="ORCID">0000-0002-0791-4935</idno>
+		</author>
+		<idno type="DOI">10.1016/j.rmal.2023.100050</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Research Methods in Applied Linguistics</title>
+		<title level="j" type="abbrev">Research Methods in Applied Linguistics</title>
+		<idno type="ISSN">2772-7661</idno>
+		<imprint>
+			<biblScope unit="volume">2</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page">100050</biblScope>
+			<date type="published" when="2023-08">2023</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Atsushi Mizumoto and Masaki Eguchi. 2023. Exploring the potential of using an ai language model for auto- mated essay scoring. Research Methods in Applied Linguistics, 2(2):100050.</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Testing the viability of chatgpt as a companion in l2 writing accuracy assessment</title>
+		<author>
+			<persName><forename type="first">Atsushi</forename><surname>Mizumoto</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Natsuko</forename><surname>Shintani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Miyuki</forename><surname>Sasaki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mark</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Teng</forename></persName>
+		</author>
+		<idno type="DOI">10.1016/j.rmal.2024.100116</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Research Methods in Applied Linguistics</title>
+		<imprint>
+			<biblScope unit="volume">3</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page">100116</biblScope>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Atsushi Mizumoto, Natsuko Shintani, Miyuki Sasaki, and Mark Feng Teng. 2024. Testing the viability of chatgpt as a companion in l2 writing accuracy as- sessment. Research Methods in Applied Linguistics, 3(2):100116.</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">Toward a Task of Feedback Comment Generation for Writing Learning</title>
+		<author>
+			<persName><forename type="first">Ryo</forename><surname>Nagata</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d19-1316</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)</title>
+		<meeting>the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)<address><addrLine>Hong Kong, China</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+			<biblScope unit="page" from="3204" to="3213" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ryo Nagata. 2019. Toward a task of feedback comment generation for writing learning. In Proceedings of the 2019 Conference on Empirical Methods in Natu- ral Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP), pages 3206-3215, Hong Kong, China. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Automated evaluation of written discourse coherence using GPT-4</title>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Naismith</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Phoebe</forename><surname>Mulcaire</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jill</forename><surname>Burstein</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.bea-1.32</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023)</title>
+		<meeting>the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="394" to="403" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ben Naismith, Phoebe Mulcaire, and Jill Burstein. 2023. Automated evaluation of written discourse coherence using GPT-4. In Proceedings of the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023), pages 394-403, Toronto, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<monogr>
+		<title level="m" type="main">ICEbox: Individual Conditional Expectation Plot Toolbox</title>
+		<author>
+			<persName><forename type="first">:</forename><surname>Openai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aaron</forename><surname>Hurst</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Lerer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><forename type="middle">P</forename><surname>Goucher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Perelman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aditya</forename><surname>Ramesh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aidan</forename><surname>Clark</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Akila</forename><surname>Ostrow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alan</forename><surname>Welihinda</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alec</forename><surname>Hayes</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Radford</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Aleksander M Ądry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Baker-Whitcomb</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Beutel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Borzunov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Carney</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Chow</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">;</forename><surname>Kirillov</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Others</surname></persName>
+		</author>
+		<idno type="DOI">10.32614/cran.package.icebox</idno>
+		<idno type="arXiv">arXiv:2410.21276</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<publisher>The R Foundation</publisher>
+			<biblScope unit="page">401</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note>Gpt-4o system card</note>
+	<note type="raw_reference">OpenAI, :, Aaron Hurst, Adam Lerer, Adam P. Goucher, Adam Perelman, Aditya Ramesh, Aidan Clark, AJ Ostrow, Akila Welihinda, Alan Hayes, Alec Radford, Aleksander M ądry, Alex Baker-Whitcomb, Alex Beutel, Alex Borzunov, Alex Carney, Alex Chow, Alex Kirillov, and 401 others. 2024a. Gpt- 4o system card. Preprint, arXiv:2410.21276.</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<monogr>
+		<author>
+			<persName><forename type="first">:</forename><surname>Openai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aaron</forename><surname>Jaech</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Kalai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Lerer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Richardson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ahmed</forename><surname>El-Kishky</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aiden</forename><surname>Low</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alec</forename><surname>Helyar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aleksander</forename><surname>Madry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Beutel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Carney</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Iftimie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Karpenko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Tachard Passos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Neitz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Prokofiev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Allison</forename><surname>Tam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">;</forename><surname>Others</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2412.16720</idno>
+		<title level="m">Openai o1 system card</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page">244</biblScope>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note type="raw_reference">OpenAI, :, Aaron Jaech, Adam Kalai, Adam Lerer, Adam Richardson, Ahmed El-Kishky, Aiden Low, Alec Helyar, Aleksander Madry, Alex Beutel, Alex Carney, Alex Iftimie, Alex Karpenko, Alex Tachard Passos, Alexander Neitz, Alexander Prokofiev, Alexander Wei, Allison Tam, and 244 others. 2024b. Openai o1 system card. Preprint, arXiv:2412.16720.</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<monogr>
+		<title/>
+		<author>
+			<persName><surname>Openai</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2303.08774</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note type="raw_reference">OpenAI. 2023. GPT-4 technical report. Preprint, arXiv:2303.08774.</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Training language models to follow instructions with human feedback</title>
+		<author>
+			<persName><forename type="first">Long</forename><surname>Ouyang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xu</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diogo</forename><surname>Almeida</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carroll</forename><forename type="middle">L</forename><surname>Wainwright</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pamela</forename><surname>Mishkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chong</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sandhini</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Katarina</forename><surname>Slama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Ray</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Schulman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Hilton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fraser</forename><surname>Kelton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Miller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maddie</forename><surname>Simens</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amanda</forename><surname>Askell</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Welinder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Paul</forename><surname>Christiano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jan</forename><surname>Leike</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ryan</forename><surname>Lowe</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 36th International Conference on Neural Information Processing Systems, NIPS &apos;22</title>
+		<meeting>the 36th International Conference on Neural Information Processing Systems, NIPS &apos;22<address><addrLine>Red Hook, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida, Car- roll L. Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray, John Schulman, Jacob Hilton, Fraser Kelton, Luke Miller, Maddie Simens, Amanda Askell, Peter Welinder, Paul Christiano, Jan Leike, and Ryan Lowe. 2022. Training language models to follow instructions with human feedback. In Proceedings of the 36th Interna- tional Conference on Neural Information Processing Systems, NIPS &apos;22, Red Hook, NY, USA.</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">The imminence of... grading essays by computer</title>
+		<author>
+			<persName><surname>Ellis B Page</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">The Phi Delta Kappan</title>
+		<imprint>
+			<biblScope unit="volume">47</biblScope>
+			<biblScope unit="issue">5</biblScope>
+			<biblScope unit="page" from="238" to="243" />
+			<date type="published" when="1966">1966</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ellis B Page. 1966. The imminence of... grading essays by computer. The Phi Delta Kappan, 47(5):238-243.</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">BLEU</title>
+		<author>
+			<persName><forename type="first">Kishore</forename><surname>Papineni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Salim</forename><surname>Roukos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Todd</forename><surname>Ward</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei-Jing</forename><surname>Zhu</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/1073083.1073135</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 40th Annual Meeting on Association for Computational Linguistics - ACL &apos;02</title>
+		<meeting>the 40th Annual Meeting on Association for Computational Linguistics - ACL &apos;02</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2002">2002</date>
+			<biblScope unit="page">311</biblScope>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kishore Papineni, Salim Roukos, Todd Ward, and Wei- Jing Zhu. 2002. Bleu: a method for automatic evalu- ation of machine translation. In Proceedings of the 40th annual meeting of the Association for Computa- tional Linguistics, pages 311-318.</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<monogr>
+		<title level="m" type="main">Language models and automated essay scoring</title>
+		<author>
+			<persName><forename type="first">Pedro Uria</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amir</forename><surname>Jafari</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><forename type="middle">M</forename><surname>Ormerod</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1909.09482</idno>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Preprint</note>
+	<note type="raw_reference">Pedro Uria Rodriguez, Amir Jafari, and Christopher M. Ormerod. 2019. Language models and automated essay scoring. Preprint, arXiv:1909.09482.</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">NLP evaluation in trouble: On the need to measure LLM data contamination for each benchmark</title>
+		<author>
+			<persName><forename type="first">Oscar</forename><surname>Sainz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jon</forename><surname>Campos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iker</forename><surname>García-Ferrero</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julen</forename><surname>Etxaniz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Oier</forename><surname>Lopez De Lacalle</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eneko</forename><surname>Agirre</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.findings-emnlp.722</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2023</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="10776" to="10787" />
+		</imprint>
+	</monogr>
+	<note>Singapore</note>
+	<note type="raw_reference">Oscar Sainz, Jon Campos, Iker García-Ferrero, Julen Etxaniz, Oier Lopez de Lacalle, and Eneko Agirre. 2023. NLP evaluation in trouble: On the need to mea- sure LLM data contamination for each benchmark. In Findings of the Association for Computational Linguistics: EMNLP 2023, pages 10776-10787, Sin- gapore. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<monogr>
+		<title level="m" type="main">Handbook of automated essay evaluation</title>
+		<editor>Mark D Shermis and Jill C Burstein</editor>
+		<imprint>
+			<date type="published" when="2013">2013</date>
+			<publisher>Routledge</publisher>
+			<pubPlace>London, England</pubPlace>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mark D Shermis and Jill C Burstein, editors. 2013. Handbook of automated essay evaluation. Routledge, London, England.</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">GEE! Grammar Error Explanation with Large Language Models</title>
+		<author>
+			<persName><forename type="first">Yixiao</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kalpesh</forename><surname>Krishna</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rajesh</forename><surname>Bhatt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Gimpel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohit</forename><surname>Iyyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.findings-naacl.49</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: NAACL 2024</title>
+		<meeting><address><addrLine>Mexico City, Mexico</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="754" to="781" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yixiao Song, Kalpesh Krishna, Rajesh Bhatt, Kevin Gimpel, and Mohit Iyyer. 2024. GEE! grammar error explanation with large language models. In Findings of the Association for Computational Lin- guistics: NAACL 2024, pages 754-781, Mexico City, Mexico. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Exploring LLM prompting strategies for joint essay scoring and feedback generation</title>
+		<author>
+			<persName><forename type="first">Maja</forename><surname>Stahl</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Leon</forename><surname>Biermann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andreas</forename><surname>Nehring</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Henning</forename><surname>Wachsmuth</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 19th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2024)</title>
+		<meeting>the 19th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2024)<address><addrLine>Mexico City, Mexico</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2024">2024</date>
+			<biblScope unit="page" from="283" to="298" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Maja Stahl, Leon Biermann, Andreas Nehring, and Hen- ning Wachsmuth. 2024. Exploring LLM prompting strategies for joint essay scoring and feedback gen- eration. In Proceedings of the 19th Workshop on Innovative Use of NLP for Building Educational Ap- plications (BEA 2024), pages 283-298, Mexico City, Mexico. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">A Neural Approach to Automated Essay Scoring</title>
+		<author>
+			<persName><forename type="first">Kaveh</forename><surname>Taghipour</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hwee</forename><forename type="middle">Tou</forename><surname>Ng</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d16-1193</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2016 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Austin, Texas</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2016">2016</date>
+			<biblScope unit="page" from="1882" to="1891" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kaveh Taghipour and Hwee Tou Ng. 2016. A neural approach to automated essay scoring. In Proceedings of the 2016 Conference on Empirical Methods in Nat- ural Language Processing, pages 1882-1891, Austin, Texas. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<analytic>
+		<title level="a" type="main">A review of deep-neural automated essay scoring models</title>
+		<author>
+			<persName><forename type="first">Masaki</forename><surname>Uto</surname></persName>
+			<idno type="ORCID">0000-0002-9330-5158</idno>
+		</author>
+		<idno type="DOI">10.1007/s41237-021-00142-y</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Behaviormetrika</title>
+		<title level="j" type="abbrev">Behaviormetrika</title>
+		<idno type="ISSN">0385-7417</idno>
+		<idno type="ISSNe">1349-6964</idno>
+		<imprint>
+			<biblScope unit="volume">48</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="459" to="484" />
+			<date type="published" when="2021-07">2021</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Masaki Uto. 2021. A review of deep-neural au- tomated essay scoring models. Behaviormetrika, 48(2):459-484.</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Annotating learner corpora</title>
+		<author>
+			<persName><surname>Bertus Van Rooy</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="s">Cambridge Handbooks in Language and Linguistics</title>
+		<imprint>
+			<biblScope unit="page" from="79" to="106" />
+			<date type="published" when="2015">2015</date>
+			<publisher>Cambridge University Press</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Bertus van Rooy. 2015. Annotating learner corpora, page 79-106. Cambridge Handbooks in Language and Linguistics. Cambridge University Press.</note>
+</biblStruct>
+
+<biblStruct xml:id="b44">
+	<analytic>
+		<title level="a" type="main">Effectiveness of large language models in automated evaluation of argumentative essays: finetuning vs. zero-shot prompting</title>
+		<author>
+			<persName><forename type="first">Qiao</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><forename type="middle">Maurice</forename><surname>Gayed</surname></persName>
+		</author>
+		<idno type="DOI">10.1080/09588221.2024.2371395</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Computer Assisted Language Learning</title>
+		<imprint>
+			<biblScope unit="page" from="1" to="29" />
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Qiao Wang and John Maurice Gayed. 2024. Effective- ness of large language models in automated evalua- tion of argumentative essays: finetuning vs. zero-shot prompting. Computer Assisted Language Learning, page 1-29.</note>
+</biblStruct>
+
+<biblStruct xml:id="b45">
+	<analytic>
+		<title level="a" type="main">Automated essay scoring via pairwise contrastive regression</title>
+		<author>
+			<persName><forename type="first">Jiayi</forename><surname>Xie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kaiwei</forename><surname>Cai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Li</forename><surname>Kong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Junsheng</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weiguang</forename><surname>Qu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 29th International Conference on Computational Linguistics</title>
+		<meeting>the 29th International Conference on Computational Linguistics<address><addrLine>Gyeongju, Republic of Korea</addrLine></address></meeting>
+		<imprint>
+			<publisher>International Committee on Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page" from="2724" to="2733" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jiayi Xie, Kaiwei Cai, Li Kong, Junsheng Zhou, and Weiguang Qu. 2022. Automated essay scoring via pairwise contrastive regression. In Proceedings of the 29th International Conference on Computational Linguistics, pages 2724-2733, Gyeongju, Republic of Korea. International Committee on Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b46">
+	<analytic>
+		<title level="a" type="main">Rating Short L2 Essays on the CEFR Scale with GPT-4</title>
+		<author>
+			<persName><forename type="first">Kevin</forename><forename type="middle">P</forename><surname>Yancey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Geoffrey</forename><surname>Laflair</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anthony</forename><surname>Verardi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jill</forename><surname>Burstein</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.bea-1.49</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023)</title>
+		<meeting>the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="576" to="584" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kevin P. Yancey, Geoffrey Laflair, Anthony Verardi, and Jill Burstein. 2023. Rating short L2 essays on the CEFR scale with GPT-4. In Proceedings of the 18th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2023), pages 576- 584, Toronto, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b47">
+	<analytic>
+		<title level="a" type="main">Enhancing Automated Essay Scoring Performance via Fine-tuning Pre-trained Language Models with Combination of Regression and Ranking</title>
+		<author>
+			<persName><forename type="first">Ruosong</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiannong</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhiyuan</forename><surname>Wen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Youzheng</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiaodong</forename><surname>He</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.findings-emnlp.141</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2020</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="1560" to="1569" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ruosong Yang, Jiannong Cao, Zhiyuan Wen, Youzheng Wu, and Xiaodong He. 2020. Enhancing automated essay scoring performance via fine-tuning pre-trained language models with combination of regression and ranking. In Findings of the Association for Computa- tional Linguistics: EMNLP 2020, pages 1560-1569, Online. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b48">
+	<analytic>
+		<title level="a" type="main">Proceedings of the 46th Annual Meeting of the Association for Computational Linguistics on Human Language Technologies Short Papers - HLT &apos;08</title>
+		<author>
+			<persName><forename type="first">Helen</forename><surname>Yannakoudakis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ted</forename><surname>Briscoe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ben</forename><surname>Medlock</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/1557690</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies<address><addrLine>Portland, Oregon, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2011">2011</date>
+			<biblScope unit="page" from="180" to="189" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Helen Yannakoudakis, Ted Briscoe, and Ben Medlock. 2011. A new dataset and method for automatically grading ESOL texts. In Proceedings of the 49th Annual Meeting of the Association for Computational Linguistics: Human Language Technologies, pages 180-189, Portland, Oregon, USA. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b49">
+	<analytic>
+		<title level="a" type="main">Evaluating the performance of Automated Text Scoring systems</title>
+		<author>
+			<persName><forename type="first">Helen</forename><surname>Yannakoudakis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ronan</forename><surname>Cummins</surname></persName>
+		</author>
+		<idno type="DOI">10.3115/v1/w15-0625</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the Tenth Workshop on Innovative Use of NLP for Building Educational Applications</title>
+		<meeting>the Tenth Workshop on Innovative Use of NLP for Building Educational Applications<address><addrLine>Denver, Colorado</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2015">2015</date>
+			<biblScope unit="page" from="213" to="223" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Helen Yannakoudakis and Ronan Cummins. 2015. Eval- uating the performance of automated text scoring systems. In Proceedings of the Tenth Workshop on Innovative Use of NLP for Building Educational Ap- plications, pages 213-223, Denver, Colorado. Asso- ciation for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b50">
+	<analytic>
+		<title level="a" type="main">Developing an automated writing placement system for ESL learners</title>
+		<author>
+			<persName><forename type="first">Helen</forename><surname>Yannakoudakis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Øistein</forename><forename type="middle">E</forename><surname>Andersen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ardeshir</forename><surname>Geranpayeh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ted</forename><surname>Briscoe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diane</forename><surname>Nicholls</surname></persName>
+		</author>
+		<idno type="DOI">10.1080/08957347.2018.1464447</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Applied Measurement in Education</title>
+		<title level="j" type="abbrev">Applied Measurement in Education</title>
+		<idno type="ISSN">0895-7347</idno>
+		<idno type="ISSNe">1532-4818</idno>
+		<imprint>
+			<biblScope unit="volume">31</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="251" to="267" />
+			<date type="published" when="2018-04-13">2018</date>
+			<publisher>Informa UK Limited</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Helen Yannakoudakis, Øistein E Andersen, Ardeshir Geranpayeh, Ted Briscoe, and Diane Nicholls. 2018. Developing an automated writing placement system for esl learners. Applied Measurement in Education, 31(3):251-267.</note>
+</biblStruct>
+
+<biblStruct xml:id="b51">
+	<analytic>
+		<title level="a" type="main">Utilizing large language models for efl essay grading: An examination of reliability and validity in rubric-based assessments</title>
+		<author>
+			<persName><forename type="first">Fatih</forename><surname>Yavuz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gamze</forename><surname>Özgür</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Yavaş Undefinedelik</surname></persName>
+		</author>
+		<idno type="DOI">10.1111/bjet.13494</idno>
+	</analytic>
+	<monogr>
+		<title level="j">British Journal of Educational Technology</title>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Fatih Yavuz, Özgür undefinedelik, and Gamze Yavaş un- definedelik. 2024. Utilizing large language models for efl essay grading: An examination of reliabil- ity and validity in rubric-based assessments. British Journal of Educational Technology.</note>
+</biblStruct>
+
+<biblStruct xml:id="b52">
+	<analytic>
+		<title level="a" type="main">Types, purposes, and effectiveness of state-of-the-art technologies for second and foreign language learning</title>
+		<author>
+			<persName><forename type="first">Ruofei</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Di</forename><surname>Zou</surname></persName>
+			<idno type="ORCID">0000-0001-8435-9739</idno>
+		</author>
+		<idno type="DOI">10.1080/09588221.2020.1744666</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Computer Assisted Language Learning</title>
+		<title level="j" type="abbrev">Computer Assisted Language Learning</title>
+		<idno type="ISSN">0958-8221</idno>
+		<idno type="ISSNe">1744-3210</idno>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="696" to="742" />
+			<date type="published" when="2020-04-06">2020</date>
+			<publisher>Informa UK Limited</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ruofei Zhang and Di Zou. 2020. Types, purposes, and effectiveness of state-of-the-art technologies for sec- ond and foreign language learning. Computer As- sisted Language Learning, 35(4):696-742.</note>
+</biblStruct>
+
+<biblStruct xml:id="b53">
+	<analytic>
+		<title level="a" type="main">Bertscore: Evaluating text generation with bert</title>
+		<author>
+			<persName><forename type="first">Tianyi</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Varsha</forename><surname>Kishore</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Felix</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kilian</forename><forename type="middle">Q</forename><surname>Weinberger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yoav</forename><surname>Artzi</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">International Conference on Learning Representations</title>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tianyi Zhang, Varsha Kishore, Felix Wu, Kilian Q. Weinberger, and Yoav Artzi. 2020. Bertscore: Eval- uating text generation with bert. In International Conference on Learning Representations.</note>
+</biblStruct>
+
+<biblStruct xml:id="b54">
+	<analytic>
+		<title level="a" type="main">Judging llm-as-a-judge with mt-bench and chatbot arena</title>
+		<author>
+			<persName><forename type="first">Lianmin</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wei-Lin</forename><surname>Chiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ying</forename><surname>Sheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siyuan</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhanghao</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yonghao</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zi</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhuohan</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dacheng</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><forename type="middle">P</forename><surname>Xing</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><forename type="middle">E</forename><surname>Gonzalez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ion</forename><surname>Stoica</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 37th International Conference on Neural Information Processing Systems, NIPS &apos;23</title>
+		<meeting>the 37th International Conference on Neural Information Processing Systems, NIPS &apos;23<address><addrLine>Red Hook, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric P. Xing, Hao Zhang, Joseph E. Gonzalez, and Ion Stoica. 2023. Judging llm-as-a-judge with mt-bench and chatbot arena. In Proceedings of the 37th International Conference on Neural Information Processing Systems, NIPS &apos;23, Red Hook, NY, USA.</note>
+</biblStruct>
+
+<biblStruct xml:id="b55">
+	<analytic>
+		<title level="a" type="main">Assessor C1 C2 C3 C4 C5 C6 C7 C8 C9 Overall Human B vs</title>
+		<author>
+			<persName><forename type="first">Curran</forename><surname>Associates</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Inc</forename></persName>
+		</author>
+		<idno>GPT-4o (IM 1) 0.23 0.29 0.08 0.06 0.11 0.05 0.06 0.25 0.10 0.03</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Human B vs</title>
+		<imprint>
+			<biblScope unit="volume">0</biblScope>
+			<biblScope unit="issue">32 0</biblScope>
+		</imprint>
+	</monogr>
+	<note>Human C. Human F vs. Human B vs. Human B vs. GPT-4o (IM 2) 0.33 0.20 0.08 0.05 0.12 0.05 0.06 0.20 0.15 0.06 Human B vs. GPT-4o (IM 3) 0.26 0.30 0.09 0.07 0.14 0.07 0.09 0.28 0.18 0.10 Human B vs. Gemini-1.5 (IM 1) 0.29 0.15 0.08 0.07 0.10 0.04 0.05 0.12 0.08 0.07 Human B vs. Gemini-1.5 (IM 2) 0.25 0.22 0.08 0.05 0.05 0.05 0.05 0.16 0.10 0.04 Human B vs. Gemini-1.5 (IM 3) 0.25 0.18 0.06 0.06 0.06 0.04 0.05 0.09 0.03 0.04 Human B vs. Llama-3 (IM 1) 0.10 0.04 0.07 -0.03 0.03 0.01 0.03 0.06 0.08 -0.06 Human B vs. Llama-3 (IM 2) 0.27 0.23 0.16 0.14 0.22 0.11 0.06 0.25 0.13 0.10 Human B vs. Llama-3 (IM 3) 0.26 0.18 0.07 0.13 0.14 0.14</note>
+	<note type="raw_reference">Curran Associates Inc. Assessor C1 C2 C3 C4 C5 C6 C7 C8 C9 Overall Human B vs. Human F 0.36 0.32 0.18 0.12 0.11 0.09 0.20 0.24 0.26 0.25 Human B vs. Human C 0.41 0.39 0.34 0.36 0.43 0.51 0.40 0.36 0.43 0.41 Human F vs. Human C 0.52 0.29 0.29 0.24 0.23 0.24 0.17 0.28 0.20 0.30 Human B vs. GPT-4o (IM 1) 0.23 0.29 0.08 0.06 0.11 0.05 0.06 0.25 0.10 0.03 Human B vs. GPT-4o (IM 2) 0.33 0.20 0.08 0.05 0.12 0.05 0.06 0.20 0.15 0.06 Human B vs. GPT-4o (IM 3) 0.26 0.30 0.09 0.07 0.14 0.07 0.09 0.28 0.18 0.10 Human B vs. Gemini-1.5 (IM 1) 0.29 0.15 0.08 0.07 0.10 0.04 0.05 0.12 0.08 0.07 Human B vs. Gemini-1.5 (IM 2) 0.25 0.22 0.08 0.05 0.05 0.05 0.05 0.16 0.10 0.04 Human B vs. Gemini-1.5 (IM 3) 0.25 0.18 0.06 0.06 0.06 0.04 0.05 0.09 0.03 0.04 Human B vs. Llama-3 (IM 1) 0.10 0.04 0.07 -0.03 0.03 0.01 0.03 0.06 0.08 -0.06 Human B vs. Llama-3 (IM 2) 0.27 0.23 0.16 0.14 0.22 0.11 0.06 0.25 0.13 0.10 Human B vs. Llama-3 (IM 3) 0.26 0.18 0.07 0.13 0.14 0.14 0.07 0.09 0.06 0.07 Human C vs. GPT-4o (IM 1) 0.36 0.28 0.10 0.12 0.17 0.07 0.03 0.22 0.15 0.13 Human C vs. GPT-4o (IM 2) 0.27 0.21 0.14 0.07 0.15 0.05 0.04 0.20 0.16 0.11 Human C vs. GPT-4o (IM 3) 0.23 0.25 0.09 0.13 0.19 0.08 0.06 0.30 0.17 0.15 Human C vs. Gemini-1.5 (IM 1) 0.19 0.11 0.09 0.11 0.14 0.06 0.03 0.10 0.09 0.08 Human C vs. Gemini-1.5 (IM 2) 0.12 0.21 0.08 0.05 0.08 0.06 0.04 0.15 0.10 0.08 Human C vs. Gemini-1.5 (IM 3) 0.12 0.15 0.08 0.07 0.08 0.07 0.01 0.11 0.05 0.07 Human C vs. Llama-3 (IM 1) 0.24 0.16 0.09 0.08 0.21 0.08 0.02 0.22 0.10 0.06 Human C vs. Llama-3 (IM 2) 0.27 0.36 0.11 0.19 0.28 0.10 0.04 0.43 0.13 0.14 Human C vs. Llama-3 (IM 3) 0.27 0.30 0.10 0.15 0.17 0.16 0.06 0.20 0.12 0.14 Human F vs. GPT-4o (IM 1) 0.44 0.32 0.24 0.17 0.22 0.09 0.07 0.14 0.26 0.17 Human F vs. GPT-4o (IM 2) 0.51 0.30 0.36 0.17 0.25 0.12 0.06 0.10 0.27 0.17 Human F vs. GPT-4o (IM 3) 0.47 0.29 0.25 0.29 0.25 0.19 0.07 0.14 0.32 0.24 Human F vs. Gemini-1.5 (IM 1) 0.37 0.16 0.22 0.11 0.18 0.08 0.03 0.05 0.13 0.11 Human F vs. Gemini-1.5 (IM 2) 0.29 0.16 0.14 0.14 0.10 0.09 0.05 0.12 0.21 0.11 Human F vs. Gemini-1.5 (IM 3) 0.29 0.12 0.17 0.14 0.09 0.09 0.05 0.03 0.09 0.10 Human F vs. Llama-3 (IM 1) 0.32 0.07 0.28 0.24 0.18 0.19 0.04 0.10 0.23 0.13 Human F vs. Llama-3 (IM 2) 0.50 0.18 0.23</note>
+</biblStruct>
+
+<biblStruct xml:id="b56">
+	<analytic>
+		<title level="a" type="main">Human strengths</title>
+		<author>
+			<persName><forename type="first">Michael</forename><forename type="middle">W</forename><surname>Eysenck</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christine</forename><surname>Eysenck</surname></persName>
+		</author>
+		<idno type="DOI">10.4324/9781003162698-3</idno>
+		<idno>24 0.32 0.60 0.45</idno>
+	</analytic>
+	<monogr>
+		<title level="m">AI vs Humans</title>
+		<imprint>
+			<publisher>Routledge</publisher>
+			<date type="published" when="2021-11-25" />
+			<biblScope unit="volume">0</biblScope>
+			<biblScope unit="page" from="60" to="94" />
+		</imprint>
+	</monogr>
+	<note>Assessor C1 C. Human F vs. Human B vs. GPT-4o (IM 1) 0.89 0.84 0.33 0.27 0.46 0.25 0.36 0.74 0.60 0.53 Human B vs. GPT-4o (IM 2) 0.94 0.76 0.42 0.30 0.43 0.27 0.17 0.70 0.68 0.52 Human B vs. GPT-4o (IM 3) 0.94 0.85 0.37 0.41 0.50 0.40 0.54 0.84 0.74 0.62 Human B vs. Gemini-1.5 (IM 1) 0.88 0.59 0.27 0.24 0.33 0.13 0.12 0.46 0.42 0.38 Human B vs. Gemini-1.5 (IM 2) 0.94 0.75 0.28 0.32 0.30 0.23 0.29 0.71 0.62 0.49 Human B vs. Gemini-1.5 (IM 3) 0.94 0.72 0.29 0.25 0.23 0.</note>
+	<note type="raw_reference">Assessor C1 C2 C3 C4 C5 C6 C7 C8 C9 Overall Human B vs. Human F 0.90 0.77 0.73 0.69 0.75 0.75 0.85 0.86 0.79 0.79 Human B vs. Human C 0.58 0.58 0.70 0.80 0.82 0.86 0.75 0.76 0.80 0.74 Human F vs. Human C 0.73 0.54 0.60 0.64 0.68 0.69 0.65 0.74 0.59 0.65 Human B vs. GPT-4o (IM 1) 0.89 0.84 0.33 0.27 0.46 0.25 0.36 0.74 0.60 0.53 Human B vs. GPT-4o (IM 2) 0.94 0.76 0.42 0.30 0.43 0.27 0.17 0.70 0.68 0.52 Human B vs. GPT-4o (IM 3) 0.94 0.85 0.37 0.41 0.50 0.40 0.54 0.84 0.74 0.62 Human B vs. Gemini-1.5 (IM 1) 0.88 0.59 0.27 0.24 0.33 0.13 0.12 0.46 0.42 0.38 Human B vs. Gemini-1.5 (IM 2) 0.94 0.75 0.28 0.32 0.30 0.23 0.29 0.71 0.62 0.49 Human B vs. Gemini-1.5 (IM 3) 0.94 0.72 0.29 0.25 0.23 0.24 0.32 0.60 0.45</note>
+</biblStruct>
+
+<biblStruct xml:id="b57">
+	<analytic>
+		<title/>
+		<idno>27 0.39 0.48 0.33 0.24 0.66 0.57 0.46</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Human B vs</title>
+		<imprint>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="0380">.38 0.50 0.65 0.45 0</date>
+		</imprint>
+	</monogr>
+	<note>IM. Human B vs. Llama-3 (IM 2) 0.88 0. Human B vs. Llama-3 (IM 3) 0.89 0.84 0.50 0.57 0.70 0.63 0.46 0.87 0.72 0.69 Human C vs. GPT-4o (IM 1) 0.74 0.. Human C vs. GPT-4o (IM 2) 0.65 0.44 0.. Human C vs. GPT-4o (IM 3) 0.62 0.57 0.. Human C vs. Gemini-1.5 (IM 1) 0.42 0.21 0.17 0.15 0.30 0.05 0.03 0.29 0.23 0.21 Human C vs. Gemini-1.5 (IM 2) 0.47 0.51 0.16 0.26 0.35 0.17 0.08 0.53 0.45 0.33 Human C vs. Gemini-1.5 (IM 3) 0.47 0.32 0.14 0.18 0.22 0.15 0.09 0.38 0.24 0.24 Human C vs. Llama-3 (IM 1) 0.82 0.73 0.49 0.47 0.74 0.46 0.03 0.86 0.68 0.59 Human C vs. Llama-3 (IM 2) 0.71 0.67 0.24 0.42 0.57 0.31 0.13 0.84 0.72 0.51 Human C vs. Llama-3 (IM 3) 0.71 0.75 0.44 0.57 0.68 0.57 0.18 0.68 0</note>
+	<note type="raw_reference">0.45 Human B vs. Llama-3 (IM 1) 0.84 0.76 0.49 0.54 0.74 0.46 0.27 0.79 0.74 0.63 Human B vs. Llama-3 (IM 2) 0.88 0.73 0.38 0.50 0.65 0.45 0.25 0.77 0.71 0.59 Human B vs. Llama-3 (IM 3) 0.89 0.84 0.50 0.57 0.70 0.63 0.46 0.87 0.72 0.69 Human C vs. GPT-4o (IM 1) 0.74 0.54 0.20 0.22 0.46 0.10 0.13 0.45 0.42 0.36 Human C vs. GPT-4o (IM 2) 0.65 0.44 0.32 0.17 0.38 0.15 0.03 0.43 0.54 0.35 Human C vs. GPT-4o (IM 3) 0.62 0.57 0.27 0.39 0.48 0.33 0.24 0.66 0.57 0.46 Human C vs. Gemini-1.5 (IM 1) 0.42 0.21 0.17 0.15 0.30 0.05 0.03 0.29 0.23 0.21 Human C vs. Gemini-1.5 (IM 2) 0.47 0.51 0.16 0.26 0.35 0.17 0.08 0.53 0.45 0.33 Human C vs. Gemini-1.5 (IM 3) 0.47 0.32 0.14 0.18 0.22 0.15 0.09 0.38 0.24 0.24 Human C vs. Llama-3 (IM 1) 0.82 0.73 0.49 0.47 0.74 0.46 0.03 0.86 0.68 0.59 Human C vs. Llama-3 (IM 2) 0.71 0.67 0.24 0.42 0.57 0.31 0.13 0.84 0.72 0.51 Human C vs. Llama-3 (IM 3) 0.71 0.75 0.44 0.57 0.68 0.57 0.18 0.68 0.58 0.57 Human F vs. GPT-4o (IM 1) 0.94 0.82 0.61 0.56 0.80 0.37 0.41 0.71 0.87 0.68 Human F vs. GPT-4o (IM 2) 0.96 0.80 0.79 0.42 0.71 0.32 0.17 0.65 0.86 0.63 Human F vs. GPT-4o (IM 3) 0.94 0.85 0.71 0.83 0.87 0.70 0.60 0.86 0.93 0.81 Human F vs. Gemini-1.5 (IM 1) 0.77 0.63 0.56 0.50 0.64 0.19 0.10 0.45 0.72 0.51 Human F vs. Gemini-1.5 (IM 2) 0.80 0.76 0.54 0.65 0.62 0.43 0.27 0.76 0.89 0.64 Human F vs. Gemini-1.5 (IM 3) 0.80 0.75 0.53 0.57 0.53 0.44 0.35 0.57 0.75 0.59 Human F vs. Llama-3 (IM 1) 0.87 0.68 0.79 0.73 0.89 0.75 0.29 0.91 0.92 0.76 Human F vs. Llama-3 (IM 2) 0.97 0.75 0.58 0.65 0.76 0.56 0.28 0.81 0.89 0.69 Human F vs. Llama-3 (IM 3) 0.97 0.87 0.84 0.92 0.96 0.90 0.58 0.91 0.93 0.88 GPT-4o (IM 1) vs. Llama-3 (IM 1) 0.99 0.62 0.80 0.66 0.89 0.85 0.91 0.56 0.95 0.80 GPT-4o (IM 1) vs. Gemini-1.5 (IM 1) 0.82 0.89 1.00 0.96 0.99 0.99 0.77 0.89 0.93 0.92 Llama-3 (IM 1) vs. Gemini-1.5 (IM 1) 0.73 0.42 0.71 0.63 0.66 0.59 0.81 0.22 0.74 0.61 GPT-4o (IM 2) vs. Gemini-1.5 (IM 2) 1.00 0.90 0.95 0.94 0.99 0.97 0.93 0.97 0.96 0.96 GPT-4o (IM 2) vs. Llama-3 (IM 2) 0.99 0.72 0.87 0.67 0.90 0.71 0.84 0.71 0.91 0.81 Gemini-1.5 (IM 2) vs. Llama-3 (IM 2) 0.97 0.84 0.72 0.63 0.78 0.67 0.76 0.78 0.85 0.78 Llama-3 (IM 3) vs. GPT-4o (IM 3) 0.99 0.98 0.91 1.00 0.97 1.00 0.99 0.99 1.00 0.98 Llama-3 (IM 3) vs. Gemini-1.5 (IM 3) 0.97 0.85 0.81 0.91 0.85 0.81 0.99 0.94 0.97 0.90 GPT-4o (IM 3) vs. Gemini-1.5 (IM 3) 1.00 1.00 0.95 0.99 0.99 1.00 0.99 0.96 0.96 0.98 Table 14: Full AAR1 (adjacent agreement rate with k = 1) results between all assessor pairs, evaluated at the level of each assessment criterion and the whole essay (&quot;Overall&quot;). C1: Material selection. C2: Material integration and citation; C3: Quality of key components. C4: Logic of structure. C5: Content and clarity of ideas. C6: Coherence (flow of ideas). C7: Cohesion (use of connectors). C8: Grammar and sentence structure. C9: Academic vocabulary.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

@@ -11,9 +11,7 @@ from pathlib import Path
 
 from twscrape import API, gather
 from twscrape.models import Tweet as TwscrapeTweet
-from sqlalchemy.orm import Session
 
-from ..models import Tweet, TweetMedia
 from ..config import ACCOUNTS_TO_FOLLOW
 
 logger = logging.getLogger(__name__)
@@ -219,15 +217,12 @@ class TwscrapeCollector:
         
         return new_tweets
 
-
 def run_twscrape_collection(since_hours: int = 24):
     """
     Synchronous wrapper for async collection
     """
-    from ..models import get_db
     
     async def _collect():
-        db = next(get_db())
         collector = TwscrapeCollector(db_session=db)
         
         since = datetime.now(timezone.utc) - timedelta(hours=since_hours)

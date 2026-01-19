@@ -294,9 +294,9 @@ const TagTaxonomyEditor: React.FC = () => {
   return (
     <div className="taxonomy-editor">
       <div className="editor-header">
-        <h1>🌳 Tag Taxonomy Reorganization</h1>
+        <h1>🌳 Concept Taxonomy Reorganization</h1>
         <p className="subtitle">
-          Powered by Gemini 2.5 Pro - Analyze and reorganize all {currentStructure?.statistics.total_tags || 0} tags at once
+          Powered by GPT-5 - Comprehensively reorganize all {currentStructure?.statistics.total_tags || 0} concepts with full backwards compatibility
         </p>
       </div>
 
@@ -332,7 +332,7 @@ const TagTaxonomyEditor: React.FC = () => {
               onClick={generateProposal}
               disabled={generating || !currentStructure}
             >
-              {generating ? '🤖 Analyzing with Gemini 2.5 Pro...' : '✨ Generate Reorganization'}
+              {generating ? '🤖 Analyzing with GPT-5...' : '✨ Generate Reorganization'}
             </button>
           )}
           

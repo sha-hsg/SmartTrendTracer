@@ -1,0 +1,2057 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Head-to-Tail: How Knowledgeable are Large Language Models (LLMs)? A.K.A. Will LLMs Replace Knowledge Graphs?</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2024-04-03">3 Apr 2024</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><roleName>Yifan</roleName><forename type="first">Kai</forename><surname>Sun</surname></persName>
+							<email>sunkaicn@meta.com</email>
+						</author>
+						<author>
+							<persName><forename type="first">Ethan</forename><surname>Xu</surname></persName>
+							<email>ethanxu@meta.com</email>
+						</author>
+						<author>
+							<persName><forename type="first">Hanwen</forename><surname>Zha</surname></persName>
+							<email>hwzha@meta.com</email>
+						</author>
+						<author>
+							<persName><roleName>Xin</roleName><forename type="first">Yue</forename><surname>Liu</surname></persName>
+						</author>
+						<author>
+							<persName><forename type="first">Luna</forename><surname>Dong</surname></persName>
+							<email>lunadong@meta.com</email>
+						</author>
+						<author>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Meta Reality Labs University of Cambridge , UK</note>
+								<orgName type="laboratory">Meta Reality Labs</orgName>
+								<orgName type="institution">University of Cambridge</orgName>
+								<address>
+									<country key="GB">UK</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<affiliation key="aff1">
+								<note type="raw_affiliation">University of Surrey What college is the sister college of Trinity College , Oxford ?</note>
+								<orgName type="department" key="dep1">college</orgName>
+								<orgName type="department" key="dep2">college of Trinity College</orgName>
+								<orgName type="institution">University of Surrey</orgName>
+								<address>
+									<settlement>Oxford</settlement>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<affiliation key="aff2">
+								<note type="raw_affiliation">Ground Truth : Churchill College , Cambridge</note>
+								<orgName type="department">Ground Truth</orgName>
+								<orgName type="institution">Churchill College</orgName>
+								<address>
+									<settlement>Cambridge</settlement>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<affiliation key="aff3">
+								<note type="raw_affiliation">Balliol College</note>
+								<orgName type="institution">Balliol College</orgName>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Head-to-Tail: How Knowledgeable are Large Language Models (LLMs)? A.K.A. Will LLMs Replace Knowledge Graphs?</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2024-04-03">3 Apr 2024</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">CA36354767C579DF624902505FE735D9</idno>
+					<idno type="arXiv">arXiv:2308.10168v2[cs.CL]</idno>
+					<note type="submission">Who authored Choke (published in 1996 Where did Josef Kittler receive the Ph.D.</note>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-20T14:27+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Since the recent prosperity of Large Language Models (LLMs), there have been interleaved discussions regarding how to reduce hallucinations from LLM responses, how to increase the factuality of LLMs, and whether Knowledge Graphs (KGs), which store the world knowledge in a symbolic form, will be replaced with LLMs. In this paper, we try to answer these questions from a new angle: How knowledgeable are LLMs?</p><p>To answer this question, we constructed Headto-Tail, a benchmark that consists of 18K question-answer (QA) pairs regarding head, torso, and tail facts in terms of popularity. We designed an automated evaluation method and a set of metrics that closely approximate the knowledge an LLM confidently internalizes. Through a comprehensive evaluation of 16 publicly available LLMs, we show that existing LLMs are still far from being perfect in terms of their grasp of factual knowledge, especially for facts of torso-to-tail entities. 1 <ref type="url" target="https://openai.com/blog/chatgpt">https://openai.com/blog/chatgpt</ref> Head Torso Tail 0 10 20 30 40 50 Correct answers by GPT-4 (%) 47.6 36.5 27.3 33.0 30.3 10.6 Open domain Specific domains (averaged) Example questions where GPT-4 gives incorrect answers Movie Question: What profession does Tj Singh (known for John Carter</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>Pre-trained large language models (LLMs), such as ChatGPT 1 , <ref type="bibr">GPT-4 (OpenAI, 2023)</ref>, and Llama 2 <ref type="bibr">(Touvron et al., 2023b)</ref>, have demonstrated impressive capabilities in internalizing knowledge and responding to common inquiries <ref type="bibr" target="#b24">(Ouyang et al., 2022;</ref><ref type="bibr">OpenAI, 2023)</ref>. Nevertheless, these models often lack knowledge of nuanced, domain-specific details and are susceptible to hallucinations <ref type="bibr" target="#b4">(Bang et al., 2023)</ref>, underscoring the significant challenges of increasing the factuality of LLMs and minimizing hallucinations from LLM responses. Conversely, the rise of LLMs has sparked debates on whether Knowledge Graphs (KGs), which store real-world factual knowledge in triplet form (subject, predicate, object), will be replaced with LLMs. This paper tries to answer these questions from a new angle: How knowledgeable are LLMs?</p><p>Figure <ref type="figure">1</ref>: The question-answering accuracy of GPT-4 decreases in the order of head, torso, and tail entities on the Head-to-Tail benchmark, and is only 31% on average.</p><p>Finding answers to these questions is not easy. First, it is hard to directly "query" the knowledge embedded in an LLM-hallucination can be due to lack of knowledge but can also be caused by dysfunction of the generative model even if the knowledge is already parameterized in the model. We approximate the amount of knowledge in an LLM by its accuracy in answering simple-formed questions, such as "where was the basketball player Michael Jordan born?"; in addition, we ask the LLM to generate brief answers and admit "unsure" when its confidence is low. We chose this proxy because we found LLMs are normally very good at understand-ing simple-formed questions and produce consistent answers when regenerating answers, especially if asked to be brief (Section 3.5).</p><p>Second, there is no ready-to-use benchmark that either well represents distributions of user's interest (the query logs for major LLMs or search engines are not publicly available) or well represents the uniform distribution of the world knowledge (even the largest knowledge graphs admit sparsity of knowledge, especially towards non-popular facts). To address this challenge, we construct a benchmark of 18K QA pairs that cover various domains and various relationships in these domains. We bucket entities and relationships to head, torso, and tail according to how popular they are (details in Section 2) and randomly sample from each bucket; as such, we call our benchmark Head-to-Tail. This benchmark facilitates us to achieve a comprehensive view of how knowledgeable LLMs are regarding each bucket.</p><p>Through the Head-to-Tail benchmark and the experimental methodology, we answer the following three research questions (RQs):</p><p>RQ1: How reliable are LLMs in answering factual questions? (Section 3.2) RQ2: Do LLMs perform equally well on head, torso, and tail facts? (Section 3.3) RQ3: Do normal methods that improve LLMs, such as model size increase and instruction tuning, help LLMs to be more knowledgeable? (Section 3.4)</p><p>As shown in Figure <ref type="figure">1</ref>, our analysis demonstrates a consistent decline in the performance of LLMs, following the order of head, torso, and tail entities, confirming our hypothesis that LLMs contain more head knowledge where training data abound. Surprisingly, even for the top-0.5% popular entities in popular domains such as Movie, the evaluated LLMs, at best, provide accurate answers for only ∼60% of the questions in the benchmark. Normal methods that enhance LLMs do not necessarily make them more knowledgeable, highlighting the need for more effective approaches to increase LLMs' factuality.</p><p>Our main contributions are as follows:</p><p>(i) We introduce Head-to-Tail, the first benchmark focused on comprehensively assessing the effectiveness of LLMs in incorporating factual knowledge encompassing the head, torso, and tail portions of knowledge graphs (Section 2.1). Head-to-Tail will be available at <ref type="url" target="https://github.com/facebookresearch/head-to-tail">https://github.com/ facebookresearch/head-to-tail</ref>.</p><p>(ii) We present an evaluation methodology accompanied by metrics designed to assess the factuality of LLMs. Our metrics allow us to distinguish hallucination and missing answers, and our evaluation method, whereas entirely automated, proves to be reliable and robust (Section 2.2-2.3).</p><p>(iii) We conducted a comprehensive evaluation and quantified the factuality of 16 LLMs regarding head, torso, and tail facts to answer the research questions (RQ1-RQ3) (Section 3). In light of these findings, we envision the future of knowledge graphs and outline a research landscape aimed at improving the overall factual reliability of LLMs (Section 4).</p><p>2 The Head-to-Tail Benchmark</p><p>We now describe the Head-to-Tail benchmark, the metrics, and our evaluation methodology.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1">QA pair generation</head><p>Domains and data sources. To cover a broad range of knowledge, we used the DBpedia knowledge graph <ref type="bibr" target="#b3">(Auer et al., 2007)</ref>, where the knowledge originates from Wikipedia <ref type="bibr" target="#b10">(Denoyer and Gallinari, 2006)</ref>. We used a cleaned version of the English snapshot from December 1, 2022. <ref type="foot" target="#foot_0">2</ref>To better understand LLM performance on particular domains, we also selected three domains where public data are easily accessible.</p><p>• Movie: We used a snapshot of IMDb<ref type="foot" target="#foot_1">foot_1</ref> from May 21, 2023.</p><p>• Book: We used the data of Goodreads scraped in 2017 released by <ref type="bibr" target="#b38">Wan and McAuley (2018)</ref>.</p><p>• Academics:</p><p>We used a snapshot of MAG <ref type="bibr" target="#b32">(Sinha et al., 2015)</ref> from September 13, 2021 and DBLP 4 from May 10, 2023.</p><p>Entities. An important contribution of the Headto-Tail benchmark is the bucketing of head, torso, and tail entities, decided by the popularity of the entities (we will also discuss how the popularity of the predicates affect results in Section 3.3). We use two ways to approximate popularity: traffic and density. When there is traffic information, such as views and votes, we conveniently use traffic to measure the popularity; otherwise, we use density as a proxy, such as the number of facts or authored works about the entity. We often observe a correlation between density and traffic (e.g., the more popular a person is, the more we know about her), but as we will see soon from the benchmark statistics (Table <ref type="table" target="#tab_0">1</ref>), they can still lead to slightly different distributions of head, torso, and tail. We give details on how we decide the popularity of different types of entities from each data source in Appendix A.2.</p><p>We bucketed head, torso, and tail entities in three steps. First, we sorted the entities by their popularity, measured as above. Second, for each entity, we computed the cumulative popularity score up to the top-1 entity in the sorted list. Third, we bucketed the entities such that head entities comprise entities whose cumulative popularity score is up to 1/3 of that of all entities, torso entities comprise entities with cumulative scores ranging from 1/3 to 2/3, and tail entities from 2/3 to 1. (See Appendix A.7 for an example.) We determined the partitioning separately for different entity types for each domain.</p><p>To make the popularity score fair, we filtered out entities that are likely too new to have sufficient statistical data for popularity measurement. For IMDb, MAG, DBLP, and Goodreads, we kept only entities by the year of 2020, 2020, 2020, and 2015, respectively. The cut-off years are all before the cut-off time of the LLM training data, so the benchmark avoids questions that require recent knowledge. We did not perform similar filtering for DBpedia because the year attribute is unavailable or non-applicable for most entities, and our pilot study shows that very few (if at all) of the questions generated from DBpedia require knowledge after 2020.</p><p>Table <ref type="table" target="#tab_0">1</ref> summarizes the distribution of head, torso, and tail entities. The distribution follows the power law, where very small percentages of entities fall in the head and torso buckets, and the majority of entities fall in the tail bucket; for example, over 99.9% of movies fall in the tail bucket, according to IMDb vote counts. We also observe that this phenomenon is more pronounced when we measure by traffic than by density; for the latter, the torso buckets are often larger (∼15% of entities), and the tails are slightly smaller (∼82%).</p><p>Questions. We generated questions using a template-based approach, where each generated question asks for an attribute of an entity. We filtered out the following types of attributes: (i) unspecific (e.g., seeAlso in DBpedia), (ii) dynamic (e.g., lastLaunchRocket in DBpedia), (iii) data source specific (e.g., averageRating in IMDb), and (iv) non-textual (e.g., picture in DBpedia). We discuss a stricter filtering criterion in Appendix A.4. For each specific domain (Movie, Book, Academics), we manually designed the question template for each attribute. DBpedia contains a large set of attributes, so we first employed ChatGPT to draft the templates (using Prompt 1 in Appendix A.1), then proofread them manually and made necessary edits. Each question template corresponds to a distinct predicate.</p><p>The answer for each question is the object of the relevant triple; when there are multiple answers (e.g., a book may have multiple authors), we included all in the answer. When necessary, we included extra information for an entity to avoid potential ambiguities (e.g., we included the publication year for a book to distinguish books of highly similar names).</p><p>We generated an equal number of questions for randomly sampled head, torso, and tail entities using each template. For each specific domain, we generated ∼1K questions for each of the head, torso, and tail buckets. As DBPedia contains more domains and relationship types, we generated ∼3K questions for each bucket.  Manually deciding the correctness of answers can be cumbersome. We next describe a few different ways to automatically decide if an answer is correct. LLM-based. We ask ChatGPT to check whether an answer is correct given the question and ground truth (Prompt 2 in Appendix A.1). Thus, accuracy A LM is defined as the percentage of answers that ChatGPT judges as correct; hallucination rate H LM is defined as the percentage of time when (i) an attempted answer is not missing, and (ii) ChatGPT judges the answer as incorrect (i.e., H LM = 100% -A LM -M).</p><p>To understand the reliability of the LLM-based metrics, we randomly sampled 840 answers from the evaluated LLMs and manually checked whether human judgment agrees with the LLM-based metrics. The agreement is 98%, which we view as reliable. Hence, we use A LM and H LM as the primary metrics in this study. Rule-based. In addition, we adopt popular metrics, including exact match (EM), token F1 (F1), and ROUGE-L (RL) <ref type="bibr" target="#b18">(Lin, 2004;</ref><ref type="bibr" target="#b27">Rajpurkar et al., 2016)</ref>; in other words, we use rule-based methods to judge the correctness of an answer. Specifically, A EM is computed as the percentage of answers that exactly match the ground truth; A F1 is computed as the average harmonic mean of precision and recall when comparing tokens in the returned answers and in the ground truth answers; A RL is computed as the average normalized longest common subsequence (LCS) between the returned answers and the ground truths. For common answer types, we additionally expand the set of ground-truth answers with their variants using hand-crafted rules (e.g., "W Shakespeare" is a variant of "William Shakespeare"); when a given question has multiple expanded ground-truth answers, we take the maximum score.</p><p>Correspondingly, we measure hallucination rate by H EM (= 100% -A EM -M), H F1 (= 100% -A F1 -M), and H RL (= 100% -A RL -M). As we will show later in Section 3.5, we observe high correlations between rule-based and LLM-based metrics.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.3">Evaluation methodology</head><p>We prompted the LLM as shown in Prompt 3 in Appendix A.1. First, we asked LLMs to give as concise answers as possible. Second, we prompted LLMs to respond "unsure" when the LLM is not confident in the answer. We applied few-shot learning and included in the prompt two examples that are not in Head-to-Tail: one is a simple, answerable question with the corresponding answer as the response; the other is an unanswerable question with "unsure" as the response.</p><p>With this prompt, rule-based metrics are more likely to reflect the factual correctness of the answers, and we can simply compute the missing rate (i.e., M) by counting "unsure" or empty answers. We observed that explicitly asking for "unsure" as an answer could significantly reduce hallucination rate (Section 3.5).</p><p>To summarize, the following three setups in the benchmark and evaluation methodology help us best approximate the existence of (confident) knowledge in the LLMs: (i) focusing on simple questions in easy-to-understand forms, (ii) asking for concise answers to ease evaluation, and (iii) hinting the LLMs to answer "unsure" to suppress unnecessary hallucinations.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">Experimental Analysis</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Models and configurations</head><p>We evaluated representative state-of-the-art LLMs of various sizes and architectures, including ChatGPT, <ref type="bibr">GPT-4 (OpenAI, 2023)</ref>, LLaMA (7B, 13B, 33B, 65B) <ref type="bibr">(Touvron et al., 2023a)</ref>, Llama 2 (70B) <ref type="bibr">(Touvron et al., 2023b)</ref>, Vicuna (7B, 13B) <ref type="bibr" target="#b8">(Chiang et al., 2023)</ref>, Flan-T5 (3B, 11B) <ref type="bibr" target="#b9">(Chung et al., 2022)</ref>, RWKV (7B) <ref type="bibr">(Peng et al., 2023b)</ref>, Falcon (7B, 40B), and Falcon-Instruct (7B, 40B) <ref type="bibr" target="#b1">(Almazrouei et al., 2023)</ref>. We employed the most deterministic settings (i.e., temperature=0 or top_k=1) for all models.</p><p>We present more details in Appendix A.3.</p><p>Table <ref type="table" target="#tab_17">14</ref> in Appendix A.8 gives detailed results of all LLMs. We note that our goal is NOT to compare different LLM models; rather, by examining the metrics by different LLMs, we make sure to report the common patterns among the representative LLMs. We also note that it is hard to exhaustively benchmark every recent model in this fast-moving field; we conducted evaluations up to GPT-4 (Ope-nAI, 2023) and Llama 2 <ref type="bibr">(Touvron et al., 2023b)</ref>, and detailed discussions can be based on slightly older models, where we observe similar patterns.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">RQ1: How reliable are LLMs in answering factual questions?</head><p>We present in Table <ref type="table" target="#tab_3">3</ref> the overall performance of GPT-4, ChatGPT, Llama 2-70B, and LLaMA-33B, which perform the best in most metrics on Headto-Tail among all LLMs introduced in Section 3.1.</p><p>The best overall accuracy is obtained by GPT-4 at 31%.</p><p>Interestingly, for questions that are not answered correctly, different LLMs show different patterns: GPT-4 and ChatGPT give unsure or empty answers for the majority of them, and the hallucination rate is &lt;20% (still non-negligible); LLaMA-33B mostly provides hallucinated answers, resulting with high hallucination rate (∼80%); Llama 2-70B falls in-between. We suspect fine-tuning and reinforcement learning of these models may explain the different patterns when the model is unsure of the answers. Figure <ref type="figure">1</ref> shows examples of counterfactual answers given by GPT-4.</p><p>Finally, for all models, the overall performance varies substantially across different specific domains. All models perform the best in the Movie domain and worst in the Academics domain, likely because of the relatively low popularity of the Academics domain, as we will discuss soon.   3.3 RQ2: Do LLMs perform equally well on head, torso, and tail facts?</p><p>The overall accuracy of GPT-4 and Llama 2-70B (A LM ) declines in the order of head, torso, and tail entities, as shown in Figure <ref type="figure">1</ref> and Table <ref type="table" target="#tab_5">4</ref>. We observe the same pattern for other LLMs. This verifies our hypothesis that as we lack training data for long-tail entities, it is difficult for LLMs to obtain knowledge for such entities. Surprisingly, the QA accuracy is still low even for the head entities (e.g., GPT-4 achieves an A LM of 48% in the open domain). We further retain top-10% popular questions from the head bucket. As shown in Table <ref type="table" target="#tab_6">5</ref>, GPT-4 and Llama 2-70B obtained slightly higher accuracy (within 6 percent point) and lower hallucination rate for these super popular entities, but the accuracy is still disappointingly low (46% for GPT-4 and 19% for Llama 2-70B), and the missing rate is notable. We have a further discussion in Appendix A.6.</p><p>The QA accuracy on tail entities is significantly lower in most of the domains. Notably, Academics intuitively is a long-tail domain, and we observe ∼10% overall accuracy and very low accuracy (16% for GPT-4 and 13% for Llama 2-70B) even for head entities in this domain.</p><p>Finally, hallucination rate drops from head to torso to tail for GPT-4, but increases for Llama 2-70B. We hypothesize that there is at least one more factor that affects the hallucination rate-the internal assessment of the confidence. When an LLM "knows" what is unknown to it, it is likely to reduce confidence when answering related questions and produce fewer hallucinations.</p><p>Head-to-tail predicates. We investigated whether the performance still correlates with the head-totail order regarding the popularity of predicates instead of entities. We sorted the predicates from DBpedia by popularity (measured by the number of relational triples with the predicate) and partitioned the sorted predicates into head, torso, and tail in a similar fashion. We then re-partitioned the open-domain questions into head, torso, and tail predicate buckets, each containing 72, 450, and 8, 610 questions, respectively. Since the number of questions in the head bucket is low, we merged the head and torso buckets.</p><p>Table <ref type="table" target="#tab_7">6</ref> compares the performance on head &amp; torso vs. on tail. We observe no consistent correlation among different LLMs between the per-formance and the head-to-tail predicate ordering, and the differences in accuracy are not very high. This is not too surprising for two reasons. First, the semantics of each predicate is mostly consistent with the semantics of the predicate names, which can be well understood by LLMs. Second, when facts are present for tail predicates, they are often about the head entities, and factual information for head entities is likely to be more abundant in the training data.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.4">RQ3: Does normal methods that improve</head><p>LLMs increase the factuality? Second, compared with LLaMA and Falcon, the instruction-tuned counterparts (i.e., Vicuna and Falcon-Instruct) have lower accuracy, as they learned to be more conservative in providing factual answers and thus generate "unsure" more often (e.g., Vicuna-13B is 26.9% higher in M than LLaMA-13B). Despite so, they still have high hallucination rate.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.5">Robustness of our evaluation methodology</head><p>Finally, we evaluate the robustness of our evaluation methodology.</p><p>Correlations between rule-and LLM-based metrics. For each combination of popularity (head, torso, tail) and domain (movie, book, academics, open), we calculate Spearman's rank and Pearson correlation coefficients between rule-and LLMbased metrics over all LLMs. We report the aggregated results (minimum, mean) in Effect of brief and "unsure". We randomly sampled 1.2K questions and tested the stability of answers if we call ChatGPT to regenerate answers. When not requiring brief or "unsure" answers, for 18% of questions, ChatGPT regenerated different answers. Adding the requirement for brief answers (Prompt 6 in Appendix A.1) reduced the percentage to 4%, and further asking "unsure" answers with few-shot examples (Prompt 3) reduced the percentage to 1%. In addition, according to manual evaluation on 150 randomly sampled questions, removing "unsure" as an option increases ChatGPT's hallucination rate by 13 percentage points.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Robustness of prompts.</head><p>We explore two other prompts. Compared with the original prompt that conducts few-shot learning (Section 3.1), denoted as Few-shot, the Zero-shot prompt does not provide examples and thus is zero-shot learning (Prompt 4 in Appendix A.1), and the In-domain prompt has the answerable example swapped out for an in-domain example generated by the same question template as the target question (Prompt 5 in Appendix A.1).</p><p>As shown in Table <ref type="table" target="#tab_12">9</ref>, Few-shot and Zero-shot show very similar results, but performance differences are noticeable between Few-shot and Indomain. In particular, in-domain examples help get more correct answers (+8.9%, +7.9%, +5.9% in A LM for head, torso, tail) but at the cost of more hallucinations (+7.5%, +8.2%, +9.7% in H LM for head, torso, tail). We suspect that the in-domain examples boost the confidence of ChatGPT in answering a question, so it answers questions even when the real confidence is not that high, causing both higher accuracy and higher hallucination rate.</p><p>Despite the fluctuation, our original prompt template (Few-shot) appears to be better at approximating the (confident) factuality of LLMs with the QA accuracy, and the relative performance among the head, torso, and tail remains stable over different prompts.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Discussions</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">The future of knowledge graphs</head><p>The experimental analysis indicates that although LLMs have incorporated factual knowledge within their parameters, the amount of this encoded knowledge remains limited. Knowledge of long-tail entities is already sparse in KGs and is even more deficient in LLMs.</p><p>Nevertheless, LLMs have been revolutionizing the way people seek information and calling for reconsideration of the best representation of factual knowledge. We term the forthcoming generation of KGs as Dual Neural KGs: knowledge can reside explicitly as triples (similar to KGs) and implicitly as embeddings (like in LLMs); the symbolic form caters to human understanding and explainability, while the neural form benefits machine comprehension and seamless conversations. A piece of knowledge can exist in both formats or in the one that is more appropriate. The harmonious blend of the two forms, capitalizing on the latest LLM innovations, is an exciting research area as we elaborate next.</p><p>Head knowledge. This involves popular entities where training data are ample. Ideally, LLMs could be taught such knowledge for efficient retrieval, meaning head knowledge shall exist in both forms. Currently, LLMs still have a mediocre QA accuracy for popular entities (see Table <ref type="table" target="#tab_6">5</ref>), so a critical research area is to infuse head knowledge into LLMs through model training or fine-tuning. Early work in this line includes knowledge infusion <ref type="bibr" target="#b19">(Liu et al., 2021;</ref><ref type="bibr" target="#b39">Wang et al., 2021;</ref><ref type="bibr" target="#b41">Zhen et al., 2022)</ref>.</p><p>Torso-to-tail and recent knowledge. This involves non-popular entities and emerging knowledge, where training data are typically sparse or absent. This type of knowledge might be best represented as triples. Serving such knowledge requires effectively deciding when external knowledge is essential, efficiently retrieving the relevant knowledge, and seamlessly integrating it into the answers. Early attempts in this direction involve knowledgeaugmented LLMs <ref type="bibr" target="#b2">(Asai et al., 2023;</ref><ref type="bibr" target="#b22">Nakano et al., 2022;</ref><ref type="bibr" target="#b30">Shi et al., 2023;</ref><ref type="bibr" target="#b6">Borgeaud et al., 2022)</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Limitations and extensions</head><p>Taxonomy. Our work does not discuss the effectiveness of LLMs in capturing taxonomy or type hierarchies, which could be an extension of this study. Specifically, we hypothesize that LLMs can effectively incorporate type relationships (e.g., hypernyms and synonyms), even for the fine-granularity sub-types. Hence, it may no longer be worth manually constructing a very deep and complex hierarchy in the future. Robustness to question formulation. This paper primarily aims to evaluate how much an LLM "knows" a fact with high confidence; we thus tested various ways of formulating factual questions and selected the least ambiguous form for this study. However, this approach does not assess the model's robustness to paraphrasing or consider the diverse ways models can be queried, such as entailment or cloze-style prompts. Our supplementary experiment in Appendix A.5 suggests that varying the form of questions does not significantly impact the evaluation results. A more thorough evaluation of robustness is beyond the scope of this paper and left for future research.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Related Work</head><p>Benchmarks. Most works studied the factuality of LLMs using existing QA benchmarks such as We-bQuestions <ref type="bibr" target="#b5">(Berant et al., 2013)</ref>, TriviaQA <ref type="bibr" target="#b13">(Joshi et al., 2017)</ref>, LC-QuAD <ref type="bibr" target="#b36">(Trivedi et al., 2017;</ref><ref type="bibr" target="#b11">Dubey et al., 2019)</ref>, QALD-9 <ref type="bibr" target="#b37">(Usbeck et al., 2018)</ref>, Natural Questions <ref type="bibr" target="#b17">(Kwiatkowski et al., 2019)</ref>, and Enti-tyQuestions <ref type="bibr" target="#b29">(Sciavolino et al., 2021)</ref>. A recent line of work has been constructing new QA benchmarks to assess LLMs' factuality, especially for long-tail knowledge <ref type="bibr" target="#b20">(Mallen et al., 2023;</ref><ref type="bibr" target="#b16">Kim et al., 2023)</ref>. Compared with these benchmarks, Head-to-Tail is the first to specifically assess how well LLMs incorporate head, torso, and tail factual information. LLM Evaluation. Recent years have seen a proliferation of research on assessing the factuality of LLMs <ref type="bibr" target="#b28">(Roberts et al., 2020;</ref><ref type="bibr" target="#b26">Petroni et al., 2021;</ref><ref type="bibr" target="#b31">Shuster et al., 2021;</ref><ref type="bibr" target="#b21">Mielke et al., 2022;</ref><ref type="bibr" target="#b33">Tan et al., 2023;</ref><ref type="bibr" target="#b12">Hu et al., 2023;</ref><ref type="bibr">Peng et al., 2023a;</ref><ref type="bibr" target="#b23">Omar et al., 2023;</ref><ref type="bibr" target="#b14">Kandpal et al., 2023;</ref><ref type="bibr" target="#b20">Mallen et al., 2023;</ref><ref type="bibr" target="#b7">Chen et al., 2023)</ref>. Most of these works focus on a single knowledge source, such as Freebase or Wikipedia, and they have yet to systematically perform the evaluation explicitly regarding head/torso/tail entities or attributes. One work close to ours is <ref type="bibr" target="#b23">Omar et al. (2023)</ref>, which evaluated ChatGPT using facts collected from diverse knowledge sources; however, their evaluation was carried out manually on only 450 QA instances.</p><p>There are three works that also showed the correlation between the QA accuracy of language models and fact popularity <ref type="bibr" target="#b20">(Mallen et al., 2023;</ref><ref type="bibr" target="#b14">Kandpal et al., 2023;</ref><ref type="bibr" target="#b16">Kim et al., 2023)</ref>. Our work, conducted in parallel, focuses on a different anglehow knowledgeable are LLMs? For this purpose, we systematically designed experimental methodology, including the definition of head, torso, and tail entities, the design of metrics, and the evaluation method. Our benchmark is comprehensive in containing different knowledge sources, different domains, and rich relations. Compared with these three works, we gave more quantified answers for research questions RQ1-RQ3.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="6">Conclusion</head><p>We introduce Head-to-Tail, the first benchmark designed to assess the ability of LLMs to internalize head, torso, and tail facts. Alongside the dataset, we present a new evaluation methodology with appropriate metrics for automatically evaluating LLMs' factuality. Our evaluation shows that even the most advanced LLMs have notable limitations in representing factual knowledge, particularly for the torso and tail entities. Accordingly, we suggest new research areas to seamlessly blend knowledge in the symbolic form and neural form. instead of "unsure" when the confidence is low).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.2 Popularity measure in head-to-tail partition</head><p>• IMDb (traffic): The number of votes (i.e., numVotes) the title (e.g., movie, short, TV series, etc.) has received; we do NOT consider whether the vote is high or low in the counting.</p><p>For person entities, we use the total number of votes received by the titles the person is known for.</p><p>• Goodreads (traffic): The count of ratings (i.e., ratings_count) the book has received; similarly, we do NOT take into consideration whether the rating is high or low.</p><p>• MAG (traffic): The number of citations (i.e., CitationCount) the entity (i.e., scholarly article, conference, or journal) has received.</p><p>• DBLP (density): The number of works the scholar has authored.</p><p>• DBpedia (density): The number of relational triples in DBPedia that contain the entity.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.3 Implementation details</head><p>We interacted with ChatGPT and GPT-4 through OpenAI API 5 . The employed version of Chat-GPT and GPT-4 is gpt-3.5-turbo-0301 and gpt-4-0613, respectively. We used Transformers <ref type="bibr" target="#b40">(Wolf et al., 2020)</ref>  When constructing Head-to-Tail, we include all predicates that allow reasonable factual questions. Table <ref type="table" target="#tab_13">10</ref>, instead, shows metrics on predicates that users are more likely to ask about. In general we observed higher performance on the Movie and Book domains, but the accuracy is still fairly low 5 <ref type="url" target="https://platform.openai.com/docs/api-reference">https://platform.openai.com/docs/ api-reference</ref> and we observe similar patterns regarding head, torso, and tail entities. It is observed that even for the top-10% popular questions in the head bucket, the missing rate of GPT-4 is still over 30% (Table <ref type="table" target="#tab_6">5</ref>). Although this might seem counterintuitive, there are two reasons. First, the performance reported in Table <ref type="table" target="#tab_6">5</ref> is based on all the studied domains, including the tail domain Academics.  <ref type="table" target="#tab_15">13</ref>). However, this is with the price of higher hallucination rate, showing that the confidence of this part of knowledge is low. Interestingly, even after the above change, GPT-4 still admits to being "unsure" for 15% of questions (e.g., GPT-4's answers are "unknown" given the questions "What is the death year of Debbi Datz-Pyle (known for The Matrix (1999))?", "What movie is Alan R. Kessler known for?"). This further confirms that LLMs are not good at memorizing (internalizing) factual information.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.5 Asking questions in different forms</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.7 An example of entity bucketing</head><p>Suppose there are 12 entities A, B, C, . . . , L, and their popularity scores are </p><formula xml:id="formula_0">A = 8, B = 4, C = D = 2, E = F = . . . = L = 1.</formula></div><figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 :</head><label>1</label><figDesc>The number (%) of head, torso, and tail entities. The distribution follows the power law.</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head></head><label></label><figDesc>Table 2 summarizes the overall statistics of Head-to-Tail in the number of questions and templates.</figDesc><table><row><cell>Domain</cell><cell>Sources</cell><cell># Templates</cell><cell># Questions</cell></row><row><cell>Movie</cell><cell>IMDb</cell><cell>13</cell><cell>3,093</cell></row><row><cell>Book</cell><cell>Goodreads</cell><cell>4</cell><cell>3,000</cell></row><row><cell>Academics</cell><cell>MAG, DBLP</cell><cell>13</cell><cell>2,946</cell></row><row><cell>Open</cell><cell>DBpedia</cell><cell>393</cell><cell>9,132</cell></row><row><cell>Total</cell><cell></cell><cell>423</cell><cell>18,171</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 2 :</head><label>2</label><figDesc>The overall statistics of Head-to-Tail.</figDesc><table><row><cell>2.2 Metrics</cell></row><row><cell>Metrics. We find that oftentimes LLMs are intelli-</cell></row><row><cell>gent enough to admit that it does not have enough</cell></row><row><cell>information to answer a question. As such, we used</cell></row><row><cell>three metrics: accuracy (A), hallucination rate (H),</cell></row><row><cell>and missing rate (M), measuring the percentage of</cell></row><row><cell>questions that an LLM gives the correct answer,</cell></row><row><cell>gives a wrong or partially incorrect answer, or ad-</cell></row><row><cell>mits it cannot answer, respectively; by definition,</cell></row><row><cell>A + H + M = 100%.</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 3 :</head><label>3</label><figDesc>The best overall accuracy is only ∼31% on Head-to-Tail. All numbers are in percentage (%).</figDesc><table><row><cell>Model</cell><cell>All</cell><cell></cell><cell cols="2">Open</cell><cell cols="2">Movie</cell><cell cols="2">Book</cell><cell cols="2">Academics</cell></row><row><cell></cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell></row><row><cell>GPT-4</cell><cell>30.9</cell><cell>19.7</cell><cell>37.1</cell><cell>25.3</cell><cell>41.7</cell><cell>15.5</cell><cell>21.3</cell><cell>19.4</cell><cell>10.0</cell><cell>6.8</cell></row><row><cell>ChatGPT</cell><cell>20.3</cell><cell>14.1</cell><cell>22.1</cell><cell>14.8</cell><cell>34.7</cell><cell>13.3</cell><cell>16.9</cell><cell>24.9</cell><cell>3.0</cell><cell>1.9</cell></row><row><cell>Llama 2 (70B)</cell><cell>11.8</cell><cell>34.0</cell><cell>7.5</cell><cell>24.8</cell><cell>27.9</cell><cell>34.3</cell><cell>10.3</cell><cell>54.5</cell><cell>9.8</cell><cell>41.0</cell></row><row><cell>LLaMA (33B)</cell><cell>18.2</cell><cell>80.0</cell><cell>19.0</cell><cell>79.1</cell><cell>28.7</cell><cell>70.1</cell><cell>15.8</cell><cell>82.9</cell><cell>7.1</cell><cell>90.3</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head>Table 4 :</head><label>4</label><figDesc></figDesc><table><row><cell>Model</cell><cell>A LM</cell><cell>H LM</cell><cell>M</cell></row><row><cell>GPT-4</cell><cell>46.0 (↑5.7)</cell><cell>21.4 (↓1.9)</cell><cell>32.6 (↓3.7)</cell></row><row><cell>Llama 2 (70B)</cell><cell>18.7 (↑2.5)</cell><cell>29.7 (↓0.6)</cell><cell>51.6 (↓1.9)</cell></row></table><note><p>LLMs' factuality, measured by A LM (%), decreases in the order of head, torso, and tail entities from Head-to-Tail.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_6"><head>Table 5 :</head><label>5</label><figDesc></figDesc><table /><note><p>Accuracy on the top-10% popular questions in the head bucket is only slightly better than overall head entities. (↑/↓: increased/decreased % compared with using all head instances.)</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_7"><head>Table 6 :</head><label>6</label><figDesc>Comparison of LLMs' factuality about head, torso, and tail predicates in A LM (%) and H LM (%) using open-domain instances from Head-to-Tail.</figDesc><table><row><cell>Model</cell><cell cols="2">Head &amp; Torso</cell><cell>Tail</cell><cell></cell></row><row><cell></cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell></row><row><cell>GPT-4</cell><cell>42.9</cell><cell>20.3</cell><cell>36.8</cell><cell>25.6</cell></row><row><cell>ChatGPT</cell><cell>18.6</cell><cell>14.2</cell><cell>22.3</cell><cell>14.8</cell></row><row><cell>Llama 2 (70B)</cell><cell>8.0</cell><cell>42.1</cell><cell>7.5</cell><cell>23.8</cell></row><row><cell>LLaMA (7B)</cell><cell>15.3</cell><cell>83.5</cell><cell>13.5</cell><cell>77.7</cell></row><row><cell>LLaMA (13B)</cell><cell>14.6</cell><cell>85.1</cell><cell>14.7</cell><cell>83.6</cell></row><row><cell>LLaMA (33B)</cell><cell>18.2</cell><cell>81.4</cell><cell>19.0</cell><cell>78.9</cell></row><row><cell>LLaMA (65B)</cell><cell>20.1</cell><cell>79.7</cell><cell>18.3</cell><cell>81.4</cell></row><row><cell>Vicuna (7B)</cell><cell>12.5</cell><cell>82.0</cell><cell>9.3</cell><cell>77.4</cell></row><row><cell>Vicuna (13B)</cell><cell>13.0</cell><cell>70.3</cell><cell>8.6</cell><cell>55.5</cell></row><row><cell>Flan-T5 (3B)</cell><cell>4.4</cell><cell>13.0</cell><cell>3.4</cell><cell>10.4</cell></row><row><cell>Flan-T5 (11B)</cell><cell>9.2</cell><cell>11.1</cell><cell>5.0</cell><cell>8.1</cell></row><row><cell>RWKV (7B)</cell><cell>6.9</cell><cell>28.7</cell><cell>6.4</cell><cell>29.7</cell></row><row><cell>Falcon (7B)</cell><cell>11.3</cell><cell>51.0</cell><cell>8.1</cell><cell>43.7</cell></row><row><cell>Falcon (40B)</cell><cell>14.4</cell><cell>34.1</cell><cell>8.5</cell><cell>29.2</cell></row><row><cell>Falcon-Instruct (7B)</cell><cell>8.8</cell><cell>48.3</cell><cell>7.2</cell><cell>47.1</cell></row><row><cell>Falcon-Instruct (40B)</cell><cell>12.8</cell><cell>15.3</cell><cell>7.9</cell><cell>15.2</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_8"><head>Table 7 compares</head><label>7</label><figDesc>LLMs in different sizes and with or without instruction tuning. First, we observe that an increased model size does not automatically translate to a better grasp of factual knowledge. For example, LLaMA-33B modestly outperforms LLaMA-65B across the head, torso, and tail subsets (+0.4% in A LM and -1.9% in H LM on average) while they share the same training dataset and hyperparameters. This provides additional evidence for our hypothesis that once the model is sufficiently large, the abundance of training data plays a more critical role in the factuality of the LLMs.</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_9"><head>Table 8 .</head><label>8</label><figDesc>The correlation scores suggest that A LM (resp. H LM ) strongly correlates with A EM , A F1 , and A RL (resp. H EM , H F1 , and H RL ), indicating that rule-based metrics are good alternatives for lower-cost or faster evaluation.</figDesc><table><row><cell>Model</cell><cell cols="2">Head-to-Tail</cell><cell></cell><cell cols="2">Head</cell><cell cols="2">Torso</cell><cell>Tail</cell><cell></cell></row><row><cell></cell><cell>A LM</cell><cell>H LM</cell><cell>M</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell></row><row><cell>LLaMA (7B)</cell><cell>12.1</cell><cell>80.0</cell><cell>7.9</cell><cell>19.0</cell><cell>74.4</cell><cell>11.7</cell><cell>81.0</cell><cell>5.4</cell><cell>84.8</cell></row><row><cell>LLaMA (13B)</cell><cell>14.4</cell><cell>84.3</cell><cell>1.3</cell><cell>22.0</cell><cell>77.2</cell><cell>14.8</cell><cell>83.8</cell><cell>6.3</cell><cell>91.9</cell></row><row><cell>LLaMA (33B)</cell><cell>18.2</cell><cell>80.0</cell><cell>1.8</cell><cell>26.0</cell><cell>72.8</cell><cell>19.8</cell><cell>78.7</cell><cell>8.8</cell><cell>88.6</cell></row><row><cell>LLaMA (65B)</cell><cell>17.8</cell><cell>81.9</cell><cell>0.3</cell><cell>25.9</cell><cell>73.8</cell><cell>18.7</cell><cell>81.0</cell><cell>8.7</cell><cell>90.9</cell></row><row><cell>Vicuna (7B)</cell><cell>10.1</cell><cell>79.2</cell><cell>10.8</cell><cell>16.2</cell><cell>72.7</cell><cell>9.6</cell><cell>79.8</cell><cell>4.3</cell><cell>85.0</cell></row><row><cell>Vicuna (13B)</cell><cell>9.2</cell><cell>62.6</cell><cell>28.2</cell><cell>14.0</cell><cell>55.0</cell><cell>8.8</cell><cell>62.8</cell><cell>4.7</cell><cell>70.0</cell></row><row><cell>Flan-T5 (3B)</cell><cell>2.3</cell><cell>17.4</cell><cell>80.3</cell><cell>3.9</cell><cell>19.7</cell><cell>1.5</cell><cell>17.1</cell><cell>1.3</cell><cell>15.5</cell></row><row><cell>Flan-T5 (11B)</cell><cell>4.2</cell><cell>20.0</cell><cell>75.7</cell><cell>7.6</cell><cell>23.7</cell><cell>3.2</cell><cell>19.9</cell><cell>2.0</cell><cell>16.5</cell></row><row><cell>Falcon (7B)</cell><cell>9.5</cell><cell>57.9</cell><cell>32.6</cell><cell>14.5</cell><cell>53.8</cell><cell>9.2</cell><cell>57.9</cell><cell>4.8</cell><cell>62.0</cell></row><row><cell>Falcon (40B)</cell><cell>10.8</cell><cell>41.0</cell><cell>48.2</cell><cell>16.2</cell><cell>36.4</cell><cell>11.2</cell><cell>40.0</cell><cell>4.9</cell><cell>46.6</cell></row><row><cell>Falcon-Instruct (7B)</cell><cell>6.8</cell><cell>56.7</cell><cell>36.5</cell><cell>11.5</cell><cell>56.0</cell><cell>5.6</cell><cell>57.2</cell><cell>3.4</cell><cell>56.7</cell></row><row><cell>Falcon-Instruct (40B)</cell><cell>10.8</cell><cell>32.2</cell><cell>57.0</cell><cell>16.7</cell><cell>30.5</cell><cell>11.5</cell><cell>31.1</cell><cell>4.3</cell><cell>34.8</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_10"><head>Table 7 :</head><label>7</label><figDesc>Comparison of different LLMs with different sizes. All numbers are in percentage (%).</figDesc><table><row><cell>LLM-Based</cell><cell>Rule-Based</cell><cell>Min.</cell><cell>ρ</cell><cell>Mean</cell><cell>Min.</cell><cell>r</cell><cell>Mean</cell></row><row><cell></cell><cell>AEM</cell><cell>0.721</cell><cell></cell><cell>0.915</cell><cell>0.921</cell><cell></cell><cell>0.966</cell></row><row><cell>ALM</cell><cell>AF1</cell><cell>0.775</cell><cell></cell><cell>0.951</cell><cell>0.781</cell><cell></cell><cell>0.969</cell></row><row><cell></cell><cell>ARL</cell><cell>0.730</cell><cell></cell><cell>0.947</cell><cell>0.775</cell><cell></cell><cell>0.969</cell></row><row><cell></cell><cell>HEM</cell><cell>0.968</cell><cell></cell><cell>0.991</cell><cell>0.993</cell><cell></cell><cell>0.998</cell></row><row><cell>HLM</cell><cell>HF1</cell><cell>0.976</cell><cell></cell><cell>0.995</cell><cell>0.998</cell><cell></cell><cell>0.999</cell></row><row><cell></cell><cell>HRL</cell><cell>0.976</cell><cell></cell><cell>0.995</cell><cell>0.998</cell><cell></cell><cell>0.999</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_11"><head>Table 8 :</head><label>8</label><figDesc></figDesc><table><row><cell></cell><cell>Domain</cell><cell cols="2">Few-shot</cell><cell cols="2">Zero-shot</cell><cell cols="2">In-domain</cell></row><row><cell></cell><cell></cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell></row><row><cell>Head</cell><cell>Open All</cell><cell>32.7 29.4</cell><cell>20.8 17.2</cell><cell>32.6 29.2</cell><cell>24.7 18.6</cell><cell>45.0 38.3</cell><cell>27.8 24.7</cell></row><row><cell>Torso</cell><cell>Open All</cell><cell>19.7 21.9</cell><cell>13.3 14.6</cell><cell>21.6 22.8</cell><cell>17.9 16.7</cell><cell>30.1 29.8</cell><cell>23.0 22.8</cell></row><row><cell>Tail</cell><cell>Open</cell><cell>13.8</cell><cell>10.2</cell><cell>14.9</cell><cell>14.5</cell><cell>23.0</cell><cell>19.5</cell></row><row><cell></cell><cell>All</cell><cell>9.5</cell><cell>10.5</cell><cell>10.3</cell><cell>12.7</cell><cell>15.4</cell><cell>20.2</cell></row></table><note><p>The minimum and mean Spearman's rank correlation coefficients (ρ) and Pearson correlation coefficients (r) show high correlation between LM-and rule-based metrics.</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_12"><head>Table 9 :</head><label>9</label><figDesc></figDesc><table /><note><p>Performance of ChatGPT with different prompts on Head-to-Tail. All numbers are in percentage (%).</p></note></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_13"><head>Table 10 :</head><label>10</label><figDesc>Comparison of LLMs' factuality on Head-to-Tail without relatively less naturally occurring questions. All numbers are in percentage (%).</figDesc><table><row><cell></cell><cell></cell><cell cols="5">to interact with the other</cell></row><row><cell cols="7">LLMs on A100 (80GB) GPUs, and we used 16-</cell></row><row><cell cols="7">bit floating point formats (i.e., float16 for Flan-T5</cell></row><row><cell cols="7">and RWKV, bfloat16 for LLaMA, Llama 2, Vicuna,</cell></row><row><cell cols="7">Falcon, and Falcon-Instruct). We employed the</cell></row><row><cell cols="7">original LLaMA, Llama 2, Flan-T5, Falcon, and</cell></row><row><cell cols="7">Falcon-Instruct versions. The employed version</cell></row><row><cell cols="7">of RWKV and Vicuna is v4 Raven and v1.1,</cell></row><row><cell>respectively.</cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell></row><row><cell cols="6">A.4 Impact of less naturally occurring</cell><cell></cell></row><row><cell>questions</cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell><cell></cell></row><row><cell>Model</cell><cell cols="2">Movie</cell><cell cols="2">Book</cell><cell cols="2">Academics</cell></row><row><cell></cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell cols="2">A LM H LM</cell></row><row><cell>GPT-4</cell><cell>43.8</cell><cell>12.6</cell><cell>39.1</cell><cell>24.6</cell><cell>11.2</cell><cell>9.8</cell></row><row><cell>ChatGPT</cell><cell>37.8</cell><cell>14.5</cell><cell>31.0</cell><cell>21.5</cell><cell>2.3</cell><cell>1.6</cell></row><row><cell>Llama 2 (70B)</cell><cell>30.4</cell><cell>31.6</cell><cell>19.7</cell><cell>10.0</cell><cell>4.5</cell><cell>59.0</cell></row><row><cell>LLaMA (7B)</cell><cell>18.7</cell><cell>71.9</cell><cell>21.4</cell><cell>59.1</cell><cell>2.4</cell><cell>94.9</cell></row><row><cell>LLaMA (13B)</cell><cell>25.3</cell><cell>73.2</cell><cell>24.4</cell><cell>74.5</cell><cell>4.6</cell><cell>93.7</cell></row><row><cell>LLaMA (33B)</cell><cell>31.2</cell><cell>67.5</cell><cell>31.7</cell><cell>65.9</cell><cell>5.2</cell><cell>91.7</cell></row><row><cell>LLaMA (65B)</cell><cell>27.1</cell><cell>72.4</cell><cell>32.3</cell><cell>66.5</cell><cell>8.2</cell><cell>91.8</cell></row><row><cell>Vicuna (7B)</cell><cell>21.1</cell><cell>68.5</cell><cell>19.2</cell><cell>62.9</cell><cell>2.6</cell><cell>91.3</cell></row><row><cell>Vicuna (13B)</cell><cell>20.3</cell><cell>58.5</cell><cell>11.4</cell><cell>38.7</cell><cell>3.1</cell><cell>77.4</cell></row><row><cell>Flan-T5 (3B)</cell><cell>1.7</cell><cell>15.1</cell><cell>2.8</cell><cell>4.5</cell><cell>0.2</cell><cell>4.3</cell></row><row><cell>Flan-T5 (11B)</cell><cell>6.3</cell><cell>22.1</cell><cell>6.6</cell><cell>10.1</cell><cell>0.8</cell><cell>16.0</cell></row><row><cell>RWKV (7B)</cell><cell>4.5</cell><cell>24.3</cell><cell>13.3</cell><cell>37.0</cell><cell>0.1</cell><cell>9.5</cell></row><row><cell>Falcon (7B)</cell><cell>20.4</cell><cell>62.3</cell><cell>15.0</cell><cell>45.1</cell><cell>3.5</cell><cell>80.7</cell></row><row><cell>Falcon (40B)</cell><cell>26.0</cell><cell>43.1</cell><cell>11.4</cell><cell>7.1</cell><cell>4.7</cell><cell>55.0</cell></row><row><cell>Falcon-Instruct (7B)</cell><cell>13.4</cell><cell>66.4</cell><cell>9.9</cell><cell>34.1</cell><cell>1.9</cell><cell>58.5</cell></row><row><cell>Falcon-Instruct (40B)</cell><cell>28.4</cell><cell>37.5</cell><cell>11.9</cell><cell>1.9</cell><cell>3.9</cell><cell>51.2</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_14"><head>Table 11 :</head><label>11</label><figDesc>ChatGPT's factuality in A LM (%) and H LM (%) obtained by the cloze-style queries closely mirrors that of the simple-formed questions in the Movie domain.We explored the influence of question formulation on the evaluation results using ChatGPT in the Movie domain. We rewrote all questions as clozestyle questions (e.g., "What's the release year of Mr. &amp; Mrs. Smith" was transformed to "The release year of Mr. &amp; Mrs. Smith is _"). As shown in Table11, the performance obtained by the clozestyle queries is very similar to that obtained by simple-formed questions.</figDesc><table><row><cell></cell><cell cols="2">Head</cell><cell cols="2">Torso</cell><cell>Tail</cell><cell></cell></row><row><cell></cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell><cell>A LM</cell><cell>H LM</cell></row><row><cell>Original</cell><cell>51.3</cell><cell>11.5</cell><cell>46.4</cell><cell>16.6</cell><cell>6.4</cell><cell>11.8</cell></row><row><cell>Cloze-style</cell><cell>50.8</cell><cell>8.9</cell><cell>46.1</cell><cell>14.3</cell><cell>6.8</cell><cell>12.6</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_15"><head>Table 13 :</head><label>13</label><figDesc>Performance of GPT-4 on the top-10% popular questions in the head bucket in the Movie domain. All numbers are in percentage (%).</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_16"><head></head><label></label><figDesc>Table12compares GPT-4's performance on the top-10% head entities in the Academics and the Movie domains. The missing rate on the more popular domain Movie is much lower (23%). Second, if we explicitly ask the LLM to return the best guess (Prompt 7) instead of responding "unsure", GPT-4's missing rate on the top 10% of head entities in the Movie domain would further drop to 15% (Table</figDesc><table /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_17"><head>Table 14 :</head><label>14</label><figDesc>Comparison of LLMs' factuality about head, torso, and tail entities using all instances and instances of each domain from Head-to-Tail. All numbers are in percentage (%).</figDesc><table><row><cell>The total</cell></row><row><cell>popularity scores add up to 24 (= 8 + 4 + 2 +</cell></row><row><cell>2 + 1 × 8). Top-1/3 traffic (a total score of 8) is</cell></row><row><cell>contributed by {A}, thus the head; mid-1/3 traffic</cell></row><row><cell>is contributed by {B, C, D} (a total score of 4 +</cell></row><row><cell>2 + 2 = 8), thus the torso; bottom-1/3 traffic is</cell></row><row><cell>contributed by {E, F, . . . , L} (a total score of 1 ×</cell></row><row><cell>8 = 8), thus the tail.</cell></row></table></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="2" xml:id="foot_0"><p>https://databus.dbpedia.org/dbpedia/ mappings/mappingbased-objects</p></note>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="3" xml:id="foot_1"><p>https://developer.imdb.com/ non-commercial-datasets/</p></note>
+		</body>
+		<back>
+
+			
+			<div type="acknowledgement">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Acknowledgements</head><p>We would like to thank the anonymous ARR reviewers and meta reviewer for their constructive and insightful feedback.</p></div>
+			</div>
+
+			<div type="annex">
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A Appendix</head></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>A.1 List of Prompts</head><p>You are given a few samples of a relation in the format of &lt;X, relation, Y&gt;. You need to write a question *template* about the relation, which can be used to generate questions. The template needs to have one blank such that a question about Y can be generated by filling the blank with X.</p><p>#Example 1 Samples: &lt;!Hero, musicBy, Eddie DeGarmo&gt;, &lt;9 to 5 (musical), musicBy, Dolly Parton&gt;, &lt;All About Us (musical), musicBy, John Kander&gt; Template: The music of _ is by whom? #Example 2 Samples: &lt;10,000 Maniacs, bandMember, Dennis Drew&gt;, &lt;16bit (band), bandMember, Eddie Jefferys&gt;, &lt;1TYM, bandMember, Teddy Park&gt; Template: Name a band member of _? #Example 3 Samples: {SAMPLES} Template:</p><p>Prompt 1: Question template drafting.</p><p>You need to check whether the prediction of a question-answering system to a question is correct. You should make the judgment based on a list of ground truth answers provided to you. Your response should be "correct" if the prediction is correct or "incorrect" if the prediction is wrong.</p></div>			</div>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Anstellungsgenehmigung für Strahlentherapeuten nach Bedarfsplanungs-Richtlinie 2012</title>
+		<idno type="DOI">10.1007/s00350-016-4523-7</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Medizinrecht</title>
+		<title level="j" type="abbrev">MedR</title>
+		<idno type="ISSN">0723-8886</idno>
+		<idno type="ISSNe">1433-8629</idno>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="168" to="179" />
+			<date type="published" when="1920">95.70. 92.25. 96.96. 82.20</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note>0.48) 3,150 ( 2.31) 1,827,710 ( 0.70) 257 ( 1.63) 225 ( 0.46) 79,521 ( 2.44) 103,564 ( 1.30) Torso 4,113 ( 0.05) 87,645 ( 1.21) 7,304 ( 5.35) 9,386,034 ( 3.60) 965 ( 6.12) 1,266 ( 2.58) 500,778 (15.36) 1,255,113 (15.77) Tail 7,536,482 (99.94) 7,111,496 (98.31) 126,134 (92.35) 249</note>
+	<note type="raw_reference">Head 767 ( 0.01) 34,903 ( 0.48) 3,150 ( 2.31) 1,827,710 ( 0.70) 257 ( 1.63) 225 ( 0.46) 79,521 ( 2.44) 103,564 ( 1.30) Torso 4,113 ( 0.05) 87,645 ( 1.21) 7,304 ( 5.35) 9,386,034 ( 3.60) 965 ( 6.12) 1,266 ( 2.58) 500,778 (15.36) 1,255,113 (15.77) Tail 7,536,482 (99.94) 7,111,496 (98.31) 126,134 (92.35) 249,311,539 (95.70) 14,550 (92.25) 47,546 (96.96) 2,680,704 (82.20) 6,600,206 (82.93References</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">AlGhafa Evaluation Benchmark for Arabic Language Models</title>
+		<author>
+			<persName><forename type="first">Ebtesam</forename><surname>Almazrouei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruxandra</forename><surname>Cojocaru</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michele</forename><surname>Baldo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quentin</forename><surname>Malartic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hamza</forename><surname>Alobeidli</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniele</forename><surname>Mazzotta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guilherme</forename><surname>Penedo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Giulia</forename><surname>Campesan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mugariya</forename><surname>Farooq</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Maitha</forename><surname>Alhammadi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julien</forename><surname>Launay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Badreddine</forename><surname>Noune</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.arabicnlp-1.21</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of ArabicNLP 2023</title>
+		<meeting>ArabicNLP 2023</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="244" to="275" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ebtesam Almazrouei, Hamza Alobeidli, Abdulaziz Al- shamsi, Alessandro Cappelli, Ruxandra Cojocaru, Merouane Debbah, Etienne Goffinet, Daniel Hes- low, Julien Launay, Quentin Malartic, Badreddine Noune, Baptiste Pannier, and Guilherme Penedo. 2023. Falcon-40B: an open large language model with state-of-the-art performance.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Retrieval-based Language Models and Applications</title>
+		<author>
+			<persName><forename type="first">Akari</forename><surname>Asai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sewon</forename><surname>Min</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zexuan</forename><surname>Zhong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Danqi</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-tutorials.6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 6: Tutorial Abstracts)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 6: Tutorial Abstracts)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="volume">6</biblScope>
+			<biblScope unit="page" from="41" to="46" />
+		</imprint>
+	</monogr>
+	<note>: Tutorial Abstracts)</note>
+	<note type="raw_reference">Akari Asai, Sewon Min, Zexuan Zhong, and Danqi Chen. 2023. Retrieval-based language models and applications. In Proceedings of the 61st Annual Meet- ing of the Association for Computational Linguistics (Volume 6: Tutorial Abstracts), pages 41-46, Toronto, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Dbpedia: A nucleus for a web of open data</title>
+		<author>
+			<persName><forename type="first">Sören</forename><surname>Auer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christian</forename><surname>Bizer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Georgi</forename><surname>Kobilarov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jens</forename><surname>Lehmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Cyganiak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zachary</forename><surname>Ives</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">The Semantic Web</title>
+		<meeting><address><addrLine>Berlin, Heidelberg; Berlin Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2007">2007</date>
+			<biblScope unit="page" from="722" to="735" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sören Auer, Christian Bizer, Georgi Kobilarov, Jens Lehmann, Richard Cyganiak, and Zachary Ives. 2007. Dbpedia: A nucleus for a web of open data. In The Semantic Web, pages 722-735, Berlin, Heidelberg. Springer Berlin Heidelberg.</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">A Multitask, Multilingual, Multimodal Evaluation of ChatGPT on Reasoning, Hallucination, and Interactivity</title>
+		<author>
+			<persName><forename type="first">Yejin</forename><surname>Bang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Samuel</forename><surname>Cahyawijaya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nayeon</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenliang</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Su</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bryan</forename><surname>Wilie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Holy</forename><surname>Lovenia</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ziwei</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tiezheng</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Willy</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quyet</forename><forename type="middle">V</forename><surname>Do</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pascale</forename><surname>Fung</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.ijcnlp-main.45</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 13th International Joint Conference on Natural Language Processing and the 3rd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 13th International Joint Conference on Natural Language Processing and the 3rd Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yejin Bang, Samuel Cahyawijaya, Nayeon Lee, Wen- liang Dai, Dan Su, Bryan Wilie, Holy Lovenia, Ziwei Ji, Tiezheng Yu, Willy Chung, Quyet V. Do, Yan Xu, and Pascale Fung. 2023. A multitask, multilin- gual, multimodal evaluation of chatgpt on reasoning, hallucination, and interactivity.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Semantic Parsing on Freebase from Question-Answer Pairs</title>
+		<author>
+			<persName><forename type="first">Jonathan</forename><surname>Berant</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Chou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roy</forename><surname>Frostig</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Liang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/d13-1160</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2013 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Seattle, Washington, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2013">2013</date>
+			<biblScope unit="page" from="1533" to="1544" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Jonathan Berant, Andrew Chou, Roy Frostig, and Percy Liang. 2013. Semantic parsing on Freebase from question-answer pairs. In Proceedings of the 2013 Conference on Empirical Methods in Natural Lan- guage Processing, pages 1533-1544, Seattle, Wash- ington, USA. Association for Computational Linguis- tics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<monogr>
+		<title level="m" type="main">Improving language models by retrieving from trillions of tokens</title>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Borgeaud</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arthur</forename><surname>Mensch</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Etc</forename><surname>Jordan Hoffmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">†</forename></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Sebastian Borgeaud, Arthur Mensch, and etc. Jor- dan Hoffmann †. 2022. Improving language models by retrieving from trillions of tokens. arXiv.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Knowledge Base Completion for Long-Tail Entities</title>
+		<author>
+			<persName><forename type="first">Lihu</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Simon</forename><surname>Razniewski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gerhard</forename><surname>Weikum</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.matching-1.8</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the First Workshop on Matching From Unstructured and Structured Data (MATCHING 2023)</title>
+		<meeting>the First Workshop on Matching From Unstructured and Structured Data (MATCHING 2023)<address><addrLine>Toronto, ON, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="99" to="108" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lihu Chen, Simon Razniewski, and Gerhard Weikum. 2023. Knowledge base completion for long-tail entities. In Proceedings of the First Workshop on Matching From Unstructured and Structured Data (MATCHING 2023), pages 99-108, Toronto, ON, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<monogr>
+		<title level="m" type="main">Vicuna: An opensource chatbot impressing gpt-4 with 90%* chatgpt quality</title>
+		<author>
+			<persName><forename type="first">Wei-Lin</forename><surname>Chiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhuohan</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zi</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ying</forename><surname>Sheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhanghao</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lianmin</forename><surname>Zheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siyuan</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yonghao</forename><surname>Zhuang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><forename type="middle">E</forename><surname>Gonzalez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ion</forename><surname>Stoica</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><forename type="middle">P</forename><surname>Xing</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Wei-Lin Chiang, Zhuohan Li, Zi Lin, Ying Sheng, Zhanghao Wu, Hao Zhang, Lianmin Zheng, Siyuan Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion Stoica, and Eric P. Xing. 2023. Vicuna: An open- source chatbot impressing gpt-4 with 90%* chatgpt quality.</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Scaling instruction-finetuned language models</title>
+		<author>
+			<persName><forename type="first">Chung</forename><surname>Hyung Won</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Le</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shayne</forename><surname>Longpre</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Barret</forename><surname>Zoph</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yi</forename><surname>Tay</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Fedus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yunxuan</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuezhi</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mostafa</forename><surname>Dehghani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Siddhartha</forename><surname>Brahma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Albert</forename><surname>Webson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shane</forename><surname>Shixiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhuyun</forename><surname>Gu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mirac</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xinyun</forename><surname>Suzgun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aakanksha</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Chowdhery</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marie</forename><surname>Castro-Ros</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Pellat</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dasha</forename><surname>Robinson</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sharan</forename><surname>Valter</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gaurav</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adams</forename><surname>Mishra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vincent</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanping</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hongkun</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Slav</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ed</forename><forename type="middle">H</forename><surname>Petrov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>Chi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Dean</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quoc</forename><forename type="middle">V</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Wei</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hyung Won Chung, Le Hou, Shayne Longpre, Barret Zoph, Yi Tay, William Fedus, Yunxuan Li, Xuezhi Wang, Mostafa Dehghani, Siddhartha Brahma, Al- bert Webson, Shixiang Shane Gu, Zhuyun Dai, Mirac Suzgun, Xinyun Chen, Aakanksha Chowdh- ery, Alex Castro-Ros, Marie Pellat, Kevin Robinson, Dasha Valter, Sharan Narang, Gaurav Mishra, Adams Yu, Vincent Zhao, Yanping Huang, Andrew Dai, Hongkun Yu, Slav Petrov, Ed H. Chi, Jeff Dean, Ja- cob Devlin, Adam Roberts, Denny Zhou, Quoc V. Le, and Jason Wei. 2022. Scaling instruction-finetuned language models.</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<analytic>
+		<title level="a" type="main">The Wikipedia XML corpus</title>
+		<author>
+			<persName><forename type="first">Ludovic</forename><surname>Denoyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Gallinari</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/1147197.1147210</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ACM SIGIR Forum</title>
+		<title level="j" type="abbrev">SIGIR Forum</title>
+		<idno type="ISSN">0163-5840</idno>
+		<imprint>
+			<biblScope unit="volume">40</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="64" to="69" />
+			<date type="published" when="2006-06">2006</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ludovic Denoyer and Patrick Gallinari. 2006. The Wikipedia XML corpus. SIGIR Forum, 40(1):64- 69.</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<analytic>
+		<title level="a" type="main">LC-QuAD 2.0: A Large Dataset for Complex Question Answering over Wikidata and DBpedia</title>
+		<author>
+			<persName><forename type="first">Mohnish</forename><surname>Dubey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Debayan</forename><surname>Banerjee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abdelrahman</forename><surname>Abdelkawi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jens</forename><surname>Lehmann</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-030-30796-7_5</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<title level="s">Proceedings, Part II</title>
+		<meeting><address><addrLine>Auckland, New Zealand; Berlin, Heidelberg</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2019-10-26">2019. October 26-30, 2019</date>
+			<biblScope unit="page" from="69" to="78" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mohnish Dubey, Debayan Banerjee, Abdelrahman Ab- delkawi, and Jens Lehmann. 2019. Lc-quad 2.0: A large dataset for complex question answering over wikidata and dbpedia. In The Semantic Web -ISWC 2019: 18th International Semantic Web Conference, Auckland, New Zealand, October 26-30, 2019, Pro- ceedings, Part II, page 69-78, Berlin, Heidelberg. Springer-Verlag.</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<analytic>
+		<title level="a" type="main">An empirical study of pre-trained language models in simple knowledge graph question answering</title>
+		<author>
+			<persName><forename type="first">Nan</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yike</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guilin</forename><surname>Qi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dehai</forename><surname>Min</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiaoyan</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><forename type="middle">Z</forename><surname>Pan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zafar</forename><surname>Ali</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/s11280-023-01166-y</idno>
+	</analytic>
+	<monogr>
+		<title level="j">World Wide Web</title>
+		<title level="j" type="abbrev">World Wide Web</title>
+		<idno type="ISSN">1386-145X</idno>
+		<idno type="ISSNe">1573-1413</idno>
+		<imprint>
+			<biblScope unit="volume">26</biblScope>
+			<biblScope unit="issue">5</biblScope>
+			<biblScope unit="page" from="2855" to="2886" />
+			<date type="published" when="2023-05-17">2023</date>
+			<publisher>Springer Science and Business Media LLC</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nan Hu, Yike Wu, Guilin Qi, Dehai Min, Jiaoyan Chen, Jeff Z Pan, and Zafar Ali. 2023. An empirical study of pre-trained language models in simple knowledge graph question answering. World Wide Web, pages 1-32.</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">TriviaQA: A large scale distantly supervised challenge dataset for reading comprehension</title>
+		<author>
+			<persName><forename type="first">Mandar</forename><surname>Joshi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eunsol</forename><surname>Choi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Weld</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/P17-1147</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 55th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Vancouver, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="1601" to="1611" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mandar Joshi, Eunsol Choi, Daniel Weld, and Luke Zettlemoyer. 2017. TriviaQA: A large scale distantly supervised challenge dataset for reading comprehen- sion. In Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (Vol- ume 1: Long Papers), pages 1601-1611, Vancouver, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Large language models struggle to learn long-tail knowledge</title>
+		<author>
+			<persName><forename type="first">Nikhil</forename><surname>Kandpal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haikang</forename><surname>Deng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Wallace</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Colin</forename><surname>Raffel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 40th International Conference on Machine Learning</title>
+		<meeting>the 40th International Conference on Machine Learning</meeting>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="volume">202</biblScope>
+			<biblScope unit="page" from="15696" to="15707" />
+		</imprint>
+	</monogr>
+	<note>Proceedings of Machine Learning Research</note>
+	<note type="raw_reference">Nikhil Kandpal, Haikang Deng, Adam Roberts, Eric Wallace, and Colin Raffel. 2023. Large language models struggle to learn long-tail knowledge. In Proceedings of the 40th International Conference on Machine Learning, volume 202 of Proceedings of Machine Learning Research, pages 15696-15707.</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<monogr>
+		<title/>
+		<author>
+			<persName><surname>Pmlr</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note type="raw_reference">PMLR.</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Automatic question-answer generation for long-tail knowledge</title>
+		<author>
+			<persName><forename type="first">Youngmin</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rohan</forename><surname>Kumar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sunitha</forename><surname>Ravi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haitian</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christos</forename><surname>Faloutsos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruslan</forename><surname>Salakhutdinov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Minji</forename><surname>Yoon</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Second Workshop on Knowledge Augmented Methods for Natural Language Processing (KDD-KnowledgeNLP)</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Youngmin Kim, Rohan Kumar, Sunitha Ravi, Haitian Sun, Christos Faloutsos, Ruslan Salakhutdinov, and Minji Yoon. 2023. Automatic question-answer gen- eration for long-tail knowledge. In Second Workshop on Knowledge Augmented Methods for Natural Lan- guage Processing (KDD-KnowledgeNLP).</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Natural questions: A benchmark for question answering research</title>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Kwiatkowski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jennimaria</forename><surname>Palomaki</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Olivia</forename><surname>Redfield</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Collins</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ankur</forename><surname>Parikh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chris</forename><surname>Alberti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Danielle</forename><surname>Epstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Illia</forename><surname>Polosukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kenton</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kristina</forename><surname>Toutanova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Llion</forename><surname>Jones</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Kelcey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming-Wei</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><forename type="middle">M</forename><surname>Dai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jakob</forename><surname>Uszkoreit</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quoc</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Slav</forename><surname>Petrov</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00276</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<imprint>
+			<biblScope unit="volume">7</biblScope>
+			<biblScope unit="page" from="452" to="466" />
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Tom Kwiatkowski, Jennimaria Palomaki, Olivia Red- field, Michael Collins, Ankur Parikh, Chris Alberti, Danielle Epstein, Illia Polosukhin, Jacob Devlin, Ken- ton Lee, Kristina Toutanova, Llion Jones, Matthew Kelcey, Ming-Wei Chang, Andrew M. Dai, Jakob Uszkoreit, Quoc Le, and Slav Petrov. 2019. Natu- ral questions: A benchmark for question answering research. Transactions of the Association for Compu- tational Linguistics, 7:452-466.</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">ROUGE: A package for automatic evaluation of summaries</title>
+		<author>
+			<persName><forename type="first">Chin-Yew</forename><surname>Lin</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Text Summarization Branches Out</title>
+		<meeting><address><addrLine>Barcelona, Spain</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2004">2004</date>
+			<biblScope unit="page" from="74" to="81" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chin-Yew Lin. 2004. ROUGE: A package for auto- matic evaluation of summaries. In Text Summariza- tion Branches Out, pages 74-81, Barcelona, Spain. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">KG-BART: Knowledge Graph-Augmented BART for Generative Commonsense Reasoning</title>
+		<author>
+			<persName><forename type="first">Ye</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yao</forename><surname>Wan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lifang</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Peng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Philip</forename><forename type="middle">S</forename><surname>Yu</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v35i7.16796</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="6418" to="6425" />
+			<date type="published" when="2021-05-18">2021</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ye Liu, Yao Wan, Lifang He, Hao Peng, and Philip S. Yu. 2021. Kg-bart: Knowledge graph-augmented bart for generative commonsense reasoning. In AAAI.</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">When Not to Trust Language Models: Investigating Effectiveness of Parametric and Non-Parametric Memories</title>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Mallen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Akari</forename><surname>Asai</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Victor</forename><surname>Zhong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rajarshi</forename><surname>Das</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daniel</forename><surname>Khashabi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hannaneh</forename><surname>Hajishirzi</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.acl-long.546</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)<address><addrLine>Toronto, Canada</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="9802" to="9822" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Alex Mallen, Akari Asai, Victor Zhong, Rajarshi Das, Daniel Khashabi, and Hannaneh Hajishirzi. 2023. When not to trust language models: Investigating effectiveness of parametric and non-parametric mem- ories. In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Vol- ume 1: Long Papers), pages 9802-9822, Toronto, Canada. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<analytic>
+		<title level="a" type="main">Reducing conversational agents&apos; overconfidence through linguistic calibration</title>
+		<author>
+			<persName><forename type="first">Sabrina</forename><forename type="middle">J</forename><surname>Mielke</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Arthur</forename><surname>Szlam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Emily</forename><surname>Dinan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y-Lan</forename><surname>Boureau</surname></persName>
+		</author>
+		<idno type="DOI">10.1162/tacl_a_00494</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Transactions of the Association for Computational Linguistics</title>
+		<imprint>
+			<biblScope unit="volume">10</biblScope>
+			<biblScope unit="page" from="857" to="872" />
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Sabrina J. Mielke, Arthur Szlam, Emily Dinan, and Y- Lan Boureau. 2022. Reducing conversational agents&apos; overconfidence through linguistic calibration. Trans- actions of the Association for Computational Linguis- tics, 10:857-872.</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<monogr>
+		<title level="m" type="main">Webgpt: Browserassisted question-answering with human feedback</title>
+		<author>
+			<persName><forename type="first">Reiichiro</forename><surname>Nakano</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Hilton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Suchir</forename><surname>Balaji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeff</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Long</forename><surname>Ouyang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christina</forename><surname>Kim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Hesse</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shantanu</forename><surname>Jain</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vineet</forename><surname>Kosaraju</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">William</forename><surname>Saunders</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xu</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Karl</forename><surname>Cobbe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tyna</forename><surname>Eloundou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gretchen</forename><surname>Krueger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Button</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matthew</forename><surname>Knight</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Benjamin</forename><surname>Chess</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">John</forename><surname>Schulman</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Reiichiro Nakano, Jacob Hilton, Suchir Balaji, Jeff Wu, Long Ouyang, Christina Kim, Christopher Hesse, Shantanu Jain, Vineet Kosaraju, William Saunders, Xu Jiang, Karl Cobbe, Tyna Eloundou, Gretchen Krueger, Kevin Button, Matthew Knight, Benjamin Chess, and John Schulman. 2022. Webgpt: Browser- assisted question-answering with human feedback. arXiv.</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<analytic>
+		<title level="a" type="main">Chatgpt versus traditional question answering for knowledge graphs: Current status and future directions towards knowledge graph chatbots</title>
+		<author>
+			<persName><forename type="first">Reham</forename><surname>Omar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Omij</forename><surname>Mangukiya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Panos</forename><surname>Kalnis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Essam</forename><surname>Mansour</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">OpenAI</title>
+		<imprint>
+			<date type="published" when="2023">2023. 2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">Gpt-4 technical report</note>
+	<note type="raw_reference">Reham Omar, Omij Mangukiya, Panos Kalnis, and Es- sam Mansour. 2023. Chatgpt versus traditional ques- tion answering for knowledge graphs: Current status and future directions towards knowledge graph chat- bots. OpenAI. 2023. Gpt-4 technical report.</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Training language models to follow instructions with human feedback</title>
+		<author>
+			<persName><forename type="first">Long</forename><surname>Ouyang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeffrey</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xu</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diogo</forename><surname>Almeida</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Carroll</forename><surname>Wainwright</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pamela</forename><surname>Mishkin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chong</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sandhini</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Katarina</forename><surname>Slama</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Ray</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">35</biblScope>
+			<biblScope unit="page" from="27730" to="27744" />
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida, Carroll Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray, et al. 2022. Training language models to follow instruc- tions with human feedback. Advances in Neural Information Processing Systems, 35:27730-27744.</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<monogr>
+		<title level="m" type="main">Check your facts and try again: Improving large language models with external knowledge and automated feedback</title>
+		<author>
+			<persName><forename type="first">Baolin</forename><surname>Peng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michel</forename><surname>Galley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pengcheng</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yujia</forename><surname>Xie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qiuyuan</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lars</forename><surname>Liden</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhou</forename><surname>Yu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Weizhu</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianfeng</forename><surname>Gao</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note>a</note>
+	<note type="raw_reference">Baolin Peng, Michel Galley, Pengcheng He, Hao Cheng, Yujia Xie, Yu Hu, Qiuyuan Huang, Lars Liden, Zhou Yu, Weizhu Chen, and Jianfeng Gao. 2023a. Check your facts and try again: Improving large language models with external knowledge and automated feed- back.</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">KILT: a benchmark for knowledge intensive language tasks</title>
+		<author>
+			<persName><forename type="first">Bo</forename><surname>Peng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Alcaide</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quentin</forename><surname>Anthony</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alon</forename><surname>Albalak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Samuel</forename><surname>Arcadinho</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Huanqi</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xin</forename><surname>Cheng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Chung</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Matteo</forename><surname>Grella</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kranthi</forename><surname>Kiran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><forename type="middle">V</forename></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuzheng</forename><surname>He</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Haowen</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Przemyslaw</forename><surname>Kazienko</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jan</forename><surname>Kocon</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jiaming</forename><surname>Kong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bartlomiej</forename><surname>Koptyra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hayden</forename><surname>Lau</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Krishna</forename><surname>Sri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ipsit</forename><surname>Mantri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ferdinand</forename><surname>Mom</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Atsushi</forename><surname>Saito</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiangru</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bolun</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Johan</forename><forename type="middle">S</forename><surname>Wind</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Stansilaw</forename><surname>Wozniak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruichong</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhenyuan</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qihang</forename><surname>Zhao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peng</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rui-Jie</forename><surname>Zhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Fabio</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aleksandra</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angela</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Patrick</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Majid</forename><surname>Yazdani</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nicola</forename><forename type="middle">De</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">James</forename><surname>Thorne</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yacine</forename><surname>Jernite</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vladimir</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jean</forename><surname>Maillard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vassilis</forename><surname>Plachouras</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Rocktäschel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sebastian</forename><surname>Riedel</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.naacl-main.200</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2023. 2021</date>
+			<biblScope unit="page" from="2523" to="2544" />
+		</imprint>
+	</monogr>
+	<note>RWKV: Reinventing rnns for the transformer era</note>
+	<note type="raw_reference">Bo Peng, Eric Alcaide, Quentin Anthony, Alon Albalak, Samuel Arcadinho, Huanqi Cao, Xin Cheng, Michael Chung, Matteo Grella, Kranthi Kiran GV, Xuzheng He, Haowen Hou, Przemyslaw Kazienko, Jan Kocon, Jiaming Kong, Bartlomiej Koptyra, Hayden Lau, Kr- ishna Sri Ipsit Mantri, Ferdinand Mom, Atsushi Saito, Xiangru Tang, Bolun Wang, Johan S. Wind, Stansi- law Wozniak, Ruichong Zhang, Zhenyuan Zhang, Qihang Zhao, Peng Zhou, Jian Zhu, and Rui-Jie Zhu. 2023b. RWKV: Reinventing rnns for the transformer era. Fabio Petroni, Aleksandra Piktus, Angela Fan, Patrick Lewis, Majid Yazdani, Nicola De Cao, James Thorne, Yacine Jernite, Vladimir Karpukhin, Jean Maillard, Vassilis Plachouras, Tim Rocktäschel, and Sebastian Riedel. 2021. KILT: a benchmark for knowledge intensive language tasks. In Proceedings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, pages 2523-2544, Online. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">SQuAD: 100,000+ questions for machine comprehension of text</title>
+		<author>
+			<persName><forename type="first">Pranav</forename><surname>Rajpurkar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Konstantin</forename><surname>Lopyrev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Percy</forename><surname>Liang</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/D16-1264</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2016 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2016 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Austin, Texas</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2016">2016</date>
+			<biblScope unit="page" from="2383" to="2392" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. SQuAD: 100,000+ questions for machine comprehension of text. In Proceedings of the 2016 Conference on Empirical Methods in Natu- ral Language Processing, pages 2383-2392, Austin, Texas. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">How much knowledge can you pack into the parameters of a language model</title>
+		<author>
+			<persName><forename type="first">Adam</forename><surname>Roberts</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Colin</forename><surname>Raffel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Noam</forename><surname>Shazeer</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-main.437</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="5418" to="5426" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Adam Roberts, Colin Raffel, and Noam Shazeer. 2020. How much knowledge can you pack into the param- eters of a language model? In Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP), pages 5418-5426, Online. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Simple Entity-Centric Questions Challenge Dense Retrievers</title>
+		<author>
+			<persName><forename type="first">Christopher</forename><surname>Sciavolino</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zexuan</forename><surname>Zhong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jinhyuk</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Danqi</forename><surname>Chen</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.emnlp-main.496</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing</title>
+		<meeting>the 2021 Conference on Empirical Methods in Natural Language Processing<address><addrLine>Punta Cana, Dominican Republic</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page" from="6138" to="6148" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Christopher Sciavolino, Zexuan Zhong, Jinhyuk Lee, and Danqi Chen. 2021. Simple entity-centric ques- tions challenge dense retrievers. In Proceedings of the 2021 Conference on Empirical Methods in Natu- ral Language Processing, pages 6138-6148, Online and Punta Cana, Dominican Republic. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">REPLUG: Retrieval-Augmented Black-Box Language Models</title>
+		<author>
+			<persName><forename type="first">Weijia</forename><surname>Shi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sewon</forename><surname>Min</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michihiro</forename><surname>Yasunaga</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Minjoon</forename><surname>Seo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>James</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mike</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luke</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wen-Tau</forename><surname>Yih</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.naacl-long.463</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)</title>
+		<meeting>the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv</note>
+	<note type="raw_reference">Weijia Shi, Sewon Min, Michihiro Yasunaga, Minjoon Seo, Rich James, Mike Lewis, Luke Zettlemoyer, and Wen tau Yih. 2023. Replug: Retrieval-augmented black-box language models. arXiv.</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Retrieval augmentation reduces hallucination in conversation</title>
+		<author>
+			<persName><forename type="first">Kurt</forename><surname>Shuster</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Spencer</forename><surname>Poff</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Moya</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Douwe</forename><surname>Kiela</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jason</forename><surname>Weston</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.findings-emnlp.320</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: EMNLP 2021</title>
+		<meeting><address><addrLine>Punta Cana, Dominican Republic</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+			<biblScope unit="page" from="3784" to="3803" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Kurt Shuster, Spencer Poff, Moya Chen, Douwe Kiela, and Jason Weston. 2021. Retrieval augmentation reduces hallucination in conversation. In Findings of the Association for Computational Linguistics: EMNLP 2021, pages 3784-3803, Punta Cana, Do- minican Republic. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">An overview of microsoft academic service (mas) and applications</title>
+		<author>
+			<persName><forename type="first">Arnab</forename><surname>Sinha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhihong</forename><surname>Shen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yang</forename><surname>Song</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hao</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Darrin</forename><surname>Eide</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bo-June (paul)</forename><surname>Hsu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kuansan</forename><surname>Wang</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2740908.2742839</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 24th International Conference on World Wide Web, WWW &apos;15 Companion</title>
+		<meeting>the 24th International Conference on World Wide Web, WWW &apos;15 Companion<address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>Association for Computing Machinery</publisher>
+			<date type="published" when="2015">2015</date>
+			<biblScope unit="page" from="243" to="246" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Arnab Sinha, Zhihong Shen, Yang Song, Hao Ma, Dar- rin Eide, Bo-June (Paul) Hsu, and Kuansan Wang. 2015. An overview of microsoft academic service (mas) and applications. In Proceedings of the 24th International Conference on World Wide Web, WWW &apos;15 Companion, page 243-246, New York, NY, USA. Association for Computing Machinery.</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<monogr>
+		<title level="m" type="main">Evaluation of chatgpt as a question answering system for answering complex questions</title>
+		<author>
+			<persName><forename type="first">Yiming</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dehai</forename><surname>Min</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yu</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenbo</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nan</forename><surname>Hu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yongrui</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guilin</forename><surname>Qi</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yiming Tan, Dehai Min, Yu Li, Wenbo Li, Nan Hu, Yongrui Chen, and Guilin Qi. 2023. Evaluation of chatgpt as a question answering system for answering complex questions.</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<monogr>
+		<title level="m" type="main">Llama: Open and efficient foundation language models</title>
+		<author>
+			<persName><forename type="first">Hugo</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thibaut</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gautier</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xavier</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marie-Anne</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Timothée</forename><surname>Lacroix</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Baptiste</forename><surname>Rozière</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Naman</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><surname>Hambro</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Faisal</forename><surname>Azhar</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aurelien</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Armand</forename><surname>Joulin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Edouard</forename><surname>Grave</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guillaume</forename><surname>Lample</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, Aurelien Rodriguez, Armand Joulin, Edouard Grave, and Guillaume Lample. 2023a. Llama: Open and efficient foundation language models.</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<monogr>
+		<title level="m" type="main">Llama 2: Open foundation and fine-tuned chat models</title>
+		<author>
+			<persName><forename type="first">Hugo</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Louis</forename><surname>Martin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kevin</forename><surname>Stone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Peter</forename><surname>Albert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amjad</forename><surname>Almahairi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yasmine</forename><surname>Babaei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nikolay</forename><surname>Bashlykov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Soumya</forename><surname>Batra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Prajjwal</forename><surname>Bhargava</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shruti</forename><surname>Bhosale</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Bikel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lukas</forename><surname>Blecher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cristian Canton</forename><surname>Ferrer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Moya</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guillem</forename><surname>Cucurull</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jude</forename><surname>Esiobu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeremy</forename><surname>Fernandes</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Wenyin</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brian</forename><surname>Fu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Cynthia</forename><surname>Fuller</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Vedanuj</forename><surname>Gao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Naman</forename><surname>Goswami</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anthony</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Saghar</forename><surname>Hartshorn</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rui</forename><surname>Hosseini</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Hakan</forename><surname>Hou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marcin</forename><surname>Inan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Viktor</forename><surname>Kardas</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Madian</forename><surname>Kerkez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Isabel</forename><surname>Khabsa</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Artem</forename><surname>Kloumann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Punit</forename><surname>Korenev</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Marie-Anne</forename><surname>Singh Koura</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thibaut</forename><surname>Lachaux</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jenya</forename><surname>Lavril</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Diana</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yinghai</forename><surname>Liskovich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuning</forename><surname>Lu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xavier</forename><surname>Mao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Todor</forename><surname>Martinet</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pushkar</forename><surname>Mihaylov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Igor</forename><surname>Mishra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yixin</forename><surname>Molybog</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrew</forename><surname>Nie</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jeremy</forename><surname>Poulton</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Rashi</forename><surname>Reizenstein</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kalyan</forename><surname>Rungta</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alan</forename><surname>Saladi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ruan</forename><surname>Schelten</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Eric</forename><forename type="middle">Michael</forename><surname>Silva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ranjan</forename><surname>Smith</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Subramanian</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ellen</forename><surname>Xiaoqing</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Binh</forename><surname>Tan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ross</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Adina</forename><surname>Taylor</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jian</forename><surname>Williams</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Puxin</forename><surname>Xiang Kuan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zheng</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Iliyan</forename><surname>Yan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yuchen</forename><surname>Zarov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Angela</forename><surname>Zhang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Melanie</forename><surname>Fan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sharan</forename><surname>Kambadur</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Aurelien</forename><surname>Narang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Robert</forename><surname>Rodriguez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sergey</forename><surname>Stojnic</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Thomas</forename><surname>Edunov</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Scialom</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hugo Touvron, Louis Martin, Kevin Stone, Peter Al- bert, Amjad Almahairi, Yasmine Babaei, Nikolay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, Dan Bikel, Lukas Blecher, Cristian Canton Ferrer, Moya Chen, Guillem Cucurull, Esiobu, Jude Fernandes, Jeremy Fu, Wenyin Fu, Brian Fuller, Cynthia Gao, Vedanuj Goswami, Naman Goyal, An- thony Hartshorn, Saghar Hosseini, Rui Hou, Hakan Inan, Marcin Kardas, Viktor Kerkez, Madian Khabsa, Isabel Kloumann, Artem Korenev, Punit Singh Koura, Marie-Anne Lachaux, Thibaut Lavril, Jenya Lee, Di- ana Liskovich, Yinghai Lu, Yuning Mao, Xavier Mar- tinet, Todor Mihaylov, Pushkar Mishra, Igor Moly- bog, Yixin Nie, Andrew Poulton, Jeremy Reizen- stein, Rashi Rungta, Kalyan Saladi, Alan Schelten, Ruan Silva, Eric Michael Smith, Ranjan Subrama- nian, Xiaoqing Ellen Tan, Binh Tang, Ross Tay- lor, Adina Williams, Jian Xiang Kuan, Puxin Xu, Zheng Yan, Iliyan Zarov, Yuchen Zhang, Angela Fan, Melanie Kambadur, Sharan Narang, Aurelien Ro- driguez, Robert Stojnic, Sergey Edunov, and Thomas Scialom. 2023b. Llama 2: Open foundation and fine-tuned chat models.</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">LC-QuAD: A Corpus for Complex Question Answering over Knowledge Graphs</title>
+		<author>
+			<persName><forename type="first">Priyansh</forename><surname>Trivedi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gaurav</forename><surname>Maheshwari</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mohnish</forename><surname>Dubey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jens</forename><surname>Lehmann</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-68204-4_22</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2017">2017</date>
+			<biblScope unit="page" from="210" to="218" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Priyansh Trivedi, Gaurav Maheshwari, Mohnish Dubey, and Jens Lehmann. 2017. Lc-quad: A corpus for complex question answering over knowledge graphs. In The Semantic Web -ISWC 2017, pages 210-218, Cham. Springer International Publishing.</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">7th Open Challenge on Question Answering over Linked Data (QALD-7)</title>
+		<author>
+			<persName><forename type="first">Ricardo</forename><surname>Usbeck</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Axel-Cyrille Ngonga</forename><surname>Ngomo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Bastian</forename><surname>Haarmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anastasia</forename><surname>Krithara</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Röder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Giulio</forename><surname>Napolitano</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-319-69146-6_6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Communications in Computer and Information Science</title>
+		<meeting><address><addrLine>Monterey, California, United States of America</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2018-10-08">2018. October 8th -9th, 2018</date>
+			<biblScope unit="page" from="59" to="69" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ricardo Usbeck, Ria Hari Gusmita, Axel- Cyrille Ngonga Ngomo, and Muhammad Saleem. 2018. 9th challenge on question answering over linked data (QALD-9). In Joint proceedings of the 4th Workshop on Semantic Deep Learning (SemDeep-4) and NLIWoD4: Natural Language Interfaces for the Web of Data (NLIWOD-4) and 9th Question Answering over Linked Data challenge (QALD-9) co-located with 17th International Semantic Web Conference (ISWC 2018), Monterey, California, United States of America, October 8th - 9th, 2018., pages 58-64.</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<analytic>
+		<title level="a" type="main">Item recommendation on monotonic behavior chains</title>
+		<author>
+			<persName><forename type="first">Mengting</forename><surname>Wan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julian</forename><surname>Mcauley</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3240323.3240369</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 12th ACM Conference on Recommender Systems</title>
+		<meeting>the 12th ACM Conference on Recommender Systems<address><addrLine>New York, NY, USA</addrLine></address></meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2018-09-27">2018</date>
+			<biblScope unit="page" from="86" to="94" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mengting Wan and Julian McAuley. 2018. Item recom- mendation on monotonic behavior chains. In Pro- ceedings of the 12th ACM Conference on Recom- mender Systems, RecSys &apos;18, page 86-94, New York, NY, USA. Association for Computing Machinery.</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<analytic>
+		<title level="a" type="main">K-Adapter: Infusing Knowledge into Pre-Trained Models with Adapters</title>
+		<author>
+			<persName><forename type="first">Ruize</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Duyu</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Nan</forename><surname>Duan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhongyu</forename><surname>Wei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xuanjing</forename><surname>Huang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jianshu</forename><surname>Ji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Guihong</forename><surname>Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Daxin</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming</forename><surname>Zhou</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2021.findings-acl.121</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021</title>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2021">2021</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ruize Wang, Duyu Tang, Nan Duan, Zhongyu Wei, Xuanjing Huang, Jianshu Ji, Guihong Cao, Daxin Jiang, and Ming Zhou. 2021. K-adapter: Infusing knowledge into pre-trained models with adapters. In ACL.</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Transformers: State-of-the-art natural language processing</title>
+		<author>
+			<persName><forename type="first">Thomas</forename><surname>Wolf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Lysandre</forename><surname>Debut</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Victor</forename><surname>Sanh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julien</forename><surname>Chaumond</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clement</forename><surname>Delangue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Anthony</forename><surname>Moi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Pierric</forename><surname>Cistac</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tim</forename><surname>Rault</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Remi</forename><surname>Louf</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Morgan</forename><surname>Funtowicz</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joe</forename><surname>Davison</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sam</forename><surname>Shleifer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Clara</forename><surname>Patrick Von Platen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yacine</forename><surname>Ma</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Julien</forename><surname>Jernite</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Canwen</forename><surname>Plu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Teven</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Sylvain</forename><surname>Le Scao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Mariama</forename><surname>Gugger</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Quentin</forename><surname>Drame</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alexander</forename><surname>Lhoest</surname></persName>
+		</author>
+		<author>
+			<persName><surname>Rush</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2020.emnlp-demos.6</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations</title>
+		<meeting>the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2020">2020</date>
+			<biblScope unit="page" from="38" to="45" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Thomas Wolf, Lysandre Debut, Victor Sanh, Julien Chaumond, Clement Delangue, Anthony Moi, Pier- ric Cistac, Tim Rault, Remi Louf, Morgan Funtow- icz, Joe Davison, Sam Shleifer, Patrick von Platen, Clara Ma, Yacine Jernite, Julien Plu, Canwen Xu, Teven Le Scao, Sylvain Gugger, Mariama Drame, Quentin Lhoest, and Alexander Rush. 2020. Trans- formers: State-of-the-art natural language processing. In Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations, pages 38-45, Online. Association for Computational Linguistics.</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<monogr>
+		<title level="m" type="main">A survey on knowledge-enhanced pre-trained language models</title>
+		<author>
+			<persName><forename type="first">Chaoqi</forename><surname>Zhen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yanlei</forename><surname>Shang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Xiangyu</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yifei</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Yong</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dell</forename><surname>Zhang</surname></persName>
+		</author>
+		<imprint>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Chaoqi Zhen, Yanlei Shang, Xiangyu Liu, Yifei Li, Yong Chen, and Dell Zhang. 2022. A survey on knowledge-enhanced pre-trained language models.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

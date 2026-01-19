@@ -62,7 +62,9 @@ backend/credentials.json
 backend/token.pickle
 **/credentials.json
 **/token.pickle
-**/.env*
+**/.env
+**/.env.*
+!**/.env.example
 **/*.pem
 **/*.key
 **/*_key.json
@@ -74,3 +76,14 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# --- Paper Images ---
+backend/data/paper_images/
+!backend/data/paper_images/.gitkeep
+
+# --- MongoDB Sync ---
+# Sync backups are machine-specific, not synced between machines
+backend/mongodb_sync/backups/
+# Sync latest directory and metadata ARE synced via Syncthing
+!backend/mongodb_sync/latest/
+!backend/mongodb_sync/last_export.json

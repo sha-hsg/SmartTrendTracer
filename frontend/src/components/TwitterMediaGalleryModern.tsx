@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Progress } from "@/components/ui/progress"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { 
   Image as ImageIcon, 
@@ -17,53 +14,61 @@ import {
   Grid3x3, 
   List, 
   Search,
-  Filter,
   Download,
   ExternalLink,
   Heart,
   Repeat2,
-  User,
-  Calendar,
-  Hash,
   X,
   ChevronLeft,
   ChevronRight,
   Loader2,
   BarChart3,
-  TrendingUp,
   Eye,
   CheckSquare,
   Square,
   ImageOff,
-  Play
+  Play,
+  Maximize2
 } from 'lucide-react'
 
 interface MediaItem {
   id: string
   tweet_id: string
-  media_key: string
   type: string
-  url: string | null
-  preview_image_url: string | null
-  alt_text: string | null
-  width: number | null
-  height: number | null
-  duration_ms: number | null
-  tweet_text: string
+  url: string
+  thumbnail_url: string
+  preview_image_url?: string
+  alt_text?: string
+  media_key?: string
+  width?: number | null
+  height?: number | null
+  duration_ms?: number | null
   author_username: string
-  author_name: string
+  author_id: string
+  tweet_text: string
   created_at: string
-  likes: number
-  retweets: number
-  tags: string[]
+  metrics: {
+    likes?: number
+    retweets?: number
+    replies?: number
+    retweet_count?: number
+    like_count?: number
+    reply_count?: number
+    quote_count?: number
+  }
 }
 
 interface MediaStats {
-  total_media: number
-  by_type: Record<string, number>
-  by_author: Record<string, number>
-  by_day: Array<{ date: string; count: number }>
-  top_tags: Array<{ tag: string; count: number }>
+  period_days: number
+  tweets_with_media: number
+  total_tweets: number
+  media_percentage: number
+  media_types: Record<string, number>
+  top_authors: Array<{
+    username: string
+    tweet_count: number
+    media_count: number
+  }>
 }
 
 interface Author {
@@ -132,9 +137,9 @@ export default function TwitterMediaGalleryModern() {
         `http://localhost:8000/api/media-gallery/gallery?${params}`
       )
 
-      setMedia(response.data.media)
-      setTotal(response.data.total)
-      setTotalPages(response.data.stats.total_pages)
+      setMedia(response.data.media || [])
+      setTotal(response.data.total || 0)
+      setTotalPages(response.data.total_pages || 1)
     } catch (error) {
       console.error('Error loading media:', error)
     } finally {
@@ -243,7 +248,7 @@ export default function TwitterMediaGalleryModern() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${item.media_key}.${item.type === 'photo' ? 'jpg' : 'mp4'}`
+      a.download = `media_${item.id}.${item.type === 'photo' ? 'jpg' : 'mp4'}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -296,16 +301,16 @@ export default function TwitterMediaGalleryModern() {
               <>
                 {item.type === 'photo' ? (
                   <img
-                    src={item.url || item.preview_image_url || ''}
-                    alt={item.alt_text || 'Media'}
+                    src={item.url || item.thumbnail_url || ''}
+                    alt={'Media'}
                     className="w-full h-full object-cover"
                     onError={() => handleImageError(item.id)}
                   />
                 ) : (
                   <div className="relative h-full">
                     <img
-                      src={item.preview_image_url || ''}
-                      alt={item.alt_text || 'Video thumbnail'}
+                      src={item.thumbnail_url || item.url || ''}
+                      alt={'Video thumbnail'}
                       className="w-full h-full object-cover"
                       onError={() => handleImageError(item.id)}
                     />
@@ -341,11 +346,11 @@ export default function TwitterMediaGalleryModern() {
                 <div className="flex gap-3">
                   <span className="flex items-center gap-1">
                     <Heart className="h-3 w-3" />
-                    {item.likes}
+                    {item.metrics.like_count || item.metrics.likes || 0}
                   </span>
                   <span className="flex items-center gap-1">
                     <Repeat2 className="h-3 w-3" />
-                    {item.retweets}
+                    {item.metrics.retweet_count || item.metrics.retweets || 0}
                   </span>
                 </div>
                 <span>{formatDate(item.created_at)}</span>
@@ -359,16 +364,16 @@ export default function TwitterMediaGalleryModern() {
               {!isBroken ? (
                 item.type === 'photo' ? (
                   <img
-                    src={item.url || item.preview_image_url || ''}
-                    alt={item.alt_text || 'Media'}
+                    src={item.url || item.thumbnail_url || ''}
+                    alt={'Media'}
                     className="w-full h-full object-cover rounded"
                     onError={() => handleImageError(item.id)}
                   />
                 ) : (
                   <div className="relative h-full">
                     <img
-                      src={item.preview_image_url || ''}
-                      alt={item.alt_text || 'Video thumbnail'}
+                      src={item.thumbnail_url || item.url || ''}
+                      alt={'Video thumbnail'}
                       className="w-full h-full object-cover rounded"
                       onError={() => handleImageError(item.id)}
                     />
@@ -425,15 +430,16 @@ export default function TwitterMediaGalleryModern() {
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1">
                   <Heart className="h-3 w-3" />
-                  {item.likes}
+                  {item.metrics.like_count || item.metrics.likes || 0}
                 </span>
                 <span className="flex items-center gap-1">
                   <Repeat2 className="h-3 w-3" />
-                  {item.retweets}
+                  {item.metrics.retweet_count || item.metrics.retweets || 0}
                 </span>
-                {item.tags.length > 0 && (
+                {/* Tags removed - not in API response */
+                false && (
                   <div className="flex gap-1">
-                    {item.tags.slice(0, 3).map(t => (
+                    {[].slice(0, 3).map(t => (
                       <Badge key={t} variant="secondary" className="text-xs">
                         {t}
                       </Badge>
@@ -463,15 +469,15 @@ export default function TwitterMediaGalleryModern() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Total Media</p>
-                  <p className="text-2xl font-bold">{stats.total_media}</p>
+                  <p className="text-sm text-gray-500">Media Tweets</p>
+                  <p className="text-2xl font-bold">{stats.tweets_with_media}</p>
                 </div>
                 <BarChart3 className="h-8 w-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
           
-          {Object.entries(stats.by_type).map(([type, count]) => (
+          {stats?.media_types && Object.entries(stats.media_types).map(([type, count]) => (
             <Card key={type}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -686,6 +692,13 @@ export default function TwitterMediaGalleryModern() {
       {/* Lightbox Modal */}
       <Dialog open={!!lightboxMedia} onOpenChange={() => setLightboxMedia(null)}>
         <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          {/* Hidden but required for accessibility */}
+          <DialogTitle className="sr-only">
+            Media Preview - {lightboxMedia?.type === 'photo' ? 'Image' : lightboxMedia?.type || 'Media'}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Viewing media from @{lightboxMedia?.author_username}. Use arrow keys to navigate between media items.
+          </DialogDescription>
           {lightboxMedia && (
             <div className="relative">
               {/* Navigation buttons */}
@@ -724,12 +737,56 @@ export default function TwitterMediaGalleryModern() {
                   className="w-full h-auto max-h-[80vh] object-contain"
                 />
               ) : (
-                <video
-                  src={lightboxMedia.url || ''}
-                  poster={lightboxMedia.preview_image_url || ''}
-                  controls
-                  className="w-full h-auto max-h-[80vh]"
-                />
+                <div className="relative">
+                  {lightboxMedia.url ? (
+                    <>
+                      <video
+                        src={lightboxMedia.url}
+                        poster={lightboxMedia.preview_image_url || ''}
+                        controls
+                        autoPlay
+                        className="w-full h-auto max-h-[80vh] object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      {/* Fullscreen button */}
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const video = e.currentTarget.parentElement?.querySelector('video')
+                          if (video && video.requestFullscreen) {
+                            video.requestFullscreen()
+                          }
+                        }}
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="relative">
+                      {lightboxMedia.preview_image_url ? (
+                        <img
+                          src={lightboxMedia.preview_image_url}
+                          alt="Video preview"
+                          className="w-full h-auto max-h-[80vh] object-contain"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-96 bg-gray-900">
+                          <Film className="h-16 w-16 text-gray-600" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60">
+                        <div className="text-white text-center p-6 bg-black/80 rounded-lg">
+                          <Film className="h-12 w-12 mx-auto mb-3" />
+                          <p className="text-lg font-medium mb-2">Video Unavailable</p>
+                          <p className="text-sm opacity-75">The video URL has expired. Only preview image is available.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* Media info */}

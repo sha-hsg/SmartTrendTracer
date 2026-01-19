@@ -4,11 +4,9 @@ Export API endpoints for articles and annotations
 from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import Response, FileResponse
 from typing import List, Optional
-from sqlalchemy.orm import Session
 import tempfile
 import os
 
-from app.models import get_db
 from app.services.export_service import ExportService
 
 router = APIRouter()
@@ -16,7 +14,6 @@ router = APIRouter()
 @router.get("/articles/json")
 def export_articles_json(
     article_ids: Optional[List[int]] = Query(None),
-    db: Session = Depends(get_db)
 ):
     """Export articles as JSON"""
     try:
@@ -36,7 +33,6 @@ def export_articles_json(
 @router.get("/articles/markdown")
 def export_articles_markdown(
     article_ids: Optional[List[int]] = Query(None),
-    db: Session = Depends(get_db)
 ):
     """Export articles as Markdown"""
     try:
@@ -56,7 +52,6 @@ def export_articles_markdown(
 @router.get("/articles/html")
 def export_articles_html(
     article_ids: Optional[List[int]] = Query(None),
-    db: Session = Depends(get_db)
 ):
     """Export articles as HTML"""
     try:
@@ -76,7 +71,6 @@ def export_articles_html(
 @router.get("/snippets/csv")
 def export_snippets_csv(
     article_ids: Optional[List[int]] = Query(None),
-    db: Session = Depends(get_db)
 ):
     """Export all snippets/highlights as CSV"""
     try:
@@ -96,7 +90,6 @@ def export_snippets_csv(
 @router.get("/reading-list")
 def export_reading_list(
     article_ids: Optional[List[int]] = Query(None),
-    db: Session = Depends(get_db)
 ):
     """Export a simple reading list"""
     try:
@@ -117,7 +110,6 @@ def export_reading_list(
 def create_export_bundle(
     article_ids: Optional[List[int]] = Query(None),
     formats: List[str] = Query(["json", "markdown"]),
-    db: Session = Depends(get_db)
 ):
     """Create a bundle with multiple export formats"""
     try:

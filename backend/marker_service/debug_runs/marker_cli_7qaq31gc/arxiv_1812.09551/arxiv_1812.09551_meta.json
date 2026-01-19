@@ -1,0 +1,901 @@
+{
+  "table_of_contents": [
+    {
+      "title": "TaxoGen: Unsupervised Topic Taxonomy Construction by\nAdaptive Term Embedding and Clustering",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          79.5,
+          83.25
+        ],
+        [
+          531.31640625,
+          83.25
+        ],
+        [
+          531.31640625,
+          119.0126953125
+        ],
+        [
+          79.5,
+          119.0126953125
+        ]
+      ]
+    },
+    {
+      "title": "ABSTRACT",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          52.5,
+          251.25
+        ],
+        [
+          114.15234375,
+          251.25
+        ],
+        [
+          114.15234375,
+          263.7421875
+        ],
+        [
+          52.5,
+          263.7421875
+        ]
+      ]
+    },
+    {
+      "title": "ACM Reference Format:",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          52.5,
+          478.5
+        ],
+        [
+          141.0,
+          478.5
+        ],
+        [
+          141.0,
+          488.42578125
+        ],
+        [
+          52.5,
+          488.42578125
+        ]
+      ]
+    },
+    {
+      "title": "1 INTRODUCTION",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          52.5,
+          561.75
+        ],
+        [
+          156.75,
+          561.75
+        ],
+        [
+          156.75,
+          572.73046875
+        ],
+        [
+          52.5,
+          572.73046875
+        ]
+      ]
+    },
+    {
+      "title": "2 RELATED WORK",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          317.056640625,
+          82.857177734375
+        ],
+        [
+          421.744140625,
+          82.857177734375
+        ],
+        [
+          421.744140625,
+          95.85791015625
+        ],
+        [
+          317.056640625,
+          95.85791015625
+        ]
+      ]
+    },
+    {
+      "title": "2.1 Pattern-Based Methods",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          317.056640625,
+          141.338134765625
+        ],
+        [
+          457.6351013183594,
+          141.338134765625
+        ],
+        [
+          457.6351013183594,
+          154.5908203125
+        ],
+        [
+          317.056640625,
+          154.5908203125
+        ]
+      ]
+    },
+    {
+      "title": "2.2 Clustering-Based Methods",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          317.35546875,
+          473.79119873046875
+        ],
+        [
+          473.1369323730469,
+          473.79119873046875
+        ],
+        [
+          473.1369323730469,
+          486.4921875
+        ],
+        [
+          317.35546875,
+          486.4921875
+        ]
+      ]
+    },
+    {
+      "title": "Supervised Methods\n2.3",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          52.5,
+          227.25
+        ],
+        [
+          178.5,
+          227.25
+        ],
+        [
+          178.5,
+          238.025390625
+        ],
+        [
+          52.5,
+          238.025390625
+        ]
+      ]
+    },
+    {
+      "title": "PROBLEM DESCRIPTION\n3",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          52.5,
+          415.5
+        ],
+        [
+          199.5,
+          415.5
+        ],
+        [
+          199.5,
+          426.1640625
+        ],
+        [
+          52.5,
+          426.1640625
+        ]
+      ]
+    },
+    {
+      "title": "\\mathbf{4}\nTHE TAXOGEN METHOD",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          52.5,
+          549.0
+        ],
+        [
+          199.916015625,
+          549.0
+        ],
+        [
+          199.916015625,
+          560.35546875
+        ],
+        [
+          52.5,
+          560.35546875
+        ]
+      ]
+    },
+    {
+      "title": "4.1 Method Overview",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          52.5,
+          617.25
+        ],
+        [
+          167.25,
+          617.25
+        ],
+        [
+          167.25,
+          627.2578125
+        ],
+        [
+          52.5,
+          627.2578125
+        ]
+      ]
+    },
+    {
+      "title": "4.2 Adaptive Spherical Clustering",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          317.25,
+          261.75
+        ],
+        [
+          492.0,
+          261.75
+        ],
+        [
+          492.0,
+          272.443359375
+        ],
+        [
+          317.25,
+          272.443359375
+        ]
+      ]
+    },
+    {
+      "title": "Local Embedding [13]\n4.3",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          316.5,
+          674.82421875
+        ],
+        [
+          450.75,
+          674.82421875
+        ],
+        [
+          450.75,
+          684.87890625
+        ],
+        [
+          316.5,
+          684.87890625
+        ]
+      ]
+    },
+    {
+      "title": "5\nEXPERIMENTS",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          317.25,
+          256.5
+        ],
+        [
+          414.17578125,
+          256.5
+        ],
+        [
+          414.17578125,
+          266.8359375
+        ],
+        [
+          317.25,
+          266.8359375
+        ]
+      ]
+    },
+    {
+      "title": "Experimental Setup\n5.1",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          316.7578125,
+          272.25
+        ],
+        [
+          441.0,
+          272.25
+        ],
+        [
+          441.0,
+          282.3046875
+        ],
+        [
+          316.7578125,
+          282.3046875
+        ]
+      ]
+    },
+    {
+      "title": "5.2\nQualitative Results",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          52.5,
+          354.0
+        ],
+        [
+          173.25,
+          354.0
+        ],
+        [
+          173.25,
+          364.482421875
+        ],
+        [
+          52.5,
+          364.482421875
+        ]
+      ]
+    },
+    {
+      "title": "5.3 Quantitative Analysis",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          316.5,
+          492.0
+        ],
+        [
+          450.75,
+          492.0
+        ],
+        [
+          450.75,
+          502.734375
+        ],
+        [
+          316.5,
+          502.734375
+        ]
+      ]
+    },
+    {
+      "title": "Figure 3: Parts of the taxonomy generated by TAXOGEN on the DBLP dataset. For each topic, we show its label and the top-\neight representative terms generated by the ranking function of TAXOGEN. All the labels and terms are returned by TAXOGEN\nautomatically without manual selection or filtering.",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          52.5,
+          522.84375
+        ],
+        [
+          559.5,
+          522.84375
+        ],
+        [
+          559.5,
+          554.25
+        ],
+        [
+          52.5,
+          554.25
+        ]
+      ]
+    },
+    {
+      "title": "CONCLUSION AND DISCUSSION\n6",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          52.5,
+          317.25
+        ],
+        [
+          235.5,
+          317.25
+        ],
+        [
+          235.5,
+          328.32421875
+        ],
+        [
+          52.5,
+          328.32421875
+        ]
+      ]
+    },
+    {
+      "title": "REFERENCES",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          52.5,
+          621.75
+        ],
+        [
+          123.75,
+          623.25
+        ],
+        [
+          123.75,
+          632.671875
+        ],
+        [
+          51.75,
+          632.671875
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          99
+        ],
+        [
+          "Span",
+          82
+        ],
+        [
+          "Text",
+          17
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          265
+        ],
+        [
+          "Line",
+          111
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "SectionHeader",
+          3
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          185
+        ],
+        [
+          "Line",
+          110
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "Reference",
+          3
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "TextInlineMath",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          136
+        ],
+        [
+          "Line",
+          115
+        ],
+        [
+          "TextInlineMath",
+          6
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "Equation",
+          3
+        ],
+        [
+          "Reference",
+          3
+        ],
+        [
+          "Figure",
+          2
+        ],
+        [
+          "ListItem",
+          2
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 4,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          167
+        ],
+        [
+          "Line",
+          106
+        ],
+        [
+          "Text",
+          9
+        ],
+        [
+          "ListItem",
+          5
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "TextInlineMath",
+          1
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 5,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Span",
+          136
+        ],
+        [
+          "Line",
+          110
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 6,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          226
+        ],
+        [
+          "Span",
+          34
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "Reference",
+          3
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 7,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          427
+        ],
+        [
+          "Line",
+          188
+        ],
+        [
+          "TableCell",
+          68
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "Reference",
+          3
+        ],
+        [
+          "Caption",
+          2
+        ],
+        [
+          "Table",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 8,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          149
+        ],
+        [
+          "Span",
+          141
+        ],
+        [
+          "Reference",
+          36
+        ],
+        [
+          "ListItem",
+          34
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "debug_data/arxiv_1812.09551"
+}

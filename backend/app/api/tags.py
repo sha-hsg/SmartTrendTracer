@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import List, Optional, Dict
 from pydantic import BaseModel
 
-from app.models import get_db, Tag, Tweet
 from app.services.llm_service import get_llm_service
 from app.services.tag_normalizer import get_tag_normalizer
+from app.services.vector_store_openai import get_vector_store
 
 router = APIRouter()
 
@@ -23,7 +21,6 @@ class TagResponse(BaseModel):
     tweet_id: str
 
 @router.get("/")
-def get_all_tags(db: Session = Depends(get_db)):
     """Get all unique tags with counts"""
     tags = db.query(
         Tag.tag,
@@ -33,13 +30,11 @@ def get_all_tags(db: Session = Depends(get_db)):
     return [{"tag": tag, "count": count} for tag, count in tags]
 
 @router.get("/tweet/{tweet_id}")
-def get_tweet_tags(tweet_id: str, db: Session = Depends(get_db)):
     """Get all tags for a specific tweet"""
     tags = db.query(Tag).filter(Tag.tweet_id == tweet_id).all()
     return tags
 
 @router.post("/tweet/{tweet_id}")
-def add_tag(tweet_id: str, tag_data: TagCreate, db: Session = Depends(get_db)):
     """Add a tag to a tweet with normalization"""
     # Validate tag is not empty
     if not tag_data.tag or not tag_data.tag.strip():
@@ -80,10 +75,19 @@ def add_tag(tweet_id: str, tag_data: TagCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_tag)
     
+    # Update vector store with new tag
+    try:
+        vector_store = get_vector_store()
+        # Get tweet text for context
+        context = tweet.text[:200] if tweet.text else final_tag
+        vector_store.update_tag_incrementally(final_tag, 'twitter', context)
+    except Exception as e:
+        # Log error but don't fail the request
+        print(f"Failed to update vector store for tag '{final_tag}': {e}")
+    
     return new_tag
 
 @router.delete("/tweet/{tweet_id}/{tag}")
-def remove_tag(tweet_id: str, tag: str, db: Session = Depends(get_db)):
     """Remove a tag from a tweet"""
     tag_obj = db.query(Tag).filter(
         Tag.tweet_id == tweet_id,
@@ -99,7 +103,6 @@ def remove_tag(tweet_id: str, tag: str, db: Session = Depends(get_db)):
     return {"message": "Tag removed successfully"}
 
 @router.get("/popular")
-def get_popular_tags(limit: int = 20, db: Session = Depends(get_db)):
     """Get most popular tags"""
     tags = db.query(
         Tag.tag,
@@ -111,7 +114,6 @@ def get_popular_tags(limit: int = 20, db: Session = Depends(get_db)):
     return [{"tag": tag, "count": count} for tag, count in tags]
 
 @router.post("/suggest/{tweet_id}")
-def suggest_tags_for_tweet(tweet_id: str, db: Session = Depends(get_db)):
     """Get AI-suggested tags for a specific tweet using both similarity search and LLM"""
     # Get the tweet
     tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
@@ -249,7 +251,6 @@ def suggest_tags_for_tweet(tweet_id: str, db: Session = Depends(get_db)):
 @router.post("/suggest/batch")
 def suggest_tags_batch(
     tweet_ids: List[str],
-    db: Session = Depends(get_db)
 ):
     """Get AI-suggested tags for multiple tweets"""
     # Limit batch size
@@ -290,7 +291,6 @@ def suggest_tags_batch(
 def auto_tag_tweet(
     tweet_id: str,
     apply_threshold: int = 3,
-    db: Session = Depends(get_db)
 ):
     """Automatically tag a tweet with AI suggestions (applies tags automatically)"""
     # Get the tweet
@@ -317,6 +317,9 @@ def auto_tag_tweet(
         
         # Add new tags
         added_tags = []
+        vector_store = None
+        tweet = None
+        
         for tag in tags_to_apply:
             if tag not in existing_tag_names:
                 new_tag = Tag(
@@ -327,6 +330,18 @@ def auto_tag_tweet(
                 )
                 db.add(new_tag)
                 added_tags.append(tag)
+                
+                # Update vector store for each new tag
+                try:
+                    if vector_store is None:
+                        vector_store = get_vector_store()
+                    if tweet is None:
+                        tweet = db.query(Tweet).filter(Tweet.id == tweet_id).first()
+                    
+                    context = tweet.text[:200] if tweet and tweet.text else tag
+                    vector_store.update_tag_incrementally(tag, 'twitter', context)
+                except Exception as e:
+                    print(f"Failed to update vector store for tag '{tag}': {e}")
         
         db.commit()
         

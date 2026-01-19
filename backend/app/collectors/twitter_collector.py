@@ -4,13 +4,12 @@ Collects tweets from specified accounts and stores them in the database
 """
 import tweepy
 import os
+import html
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any
-from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 import json
 
-from app.models import Tweet, TweetMedia, get_db
 from app.config import ACCOUNTS_TO_FOLLOW
 from app.rate_limiter import get_rate_limiter
 
@@ -31,7 +30,6 @@ class TwitterCollector:
         self.session_media_keys = set()
         
         # Database session
-        self.db = db_session or next(get_db())
         
         # Rate limiter
         self.rate_limiter = get_rate_limiter()
@@ -107,9 +105,9 @@ class TwitterCollector:
         # Get the full text - check for long tweets first (note_tweet)
         if hasattr(tweet_data, 'note_tweet') and tweet_data.note_tweet:
             # This is a long tweet, get the full text from note_tweet
-            tweet_text = tweet_data.note_tweet.get('text', tweet_data.text)
+            tweet_text = html.unescape(tweet_data.note_tweet.get('text', tweet_data.text))
         else:
-            tweet_text = tweet_data.text
+            tweet_text = html.unescape(tweet_data.text)
         
         # Track if this is a retweet or quote tweet and get referenced tweet's media
         referenced_tweet_media_keys = []
@@ -124,7 +122,7 @@ class TwitterCollector:
                     if tweet_text.startswith('RT @'):
                         # Extract the RT @username: part and combine with full text
                         rt_prefix = tweet_text.split(':', 1)[0] + ': '
-                        tweet_text = rt_prefix + original_tweet.text
+                        tweet_text = rt_prefix + html.unescape(original_tweet.text)
                     
                     # Get media keys from original tweet
                     if hasattr(original_tweet, 'attachments') and original_tweet.attachments:
@@ -362,7 +360,6 @@ class TwitterCollector:
         
         return latest.created_at if latest else datetime.now(timezone.utc) - timedelta(days=7)
 
-
 def main():
     """Main function to run the collector"""
     collector = TwitterCollector()
@@ -377,7 +374,6 @@ def main():
         print("No new tweets found, collecting historical data...")
         historical = collector.collect_historical_tweets(days=3)
         print(f"Collected {historical} historical tweets")
-
 
 if __name__ == "__main__":
     main()

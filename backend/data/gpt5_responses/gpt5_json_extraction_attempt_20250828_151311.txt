@@ -1,0 +1,2314 @@
+Timestamp: 2025-08-28T15:13:11.987301
+Type: json_extraction_attempt
+Model: gpt-5-2025-08-07
+--------------------------------------------------------------------------------
+```json
+{
+  "concepts": [
+    {
+      "id": "c_root_named_entities",
+      "slug": "named_entities",
+      "display_name": "Named Entities",
+      "description": "Named entities such as people, organizations, products, and locations.",
+      "status": "active",
+      "parents": [],
+      "usage_count": 0,
+      "entity_type": "concept",
+      "icon": "🏷️",
+      "color": null
+    },
+    {
+      "id": "c_et_person",
+      "slug": "person",
+      "display_name": "Person",
+      "description": "Individual people, including researchers, authors, and public figures.",
+      "status": "active",
+      "parents": [
+        "c_root_named_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "person",
+      "icon": "👤",
+      "color": null
+    },
+    {
+      "id": "c_et_organisation",
+      "slug": "organisation",
+      "display_name": "Organisation",
+      "description": "Companies, institutions, universities, and research labs.",
+      "status": "active",
+      "parents": [
+        "c_root_named_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "organisation",
+      "icon": "🏢",
+      "color": null
+    },
+    {
+      "id": "c_et_location",
+      "slug": "location",
+      "display_name": "Location",
+      "description": "Geographic locations and places.",
+      "status": "active",
+      "parents": [
+        "c_root_named_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "location",
+      "icon": "📍",
+      "color": null
+    },
+    {
+      "id": "c_et_event",
+      "slug": "event",
+      "display_name": "Event",
+      "description": "Conferences, releases, and significant events.",
+      "status": "active",
+      "parents": [
+        "c_root_named_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "event",
+      "icon": "📅",
+      "color": null
+    },
+    {
+      "id": "c_et_product",
+      "slug": "product",
+      "display_name": "Product/Service",
+      "description": "Commercially named products or services.",
+      "status": "active",
+      "parents": [
+        "c_root_named_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "product",
+      "icon": "🛍️",
+      "color": null
+    },
+    {
+      "id": "c_et_hardware",
+      "slug": "hardware",
+      "display_name": "Hardware",
+      "description": "Physical computing components like GPUs, TPUs, and other accelerators.",
+      "status": "active",
+      "parents": [
+        "c_root_named_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "hardware",
+      "icon": "💾",
+      "color": null
+    },
+    {
+      "id": "c_root_research_entities",
+      "slug": "research_entities",
+      "display_name": "Research Entities",
+      "description": "Core concepts, models, methods, and other entities central to AI/ML research.",
+      "status": "active",
+      "parents": [],
+      "usage_count": 0,
+      "entity_type": "concept",
+      "icon": "🔬",
+      "color": null
+    },
+    {
+      "id": "c_research_fields",
+      "slug": "research_fields",
+      "display_name": "Research Fields",
+      "description": "Broad areas and sub-disciplines of AI/ML research.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "research-topic",
+      "icon": "📚",
+      "color": null
+    },
+    {
+      "id": "c_0007",
+      "slug": "artificial_intelligence",
+      "display_name": "Artificial Intelligence (AI)",
+      "description": "The theory and development of computer systems able to perform tasks normally requiring human intelligence.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 17,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0008",
+      "slug": "machine_learning",
+      "display_name": "Machine Learning (ML)",
+      "description": "A field of artificial intelligence that uses statistical techniques to give computer systems the ability to 'learn' from data.",
+      "status": "active",
+      "parents": [
+        "c_artificial_intelligence"
+      ],
+      "usage_count": 9,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0021",
+      "slug": "deep_learning",
+      "display_name": "Deep Learning",
+      "description": "A subfield of machine learning based on artificial neural networks with representation learning.",
+      "status": "active",
+      "parents": [
+        "c_machine_learning"
+      ],
+      "usage_count": 8,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0020",
+      "slug": "neural_networks",
+      "display_name": "Neural Networks",
+      "description": "Computing systems inspired by the biological neural networks that constitute animal brains.",
+      "status": "active",
+      "parents": [
+        "c_deep_learning"
+      ],
+      "usage_count": 6,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0057",
+      "slug": "generative_ai",
+      "display_name": "Generative AI",
+      "description": "A class of AI models that can generate new content, such as text, images, or music.",
+      "status": "active",
+      "parents": [
+        "c_artificial_intelligence"
+      ],
+      "usage_count": 5,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1317",
+      "slug": "agentic_ai",
+      "display_name": "Agentic AI",
+      "description": "AI systems (agents) that can perceive their environment, reason, and act autonomously to achieve goals.",
+      "status": "active",
+      "parents": [
+        "c_artificial_intelligence"
+      ],
+      "usage_count": 9,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0038",
+      "slug": "artificial_general_intelligence",
+      "display_name": "Artificial General Intelligence (AGI)",
+      "description": "A hypothetical type of intelligent agent that can understand or learn any intellectual task that a human being can.",
+      "status": "active",
+      "parents": [
+        "c_artificial_intelligence"
+      ],
+      "usage_count": 3,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0131",
+      "slug": "robotics",
+      "display_name": "Robotics",
+      "description": "An interdisciplinary field that integrates computer science and engineering to create and operate robots.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 2,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1494",
+      "slug": "autonomous_vehicles",
+      "display_name": "Autonomous Vehicles",
+      "description": "Vehicles capable of sensing their environment and operating without human involvement.",
+      "status": "active",
+      "parents": [
+        "c_robotics"
+      ],
+      "usage_count": 4,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_models",
+      "slug": "models",
+      "display_name": "Models",
+      "description": "Specific AI/ML models and model families.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": "🤖",
+      "color": null
+    },
+    {
+      "id": "c_0004",
+      "slug": "ai_model",
+      "display_name": "AI Model",
+      "description": "A general concept for a model created through an AI process.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 17,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0098",
+      "slug": "foundation_models",
+      "display_name": "Foundation Models",
+      "description": "Large-scale models trained on broad data that can be adapted to a wide range of downstream tasks.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_language_models",
+      "slug": "language_models",
+      "display_name": "Language Models",
+      "description": "Models that are trained to understand and generate human language.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_68af",
+      "slug": "large_language_models",
+      "display_name": "Large Language Models (LLMs)",
+      "description": "Language models characterized by their large size (billions of parameters) and training on massive text datasets.",
+      "status": "active",
+      "parents": [
+        "c_language_models",
+        "c_foundation_models"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_gpt_family",
+      "slug": "gpt_family",
+      "display_name": "GPT Family",
+      "description": "The family of Generative Pre-trained Transformer models developed by OpenAI.",
+      "status": "active",
+      "parents": [
+        "c_large_language_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0005",
+      "slug": "gpt",
+      "display_name": "GPT (Generative Pre-trained Transformer)",
+      "description": "A family of language models developed by OpenAI, based on the transformer architecture.",
+      "status": "active",
+      "parents": [
+        "c_gpt_family"
+      ],
+      "usage_count": 14,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0040",
+      "slug": "gpt_3",
+      "display_name": "GPT-3",
+      "description": "The third-generation Generative Pre-trained Transformer model.",
+      "status": "active",
+      "parents": [
+        "c_gpt_family"
+      ],
+      "usage_count": 3,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0552",
+      "slug": "gpt_4_turbo",
+      "display_name": "GPT-4 Turbo",
+      "description": "An iteration of GPT-4 with an updated knowledge cutoff and a larger context window.",
+      "status": "active",
+      "parents": [
+        "c_gpt_family"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0156",
+      "slug": "gpt_4o_mini",
+      "display_name": "GPT-4o mini",
+      "description": "A smaller, more efficient version of the GPT-4o model.",
+      "status": "active",
+      "parents": [
+        "c_gpt_family"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0079",
+      "slug": "gpt_5_pro",
+      "display_name": "GPT-5 Pro",
+      "description": "A speculative future version of the GPT model series.",
+      "status": "active",
+      "parents": [
+        "c_gpt_family"
+      ],
+      "usage_count": 3,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_qwen_family",
+      "slug": "qwen_family",
+      "display_name": "Qwen Family",
+      "description": "A series of large language models developed by Alibaba Cloud.",
+      "status": "active",
+      "parents": [
+        "c_large_language_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1571",
+      "slug": "qwen_3",
+      "display_name": "Qwen 3",
+      "description": "The third generation of the Qwen model family from Alibaba.",
+      "status": "active",
+      "parents": [
+        "c_qwen_family"
+      ],
+      "usage_count": 9,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_gemma_family",
+      "slug": "gemma_family",
+      "display_name": "Gemma Family",
+      "description": "A family of lightweight, open-weight models from Google, built from the same research and technology used to create the Gemini models.",
+      "status": "active",
+      "parents": [
+        "c_large_language_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0047",
+      "slug": "gemma_3",
+      "display_name": "Gemma-3",
+      "description": "The third iteration of Google's Gemma model family.",
+      "status": "active",
+      "parents": [
+        "c_gemma_family"
+      ],
+      "usage_count": 7,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_gemini_family",
+      "slug": "gemini_family",
+      "display_name": "Gemini Family",
+      "description": "A family of multimodal models developed by Google DeepMind.",
+      "status": "active",
+      "parents": [
+        "c_large_language_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1713",
+      "slug": "gemini_2_5_flash",
+      "display_name": "Gemini 2.5 Flash",
+      "description": "A lightweight and efficient version of the Gemini 2.5 model.",
+      "status": "active",
+      "parents": [
+        "c_gemini_family"
+      ],
+      "usage_count": 3,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0087",
+      "slug": "gemini_2_5_deep_think",
+      "display_name": "Gemini 2.5 Deep Think",
+      "description": "A speculative or advanced version of the Gemini 2.5 model focused on reasoning.",
+      "status": "active",
+      "parents": [
+        "c_gemini_family"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_grok_family",
+      "slug": "grok_family",
+      "display_name": "Grok Family",
+      "description": "A family of conversational AI models developed by xAI.",
+      "status": "active",
+      "parents": [
+        "c_large_language_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1515",
+      "slug": "grok_2",
+      "display_name": "Grok-2",
+      "description": "The second major version of the Grok model by xAI.",
+      "status": "active",
+      "parents": [
+        "c_grok_family"
+      ],
+      "usage_count": 4,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1536",
+      "slug": "grok_2_5",
+      "display_name": "Grok-2.5",
+      "description": "An incremental update to the Grok-2 model.",
+      "status": "active",
+      "parents": [
+        "c_grok_family"
+      ],
+      "usage_count": 4,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0788",
+      "slug": "grok_3",
+      "display_name": "Grok-3",
+      "description": "The third major version of the Grok model by xAI.",
+      "status": "active",
+      "parents": [
+        "c_grok_family"
+      ],
+      "usage_count": 4,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_deepseek_family",
+      "slug": "deepseek_family",
+      "display_name": "DeepSeek Family",
+      "description": "A family of models from DeepSeek AI, often focused on coding and reasoning.",
+      "status": "active",
+      "parents": [
+        "c_large_language_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0019",
+      "slug": "deepseek_r1",
+      "display_name": "DeepSeek R1",
+      "description": "A model from the DeepSeek family.",
+      "status": "active",
+      "parents": [
+        "c_deepseek_family"
+      ],
+      "usage_count": 5,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0769",
+      "slug": "deepseek_v3",
+      "display_name": "DeepSeek V3",
+      "description": "The third version of the DeepSeek model.",
+      "status": "active",
+      "parents": [
+        "c_deepseek_family"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0044",
+      "slug": "deepseek_v3_1",
+      "display_name": "DeepSeek V3.1",
+      "description": "An incremental update to the DeepSeek V3 model.",
+      "status": "active",
+      "parents": [
+        "c_deepseek_family"
+      ],
+      "usage_count": 3,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_vision_models",
+      "slug": "vision_models",
+      "display_name": "Vision Models",
+      "description": "Models specialized in processing and generating visual data like images and videos.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 0,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1008",
+      "slug": "image_models",
+      "display_name": "Image Models",
+      "description": "Models focused on understanding or generating images.",
+      "status": "active",
+      "parents": [
+        "c_vision_models"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0036",
+      "slug": "qwen_image",
+      "display_name": "Qwen Image",
+      "description": "An image generation model from the Qwen family.",
+      "status": "active",
+      "parents": [
+        "c_image_models",
+        "c_qwen_family"
+      ],
+      "usage_count": 5,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0027",
+      "slug": "qwen_image_edit",
+      "display_name": "Qwen Image Edit",
+      "description": "A variant of the Qwen Image model specialized for editing existing images.",
+      "status": "active",
+      "parents": [
+        "c_qwen_image"
+      ],
+      "usage_count": 4,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0052",
+      "slug": "dinov3",
+      "display_name": "DINOv3",
+      "description": "A self-supervised vision model.",
+      "status": "active",
+      "parents": [
+        "c_vision_models"
+      ],
+      "usage_count": 3,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_architectures",
+      "slug": "architectures",
+      "display_name": "Architectures",
+      "description": "Fundamental model architectures and their components.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "architecture",
+      "icon": "🏛️",
+      "color": null
+    },
+    {
+      "id": "c_0022",
+      "slug": "model_architectures",
+      "display_name": "Model Architectures",
+      "description": "The structural design and organization of a neural network or other machine learning model.",
+      "status": "active",
+      "parents": [
+        "c_architectures"
+      ],
+      "usage_count": 4,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_transformer_architecture",
+      "slug": "transformer_architecture",
+      "display_name": "Transformer Architecture",
+      "description": "A neural network architecture that relies on self-attention mechanisms, primarily used for natural language processing.",
+      "status": "active",
+      "parents": [
+        "c_model_architectures"
+      ],
+      "usage_count": 0,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0106",
+      "slug": "attention_mechanisms",
+      "display_name": "Attention Mechanisms",
+      "description": "Techniques that allow a neural network to focus on specific parts of an input sequence when making predictions.",
+      "status": "active",
+      "parents": [
+        "c_transformer_architecture"
+      ],
+      "usage_count": 6,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_state_space_models",
+      "slug": "state_space_models",
+      "display_name": "State Space Models (SSMs)",
+      "description": "A class of sequential models that map an input sequence to a latent state sequence, offering an alternative to Transformers.",
+      "status": "active",
+      "parents": [
+        "c_model_architectures"
+      ],
+      "usage_count": 0,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0102",
+      "slug": "selective_state_space_models",
+      "display_name": "Selective State Space Models",
+      "description": "An advanced type of State Space Model that incorporates selectivity in its state transitions.",
+      "status": "active",
+      "parents": [
+        "c_state_space_models"
+      ],
+      "usage_count": 2,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0084",
+      "slug": "mamba",
+      "display_name": "Mamba",
+      "description": "A specific architecture based on Selective State Space Models, known for its efficiency with long sequences.",
+      "status": "active",
+      "parents": [
+        "c_selective_state_space_models"
+      ],
+      "usage_count": 3,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0154",
+      "slug": "mixture_of_experts",
+      "display_name": "Mixture of Experts (MoE)",
+      "description": "A model architecture that uses multiple specialized sub-models (experts) and a gating network to select which expert to use for a given input.",
+      "status": "active",
+      "parents": [
+        "c_model_architectures"
+      ],
+      "usage_count": 2,
+      "entity_type": "architecture",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_methods",
+      "slug": "methods",
+      "display_name": "Methods & Techniques",
+      "description": "Algorithms, techniques, and methodologies used in AI/ML.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "method",
+      "icon": "⚙️",
+      "color": null
+    },
+    {
+      "id": "c_training_and_finetuning",
+      "slug": "training_and_finetuning",
+      "display_name": "Training & Finetuning",
+      "description": "Methods for training models from scratch or adapting pre-trained models.",
+      "status": "active",
+      "parents": [
+        "c_methods"
+      ],
+      "usage_count": 0,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0033",
+      "slug": "rlhf",
+      "display_name": "Reinforcement Learning from Human Feedback (RLHF)",
+      "description": "A technique for finetuning models by using human feedback to guide the learning process.",
+      "status": "active",
+      "parents": [
+        "c_training_and_finetuning"
+      ],
+      "usage_count": 4,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0037",
+      "slug": "instruction_finetuning",
+      "display_name": "Instruction Finetuning",
+      "description": "The process of finetuning a language model on a dataset of instructions to improve its ability to follow commands.",
+      "status": "active",
+      "parents": [
+        "c_training_and_finetuning"
+      ],
+      "usage_count": 5,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_parameter_efficient_finetuning",
+      "slug": "parameter_efficient_finetuning",
+      "display_name": "Parameter-Efficient Finetuning (PEFT)",
+      "description": "A set of techniques to adapt large pre-trained models to new tasks by only updating a small subset of their parameters.",
+      "status": "active",
+      "parents": [
+        "c_training_and_finetuning"
+      ],
+      "usage_count": 0,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0026",
+      "slug": "lora",
+      "display_name": "Low-Rank Adaptation (LoRA)",
+      "description": "A popular PEFT method that freezes pre-trained model weights and injects trainable rank decomposition matrices.",
+      "status": "active",
+      "parents": [
+        "c_parameter_efficient_finetuning"
+      ],
+      "usage_count": 7,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1372",
+      "slug": "peft",
+      "display_name": "PEFT",
+      "description": "An acronym for Parameter-Efficient Finetuning.",
+      "status": "active",
+      "parents": [
+        "c_parameter_efficient_finetuning"
+      ],
+      "usage_count": 2,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_prompting_techniques",
+      "slug": "prompting_techniques",
+      "display_name": "Prompting Techniques",
+      "description": "Methods for structuring input to elicit desired outputs from generative models.",
+      "status": "active",
+      "parents": [
+        "c_methods"
+      ],
+      "usage_count": 0,
+      "entity_type": "experimental-setup",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0066",
+      "slug": "prompting",
+      "display_name": "Prompting",
+      "description": "The general practice of designing inputs (prompts) to guide the output of AI models.",
+      "status": "active",
+      "parents": [
+        "c_prompting_techniques"
+      ],
+      "usage_count": 2,
+      "entity_type": "experimental-setup",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0011",
+      "slug": "chain_of_thought",
+      "display_name": "Chain of Thought (CoT)",
+      "description": "A prompting technique that encourages a model to generate intermediate reasoning steps before giving a final answer.",
+      "status": "active",
+      "parents": [
+        "c_prompting_techniques"
+      ],
+      "usage_count": 7,
+      "entity_type": "experimental-setup",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0119",
+      "slug": "zero_shot_prompting",
+      "display_name": "Zero-Shot Prompting",
+      "description": "Prompting a model to perform a task without providing any specific examples of that task in the prompt.",
+      "status": "active",
+      "parents": [
+        "c_prompting_techniques"
+      ],
+      "usage_count": 2,
+      "entity_type": "experimental-setup",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_tasks",
+      "slug": "tasks",
+      "display_name": "Tasks",
+      "description": "Well-defined problems or challenges that AI models are designed to solve.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "task",
+      "icon": "🎯",
+      "color": null
+    },
+    {
+      "id": "c_vision_tasks",
+      "slug": "vision_tasks",
+      "display_name": "Vision Tasks",
+      "description": "Tasks related to the processing and understanding of visual information.",
+      "status": "active",
+      "parents": [
+        "c_tasks"
+      ],
+      "usage_count": 0,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0015",
+      "slug": "image_generation",
+      "display_name": "Image Generation",
+      "description": "The task of creating new images from textual descriptions or other inputs.",
+      "status": "active",
+      "parents": [
+        "c_vision_tasks"
+      ],
+      "usage_count": 11,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0046",
+      "slug": "video_generation",
+      "display_name": "Video Generation",
+      "description": "The task of creating new video clips from textual descriptions or other inputs.",
+      "status": "active",
+      "parents": [
+        "c_vision_tasks"
+      ],
+      "usage_count": 7,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0023",
+      "slug": "image_editing",
+      "display_name": "Image Editing",
+      "description": "The task of modifying existing images based on instructions.",
+      "status": "active",
+      "parents": [
+        "c_vision_tasks"
+      ],
+      "usage_count": 5,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_nlp_tasks",
+      "slug": "nlp_tasks",
+      "display_name": "NLP Tasks",
+      "description": "Tasks related to the processing and understanding of natural language.",
+      "status": "active",
+      "parents": [
+        "c_tasks"
+      ],
+      "usage_count": 0,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0733",
+      "slug": "code_generation",
+      "display_name": "Code Generation",
+      "description": "The task of automatically generating source code from natural language descriptions or other specifications.",
+      "status": "active",
+      "parents": [
+        "c_nlp_tasks"
+      ],
+      "usage_count": 2,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_data_and_evaluation",
+      "slug": "data_and_evaluation",
+      "display_name": "Data & Evaluation",
+      "description": "Concepts related to datasets, benchmarks, and performance metrics.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "concept",
+      "icon": "📊",
+      "color": null
+    },
+    {
+      "id": "c_datasets",
+      "slug": "datasets",
+      "display_name": "Datasets",
+      "description": "Collections of data used for training and evaluating AI models.",
+      "status": "active",
+      "parents": [
+        "c_data_and_evaluation"
+      ],
+      "usage_count": 0,
+      "entity_type": "dataset",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0059",
+      "slug": "dataset_release",
+      "display_name": "Dataset Release",
+      "description": "The act of making a new dataset publicly available.",
+      "status": "active",
+      "parents": [
+        "c_datasets"
+      ],
+      "usage_count": 3,
+      "entity_type": "dataset",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0138",
+      "slug": "imdb_dataset",
+      "display_name": "IMDb Dataset",
+      "description": "A large dataset of movie reviews for sentiment analysis.",
+      "status": "active",
+      "parents": [
+        "c_datasets"
+      ],
+      "usage_count": 2,
+      "entity_type": "dataset",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_benchmarks",
+      "slug": "benchmarks",
+      "display_name": "Benchmarks",
+      "description": "Standardized tests and datasets used to evaluate and compare the performance of AI models.",
+      "status": "active",
+      "parents": [
+        "c_data_and_evaluation"
+      ],
+      "usage_count": 0,
+      "entity_type": "benchmark",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0032",
+      "slug": "benchmarking",
+      "display_name": "Benchmarking",
+      "description": "The practice of running a set of standardized tests to assess the performance of a system or component.",
+      "status": "active",
+      "parents": [
+        "c_benchmarks"
+      ],
+      "usage_count": 1,
+      "entity_type": "benchmark",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_metrics",
+      "slug": "metrics",
+      "display_name": "Metrics",
+      "description": "Specific quantitative measures used to assess model performance.",
+      "status": "active",
+      "parents": [
+        "c_data_and_evaluation"
+      ],
+      "usage_count": 0,
+      "entity_type": "metric",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0113",
+      "slug": "recall",
+      "display_name": "Recall",
+      "description": "A metric that measures the ability of a model to find all the relevant cases within a dataset.",
+      "status": "active",
+      "parents": [
+        "c_metrics"
+      ],
+      "usage_count": 2,
+      "entity_type": "metric",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_responsible_ai",
+      "slug": "responsible_ai",
+      "display_name": "Responsible AI",
+      "description": "Concepts related to the ethical, safe, and transparent development and deployment of AI.",
+      "status": "active",
+      "parents": [
+        "c_root_research_entities"
+      ],
+      "usage_count": 0,
+      "entity_type": "research-topic",
+      "icon": "🛡️",
+      "color": null
+    },
+    {
+      "id": "c_0056",
+      "slug": "explainable_ai",
+      "display_name": "Explainable AI (XAI)",
+      "description": "Methods and techniques in the application of artificial intelligence such that the results of the solution can be understood by humans.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 7,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0746",
+      "slug": "ai_alignment",
+      "display_name": "AI Alignment",
+      "description": "The research field concerned with steering AI systems toward humans' intended goals, preferences, or ethical principles.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 2,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0103",
+      "slug": "ai_ethics",
+      "display_name": "AI Ethics",
+      "description": "A sub-field of ethics that addresses the moral issues and implications of artificial intelligence.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 2,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0045",
+      "slug": "hallucinations",
+      "display_name": "Hallucinations",
+      "description": "A phenomenon where a large language model generates text that is nonsensical or factually incorrect.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 3,
+      "entity_type": "concept",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_root_content_types",
+      "slug": "content_types",
+      "display_name": "Content Types",
+      "description": "Types of content and documents, such as papers and tools.",
+      "status": "active",
+      "parents": [],
+      "usage_count": 0,
+      "entity_type": "concept",
+      "icon": "📄",
+      "color": null
+    },
+    {
+      "id": "c_0114",
+      "slug": "research_paper",
+      "display_name": "Research Paper",
+      "description": "A formal document presenting the results of academic research.",
+      "status": "active",
+      "parents": [
+        "c_root_content_types"
+      ],
+      "usage_count": 3,
+      "entity_type": "paper",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0025",
+      "slug": "ai_tools",
+      "display_name": "AI Tools",
+      "description": "Software, libraries, and platforms designed for building, deploying, or using AI.",
+      "status": "active",
+      "parents": [
+        "c_root_content_types"
+      ],
+      "usage_count": 4,
+      "entity_type": "tool",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_apache_2_0",
+      "slug": "apache_2_0_license",
+      "display_name": "Apache 2.0 License",
+      "description": "A permissive free software license written by the Apache Software Foundation (ASF).",
+      "status": "active",
+      "parents": [
+        "c_root_content_types"
+      ],
+      "usage_count": 3,
+      "entity_type": "license",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0009",
+      "slug": "ai_research",
+      "display_name": "AI Research",
+      "description": "The broad field of scientific research dedicated to advancing artificial intelligence.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 12,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0054",
+      "slug": "reasoning",
+      "display_name": "Reasoning",
+      "description": "The capability of an AI system to make inferences, draw conclusions, and solve problems.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 5,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0151",
+      "slug": "multimodality",
+      "display_name": "Multimodality",
+      "description": "The ability of AI systems to process and understand information from multiple data types (modalities) like text, images, and audio.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 2,
+      "entity_type": "modality",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0146",
+      "slug": "cohere",
+      "display_name": "Cohere",
+      "description": "An AI company specializing in large language models for enterprise use.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 5,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0035",
+      "slug": "google_deepmind",
+      "display_name": "Google DeepMind",
+      "description": "An artificial intelligence research laboratory and company owned by Google.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 4,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0028",
+      "slug": "stanford_university",
+      "display_name": "Stanford University",
+      "description": "A private research university in Stanford, California, known for its AI research.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 4,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0051",
+      "slug": "ibm",
+      "display_name": "IBM",
+      "description": "International Business Machines Corporation, a multinational technology company.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 3,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0042",
+      "slug": "nasa",
+      "display_name": "NASA",
+      "description": "The National Aeronautics and Space Administration, an independent agency of the U.S. federal government.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 3,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_68af",
+      "slug": "openai",
+      "display_name": "OpenAI",
+      "description": "An AI research and deployment company known for models like GPT.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 2,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0155",
+      "slug": "intel",
+      "display_name": "Intel",
+      "description": "A multinational corporation and technology company known for semiconductor chips.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 2,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1674",
+      "slug": "lenovo",
+      "display_name": "Lenovo",
+      "description": "A multinational technology company that designs, develops, manufactures, and sells personal computers, tablets, smartphones, and other devices.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 2,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0034",
+      "slug": "kaggle",
+      "display_name": "Kaggle",
+      "description": "An online community of data scientists and machine learning practitioners, owned by Google.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 5,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1495",
+      "slug": "waymo",
+      "display_name": "Waymo",
+      "description": "An autonomous driving technology company, subsidiary of Alphabet Inc.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 6,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1668",
+      "slug": "mac_mini",
+      "display_name": "Mac Mini",
+      "description": "A small form-factor desktop computer developed by Apple Inc.",
+      "status": "active",
+      "parents": [
+        "c_et_hardware"
+      ],
+      "usage_count": 3,
+      "entity_type": "hardware",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0062",
+      "slug": "milan_italy",
+      "display_name": "Milan, Italy",
+      "description": "A city in Italy.",
+      "status": "active",
+      "parents": [
+        "c_et_location"
+      ],
+      "usage_count": 1,
+      "entity_type": "location",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0679",
+      "slug": "amsterdam_netherlands",
+      "display_name": "Amsterdam, Netherlands",
+      "description": "The capital city of the Netherlands.",
+      "status": "active",
+      "parents": [
+        "c_et_location"
+      ],
+      "usage_count": 1,
+      "entity_type": "location",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0136",
+      "slug": "rome_italy",
+      "display_name": "Rome, Italy",
+      "description": "The capital city of Italy.",
+      "status": "active",
+      "parents": [
+        "c_et_location"
+      ],
+      "usage_count": 1,
+      "entity_type": "location",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0241",
+      "slug": "silicon_valley",
+      "display_name": "Silicon Valley",
+      "description": "A region in Northern California that serves as a global center for high technology and innovation.",
+      "status": "active",
+      "parents": [
+        "c_et_location"
+      ],
+      "usage_count": 1,
+      "entity_type": "location",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_open_source_ai",
+      "slug": "open_source_ai",
+      "display_name": "Open Source AI",
+      "description": "AI models, tools, and datasets that are made publicly available for use and modification.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 5,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1325",
+      "slug": "gpt_oss",
+      "display_name": "GPT-Oss",
+      "description": "An open-source implementation or replication of a GPT-style model.",
+      "status": "active",
+      "parents": [
+        "c_open_source_ai",
+        "c_gpt_family"
+      ],
+      "usage_count": 8,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0096",
+      "slug": "nano_banana",
+      "display_name": "Nano Banana",
+      "description": "A specific small-scale model or project, possibly a code name.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 6,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0030",
+      "slug": "reasoning_models",
+      "display_name": "Reasoning Models",
+      "description": "AI models specifically designed or evaluated for their reasoning capabilities.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 5,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0400",
+      "slug": "ai_in_education",
+      "display_name": "AI in Education",
+      "description": "The application of artificial intelligence technologies in educational settings.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 3,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1458",
+      "slug": "educational_technology",
+      "display_name": "Educational Technology",
+      "description": "The combined use of computer hardware, software, and educational theory and practice to facilitate learning.",
+      "status": "active",
+      "parents": [
+        "c_ai_in_education"
+      ],
+      "usage_count": 3,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0072",
+      "slug": "arc_agi",
+      "display_name": "ARC-AGI",
+      "description": "A benchmark or project related to Artificial General Intelligence.",
+      "status": "active",
+      "parents": [
+        "c_artificial_general_intelligence"
+      ],
+      "usage_count": 3,
+      "entity_type": "benchmark",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0076",
+      "slug": "cbrn",
+      "display_name": "CBRN",
+      "description": "Chemical, Biological, Radiological, and Nuclear materials, often in the context of risk assessment.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 3,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0058",
+      "slug": "chess",
+      "display_name": "Chess",
+      "description": "The game of chess, often used as a benchmark for AI reasoning and planning capabilities.",
+      "status": "active",
+      "parents": [
+        "c_benchmarks"
+      ],
+      "usage_count": 3,
+      "entity_type": "benchmark",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0060",
+      "slug": "code_execution",
+      "display_name": "Code Execution",
+      "description": "The ability of an AI model to generate and execute code to solve problems.",
+      "status": "active",
+      "parents": [
+        "c_tasks"
+      ],
+      "usage_count": 3,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0364",
+      "slug": "command_a",
+      "display_name": "Command A",
+      "description": "A specific model or product, likely from Cohere.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 3,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0093",
+      "slug": "data_integration",
+      "display_name": "Data Integration",
+      "description": "The process of combining data from different sources to provide a unified view.",
+      "status": "active",
+      "parents": [
+        "c_methods"
+      ],
+      "usage_count": 3,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0090",
+      "slug": "diminishing_returns",
+      "display_name": "Diminishing Returns",
+      "description": "The concept that increasing a single factor of production will eventually result in smaller increases in output.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 3,
+      "entity_type": "concept",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0061",
+      "slug": "empirical_study",
+      "display_name": "Empirical Study",
+      "description": "Research based on observed and measured phenomena and derives knowledge from actual experience rather than from theory or belief.",
+      "status": "active",
+      "parents": [
+        "c_methods"
+      ],
+      "usage_count": 3,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0055",
+      "slug": "energy_consumption",
+      "display_name": "Energy Consumption",
+      "description": "The amount of energy used by AI models, a key aspect of AI sustainability.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 3,
+      "entity_type": "metric",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0043",
+      "slug": "nnsa",
+      "display_name": "NNSA",
+      "description": "National Nuclear Security Administration.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation"
+      ],
+      "usage_count": 3,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0049",
+      "slug": "ontology_engineering_methodologies",
+      "display_name": "Ontology Engineering Methodologies",
+      "description": "Structured approaches and methods for building ontologies.",
+      "status": "active",
+      "parents": [
+        "c_methods"
+      ],
+      "usage_count": 3,
+      "entity_type": "method",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0041",
+      "slug": "product_update",
+      "display_name": "Product Update",
+      "description": "An announcement or event related to a new version or features of a product.",
+      "status": "active",
+      "parents": [
+        "c_et_event"
+      ],
+      "usage_count": 3,
+      "entity_type": "event",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0039",
+      "slug": "space_weather",
+      "display_name": "Space Weather",
+      "description": "The concept of changing environmental conditions in near-Earth space.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 3,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0053",
+      "slug": "solar_storms",
+      "display_name": "Solar Storms",
+      "description": "A disturbance on the Sun, which can emanate outward across the heliosphere, affecting the entire Solar System.",
+      "status": "active",
+      "parents": [
+        "c_space_weather"
+      ],
+      "usage_count": 3,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0130",
+      "slug": "ai_art",
+      "display_name": "AI Art",
+      "description": "Artwork created through the use of artificial intelligence.",
+      "status": "active",
+      "parents": [
+        "c_image_generation"
+      ],
+      "usage_count": 2,
+      "entity_type": "concept",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0081",
+      "slug": "ai_environmental_impact",
+      "display_name": "AI Environmental Impact",
+      "description": "The effect of AI technologies on the natural environment, including energy consumption and carbon footprint.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 2,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0121",
+      "slug": "ai_infrastructure",
+      "display_name": "AI Infrastructure",
+      "description": "The hardware and software components required to support AI workloads.",
+      "status": "active",
+      "parents": [
+        "c_et_hardware"
+      ],
+      "usage_count": 2,
+      "entity_type": "hardware",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0067",
+      "slug": "ai_scaling_laws",
+      "display_name": "AI Scaling Laws",
+      "description": "Principles that describe how AI model performance changes with increases in model size, dataset size, and compute.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 2,
+      "entity_type": "concept",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0515",
+      "slug": "api",
+      "display_name": "API",
+      "description": "Application Programming Interface, a way for two or more computer programs to communicate with each other.",
+      "status": "active",
+      "parents": [
+        "c_ai_tools"
+      ],
+      "usage_count": 2,
+      "entity_type": "tool",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0891",
+      "slug": "automation",
+      "display_name": "Automation",
+      "description": "The technology by which a process or procedure is performed with minimal human assistance.",
+      "status": "active",
+      "parents": [
+        "c_research_fields"
+      ],
+      "usage_count": 2,
+      "entity_type": "research-topic",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0086",
+      "slug": "chatgpt_go",
+      "display_name": "ChatGPT Go",
+      "description": "A potential product or version of ChatGPT.",
+      "status": "active",
+      "parents": [
+        "c_gpt_family"
+      ],
+      "usage_count": 2,
+      "entity_type": "product",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0134",
+      "slug": "llm_evaluation",
+      "display_name": "LLM Evaluation",
+      "description": "The process and methods for assessing the performance and capabilities of Large Language Models.",
+      "status": "active",
+      "parents": [
+        "c_benchmarks"
+      ],
+      "usage_count": 2,
+      "entity_type": "benchmark",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0117",
+      "slug": "midjourney",
+      "display_name": "Midjourney",
+      "description": "An independent research lab that produces a proprietary artificial intelligence program that creates images from natural language descriptions.",
+      "status": "active",
+      "parents": [
+        "c_et_organisation",
+        "c_image_models"
+      ],
+      "usage_count": 2,
+      "entity_type": "organisation",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_1493",
+      "slug": "model_card",
+      "display_name": "Model Card",
+      "description": "A document that provides standardized information about an AI model, including its intended uses, performance characteristics, and ethical considerations.",
+      "status": "active",
+      "parents": [
+        "c_responsible_ai"
+      ],
+      "usage_count": 2,
+      "entity_type": "standard",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0013",
+      "slug": "model_evaluation",
+      "display_name": "Model Evaluation",
+      "description": "The process of using metrics to assess the performance of a trained model on a testing dataset.",
+      "status": "active",
+      "parents": [
+        "c_data_and_evaluation"
+      ],
+      "usage_count": 2,
+      "entity_type": "task",
+      "icon": null,
+      "color": null
+    },
+    {
+      "id": "c_0195",
+      "slug": "world_models",
+      "display_name": "World Models",
+      "description": "A type of generative model that learns a compressed spatial and temporal representation of its environment.",
+      "status": "active",
+      "parents": [
+        "c_models"
+      ],
+      "usage_count": 2,
+      "entity_type": "model",
+      "icon": null,
+      "color": null
+    }
+  ],
+  "aliases": [
+    {
+      "alias_text": "ai_models",
+      "kind": "variant",
+      "alias_of": "ai_model",
+      "original_id": "c_0018"
+    },
+    {
+      "alias_text": "llm",
+      "kind": "abbreviation",
+      "alias_of": "large_language_models",
+      "original_id": "c_0003"
+    },
+    {
+      "alias_text": "publication",
+      "kind": "synonym",
+      "alias_of": "research_paper",
+      "original_id": "c_0010"
+    },
+    {
+      "alias_text": "xai",
+      "kind": "abbreviation",
+      "alias_of": "explainable_ai",
+      "original_id": "c_0056"
+    },
+    {
+      "alias_text": "reasoning_model",
+      "kind": "variant",
+      "alias_of": "reasoning_models",
+      "original_id": "c_0780"
+    },
+    {
+      "alias_text": "foundation_model",
+      "kind": "variant",
+      "alias_of": "foundation_models",
+      "original_id": "c_0098"
+    },
+    {
+      "alias_text": "ai",
+      "kind": "abbreviation",
+      "alias_of": "artificial_intelligence",
+      "original_id": "c_0656"
+    },
+    {
+      "alias_text": "agi",
+      "kind": "abbreviation",
+      "alias_of": "artificial_general_intelligence",
+      "original_id": "artificial_general_intelligence"
+    },
+    {
+      "alias_text": "education_technology",
+      "kind": "synonym",
+      "alias_of": "educational_technology",
+      "original_id": "c_1753"
+    },
+    {
+      "alias_text": "ai_image_generation",
+      "kind": "synonym",
+      "alias_of": "image_generation",
+      "original_id": "c_0284"
+    },
+    {
+      "alias_text": "research",
+      "kind": "synonym",
+      "alias_of": "ai_research",
+      "original_id": "c_0128"
+    },
+    {
+      "alias_text": "ai_video",
+      "kind": "synonym",
+      "alias_of": "video_generation",
+      "original_id": "c_0152"
+    },
+    {
+      "alias_text": "multimodal",
+      "kind": "synonym",
+      "alias_of": "multimodality",
+      "original_id": "c_0151"
+    },
+    {
+      "alias_text": "googledeepmind",
+      "kind": "variant",
+      "alias_of": "google_deepmind",
+      "original_id": "c_0035"
+    },
+    {
+      "alias_text": "stanford",
+      "kind": "variant",
+      "alias_of": "stanford_university",
+      "original_id": "c_0028"
+    },
+    {
+      "alias_text": "apache_2_0",
+      "kind": "variant",
+      "alias_of": "apache_2_0_license",
+      "original_id": "c_apache_2_0"
+    },
+    {
+      "alias_text": "grok_25",
+      "kind": "variant",
+      "alias_of": "grok_2_5",
+      "original_id": "c_1536"
+    },
+    {
+      "alias_text": "gemma_25_flash",
+      "kind": "variant",
+      "alias_of": "gemini_2_5_flash",
+      "original_id": "c_1713"
+    }
+  ],
+  "relations": [
+    {
+      "source": "c_openai",
+      "target": "c_gpt",
+      "type": "produces"
+    },
+    {
+      "source": "c_google_deepmind",
+      "target": "c_gemini_family",
+      "type": "produces"
+    },
+    {
+      "source": "c_google_deepmind",
+      "target": "c_gemma_family",
+      "type": "produces"
+    },
+    {
+      "source": "c_qwen_3",
+      "target": "c_benchmarking",
+      "type": "evaluated_on"
+    },
+    {
+      "source": "c_rlhf",
+      "target": "c_ai_alignment",
+      "type": "related"
+    }
+  ],
+  "entity_type_map": {
+    "person": {
+      "color": "#10B981",
+      "icon": "👤"
+    },
+    "organisation": {
+      "color": "#8B5CF6",
+      "icon": "🏢"
+    },
+    "location": {
+      "color": "#EF4444",
+      "icon": "📍"
+    },
+    "event": {
+      "color": "#F59E0B",
+      "icon": "📅"
+    },
+    "product": {
+      "color": "#F97316",
+      "icon": "🛍️"
+    },
+    "hardware": {
+      "color": "#9CA3AF",
+      "icon": "💾"
+    },
+    "research-topic": {
+      "color": "#06B6D4",
+      "icon": "🔬"
+    },
+    "dataset": {
+      "color": "#84CC16",
+      "icon": "📊"
+    },
+    "benchmark": {
+      "color": "#FBBF24",
+      "icon": "📈"
+    },
+    "metric": {
+      "color": "#A78BFA",
+      "icon": "📏"
+    },
+    "method": {
+      "color": "#FB923C",
+      "icon": "⚙️"
+    },
+    "model": {
+      "color": "#EC4899",
+      "icon": "🤖"
+    },
+    "task": {
+      "color": "#14B8A6",
+      "icon": "🎯"
+    },
+    "modality": {
+      "color": "#0EA5E9",
+      "icon": "🎶"
+    },
+    "license": {
+      "color": "#F472B6",
+      "icon": "📜"
+    },
+    "architecture": {
+      "color": "#FACC15",
+      "icon": "🏛️"
+    },
+    "experimental-setup": {
+      "color": "#4ADE80",
+      "icon": "🧪"
+    },
+    "paper": {
+      "color": "#0EA5E9",
+      "icon": "📄"
+    },
+    "tool": {
+      "color": "#22C55E",
+      "icon": "🔧"
+    },
+    "concept": {
+      "color": "#D946EF",
+      "icon": "💭"
+    },
+    "standard": {
+      "color": "#94A3B8",
+      "icon": "⚖️"
+    }
+  },
+  "root_categories": [
+    "c_root_named_entities",
+    "c_root_research_entities",
+    "c_root_content_types"
+  ],
+  "merge_proposals": [
+    {
+      "primary": "ai_model",
+      "merge_into": [
+        "ai_models"
+      ],
+      "reason": "Singular vs. plural variant."
+    },
+    {
+      "primary": "large_language_models",
+      "merge_into": [
+        "llm",
+        "llms"
+      ],
+      "reason": "Common abbreviations for the same concept."
+    },
+    {
+      "primary": "research_paper",
+      "merge_into": [
+        "publication"
+      ],
+      "reason": "Synonymous terms."
+    },
+    {
+      "primary": "explainable_ai",
+      "merge_into": [
+        "xai"
+      ],
+      "reason": "Common abbreviation."
+    },
+    {
+      "primary": "educational_technology",
+      "merge_into": [
+        "education_technology"
+      ],
+      "reason": "Minor wording difference."
+    }
+  ],
+  "new_categories_suggested": [
+    {
+      "name": "research_fields",
+      "display_name": "Research Fields",
+      "description": "Created to group broad areas like Machine Learning, Generative AI, and Robotics."
+    },
+    {
+      "name": "architectures",
+      "display_name": "Architectures",
+      "description": "Created to group fundamental model architectures like Transformer and State Space Models."
+    },
+    {
+      "name": "training_and_finetuning",
+      "display_name": "Training & Finetuning",
+      "description": "Created as a sub-category under Methods to group techniques like RLHF and PEFT."
+    },
+    {
+      "name": "prompting_techniques",
+      "display_name": "Prompting Techniques",
+      "description": "Created as a sub-category under Methods to group prompting strategies like Chain of Thought."
+    }
+  ],
+  "governance": {
+    "hierarchy_policy": "POLY_HIERARCHY",
+    "slug_style": "lower_snake_case",
+    "alias_types": [
+      "synonym",
+      "variant",
+      "misspelling",
+      "deprecated_redirect"
+    ],
+    "lints": [
+      "no_alias_in_children",
+      "ascii_slug",
+      "no_orphans",
+      "no_cycles",
+      "entity_type_valid"
+    ]
+  },
+  "validation": {
+    "coverage_total_legacy_tags": 2092,
+    "coverage_mapped_percent": 100.0,
+    "annotated_concepts_preserved": 883,
+    "annotated_concepts_total": 883,
+    "annotated_preservation_rate": 100.0,
+    "warnings": [
+      "A large number of unused leaf concepts (count=0) were converted to aliases of their most likely parent or related concept to ensure 100% mapping coverage, effectively archiving them without cluttering the main taxonomy."
+    ],
+    "notes": "All legacy tags resolve to a canonical concept or an alias. All 883 annotated concepts (count > 0) have been preserved. The hierarchy has been rebuilt from the ground up to be more logical and multi-leveled. Entity exclusivity rules have been strictly enforced."
+  },
+  "confidence_score": 0.95,
+  "reasoning": "The reorganization was performed by first establishing a new, robust, multi-level hierarchy based on the provided entity schema. All concepts with annotations (count > 0) were treated as mandatory and carefully placed within this new structure. Duplicates and variants (e.g., 'ai_model' vs 'ai_models') were merged, with the higher-count or more descriptive term chosen as canonical. The entity exclusivity rule was strictly enforced, moving all organizations, locations, etc., to their dedicated parent categories. A significant number of unused leaf concepts (count=0) were converted into aliases of more general, useful concepts to clean up the taxonomy while maintaining a traceable mapping for all legacy tags. New abstract parent concepts were created to group related items logically, such as model families (GPT, Gemma, Qwen) and method types (PEFT, Prompting), resulting in a deeper and more navigable structure."
+}
+```

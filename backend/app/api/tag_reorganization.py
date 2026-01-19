@@ -2,14 +2,12 @@
 API endpoints for tag reorganization using Gemini 2.5 Pro
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
 import json
 import logging
 import time
 
-from app.models import get_db
 from app.services.tag_reorganization_service import (
     TagReorganizationService, 
     TaxonomyReorganization,
@@ -20,9 +18,7 @@ from app.services.tag_reorganization_service import (
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-
 router = APIRouter()
-
 
 class ReorganizationRequest(BaseModel):
     """Request model for reorganization"""
@@ -30,13 +26,11 @@ class ReorganizationRequest(BaseModel):
     max_samples_per_tag: int = 3
     confidence_threshold: float = 0.7
 
-
 class ApprovalRequest(BaseModel):
     """Request model for applying reorganization changes"""
     proposal_id: str
     approved_changes: Dict[str, bool]
     modifications: Optional[Dict[str, Any]] = None
-
 
 class TagNodeUpdate(BaseModel):
     """Model for updating a tag node"""
@@ -47,13 +41,10 @@ class TagNodeUpdate(BaseModel):
     color: Optional[str] = None
     icon: Optional[str] = None
 
-
 # Store proposals temporarily (in production, use Redis or database)
 _proposals_cache = {}
 
-
 @router.get("/current-structure")
-async def get_current_tag_structure(db: Session = Depends(get_db)):
     """Get the current tag structure with all context"""
     service = TagReorganizationService(db)
     structure = service.get_all_tags_with_context()
@@ -64,11 +55,9 @@ async def get_current_tag_structure(db: Session = Depends(get_db)):
         "total_tags": structure['statistics']['total_tags']
     }
 
-
 @router.post("/generate-proposal")
 async def generate_reorganization_proposal(
     request: ReorganizationRequest,
-    db: Session = Depends(get_db)
 ):
     """Generate a comprehensive reorganization proposal using Gemini 2.5 Pro"""
     start_time = time.time()
@@ -138,7 +127,6 @@ async def generate_reorganization_proposal(
         
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/proposal/{proposal_id}")
 async def get_proposal(proposal_id: str):
     """Get a specific proposal by ID"""
@@ -165,7 +153,6 @@ async def get_proposal(proposal_id: str):
         } for k, v in proposal.hierarchy.items()},
         "statistics": proposal.statistics
     }
-
 
 @router.put("/proposal/{proposal_id}/node/{node_name}")
 async def update_proposal_node(
@@ -217,12 +204,10 @@ async def update_proposal_node(
         "icon": node.icon
     }}
 
-
 @router.post("/proposal/{proposal_id}/apply")
 async def apply_reorganization(
     proposal_id: str,
     approval: ApprovalRequest,
-    db: Session = Depends(get_db)
 ):
     """Apply the approved reorganization changes"""
     start_time = time.time()
@@ -277,7 +262,6 @@ async def apply_reorganization(
         
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/proposal/{proposal_id}/export")
 async def export_proposal(
     proposal_id: str,
@@ -304,7 +288,6 @@ async def export_proposal(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-
 @router.delete("/proposal/{proposal_id}")
 async def delete_proposal(proposal_id: str):
     """Delete a proposal from cache"""
@@ -313,7 +296,6 @@ async def delete_proposal(proposal_id: str):
     
     del _proposals_cache[proposal_id]
     return {"status": "deleted", "proposal_id": proposal_id}
-
 
 @router.get("/proposals")
 async def list_proposals():
@@ -330,7 +312,6 @@ async def list_proposals():
     
     return {"proposals": proposals, "total": len(proposals)}
 
-
 class ImportRequest(BaseModel):
     """Request model for importing a tag hierarchy"""
     hierarchy: Dict[str, Any]
@@ -338,11 +319,9 @@ class ImportRequest(BaseModel):
     dry_run: bool = False
     merge_strategy: str = "replace"  # "replace", "merge", or "append"
 
-
 @router.post("/import")
 async def import_tag_hierarchy(
     import_request: ImportRequest,
-    db: Session = Depends(get_db)
 ):
     """
     Import a tag hierarchy to replace or merge with the current ontology

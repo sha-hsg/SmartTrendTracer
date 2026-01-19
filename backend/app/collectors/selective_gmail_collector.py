@@ -10,7 +10,6 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from app.collectors.gmail_substack_collector import GmailSubstackCollector
-from app.models import get_db, SubstackArticle, SubstackAuthor
 
 class SelectiveGmailCollector(GmailSubstackCollector):
     """Collector that only processes emails from specific authors"""
@@ -160,7 +159,6 @@ def main():
     articles = collector.collect_selective(args.max)
     
     # Show results
-    db = next(get_db())
     
     print("\n📊 Collection Results:")
     print(f"New articles collected: {articles}")

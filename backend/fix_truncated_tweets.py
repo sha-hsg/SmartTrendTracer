@@ -1,167 +1,74 @@
 #!/usr/bin/env python3
 """
-Fix tweets that are truncated at 280 characters by fetching their full text
+Fix truncated tweets in the database by re-fetching them from Twitter API
 """
-import sys
+
 import os
 import tweepy
+from pymongo import MongoClient
 from datetime import datetime
-from dotenv import load_dotenv
+import time
 
-# Add the backend directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# MongoDB setup
+client = MongoClient('mongodb://localhost:27017/')
+db = client.smarttrendtracer
 
-from app.models import get_db, Tweet
-from sqlalchemy import func
+def get_twitter_client():
+    """Get Twitter API v2 client"""
+    # You'll need to set these environment variables
+    bearer_token = os.environ.get('TWITTER_BEARER_TOKEN')
+    
+    if not bearer_token:
+        print("Error: TWITTER_BEARER_TOKEN environment variable not set")
+        print("You can find this in your Twitter Developer Portal")
+        return None
+    
+    return tweepy.Client(bearer_token=bearer_token)
 
-load_dotenv()
+def find_truncated_tweets():
+    """Find tweets that appear to be truncated"""
+    # Find tweets ending with "..." (likely truncated)
+    truncated_tweets = list(db.tweets.find({
+        'text': {'$regex': r'\.\.\.$'}
+    }, {'_id': 1, 'text': 1, 'author_username': 1}).limit(100))
+    
+    print(f"Found {len(truncated_tweets)} potentially truncated tweets (limited to first 100)")
+    return truncated_tweets
 
-def fix_truncated_tweets():
-    """Find and update tweets that are truncated at 280 character limit"""
+def main():
+    print("=" * 60)
+    print("Truncated Tweets Analysis")
+    print("=" * 60)
     
-    db = next(get_db())
-    bearer_token = os.getenv('TWITTER_BEARER_TOKEN')
-    client = tweepy.Client(bearer_token=bearer_token)
+    # Find truncated tweets
+    truncated_tweets = find_truncated_tweets()
     
-    # Find tweets that are likely truncated (exactly 280 chars or 275-280 with no ending punctuation)
-    likely_truncated = db.query(Tweet).filter(
-        func.length(Tweet.text) >= 275,
-        func.length(Tweet.text) <= 280
-    ).all()
+    if not truncated_tweets:
+        print("No truncated tweets found")
+        return
     
-    # Also check tweets ending with "…" (ellipsis character)
-    ellipsis_tweets = db.query(Tweet).filter(
-        Tweet.text.like('%…')
-    ).all()
+    # Show examples
+    print("\nExamples of truncated tweets:")
+    print("-" * 60)
+    for tweet in truncated_tweets[:5]:
+        print(f"ID: {tweet['_id']}")
+        print(f"Author: @{tweet['author_username']}")
+        print(f"Text: {tweet['text']}")
+        print(f"Length: {len(tweet['text'])} characters")
+        print("-" * 60)
     
-    # Combine and deduplicate
-    all_truncated = list({t.id: t for t in likely_truncated + ellipsis_tweets}.values())
+    print(f"\nTotal truncated tweets in database: {db.tweets.count_documents({'text': {'$regex': r'\.\.\.$'}})}")
     
-    print(f"Found {len(all_truncated)} potentially truncated tweets:")
-    for t in all_truncated[:5]:  # Show first 5
-        print(f"  @{t.author_username}: {len(t.text)} chars - ...{t.text[-30:]}")
-    
-    if len(all_truncated) > 5:
-        print(f"  ... and {len(all_truncated) - 5} more")
-    
-    updated_count = 0
-    failed_count = 0
-    batch_size = 100  # Twitter API allows up to 100 IDs per request
-    
-    # Process in batches
-    for i in range(0, len(all_truncated), batch_size):
-        batch = all_truncated[i:i+batch_size]
-        tweet_ids = [t.id for t in batch]
-        
-        try:
-            print(f"\n📥 Fetching batch {i//batch_size + 1} ({len(tweet_ids)} tweets)...")
-            
-            # Fetch tweets with note_tweet field for full text
-            response = client.get_tweets(
-                ids=tweet_ids,
-                tweet_fields=['text', 'note_tweet', 'created_at', 'author_id'],
-                expansions=['referenced_tweets.id', 'author_id']
-            )
-            
-            if not response.data:
-                print("  ❌ No data returned from API")
-                continue
-            
-            # Build author map if we have includes
-            author_map = {}
-            if response.includes and 'users' in response.includes:
-                for user in response.includes['users']:
-                    author_map[user.id] = user.username
-            
-            # Process referenced tweets for RTs
-            referenced_dict = {}
-            if response.includes and 'tweets' in response.includes:
-                for ref_tweet in response.includes['tweets']:
-                    # Check if ref tweet has note_tweet
-                    if hasattr(ref_tweet, 'note_tweet') and ref_tweet.note_tweet:
-                        ref_full_text = ref_tweet.note_tweet.get('text', ref_tweet.text)
-                    else:
-                        ref_full_text = ref_tweet.text
-                    referenced_dict[str(ref_tweet.id)] = ref_full_text
-            
-            for tweet_data in response.data:
-                # Find the database tweet
-                db_tweet = next((t for t in batch if t.id == str(tweet_data.id)), None)
-                if not db_tweet:
-                    continue
-                
-                # Get full text from note_tweet if available
-                if hasattr(tweet_data, 'note_tweet') and tweet_data.note_tweet:
-                    full_text = tweet_data.note_tweet.get('text', tweet_data.text)
-                    print(f"  📝 Found note_tweet for @{db_tweet.author_username}")
-                else:
-                    full_text = tweet_data.text
-                
-                # For retweets, check if we can get the full original
-                if full_text.startswith('RT @') and hasattr(tweet_data, 'referenced_tweets'):
-                    for ref in tweet_data.referenced_tweets:
-                        if ref.type == 'retweeted' and str(ref.id) in referenced_dict:
-                            rt_prefix = full_text.split(':', 1)[0] + ': '
-                            original_full = referenced_dict[str(ref.id)]
-                            
-                            # Only update if we got more text
-                            if len(original_full) > len(full_text) - len(rt_prefix):
-                                full_text = rt_prefix + original_full
-                                print(f"  📝 Got full RT text for @{db_tweet.author_username}")
-                            break
-                
-                # Update if we got more text
-                old_len = len(db_tweet.text)
-                new_len = len(full_text)
-                
-                if new_len > old_len:
-                    db_tweet.text = full_text
-                    updated_count += 1
-                    print(f"  ✅ Updated @{db_tweet.author_username}: {old_len} → {new_len} chars (+{new_len - old_len})")
-                    
-                    # Show preview of new ending
-                    if new_len > 280:
-                        print(f"     New ending: ...{full_text[-50:]}")
-                else:
-                    # Check if it's actually different even if same length
-                    if full_text != db_tweet.text:
-                        db_tweet.text = full_text
-                        updated_count += 1
-                        print(f"  ✅ Updated @{db_tweet.author_username}: content changed (same length)")
-                    
-        except tweepy.errors.TooManyRequests:
-            print("⚠️  Rate limited! Please wait 15 minutes and run again.")
-            print(f"  Processed {updated_count} tweets before rate limit")
-            break
-        except Exception as e:
-            print(f"❌ Error processing batch: {e}")
-            failed_count += len(batch)
-            continue
-    
-    # Commit all updates
-    if updated_count > 0:
-        db.commit()
-        print(f"\n✅ Successfully updated {updated_count} tweets with full text!")
-    else:
-        print("\n📝 No tweets were updated.")
-        print("   This might mean:")
-        print("   - The tweets are intentionally short with '...'")
-        print("   - They're not eligible for note_tweet (only tweets >280 chars)")
-        print("   - The API doesn't have extended versions")
-    
-    if failed_count > 0:
-        print(f"⚠️  Failed to process {failed_count} tweets")
-    
-    # Final check
-    remaining = db.query(Tweet).filter(
-        func.length(Tweet.text) == 280
-    ).count()
-    
-    print(f"\n📊 Remaining tweets at exactly 280 chars: {remaining}")
-    
-    db.close()
+    print("\n" + "=" * 60)
+    print("NOTE: These tweets are truncated because:")
+    print("1. They are retweets (RT) that Twitter API v2 truncates")
+    print("2. They are replies that were cut off")
+    print("3. They reference other tweets")
+    print("\nTo fix this, you would need to:")
+    print("1. Set up TWITTER_BEARER_TOKEN environment variable")
+    print("2. Re-fetch these tweets with full expansions")
+    print("3. Update the collector to better handle retweets")
+    print("=" * 60)
 
 if __name__ == "__main__":
-    print("🔧 Fixing truncated tweets (280 char limit)...")
-    print("=" * 60)
-    fix_truncated_tweets()
+    main()

@@ -2,31 +2,25 @@
 API endpoints for advanced paper features - Phase 5
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 
-from ..models import get_db
 from ..services.paper_advanced_service import PaperAdvancedService
 
 router = APIRouter(prefix="/api/papers/advanced", tags=["paper-advanced"])
 advanced_service = PaperAdvancedService()
 
-
 class ArxivImportRequest(BaseModel):
     arxiv_id: str
-
 
 class SummarizeRequest(BaseModel):
     paper_id: int
     include_insights: bool = True
 
-
 @router.get("/recommendations/{paper_id}")
 def get_paper_recommendations(
     paper_id: int,
     limit: int = Query(5, le=20),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get recommendations for similar papers"""
     try:
@@ -41,11 +35,9 @@ def get_paper_recommendations(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/summarize")
 def generate_paper_summary(
     request: SummarizeRequest,
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Generate AI-powered summary of a paper"""
     try:
@@ -56,12 +48,10 @@ def generate_paper_summary(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/knowledge-graph")
 def get_knowledge_graph(
     paper_id: Optional[int] = Query(None, description="Center paper ID"),
     depth: int = Query(2, le=3),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Build knowledge graph of paper relationships"""
     try:
@@ -72,11 +62,9 @@ def get_knowledge_graph(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/import-arxiv")
 def import_from_arxiv(
     request: ArxivImportRequest,
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Import a paper from ArXiv by ID"""
     try:
@@ -87,11 +75,9 @@ def import_from_arxiv(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/github-links/{paper_id}")
 def extract_github_links(
     paper_id: int,
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Extract GitHub repository links from paper"""
     try:
@@ -104,11 +90,9 @@ def extract_github_links(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/author-network")
 def get_author_collaboration_network(
     min_papers: int = Query(2, description="Minimum papers per author"),
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get author collaboration network"""
     try:
@@ -119,11 +103,9 @@ def get_author_collaboration_network(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/semantic-scholar/{paper_id}")
 def get_semantic_scholar_data(
     paper_id: int,
-    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get additional data from Semantic Scholar"""
     # This would integrate with Semantic Scholar API

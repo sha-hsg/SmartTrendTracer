@@ -4,67 +4,77 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { TagBadge } from "@/components/ui/tag-badge"
 import { Separator } from "@/components/ui/separator"
 import { 
-  Twitter, 
   Heart, 
   MessageCircle, 
   Repeat2, 
   Plus, 
   X, 
   Sparkles,
-  Hash,
   Image as ImageIcon,
   Film,
   Calendar,
   User,
   ExternalLink,
-  Tag
+  Tag,
+  Play
 } from 'lucide-react'
-import { cn } from "@/lib/utils"
+import { Tweet, Concept } from '@/types/concept'
+import conceptService from '@/services/conceptService'
+import { decodeHtmlEntities } from '@/utils/htmlDecoder'
 
 interface TweetCardProps {
-  tweet: {
-    id: string
-    text: string
-    author_username: string
-    created_at: string
-    metrics: {
-      likes: number
-      retweets: number
-      replies: number
-    }
-    media: any[]
-    tags: { tag: string; type: string }[]
-  }
-  onTagAdded: (tweetId: string, tag: string) => void
-  onTagRemoved: (tweetId: string, tag: string) => void
-  onTweetClick?: (tweet: any) => void
-  onSuggestTags?: (tweet: any) => void
+  tweet: Tweet
+  onConceptAdded: (tweetId: string, concept: Concept) => void
+  onConceptRemoved: (tweetId: string, conceptId: string) => void
+  onTweetClick?: (tweet: Tweet) => void
+  onSuggestConcepts?: (tweet: Tweet) => void
 }
 
 export default function TweetCardModern({ 
   tweet, 
-  onTagAdded, 
-  onTagRemoved, 
+  onConceptAdded, 
+  onConceptRemoved, 
   onTweetClick, 
-  onSuggestTags 
+  onSuggestConcepts 
 }: TweetCardProps) {
-  const [isAddingTag, setIsAddingTag] = useState(false)
-  const [newTag, setNewTag] = useState('')
+  const [isAddingConcept, setIsAddingConcept] = useState(false)
+  const [newConceptText, setNewConceptText] = useState('')
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
-  const [showTagCreationForm, setShowTagCreationForm] = useState(false)
-  const [tagCreationText, setTagCreationText] = useState('')
+  const [showConceptCreationForm, setShowConceptCreationForm] = useState(false)
+  const [conceptCreationText, setConceptCreationText] = useState('')
   const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set())
+  const [isCreatingConcept, setIsCreatingConcept] = useState(false)
   const selectedTextRef = useRef<string>('')
   const tweetContentRef = useRef<HTMLDivElement>(null)
+  const [playingVideos, setPlayingVideos] = useState<Set<number>>(new Set())
+  const videoRefs = useRef<{ [key: number]: HTMLVideoElement | null }>({})
+  const [hoveredVideo, setHoveredVideo] = useState<number | null>(null)
+  const [profileImageBroken, setProfileImageBroken] = useState(false)
 
-  const handleAddTag = () => {
-    if (newTag.trim()) {
-      onTagAdded(tweet.id, newTag.trim())
-      setNewTag('')
-      setIsAddingTag(false)
+  const handleAddConcept = async () => {
+    if (newConceptText.trim() && !isCreatingConcept) {
+      setIsCreatingConcept(true)
+      try {
+        const concept = await conceptService.addConceptToContent('tweet', tweet.id, newConceptText.trim())
+        if (concept) {
+          onConceptAdded(tweet.id, concept)
+          setNewConceptText('')
+          setIsAddingConcept(false)
+        }
+      } catch (error) {
+        console.error('Failed to add concept:', error)
+      } finally {
+        setIsCreatingConcept(false)
+      }
+    }
+  }
+
+  const handleRemoveConcept = async (conceptId: string) => {
+    const success = await conceptService.removeConceptFromContent('tweet', tweet.id, conceptId)
+    if (success) {
+      onConceptRemoved(tweet.id, conceptId)
     }
   }
 
@@ -99,31 +109,79 @@ export default function TweetCardModern({
     }
   }
 
-  const handleCreateTag = () => {
-    setTagCreationText(selectedTextRef.current)
-    setShowTagCreationForm(true)
+  const handleCreateConcept = () => {
+    setConceptCreationText(selectedTextRef.current)
+    setShowConceptCreationForm(true)
     setContextMenu(null)
+  }
+
+  const handleSubmitConceptCreation = async () => {
+    if (conceptCreationText.trim() && !isCreatingConcept) {
+      setIsCreatingConcept(true)
+      try {
+        const concept = await conceptService.addConceptToContent('tweet', tweet.id, conceptCreationText.trim())
+        if (concept) {
+          onConceptAdded(tweet.id, concept)
+          setConceptCreationText('')
+          setShowConceptCreationForm(false)
+        }
+      } catch (error) {
+        console.error('Failed to create concept:', error)
+      } finally {
+        setIsCreatingConcept(false)
+      }
+    }
   }
 
   const handleImageError = (index: number) => {
     setBrokenImages(prev => new Set(prev).add(index))
   }
 
-  const getTagVariant = (type: string) => {
-    switch(type) {
-      case 'llm':
-      case 'ai':
-        return 'ai'
-      case 'similar':
-      case 'existing':
-        return 'similar'
-      case 'entity':
-        return 'entity'
-      case 'new':
-        return 'new'
-      case 'manual':
-      default:
-        return 'default'
+  const toggleVideoPlay = (index: number) => {
+    const video = videoRefs.current[index]
+    if (!video) return
+
+    if (playingVideos.has(index)) {
+      video.pause()
+      setPlayingVideos(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(index)
+        return newSet
+      })
+    } else {
+      video.play()
+      setPlayingVideos(prev => new Set(prev).add(index))
+    }
+  }
+
+  const handleVideoEnded = (index: number) => {
+    setPlayingVideos(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(index)
+      return newSet
+    })
+  }
+
+  const getConceptVariant = (concept: Concept) => {
+    // Determine badge variant based on entity type or other properties
+    if (concept.auto_generated) return 'secondary'
+    
+    switch(concept.entity_type) {
+      case 'person': return 'default'
+      case 'organisation': return 'success'
+      case 'location': return 'warning'
+      case 'event': return 'destructive'
+      case 'product': return 'outline'
+      case 'topic':
+      default: return 'default'
+    }
+  }
+
+  const getConceptBadgeStyle = (concept: Concept) => {
+    // Default: light-blue background with dark-blue text
+    return {
+      backgroundColor: '#DBEAFE', // light blue (blue-100)
+      color: '#1E40AF'            // dark blue (blue-800)
     }
   }
 
@@ -131,16 +189,19 @@ export default function TweetCardModern({
   useEffect(() => {
     const handleClickOutside = () => {
       setContextMenu(null)
-      setShowTagCreationForm(false)
+      setShowConceptCreationForm(false)
     }
-    if (contextMenu || showTagCreationForm) {
+    if (contextMenu || showConceptCreationForm) {
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
     }
-  }, [contextMenu, showTagCreationForm])
+  }, [contextMenu, showConceptCreationForm])
 
   const hasVisibleMedia = tweet.media.length > 0 && 
     tweet.media.some((_, index) => !brokenImages.has(index))
+
+  // Get concepts for display
+  const concepts = tweet.concepts || []
 
   return (
     <>
@@ -148,30 +209,34 @@ export default function TweetCardModern({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-gray-900">@{tweet.author_username}</span>
-                  <Badge variant="outline" className="text-xs">
-                    <Twitter className="h-3 w-3 mr-1" />
-                    X
-                  </Badge>
+              {tweet.author_profile_image_url && !profileImageBroken ? (
+                <img
+                  src={tweet.author_profile_image_url}
+                  alt={`@${tweet.author_username}`}
+                  className="w-10 h-10 rounded-full object-cover"
+                  onError={() => setProfileImageBroken(true)}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
                 </div>
-                <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                  <Calendar className="h-3 w-3" />
+              )}
+              <div>
+                <div className="font-semibold text-gray-900">@{tweet.author_username}</div>
+                <div className="text-xs text-gray-500 flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
                   {formatDate(tweet.created_at)}
                 </div>
               </div>
             </div>
             <Button
-              onClick={openTweetInTwitter}
               size="sm"
               variant="ghost"
-              className="rounded-full hover:bg-blue-50"
+              onClick={openTweetInTwitter}
+              className="rounded-full w-8 h-8 p-0 bg-gradient-to-br from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white"
+              title="Open original tweet in X/Twitter"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="w-4 h-4" />
             </Button>
           </div>
         </CardHeader>
@@ -179,47 +244,156 @@ export default function TweetCardModern({
         <CardContent className="pb-3">
           <div 
             ref={tweetContentRef}
-            className="text-gray-800 leading-relaxed whitespace-pre-wrap select-text"
+            className="text-gray-800 whitespace-pre-wrap break-words select-text cursor-text"
+            onClick={() => onTweetClick?.(tweet)}
             onMouseUp={handleTextSelection}
             onContextMenu={handleContextMenu}
           >
-            {tweet.text}
+            {decodeHtmlEntities(tweet.text)}
           </div>
 
           {hasVisibleMedia && (
-            <div className={cn(
-              "mt-3 grid gap-2 rounded-lg overflow-hidden",
-              tweet.media.length === 1 && "grid-cols-1",
-              tweet.media.length === 2 && "grid-cols-2",
-              tweet.media.length === 3 && "grid-cols-2",
-              tweet.media.length >= 4 && "grid-cols-2"
-            )}>
+            <div className="mt-3 grid grid-cols-2 gap-2">
               {tweet.media.map((media, index) => (
                 !brokenImages.has(index) && (
-                  <div 
-                    key={index} 
-                    className={cn(
-                      "relative bg-gray-100 rounded-lg overflow-hidden",
-                      tweet.media.length === 3 && index === 0 && "col-span-2"
-                    )}
-                  >
+                  <div key={`${media.media_key}-${index}`} className="relative rounded-lg overflow-hidden bg-gray-100">
                     {media.type === 'photo' ? (
                       <img 
-                        src={media.media_url || media.url}
-                        alt={`Media ${index + 1}`}
-                        className="w-full h-full object-cover"
+                        src={media.url} 
+                        alt={media.alt_text || 'Tweet image'}
+                        className="w-full h-auto object-cover"
                         onError={() => handleImageError(index)}
                       />
-                    ) : media.type === 'animated_gif' || media.type === 'video' ? (
-                      <div className="flex items-center justify-center h-32 bg-gray-200">
-                        <Film className="h-8 w-8 text-gray-400" />
-                        <span className="ml-2 text-sm text-gray-500">
-                          {media.type === 'animated_gif' ? 'GIF' : 'Video'}
-                        </span>
-                      </div>
+                    ) : media.type === 'video' ? (
+                      media.url ? (
+                        <div 
+                          className="relative group"
+                          onMouseEnter={() => setHoveredVideo(index)}
+                          onMouseLeave={() => setHoveredVideo(null)}
+                        >
+                          <video
+                            ref={el => videoRefs.current[index] = el}
+                            src={media.url}
+                            poster={media.preview_image_url}
+                            controls
+                            className="w-full h-auto max-h-64 object-contain bg-black"
+                            onError={() => handleImageError(index)}
+                            onEnded={() => handleVideoEnded(index)}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                          {/* Play button overlay for better UX */}
+                          {!playingVideos.has(index) && hoveredVideo === index && (
+                            <div 
+                              className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleVideoPlay(index)
+                              }}
+                            >
+                              <div className="bg-white/90 rounded-full p-3 shadow-lg transform hover:scale-110 transition-transform">
+                                <Play className="h-8 w-8 text-gray-900 fill-current" />
+                              </div>
+                            </div>
+                          )}
+                          {/* Video type indicator */}
+                          <div className="absolute top-2 right-2 pointer-events-none">
+                            <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+                              <Film className="h-3 w-3 mr-1" />
+                              Video
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          {media.preview_image_url ? (
+                            <img
+                              src={media.preview_image_url}
+                              alt="Video preview"
+                              className="w-full h-auto max-h-64 object-contain opacity-75 cursor-default"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-32 bg-gray-200">
+                              <Film className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
+                            <div className="text-white text-center p-3">
+                              <Film className="h-8 w-8 mx-auto mb-2" />
+                              <span className="text-sm">Video preview only</span>
+                            </div>
+                          </div>
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+                              Video
+                            </Badge>
+                          </div>
+                        </div>
+                      )
+                    ) : media.type === 'animated_gif' ? (
+                      media.url ? (
+                        <div className="relative group">
+                          <video
+                            ref={el => videoRefs.current[index] = el}
+                            src={media.url}
+                            poster={media.preview_image_url}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-auto max-h-64 object-contain bg-black cursor-pointer"
+                            onError={() => handleImageError(index)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const video = e.currentTarget as HTMLVideoElement
+                              if (video.paused) {
+                                video.play()
+                              } else {
+                                video.pause()
+                              }
+                            }}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                          {/* GIF indicator */}
+                          <div className="absolute top-2 right-2 pointer-events-none">
+                            <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+                              GIF
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          {media.preview_image_url ? (
+                            <img
+                              src={media.preview_image_url}
+                              alt="GIF preview"
+                              className="w-full h-auto max-h-64 object-contain opacity-75 cursor-default"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-32 bg-gray-200">
+                              <ImageIcon className="w-8 h-8 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
+                            <div className="text-white text-center p-3">
+                              <span className="text-sm">🎬 GIF preview only</span>
+                            </div>
+                          </div>
+                          <div className="absolute top-2 right-2">
+                            <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+                              GIF
+                            </Badge>
+                          </div>
+                        </div>
+                      )
                     ) : (
-                      <div className="flex items-center justify-center h-32">
-                        <ImageIcon className="h-8 w-8 text-gray-400" />
+                      <div className="flex items-center justify-center h-32 bg-gray-200">
+                        <ImageIcon className="w-8 h-8 text-gray-400" />
+                        <span className="ml-2 text-sm text-gray-500">Media</span>
                       </div>
                     )}
                   </div>
@@ -228,158 +402,179 @@ export default function TweetCardModern({
             </div>
           )}
 
-          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-1 text-sm text-gray-500">
-              <Heart className="h-4 w-4" />
-              <span>{tweet.metrics.likes.toLocaleString()}</span>
+          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+            <div className="flex items-center gap-1">
+              <Heart className="w-4 h-4" />
+              <span>{(tweet.metrics?.likes || 0).toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-1 text-sm text-gray-500">
-              <Repeat2 className="h-4 w-4" />
-              <span>{tweet.metrics.retweets.toLocaleString()}</span>
+            <div className="flex items-center gap-1">
+              <Repeat2 className="w-4 h-4" />
+              <span>{(tweet.metrics?.retweets || 0).toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-1 text-sm text-gray-500">
-              <MessageCircle className="h-4 w-4" />
-              <span>{tweet.metrics.replies.toLocaleString()}</span>
+            <div className="flex items-center gap-1">
+              <MessageCircle className="w-4 h-4" />
+              <span>{(tweet.metrics?.replies || 0).toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
 
-        <CardFooter className="flex-col items-start gap-3 pt-0">
-          <div className="flex flex-wrap gap-2 w-full">
-            {tweet.tags.map((tag, index) => (
-              <TagBadge
-                key={`${tag.tag}-${index}`}
-                variant={getTagVariant(tag.type)}
-                removable
-                onRemove={() => onTagRemoved(tweet.id, tag.tag)}
-                icon={tag.type === 'ai' || tag.type === 'llm' ? <Sparkles className="h-3 w-3" /> : <Hash className="h-3 w-3" />}
-              >
-                {tag.tag}
-              </TagBadge>
-            ))}
-          </div>
+        <Separator className="my-2" />
 
-          <div className="flex gap-2 w-full">
-            {!isAddingTag ? (
-              <>
+        <CardFooter className="pt-3 pb-3">
+          <div className="w-full">
+            <div className="flex items-center gap-2 mb-2">
+              <Tag className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">Concepts</span>
+              {onSuggestConcepts && (
                 <Button
-                  onClick={() => setIsAddingTag(true)}
                   size="sm"
                   variant="outline"
-                  className="gap-1"
+                  onClick={() => onSuggestConcepts(tweet)}
+                  className="ml-auto"
                 >
-                  <Plus className="h-3 w-3" />
-                  Add Tag
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Suggest
                 </Button>
-                {onSuggestTags && (
-                  <Button
-                    onClick={() => onSuggestTags(tweet)}
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
+              )}
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {concepts.map((concept, index) => (
+                <Badge
+                  key={`${concept.concept_id}-${index}`}
+                  variant="outline"
+                  className="group cursor-pointer transition-all hover:shadow-md"
+                  style={getConceptBadgeStyle(concept)}
+                  title={concept.description || `Concept: ${concept.display_name}`}
+                >
+                  <span className="mr-1">{conceptService.getConceptIcon(concept)}</span>
+                  {concept.display_name}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRemoveConcept(concept.concept_id)
+                    }}
+                    className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Sparkles className="h-3 w-3" />
-                    Suggest Tags
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+              
+              {isAddingConcept ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="text"
+                    value={newConceptText}
+                    onChange={(e) => setNewConceptText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddConcept()}
+                    placeholder="Type concept..."
+                    className="h-7 w-32 text-sm"
+                    autoFocus
+                    disabled={isCreatingConcept}
+                  />
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleAddConcept}
+                    disabled={isCreatingConcept}
+                    className="h-7 w-7 p-0"
+                  >
+                    <Plus className="w-4 h-4" />
                   </Button>
-                )}
-              </>
-            ) : (
-              <div className="flex gap-2 flex-1">
-                <Input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddTag()}
-                  placeholder="Enter tag name..."
-                  className="flex-1 h-8"
-                  autoFocus
-                />
-                <Button onClick={handleAddTag} size="sm" variant="default">
-                  <Plus className="h-3 w-3" />
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setIsAddingTag(false)
-                    setNewTag('')
-                  }} 
-                  size="sm" 
-                  variant="ghost"
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setIsAddingConcept(false)
+                      setNewConceptText('')
+                    }}
+                    className="h-7 w-7 p-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsAddingConcept(true)}
+                  className="h-7"
                 >
-                  <X className="h-3 w-3" />
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Concept
                 </Button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </CardFooter>
       </Card>
 
-      {/* Context Menu */}
+      {/* Context Menu Portal */}
       {contextMenu && ReactDOM.createPortal(
         <div
-          className="fixed z-50 min-w-[150px] rounded-md border bg-white shadow-md"
-          style={{ 
-            left: `${contextMenu.x}px`, 
-            top: `${contextMenu.y}px`
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+            maxWidth: '200px'
           }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100"
-            onClick={handleCreateTag}
+            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            onClick={handleCreateConcept}
           >
-            <Tag className="h-4 w-4" />
-            Create Tag
+            <Tag className="w-4 h-4" />
+            Create Concept
           </button>
         </div>,
         document.body
       )}
 
-      {/* Tag Creation Form */}
-      {showTagCreationForm && ReactDOM.createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card 
-            className="w-96 max-w-[90vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <CardHeader>
-              <h3 className="text-lg font-semibold">Create Tag from Selection</h3>
-            </CardHeader>
-            <CardContent>
-              <Input
-                value={tagCreationText}
-                onChange={(e) => setTagCreationText(e.target.value)}
-                placeholder="Tag name..."
-                className="mb-4"
-                autoFocus
-              />
-              <div className="text-sm text-gray-500 mb-4">
-                Selected text: "{selectedTextRef.current}"
-              </div>
-            </CardContent>
-            <CardFooter className="gap-2">
-              <Button
-                onClick={() => {
-                  if (tagCreationText.trim()) {
-                    onTagAdded(tweet.id, tagCreationText.trim())
-                    setShowTagCreationForm(false)
-                    setTagCreationText('')
-                  }
-                }}
-                size="sm"
-              >
-                Create Tag
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowTagCreationForm(false)
-                  setTagCreationText('')
-                }}
-                size="sm"
-                variant="outline"
-              >
-                Cancel
-              </Button>
-            </CardFooter>
-          </Card>
+      {/* Concept Creation Form Portal */}
+      {showConceptCreationForm && ReactDOM.createPortal(
+        <div
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 z-50"
+          style={{
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '300px'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="font-semibold mb-2">Create Concept from Selection</h3>
+          <Input
+            type="text"
+            value={conceptCreationText}
+            onChange={(e) => setConceptCreationText(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSubmitConceptCreation()}
+            placeholder="Enter concept text..."
+            className="mb-3"
+            autoFocus
+            disabled={isCreatingConcept}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setShowConceptCreationForm(false)
+                setConceptCreationText('')
+              }}
+              disabled={isCreatingConcept}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSubmitConceptCreation}
+              disabled={isCreatingConcept || !conceptCreationText.trim()}
+            >
+              Create Concept
+            </Button>
+          </div>
         </div>,
         document.body
       )}

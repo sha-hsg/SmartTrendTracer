@@ -2,21 +2,15 @@
 API endpoints for per-user Twitter trend analysis
 """
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, desc
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 from collections import defaultdict
 
-from app.models import get_db, Tweet, Tag
-
 router = APIRouter()
-
 
 @router.get("/per-user")
 def get_per_user_trends(
     hours: int = Query(168, description="Hours to look back (default: 7 days)"),
-    db: Session = Depends(get_db)
 ):
     """Get trend analysis broken down by Twitter user"""
     
@@ -89,12 +83,10 @@ def get_per_user_trends(
         "last_updated": now.isoformat()
     }
 
-
 @router.get("/user/{username}")
 def get_user_trend_details(
     username: str,
     days: int = Query(30, description="Days to analyze"),
-    db: Session = Depends(get_db)
 ):
     """Get detailed trend analysis for a specific user"""
     
@@ -211,12 +203,10 @@ def get_user_trend_details(
         "latest_activity": tweets[0].created_at.isoformat() if tweets and tweets[0].created_at else None
     }
 
-
 @router.get("/compare-users")
 def compare_user_trends(
     users: str = Query(..., description="Comma-separated usernames"),
     days: int = Query(7, description="Days to analyze"),
-    db: Session = Depends(get_db)
 ):
     """Compare trends between multiple users"""
     

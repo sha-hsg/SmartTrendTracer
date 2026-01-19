@@ -1,11 +1,8 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 import json
 
-from app.models import get_db, Tweet, Tag
 from app.services.llm_service import LLMService
 
 router = APIRouter()
@@ -13,7 +10,6 @@ router = APIRouter()
 @router.get("/trends/timeline")
 def get_trend_timeline(
     days: int = Query(7, ge=1, le=30),
-    db: Session = Depends(get_db)
 ):
     """
     Get tweet volume timeline for trend visualization
@@ -83,7 +79,6 @@ def get_trend_timeline(
 def get_tag_trends(
     days: int = Query(7, ge=1, le=30),
     limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db)
 ):
     """
     Get trending tags with counts over time
@@ -140,7 +135,6 @@ def summarize_tweets(
     period: Optional[str] = Query(None, description="Period: today, 3days, week"),
     tags: Optional[List[str]] = Query(None, description="Filter by tags"),
     author: Optional[str] = Query(None, description="Filter by author"),
-    db: Session = Depends(get_db)
 ):
     """
     Summarize tweets based on filters using LLM

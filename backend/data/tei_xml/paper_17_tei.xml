@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Towards Improving a Student Advisory Service Chatbot Using Knowledge Graphs</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability status="unknown"><licence/></availability>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Daniel</forename><surname>Delev</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data And Web Science Group , Germany</note>
+								<orgName type="department">Data And Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Emmie</forename><surname>Schiffer</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data And Web Science Group , Germany</note>
+								<orgName type="department">Data And Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Felix</forename><surname>Vogl</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data And Web Science Group , Germany</note>
+								<orgName type="department">Data And Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Andreea</forename><surname>Iana</surname></persName>
+							<email>andreea.iana@uni-mannheim.de</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data And Web Science Group , Germany</note>
+								<orgName type="department">Data And Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Heiko</forename><surname>Paulheim</surname></persName>
+							<email>heiko.paulheim@uni-mannheim.de</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation"><label>1</label> University of Mannheim , Data And Web Science Group , Germany</note>
+								<orgName type="department">Data And Web Science Group</orgName>
+								<orgName type="institution">University of Mannheim</orgName>
+								<address>
+									<country key="DE">Germany</country>
+								</address>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Towards Improving a Student Advisory Service Chatbot Using Knowledge Graphs</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date/>
+						</imprint>
+					</monogr>
+					<idno type="MD5">F620D5E1969C4A32FBF522B20A311425</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:55+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Chatbot</term>
+					<term>Retrieval Augmented Generation (RAG)</term>
+					<term>Large Language Model</term>
+					<term>ChatGPT</term>
+					<term>Knowledge Graph</term>
+					<term>Dialogue</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Student advisory services at universities face a high volume of repetitive inquiries, which can be time-consuming and labor-intensive to address. In this paper, we explore the potential of chatbots to provide personalized support by leveraging university web pages and study regulation documents. Our prototype demonstrates the feasibility of chatbots in identifying relevant information and answering student queries. However, we also identify limitations in handling nuanced cases, particularly cohort-specific regulations. To address these challenges, we propose the integration of knowledge graphs as a potential extension to enhance the dialogue capabilities of the chatbot.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1.">Introduction</head><p>Throughout their time at the university, students frequently contact the student advisory service with various questions about planning and conducting their studies. Many of those questions can be answered from information found on university web pages and study regulation documents.</p><p>While there is clear evidence that student advisory is helpful and impacts students' success <ref type="bibr" target="#b0">[1]</ref>, the capacity of student advisors is usually limited. At the same time, they spend a substantial amount of time with questions that are trivial enough to be answered directly from publicly available documents, such as university web pages and study regulation documents. In order to decrease the burden of study advisors, chatbots may help answering such simple questions, giving the advisors more time to care about the non-trivial cases.</p><p>In this paper, we introduce a prototype of a chatbot based on the Large Language Model ChatGPT <ref type="bibr" target="#b1">[2]</ref> built with LangChain <ref type="bibr" target="#b2">[3]</ref>, which can be used to answer standard questions about study programs that are often directed to study advisors. There are two main challenges that need to be faced:</p><p>• The answers need to be truthful and free from hallucinations <ref type="bibr" target="#b3">[4]</ref>. Especially LLMs trained from large amounts of texts from various sources are likely to have ingested many university Web pages, but should only give answers which are in line with the regulations of the specific university where the chatbot is deployed. • The answers need to be tailored to the student at hand. The answer to many questions, e.g., whether a student can register for a particular course, may depend on the study program the student is enrolled in, their academic record so far, and other conditions.</p><p>The first challenge is addressed by following the Retrieval Augmented Generation paradigm <ref type="bibr" target="#b4">[5]</ref>, providing the LLM with pre-retrieved fragments from study regulation documents and Web pages about study programs. For the second challenge, the current prototype uses a fixed prompt template asking the student for their background and study program. Here, we argue that knowledge graphs could help improving the interaction, making the answers more concise and, at the same time, facilitating a better dialogue and user experience by limiting the amount of unnecessary questions asked upfront. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.">Prototype</head><p>The prototype introduced in this paper consists of two preprocessing steps: (1) web scraping, and (2) text chunking and augmentation. At the user interaction stage, the chatbot executes a fixed protocol, (3) collecting initial personal information on the candidate, (4a) retrieving and (4b) filtering relevant document chunks, and ( <ref type="formula">5</ref>) generating an answer from those chunks. Figure <ref type="figure">1</ref> shows the overall process.</p><p>The prototype has been developed and tested for study programs of the School of Business Informatics at University of Mannheim, but can be applied to other study programs as well.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1.">Data Preparation</head><p>To collect relevant data, we run a web scraper starting from the School of Business Informatics Web page, and following links to Web pages and PDF files (which are the common format to provide documents such study regulations) up to a depth of 3. The final dataset consists of of 668 HTML files (43 MB) and 983 PDF files <ref type="bibr" target="#b0">(1,</ref><ref type="bibr">234 GB)</ref>. Not all of the documents are relevant for answering questions in the context of academic advisory (for example, by crawling PDFs from the faculty Web page, academic papers and CVs are also caught, among others). However, manual filtering is infeasible, so we rely on later processing steps and/or automatic filtering to identify the relevant documents for a question at hand.</p><p>In order to use texts in a RAG setting, they need to be injected in the prompts (see below). Since there are token limits for prompts (4,096 tokens for ChatGPT-3.5 which was used for this project), most of the texts are too large to be used directly. Therefore, they are divided into smaller chunks (using a chunk size of 1,000 characters, with an overlap of 200 characters) before further processing.</p><p>Furthermore, each text chunk is augmented with metadata. The prototype uses two metadata fields, i.e., the study program (one of the study programs taught at the School of Business Informatics, or "general"), and a short summary. Both are generated by feeding the corresponding chunk into ChatGPT and making it determine the study program and a summary in a zero-shot setting. An evaluation on a small sample showed that the metadata are correct in 65% of the cases.</p><p>For all text chunks, embedding vectors are created using LlamaIndex<ref type="foot" target="#foot_0">foot_0</ref> . Those are stored in a vector index so that they can be used for passage retrieval.</p><p>Note that while the data collection and preparation has been done once for this proof-of-concept prototype, in a productive deployment, it would be re-run periodically in order to always deliver up to date responses.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.2.">User Interactions</head><p>As shown in Fig <ref type="figure">1,</ref><ref type="figure"></ref> ChatGPT is not used directly, but invoked by the chatbot that interfaces with the user. When collecting the question, it asks for context like the study program the user is enrolled in. In parallel, the user's question is embedded using the same method as for the text chunks, and the text chunks with the closest vectors are retrieved and filtered by the metadata according to the context provided by the user.</p><p>The final prompt used to provide an answer to the user which is passed to ChatGPT looks as follows:</p><p>Use t h e f o l l o w i n g p i e c e s o f c o n t e x t t o answer t h e q u e s t i o n a t t h e end . E x e c u t e t h e s e s t e p s : 1 -a l w a y s answer i n t h e l a n g u a g e t h e q u e s t i o n was g i v e n i n</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">-r e a d t h e c o n t e x t , do n o t u s e i n f o r m a t i o n o u t s i d e o f t h e c o n t e x t t o answer t h e q u e s t i o n 3 -i f t h e answer i s n o t p r o v i d e d i n t h e g i v e n c o n t e x t , s a y where more i n f o r m a t i o n can p o s s i b l y be f o u n d 4 -answer t h e q u e s t i o n ------------------------C o n t e x t : { c o n t e x t } Q u e s t i o n : I am s t u d y i n g t h e { s t u d y _ p r o g r a m } . { q u e s t i o n }</head><p>where study_program and context are the study program asked for in the previous dialogue, and the text chunks retrieved, respectively, and question is the question provided by the user.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.3.">Evaluation</head><p>We have evaluated the proposed approach using a set of 23 questions, both in English and German. Each question was tested with two different study programs as a context, leading to an overall set of 46 questions and gold standard answers. The answers given by the chatbot were manually evaluated against the gold standard. The final prototype yields an overall rate of correct answers of 83%. In a preliminary study, we also evaluated PaperQA <ref type="bibr" target="#b5">[6]</ref> as an out of the box end-to-end solution, but achieved less than 50% correct answers. Therefore, the approach was discarded.</p><p>We also evaluated the document chunk retrieval step in isolation for each of the test questions, considering the precision@5 (i.e., the rate of relevant documents among the top 5 document chunks). The approach achieves a total rate of 87%, i.e., on average, 4.4 out of the top 5 document chunks are relevant for answering the question at hand. Interestingly, without considering the metadata, the rate drops to 63% (i.e., 3.1 out of the top 5 document chunks).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.">Potential of Using a Knowledge Graph</head><p>As discussed above, the dialogue currently follows a fixed script. This also means that the same context information is always collected, regardless of whether that information is required or not. However, some questions require no context information (When do the lectures start in the fall semester? ), others may require the study program (How many credits do I need to collect in the fundamentals module? ), others may even require other information on the student's individual track record (Can I attend the advanced course on software engineering?, e.g., if this course has specific requirements).</p><p>Organizing the collected text information in a knowledge graph, as shown in Fig. <ref type="figure" target="#fig_1">2</ref>, can help identifying those required pieces of context information in an interative process of retrieving document chunks and narrowing down the set of relevant chunks in an interactive dialogue with the user. The information in the knowledge graph may include the metadata discussed above, but also further information on the curriculum <ref type="bibr" target="#b6">[7]</ref>, like information extracted from a module catalogue (e.g., course prerequisites, as shown in the left part of the figure).</p><p>Although the rate of relevant document chunks retrieved is rather good, as discussed above, we often observe the retrieval of contradicting chunks, which then leads to wrong or unspecific answers. This may be the case, e.g., for chunks extracted from documents concerning different study programs, in which different regulations are in place. Detecting such contradictions by means of automatic stance detection <ref type="bibr" target="#b7">[8]</ref> and explicitly modeling them in the knowledge graph, as shown in the figure, is a good way to both identify those cases, as well as making the chatbot ask specific questions to narrow down the set of retrieved chunks. In the example shown in the figure, retrieving the two contradicting chunks chunk43987 and chunk51378, the knowledge graph could be traversed to find out that both refer to different study programs, to make the chatbot ask for the user's study program, and ultimately discard non-fitting document chunks before passing them to the answer generation.</p><p>Finally, if the knowledge graph becomes deeper and more connected, encompassing more metadata and interlinks inbetween the text chunks, which are represented as nodes in the graph, knowledge graph embeddings <ref type="bibr" target="#b8">[9]</ref> can be used to improve the retrieval process.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.">Conclusion</head><p>In this paper, we have introduced a first prototype for a student advisory chatbot. The chatbot is based on a document collection harvested from the Web, which is preprocessed and enriched using an LLM. The text chunks are then used in the information retrieval block in a retrieval augmented generation (RAG) based chatbot implemented with LangChain and ChatGPT.</p><p>In the future, it would be interesting to test the approach in a broader setting, covering more study programs and/or schools. While the approach itself is considered scalable, this will also pose challenges with respect to identifying relevant information if the amount of processed contents is larger.</p><p>Moreover, we have discussed how a knowledge graph can help improving the behavior and output of the chatbot. Especially for identifying which context information is required from the user, a knowledge graph may be beneficial and help extending the system from a chatbot following a static script to an interactive bot asking directed questions based on information modeled in the knowledge graph. This will be even more crucial if the approach is used on a broader scale, as discussed above.</p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>5 Figure 1 :</head><label>51</label><figDesc>Figure 1: Schematic depiction of the prototype</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Figure 2 :</head><label>2</label><figDesc>Figure 2: Example for a Knowledge Graph describing the extracted text snippets</figDesc></figure>
+			<note xmlns="http://www.tei-c.org/ns/1.0" place="foot" n="1" xml:id="foot_0"><p>https://www.llamaindex.ai/</p></note>
+		</body>
+		<back>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">A Quantitative Study of Community College Student-Advisor Appointments and Student Success Metrics</title>
+		<author>
+			<persName><forename type="first">Michael</forename><surname>Goemans</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Brian</forename><surname>Kapinos</surname></persName>
+		</author>
+		<idno type="DOI">10.12930/nacada-23-31</idno>
+	</analytic>
+	<monogr>
+		<title level="j">NACADA Journal</title>
+		<idno type="ISSN">0271-9517</idno>
+		<idno type="ISSNe">2330-3840</idno>
+		<imprint>
+			<biblScope unit="volume">44</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="38" to="54" />
+			<date type="published" when="2024-06-01">2024</date>
+			<publisher>National Academic Advising Association (NACADA)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Goemans, B. Kapinos, A quantitative study of community college student-advisor appointments and student success metrics, NACADA Journal 44 (2024) 38-54.</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<analytic>
+		<title level="a" type="main">A Brief Overview of ChatGPT: The History, Status Quo and Potential Future Development</title>
+		<author>
+			<persName><forename type="first">Tianyu</forename><surname>Wu</surname></persName>
+			<idno type="ORCID">0009-0008-8104-3382</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Shizhu</forename><surname>He</surname></persName>
+			<idno type="ORCID">0000-0001-9053-9517</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jingping</forename><surname>Liu</surname></persName>
+			<idno type="ORCID">0000-0002-8671-2302</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Siqi</forename><surname>Sun</surname></persName>
+			<idno type="ORCID">0000-0001-7240-8724</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Kang</forename><surname>Liu</surname></persName>
+			<idno type="ORCID">0000-0002-6083-8433</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Qing-Long</forename><surname>Han</surname></persName>
+			<idno type="ORCID">0000-0002-7207-0716</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Yang</forename><surname>Tang</surname></persName>
+			<idno type="ORCID">0000-0002-2750-8029</idno>
+		</author>
+		<idno type="DOI">10.1109/jas.2023.123618</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE/CAA Journal of Automatica Sinica</title>
+		<title level="j" type="abbrev">IEEE/CAA J. Autom. Sinica</title>
+		<idno type="ISSN">2329-9266</idno>
+		<idno type="ISSNe">2329-9274</idno>
+		<imprint>
+			<biblScope unit="volume">10</biblScope>
+			<biblScope unit="issue">5</biblScope>
+			<biblScope unit="page" from="1122" to="1136" />
+			<date type="published" when="2023-05">2023</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">T. Wu, S. He, J. Liu, S. Sun, K. Liu, Q.-L. Han, Y. Tang, A brief overview of chatgpt: The history, status quo and potential future development, IEEE/CAA Journal of Automatica Sinica 10 (2023) 1122-1136.</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">Creating Large Language Model Applications Utilizing LangChain: A Primer on Developing LLM Apps Fast</title>
+		<author>
+			<persName><forename type="first">Oguzhan</forename><surname>Topsakal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Tahir</forename><forename type="middle">Cetin</forename><surname>Akinci</surname></persName>
+		</author>
+		<idno type="DOI">10.59287/icaens.1127</idno>
+	</analytic>
+	<monogr>
+		<title level="j">International Conference on Applied Engineering and Natural Sciences</title>
+		<title level="j" type="abbrev">ICAENS</title>
+		<idno type="ISSNe">2980-3209</idno>
+		<imprint>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1050" to="1056" />
+			<date type="published" when="2023-07-22">2023</date>
+			<publisher>All Sciences Proceedings</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">O. Topsakal, T. C. Akinci, Creating large language model applications utilizing langchain: A primer on developing llm apps fast, in: International Conference on Applied Engineering and Natural Sciences, volume 1, 2023, pp. 1050-1056.</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<monogr>
+		<author>
+			<persName><forename type="first">V</forename><surname>Rawte</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Sheth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Das</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2309.05922</idno>
+		<title level="m">A survey of hallucination in large foundation models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">V. Rawte, A. Sheth, A. Das, A survey of hallucination in large foundation models, arXiv preprint arXiv:2309.05922 (2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledge-intensive nlp tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><surname>-T. Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="9459" to="9474" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W.-t. Yih, T. Rocktäschel, et al., Retrieval-augmented generation for knowledge-intensive nlp tasks, Advances in Neural Information Processing Systems 33 (2020) 9459-9474.</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<monogr>
+		<author>
+			<persName><forename type="first">J</forename><surname>Lála</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>O'donoghue</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Shtedritski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Cox</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><forename type="middle">G</forename><surname>Rodriques</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">D</forename><surname>White</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2312.07559</idno>
+		<title level="m">Paperqa: Retrievalaugmented generative agent for scientific research</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">J. Lála, O. O&apos;Donoghue, A. Shtedritski, S. Cox, S. G. Rodriques, A. D. White, Paperqa: Retrieval- augmented generative agent for scientific research, arXiv preprint arXiv:2312.07559 (2023).</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">An Ontology-Based Approach for Curriculum Mapping in Higher Education</title>
+		<author>
+			<persName><forename type="first">Muthana</forename><surname>Zouri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alex</forename><surname>Ferworn</surname></persName>
+		</author>
+		<idno type="DOI">10.1109/ccwc51732.2021.9376163</idno>
+	</analytic>
+	<monogr>
+		<title level="m">2021 IEEE 11th Annual Computing and Communication Workshop and Conference (CCWC)</title>
+		<imprint>
+			<publisher>IEEE</publisher>
+			<date type="published" when="2021-01-27">2021. 2021</date>
+			<biblScope unit="page" from="0141" to="0147" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">M. Zouri, A. Ferworn, An ontology-based approach for curriculum mapping in higher education, in: 2021 IEEE 11th Annual Computing and communication workshop and conference (CCWC), IEEE, 2021, pp. 0141-0147.</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Stance Detection</title>
+		<author>
+			<persName><forename type="first">Dilek</forename><surname>Küçük</surname></persName>
+			<idno type="ORCID">0000-0003-2656-1300</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Fazli</forename><surname>Can</surname></persName>
+			<idno type="ORCID">0000-0003-0016-4278</idno>
+		</author>
+		<idno type="DOI">10.1145/3369026</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">53</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<biblScope unit="page" from="1" to="37" />
+			<date type="published" when="2020-02-06">2020</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">D. Küçük, F. Can, Stance detection: A survey, ACM Computing Surveys (CSUR) 53 (2020) 1-37.</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">RDF2vec at Scale</title>
+		<author>
+			<persName><forename type="first">Heiko</forename><surname>Paulheim</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Petar</forename><surname>Ristoski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jan</forename><surname>Portisch</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-031-30387-6_5</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Synthesis Lectures on Data, Semantics, and Knowledge</title>
+		<imprint>
+			<publisher>Springer International Publishing</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="77" to="86" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">H. Paulheim, P. Ristoski, J. Portisch, Embedding Knowledge Graphs with RDF2vec, Springer Nature, 2023.</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

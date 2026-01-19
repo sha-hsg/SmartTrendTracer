@@ -17,15 +17,11 @@ import {
   Users,
   FileText,
   Hash,
-  BarChart3,
   Activity,
   RefreshCw,
-  Loader2,
   AlertCircle,
   Sparkles,
-  Calendar,
   ArrowUp,
-  ArrowDown,
   ArrowRight,
   Zap,
   Target,
@@ -184,11 +180,16 @@ export default function SubstackTrendsModern() {
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
-    })
+    if (!dateStr) return 'N/A'
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      })
+    } catch {
+      return 'N/A'
+    }
   }
 
   if (loading || !trends) {
@@ -225,7 +226,7 @@ export default function SubstackTrendsModern() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Newsletter Trend Analysis</h1>
             <p className="text-gray-600">
-              Analyzing {trends.total_articles} articles from {formatDate(trends.date_range.start)} to {formatDate(trends.date_range.end)}
+              Analyzing {trends?.total_articles || 0} articles from {formatDate(trends?.date_range?.start || '')} to {formatDate(trends?.date_range?.end || '')}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -260,7 +261,7 @@ export default function SubstackTrendsModern() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Articles</p>
-                <p className="text-2xl font-bold">{trends.total_articles}</p>
+                <p className="text-2xl font-bold">{trends?.total_articles || 0}</p>
               </div>
               <FileText className="h-8 w-8 text-blue-500 opacity-20" />
             </div>
@@ -272,7 +273,7 @@ export default function SubstackTrendsModern() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Authors</p>
-                <p className="text-2xl font-bold">{trends.author_trends.total_authors}</p>
+                <p className="text-2xl font-bold">{trends?.author_trends?.total_authors || 0}</p>
               </div>
               <Users className="h-8 w-8 text-green-500 opacity-20" />
             </div>
@@ -284,7 +285,7 @@ export default function SubstackTrendsModern() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Unique Tags</p>
-                <p className="text-2xl font-bold">{trends.tag_trends.unique_tags}</p>
+                <p className="text-2xl font-bold">{trends?.tag_trends?.unique_tags || 0}</p>
               </div>
               <Hash className="h-8 w-8 text-purple-500 opacity-20" />
             </div>
@@ -296,7 +297,7 @@ export default function SubstackTrendsModern() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Highlights</p>
-                <p className="text-2xl font-bold">{trends.snippet_insights.total_snippets}</p>
+                <p className="text-2xl font-bold">{trends?.snippet_insights?.total_snippets || 0}</p>
               </div>
               <MessageSquare className="h-8 w-8 text-orange-500 opacity-20" />
             </div>
@@ -317,7 +318,7 @@ export default function SubstackTrendsModern() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Key Insights */}
-            {trends.summary.key_insights.length > 0 && (
+            {trends?.summary?.key_insights?.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -327,7 +328,7 @@ export default function SubstackTrendsModern() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {trends.summary.key_insights.map((insight, idx) => (
+                    {(trends?.summary?.key_insights || []).map((insight, idx) => (
                       <li key={idx} className="flex items-start gap-2">
                         <ChevronRight className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{insight}</span>
@@ -339,7 +340,7 @@ export default function SubstackTrendsModern() {
             )}
 
             {/* Emerging Themes */}
-            {trends.emerging_themes.length > 0 && (
+            {trends?.emerging_themes?.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -349,7 +350,7 @@ export default function SubstackTrendsModern() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {trends.emerging_themes.slice(0, 5).map((theme, idx) => (
+                    {(trends?.emerging_themes || []).slice(0, 5).map((theme, idx) => (
                       <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
                         <div className="flex items-center gap-2">
                           {theme.type === 'new' ? (
@@ -374,7 +375,7 @@ export default function SubstackTrendsModern() {
           </div>
 
           {/* Hot Topics */}
-          {trends.topic_trends.top_topics.length > 0 && (
+          {trends?.topic_trends?.top_topics?.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -385,8 +386,8 @@ export default function SubstackTrendsModern() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {trends.topic_trends.top_topics.slice(0, 10).map((topic, idx) => {
-                    const maxScore = trends.topic_trends.top_topics[0].score
+                  {(trends?.topic_trends?.top_topics || []).slice(0, 10).map((topic, idx) => {
+                    const maxScore = trends?.topic_trends?.top_topics?.[0]?.score || 1
                     const percentage = (topic.score / maxScore) * 100
                     
                     return (
@@ -410,7 +411,7 @@ export default function SubstackTrendsModern() {
         <TabsContent value="topics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Trending Up */}
-            {trends.topic_trends.trending_up.length > 0 && (
+            {trends?.topic_trends?.trending_up?.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -422,7 +423,7 @@ export default function SubstackTrendsModern() {
                 <CardContent>
                   <ScrollArea className="h-[400px]">
                     <div className="space-y-2">
-                      {trends.topic_trends.trending_up.map((topic, idx) => (
+                      {(trends?.topic_trends?.trending_up || []).map((topic, idx) => (
                         <div key={idx} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
                           <span className="font-medium">{topic.term}</span>
                           <div className="flex items-center gap-2">
@@ -440,7 +441,7 @@ export default function SubstackTrendsModern() {
             )}
 
             {/* Tag Relationships */}
-            {trends.tag_trends.tag_relationships.length > 0 && (
+            {trends?.tag_trends?.tag_relationships?.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -452,7 +453,7 @@ export default function SubstackTrendsModern() {
                 <CardContent>
                   <ScrollArea className="h-[400px]">
                     <div className="space-y-3">
-                      {trends.tag_trends.tag_relationships.slice(0, 5).map((rel, idx) => (
+                      {(trends?.tag_trends?.tag_relationships || []).slice(0, 5).map((rel, idx) => (
                         <div key={idx} className="space-y-2">
                           <div className="font-medium text-sm">{rel.tag}</div>
                           <div className="flex flex-wrap gap-1">
@@ -463,7 +464,7 @@ export default function SubstackTrendsModern() {
                               </Badge>
                             ))}
                           </div>
-                          {idx < trends.tag_trends.tag_relationships.length - 1 && (
+                          {idx < (trends?.tag_trends?.tag_relationships?.length || 0) - 1 && (
                             <Separator className="mt-2" />
                           )}
                         </div>
@@ -487,7 +488,7 @@ export default function SubstackTrendsModern() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {trends.author_trends.most_active.map((author, idx) => (
+                {(trends?.author_trends?.most_active || []).map((author, idx) => (
                   <Card key={idx}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -498,7 +499,7 @@ export default function SubstackTrendsModern() {
                             className={cn("mt-1", getProductivityColor(author.productivity))}
                           >
                             {getProductivityIcon(author.productivity)}
-                            <span className="ml-1">{author.productivity.replace('_', ' ')}</span>
+                            <span className="ml-1">{author.productivity?.replace('_', ' ') || 'unknown'}</span>
                           </Badge>
                         </div>
                       </div>
@@ -510,11 +511,11 @@ export default function SubstackTrendsModern() {
                         </div>
                         <div>
                           <span className="text-gray-500">Avg words:</span>
-                          <span className="ml-2 font-medium">{author.avg_words.toLocaleString()}</span>
+                          <span className="ml-2 font-medium">{author.avg_words?.toLocaleString() || 0}</span>
                         </div>
                         <div>
                           <span className="text-gray-500">Reading time:</span>
-                          <span className="ml-2 font-medium">{author.avg_reading_time.toFixed(1)} min</span>
+                          <span className="ml-2 font-medium">{author.avg_reading_time?.toFixed(1) || 0} min</span>
                         </div>
                         <div>
                           <span className="text-gray-500">Snippets:</span>
@@ -550,7 +551,7 @@ export default function SubstackTrendsModern() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {trends.velocity_trends.map((item, idx) => (
+                {(trends?.velocity_trends || []).map((item, idx) => (
                   <div 
                     key={idx} 
                     className={cn(
@@ -575,7 +576,7 @@ export default function SubstackTrendsModern() {
                           item.velocity < 0 && "bg-red-100 text-red-700"
                         )}
                       >
-                        {item.velocity > 0 ? '+' : ''}{(item.velocity * 100).toFixed(0)}%
+                        {item.velocity > 0 ? '+' : ''}{((item.velocity || 0) * 100).toFixed(0)}%
                       </Badge>
                     </div>
                   </div>
@@ -596,7 +597,7 @@ export default function SubstackTrendsModern() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {trends.content_clusters.map((cluster, idx) => (
+                {(trends?.content_clusters || []).map((cluster, idx) => (
                   <Card key={idx}>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -643,7 +644,7 @@ export default function SubstackTrendsModern() {
       </Tabs>
 
       {/* Important Snippets */}
-      {trends.snippet_insights.important_highlights.length > 0 && (
+      {trends?.snippet_insights?.important_highlights?.length > 0 && (
         <Card className="mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -655,7 +656,7 @@ export default function SubstackTrendsModern() {
           <CardContent>
             <ScrollArea className="h-[400px]">
               <div className="space-y-3">
-                {trends.snippet_insights.important_highlights.slice(0, 5).map((snippet, idx) => (
+                {(trends?.snippet_insights?.important_highlights || []).slice(0, 5).map((snippet, idx) => (
                   <Card key={idx}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">

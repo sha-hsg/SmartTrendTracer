@@ -1,20 +1,14 @@
 """
-AI-powered ontology suggestions using Claude via LangChain
+AI-powered ontology suggestions using LLM Manager
+Migrated to use unified LLM Manager with LiteLLM
 """
 import json
 import os
 from typing import List, Dict, Optional, Tuple, Any
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from sqlalchemy.orm import Session
-from sqlalchemy import func
 
-from app.models import TagConcept, TagSynonym, Tag
-
+from app.services.llm_manager import get_llm_manager
 
 class OntologySuggestion(BaseModel):
     """Model for ontology suggestions"""
@@ -23,49 +17,30 @@ class OntologySuggestion(BaseModel):
     same_as: List[Dict[str, Any]]  # [{"canonical": "llm", "alternatives": ["LLM", "large-language-model"]}]
     reasoning: str
 
-
 class OntologyAIService:
     """Service for AI-powered ontology management"""
-    
-    def __init__(self):
-        """Initialize with LangChain and Claude"""
+
+    def __init__(self, user_id: str = "default"):
+        """Initialize with LLM Manager"""
         # Load environment variables
         load_dotenv()
-        
-        # Load configuration
-        with open('llm.json', 'r') as f:
-            self.llm_config = json.load(f)
-        
+
+        # Initialize LLM Manager
+        self.llm_manager = get_llm_manager()
+        self.user_id = user_id
+
+        # Task types from litellm_config.yaml
+        self.task_type_suggestion = 'ontology_suggestion'
+        self.task_type_validation = 'ontology_validation'
+        self.task_type_bulk = 'ontology_bulk'
+
+        # Load prompts configuration
         with open('prompts_config.json', 'r') as f:
             self.prompts = json.load(f)
-        
-        # Initialize Claude model
-        model_config = self.llm_config['models'].get('ontology_suggestion', 
-                                                      self.llm_config['models']['tag_suggestion'])
-        
-        # Get API key
-        api_key = os.getenv('ANTHROPIC_API_KEY')
-        if not api_key:
-            # Try loading from .env file (already imported at top)
-            load_dotenv()
-            api_key = os.getenv('ANTHROPIC_API_KEY')
-        
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY not found in environment variables")
-        
-        # Use the model from config, no hardcoded fallback
-        if 'model' not in model_config:
-            raise ValueError("Model not specified in llm.json for ontology_suggestion")
-        
-        self.llm = ChatAnthropic(
-            model=model_config['model'],
-            anthropic_api_key=api_key,
-            temperature=model_config.get('temperature', 0.3),
-            max_tokens=model_config.get('max_tokens', 2000)
-        )
-        
-        # JSON output parser
-        self.parser = JsonOutputParser(pydantic_object=OntologySuggestion)
+
+        # Get model attribution for suggestion task
+        task_info = self.llm_manager.get_task_info(self.task_type_suggestion)
+        self.model_name = task_info['model'] if task_info else 'unknown'
     
     def analyze_tag_relationships(self, db: Session, tag: str) -> OntologySuggestion:
         """
@@ -101,29 +76,31 @@ class OntologyAIService:
             tags=f"['{tag}']"  # Format as list for consistency
         )
         
+        # Convert to OpenAI message format
         messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
         ]
-        
+
         try:
-            print(f"Sending messages to Claude for tag: {tag}")
-            print(f"System message: {messages[0].content[:200]}...")
-            print(f"User message: {messages[1].content[:200]}...")
-            
-            response = self.llm.invoke(messages)
-            
+            print(f"Sending messages to LLM for tag: {tag}")
+            print(f"System message: {messages[0]['content'][:200]}...")
+            print(f"User message: {messages[1]['content'][:200]}...")
+
+            # Call LLM Manager
+            response = self.llm_manager.completion_sync(
+                task_type=self.task_type_suggestion,
+                messages=messages,
+                user_id=self.user_id
+            )
+
             print(f"Raw response type: {type(response)}")
             print(f"Raw response: {response}")
-            
-            # Try to parse the response content
-            if hasattr(response, 'content'):
-                content = response.content
-                print(f"Response content type: {type(content)}")
-                print(f"Response content: {content}")
-            else:
-                content = str(response)
-                print(f"Using str(response): {content}")
+
+            # Extract content from LiteLLM response
+            content = response.choices[0].message.content
+            print(f"Response content type: {type(content)}")
+            print(f"Response content: {content}")
             
             # Clean up the response if needed
             if isinstance(content, str):
@@ -276,22 +253,8 @@ class OntologyAIService:
         ).all()
         
         ontology_context = self._build_ontology_context(existing_concepts)
-        
-        # Use bulk model if configured, otherwise use main ontology model
-        bulk_config = self.llm_config['models'].get('ontology_bulk', 
-                                                     self.llm_config['models']['ontology_suggestion'])
-        
-        # Create a separate LLM instance for bulk operations if different config
-        if bulk_config != self.llm_config['models']['ontology_suggestion']:
-            bulk_llm = ChatAnthropic(
-                model=bulk_config['model'],
-                anthropic_api_key=os.getenv('ANTHROPIC_API_KEY'),
-                temperature=bulk_config.get('temperature', 0.3),
-                max_tokens=bulk_config.get('max_tokens', 4000)
-            )
-        else:
-            bulk_llm = self.llm
-        
+
+        # Use bulk task type (configured in litellm_config.yaml)
         bulk_prompt_config = self.prompts.get('ontology_bulk_organization', {})
         system_prompt = bulk_prompt_config.get('system', '')
         user_template = bulk_prompt_config.get('user_template', '')
@@ -310,20 +273,23 @@ class OntologyAIService:
             ontology_context=ontology_context,
             tags=json.dumps(uncategorized_tags, indent=2)
         )
-        
+
+        # Convert to OpenAI message format
         messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt)
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
         ]
-        
+
         try:
-            response = bulk_llm.invoke(messages)
-            
-            # Parse response
-            if hasattr(response, 'content'):
-                content = response.content
-            else:
-                content = str(response)
+            # Call LLM Manager with bulk task type
+            response = self.llm_manager.completion_sync(
+                task_type=self.task_type_bulk,
+                messages=messages,
+                user_id=self.user_id
+            )
+
+            # Extract content from LiteLLM response
+            content = response.choices[0].message.content
             
             # Clean up JSON if in markdown blocks
             if isinstance(content, str):
@@ -357,14 +323,23 @@ class OntologyAIService:
             source=source,
             target=target
         )
-        
+
         try:
+            # Convert to OpenAI message format
             messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=user_prompt)
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ]
-            response = self.llm.invoke(messages)
-            return json.loads(response.content)
+
+            # Call LLM Manager with validation task type
+            response = self.llm_manager.completion_sync(
+                task_type=self.task_type_validation,
+                messages=messages,
+                user_id=self.user_id
+            )
+
+            content = response.choices[0].message.content
+            return json.loads(content)
         except:
             return {
                 "valid": True,
@@ -459,13 +434,13 @@ class OntologyAIService:
         
         return suggestions
 
-
 class OntologyProposalService:
     """Service for managing ontology proposals"""
-    
-    def __init__(self, db: Session):
+
+    def __init__(self, db: Session, user_id: str = "default"):
         self.db = db
-        self.ai_service = OntologyAIService()
+        self.user_id = user_id
+        self.ai_service = OntologyAIService(user_id=user_id)
     
     def generate_proposals_for_tag(self, tag: str) -> Dict:
         """Generate comprehensive proposals for a single tag"""

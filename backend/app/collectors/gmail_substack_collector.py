@@ -18,10 +18,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from bs4 import BeautifulSoup
-from sqlalchemy.orm import Session
 
-from app.models import get_db
-from app.models.substack import SubstackAuthor, SubstackArticle, SubstackCollection
 from app.services.forwarded_email_cleaner import ForwardedEmailCleaner
 from app.services.aggressive_html_cleaner import AggressiveHTMLCleaner
 
@@ -105,7 +102,6 @@ class GmailSubstackCollector:
     """Collect Substack newsletters from Gmail"""
     
     def __init__(self, db_session: Session = None):
-        self.db = db_session or next(get_db())
         self.service = None
         # Markdownify options for better conversion
         self.markdown_options = {
@@ -210,7 +206,7 @@ class GmailSubstackCollector:
                 # Gmail date format: "Thu, 7 Nov 2024 08:30:00 +0000"
                 from email.utils import parsedate_to_datetime
                 date = parsedate_to_datetime(date_str)
-            except:
+            except (ValueError, TypeError):
                 date = datetime.now(timezone.utc)
             
             # Extract HTML body
@@ -389,13 +385,13 @@ class GmailSubstackCollector:
                 width = img.get('width')
                 height = img.get('height')
                 src = img.get('src', '')
-                
+
                 # Remove 1x1 tracking pixels
-                if ((width == '1' and height == '1') or 
-                    'open?token=' in src or 
+                if ((width == '1' and height == '1') or
+                    'open?token=' in src or
                     '/track' in src):
                     img.decompose()
-            except:
+            except (AttributeError, TypeError):
                 pass
         
         # Only remove very specific forwarding header elements, not entire containers
@@ -571,7 +567,7 @@ class GmailSubstackCollector:
                         if w <= 40 and h <= 40 and 'substack-post-media' not in src:
                             img.decompose()
                             continue
-                    except:
+                    except (ValueError, TypeError):
                         pass
                 
                 # Keep content images from Substack CDN
@@ -604,7 +600,7 @@ class GmailSubstackCollector:
                 # If we can't process an image, remove it
                 try:
                     img.decompose()
-                except:
+                except (AttributeError, TypeError):
                     pass
         
         # Extract all content including text and markdown images
@@ -1155,6 +1151,8 @@ def main():
                        help='Collect emails before this date (format: YYYY-MM-DD, e.g., 2025-08-12)')
     parser.add_argument('--on', default=None,
                        help='Collect emails on this specific date (format: YYYY-MM-DD, e.g., 2025-08-11)')
+    parser.add_argument('--days', type=int, default=None,
+                       help='Collect emails from the last N days (e.g., --days 2 for last 2 days)')
     parser.add_argument('--restore-deleted', action='store_true',
                        help='Restore and re-import soft-deleted articles (undelete them)')
     
@@ -1172,11 +1170,18 @@ def main():
         query_parts = []
         
         # Add date filters if specified
-        if args.on:
+        from datetime import datetime, timedelta
+        
+        if args.days:
+            # Calculate date range from --days parameter
+            today = datetime.now()
+            days_ago = (today - timedelta(days=args.days)).strftime('%Y-%m-%d')
+            query_parts.append(f'after:{days_ago}')
+            print(f"📅 Collecting emails from the last {args.days} days (since {days_ago})")
+        elif args.on:
             # Specific date - use after and before to bracket the day
             query_parts.append(f'after:{args.on}')
             # Add one day for before (Gmail date logic)
-            from datetime import datetime, timedelta
             date_obj = datetime.strptime(args.on, '%Y-%m-%d')
             next_day = (date_obj + timedelta(days=1)).strftime('%Y-%m-%d')
             query_parts.append(f'before:{next_day}')
@@ -1252,7 +1257,6 @@ def main():
         articles = collector.collect_newsletters(query, args.max)
         
         # Show summary
-        db = next(get_db())
         total_articles = db.query(SubstackArticle).count()
         total_authors = db.query(SubstackAuthor).count()
         

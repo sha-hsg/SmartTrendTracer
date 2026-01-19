@@ -1,0 +1,2430 @@
+{
+  "table_of_contents": [
+    {
+      "title": "Using Large Language Models to Generate, Validate, and\nApply User Intent Taxonomies",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          45.44145202636719,
+          77.34375
+        ],
+        [
+          415.9951171875,
+          77.34375
+        ],
+        [
+          415.9951171875,
+          111.62109375
+        ],
+        [
+          45.44145202636719,
+          111.62109375
+        ]
+      ]
+    },
+    {
+      "title": "CCS Concepts: \u2022 Information systems \u2192 Users and interactive retrieval; Web log analysis;",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          44.96923828125,
+          216.47845458984375
+        ],
+        [
+          403.41796875,
+          216.47845458984375
+        ],
+        [
+          403.41796875,
+          228.83673095703125
+        ],
+        [
+          44.96923828125,
+          228.83673095703125
+        ]
+      ]
+    },
+    {
+      "title": "ACM Reference Format:",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          44.8209228515625,
+          252.94921875
+        ],
+        [
+          143.3050994873047,
+          252.94921875
+        ],
+        [
+          143.3050994873047,
+          262.0644226074219
+        ],
+        [
+          44.8209228515625,
+          262.0644226074219
+        ]
+      ]
+    },
+    {
+      "title": "1 Introduction",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          45.265869140625,
+          329.9139099121094
+        ],
+        [
+          118.20509338378906,
+          329.9139099121094
+        ],
+        [
+          118.20509338378906,
+          339.8764953613281
+        ],
+        [
+          45.265869140625,
+          339.8764953613281
+        ]
+      ]
+    },
+    {
+      "title": "2 Related Work",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          44.9989013671875,
+          212.51953125
+        ],
+        [
+          123.99169921875,
+          212.51953125
+        ],
+        [
+          123.99169921875,
+          222.8316650390625
+        ],
+        [
+          44.9989013671875,
+          222.8316650390625
+        ]
+      ]
+    },
+    {
+      "title": "2.1 Understanding User Intents in Search",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          45.265869140625,
+          370.546875
+        ],
+        [
+          237.7114715576172,
+          370.546875
+        ],
+        [
+          237.7114715576172,
+          380.6382751464844
+        ],
+        [
+          45.265869140625,
+          380.6382751464844
+        ]
+      ]
+    },
+    {
+      "title": "2.2 Taxonomy Generation, Validation, and Use",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          45.5625,
+          80.859375
+        ],
+        [
+          262.18731689453125,
+          80.859375
+        ],
+        [
+          262.18731689453125,
+          91.91717529296875
+        ],
+        [
+          45.5625,
+          91.91717529296875
+        ]
+      ]
+    },
+    {
+      "title": "2.3 Use of LLMs in Research",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          45.028564453125,
+          249.78515625
+        ],
+        [
+          179.6396484375,
+          249.78515625
+        ],
+        [
+          179.6396484375,
+          260.4883117675781
+        ],
+        [
+          45.028564453125,
+          260.4883117675781
+        ]
+      ]
+    },
+    {
+      "title": "2.4 Log Analysis and Insights",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          45.265869140625,
+          430.6640625
+        ],
+        [
+          184.3857421875,
+          430.6640625
+        ],
+        [
+          184.3857421875,
+          441.2109375
+        ],
+        [
+          45.265869140625,
+          441.2109375
+        ]
+      ]
+    },
+    {
+      "title": "3 Methodology for Generating and Validating a User Intent Taxonomy",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          44.49462890625,
+          127.67486572265625
+        ],
+        [
+          370.2489318847656,
+          127.67486572265625
+        ],
+        [
+          370.2489318847656,
+          137.63751220703125
+        ],
+        [
+          44.49462890625,
+          137.63751220703125
+        ]
+      ]
+    },
+    {
+      "title": "3.1 Data",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          45.20654296875,
+          582.8626098632812
+        ],
+        [
+          89.81982421875,
+          582.8626098632812
+        ],
+        [
+          89.81982421875,
+          592.8252029418945
+        ],
+        [
+          45.20654296875,
+          592.8252029418945
+        ]
+      ]
+    },
+    {
+      "title": "3.2 Evaluating the Taxonomy",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          45.20654296875,
+          350.33203125
+        ],
+        [
+          185.69091796875,
+          350.33203125
+        ],
+        [
+          185.69091796875,
+          362.109375
+        ],
+        [
+          45.20654296875,
+          362.109375
+        ]
+      ]
+    },
+    {
+      "title": "3.3 Phase 1: Taxonomy Generation",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          45.503173828125,
+          543.515625
+        ],
+        [
+          209.5400390625,
+          543.515625
+        ],
+        [
+          209.5400390625,
+          555.46875
+        ],
+        [
+          45.503173828125,
+          555.46875
+        ]
+      ]
+    },
+    {
+      "title": "3.4 Phase 2: Taxonomy Validation",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          45.028564453125,
+          294.16693115234375
+        ],
+        [
+          204.16636657714844,
+          294.16693115234375
+        ],
+        [
+          204.16636657714844,
+          304.1295166015625
+        ],
+        [
+          45.028564453125,
+          304.1295166015625
+        ]
+      ]
+    },
+    {
+      "title": "3.5 Phase 3: Taxonomy Application and Testing",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          45.94501876831055,
+          527.34375
+        ],
+        [
+          266.73046875,
+          527.34375
+        ],
+        [
+          266.73046875,
+          538.3264312744141
+        ],
+        [
+          45.94501876831055,
+          538.3264312744141
+        ]
+      ]
+    },
+    {
+      "title": "3.6 Documenting Efforts and Advantages of the LLM with HITL Method",
+      "heading_level": null,
+      "page_id": 9,
+      "polygon": [
+        [
+          44.96923828125,
+          226.29763793945312
+        ],
+        [
+          376.83984375,
+          226.29763793945312
+        ],
+        [
+          376.83984375,
+          236.42578125
+        ],
+        [
+          44.96923828125,
+          236.42578125
+        ]
+      ]
+    },
+    {
+      "title": "Using Large Language Models to Generate, Validate, and Apply User Intent Taxonomies 34:11",
+      "heading_level": null,
+      "page_id": 10,
+      "polygon": [
+        [
+          44.138671875,
+          54.4482421875
+        ],
+        [
+          441.861328125,
+          54.4482421875
+        ],
+        [
+          441.861328125,
+          64.90972900390625
+        ],
+        [
+          44.138671875,
+          64.90972900390625
+        ]
+      ]
+    },
+    {
+      "title": "3.7 Insights About and From Annotations",
+      "heading_level": null,
+      "page_id": 10,
+      "polygon": [
+        [
+          45.44384765625,
+          387.7734375
+        ],
+        [
+          239.32177734375,
+          387.7734375
+        ],
+        [
+          239.32177734375,
+          398.38702392578125
+        ],
+        [
+          45.44384765625,
+          398.38702392578125
+        ]
+      ]
+    },
+    {
+      "title": "4 Additional Validations Using Open-Source LLMs",
+      "heading_level": null,
+      "page_id": 11,
+      "polygon": [
+        [
+          45.20654296875,
+          505.8984375
+        ],
+        [
+          280.0025634765625,
+          505.8984375
+        ],
+        [
+          280.0025634765625,
+          517.2585754394531
+        ],
+        [
+          45.20654296875,
+          517.2585754394531
+        ]
+      ]
+    },
+    {
+      "title": "4.1 Single Level Taxonomy Generation",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          45.621826171875,
+          245.1788330078125
+        ],
+        [
+          227.22947692871094,
+          245.1788330078125
+        ],
+        [
+          227.22947692871094,
+          255.5859375
+        ],
+        [
+          45.621826171875,
+          255.5859375
+        ]
+      ]
+    },
+    {
+      "title": "4.2 Multilevel Taxonomy Generation",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          45.265869140625,
+          472.8515625
+        ],
+        [
+          218.4932403564453,
+          472.8515625
+        ],
+        [
+          218.4932403564453,
+          483.3984375
+        ],
+        [
+          45.265869140625,
+          483.3984375
+        ]
+      ]
+    },
+    {
+      "title": "4.3 Taxonomy Application",
+      "heading_level": null,
+      "page_id": 13,
+      "polygon": [
+        [
+          45.5625,
+          469.6875
+        ],
+        [
+          172.16455078125,
+          469.6875
+        ],
+        [
+          172.16455078125,
+          481.34922790527344
+        ],
+        [
+          45.5625,
+          481.34922790527344
+        ]
+      ]
+    },
+    {
+      "title": "5 Application of User Intent Pipeline",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          44.96923828125,
+          248.73046875
+        ],
+        [
+          218.91357421875,
+          248.73046875
+        ],
+        [
+          218.91357421875,
+          260.68359375
+        ],
+        [
+          44.96923828125,
+          260.68359375
+        ]
+      ]
+    },
+    {
+      "title": "5.1 Stepwise Process for the Full Pipeline",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          45.503173828125,
+          380.390625
+        ],
+        [
+          237.8824920654297,
+          380.390625
+        ],
+        [
+          237.8824920654297,
+          392.7160949707031
+        ],
+        [
+          45.503173828125,
+          392.7160949707031
+        ]
+      ]
+    },
+    {
+      "title": "",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          164.4521484375,
+          81.6064453125
+        ],
+        [
+          319.6494140625,
+          81.6064453125
+        ],
+        [
+          319.6494140625,
+          90.703125
+        ],
+        [
+          164.4521484375,
+          90.703125
+        ]
+      ]
+    },
+    {
+      "title": "5.2 Insights about Intents in Search vs. Chat",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          45.20654296875,
+          304.62890625
+        ],
+        [
+          250.59375,
+          304.62890625
+        ],
+        [
+          250.59375,
+          314.6405029296875
+        ],
+        [
+          45.20654296875,
+          314.6405029296875
+        ]
+      ]
+    },
+    {
+      "title": "5.3 Steps for Generating Intent Taxonomies",
+      "heading_level": null,
+      "page_id": 17,
+      "polygon": [
+        [
+          45.147216796875,
+          222.71484375
+        ],
+        [
+          250.119140625,
+          222.71484375
+        ],
+        [
+          250.119140625,
+          234.55966186523438
+        ],
+        [
+          45.147216796875,
+          234.55966186523438
+        ]
+      ]
+    },
+    {
+      "title": "6 Conclusion",
+      "heading_level": null,
+      "page_id": 18,
+      "polygon": [
+        [
+          45.2955322265625,
+          375.8203125
+        ],
+        [
+          112.20626068115234,
+          375.8203125
+        ],
+        [
+          112.20626068115234,
+          386.6148376464844
+        ],
+        [
+          45.2955322265625,
+          386.6148376464844
+        ]
+      ]
+    },
+    {
+      "title": "References",
+      "heading_level": null,
+      "page_id": 20,
+      "polygon": [
+        [
+          45.740478515625,
+          80.9033203125
+        ],
+        [
+          96.879638671875,
+          80.9033203125
+        ],
+        [
+          96.879638671875,
+          91.91717529296875
+        ],
+        [
+          45.740478515625,
+          91.91717529296875
+        ]
+      ]
+    },
+    {
+      "title": "Using Large Language Models to Generate, Validate, and Apply User Intent Taxonomies 34:23",
+      "heading_level": null,
+      "page_id": 22,
+      "polygon": [
+        [
+          44.61328125,
+          54.4482421875
+        ],
+        [
+          442.3359375,
+          54.4482421875
+        ],
+        [
+          442.3359375,
+          64.90972900390625
+        ],
+        [
+          44.61328125,
+          64.90972900390625
+        ]
+      ]
+    },
+    {
+      "title": "Appendices",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          44.96923828125,
+          334.86328125
+        ],
+        [
+          99.9052734375,
+          334.86328125
+        ],
+        [
+          99.9052734375,
+          346.11328125
+        ],
+        [
+          44.96923828125,
+          346.11328125
+        ]
+      ]
+    },
+    {
+      "title": "A Prompt for Chat User Intent Taxonomy Generation (Section 3.3)",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          45.20654296875,
+          349.27734375
+        ],
+        [
+          353.109375,
+          349.27734375
+        ],
+        [
+          353.109375,
+          360.703125
+        ],
+        [
+          45.20654296875,
+          360.703125
+        ]
+      ]
+    },
+    {
+      "title": "Context and data description",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          44.96923828125,
+          363.8671875
+        ],
+        [
+          178.927734375,
+          363.8671875
+        ],
+        [
+          178.927734375,
+          375.6242980957031
+        ],
+        [
+          44.96923828125,
+          375.6242980957031
+        ]
+      ]
+    },
+    {
+      "title": "Criteria of a generic taxonomy",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          44.73193359375,
+          579.7265625
+        ],
+        [
+          186.7587890625,
+          579.7265625
+        ],
+        [
+          186.7587890625,
+          590.2854766845703
+        ],
+        [
+          44.73193359375,
+          590.2854766845703
+        ]
+      ]
+    },
+    {
+      "title": "Requirements of your output taxonomy",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          44.909912109375,
+          122.51953125
+        ],
+        [
+          227.5751953125,
+          122.51953125
+        ],
+        [
+          227.5751953125,
+          133.9453125
+        ],
+        [
+          44.909912109375,
+          133.9453125
+        ]
+      ]
+    },
+    {
+      "title": "You are asked to answer the following questions",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          55.64794921875,
+          384.9609375
+        ],
+        [
+          274.32421875,
+          384.9609375
+        ],
+        [
+          274.32421875,
+          396.2109375
+        ],
+        [
+          55.64794921875,
+          396.2109375
+        ]
+      ]
+    },
+    {
+      "title": "Tips",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          45.611244201660156,
+          551.953125
+        ],
+        [
+          66.2080078125,
+          551.953125
+        ],
+        [
+          66.2080078125,
+          563.203125
+        ],
+        [
+          45.611244201660156,
+          563.203125
+        ]
+      ]
+    },
+    {
+      "title": "B Final Outline of the Taxonomy for User Intents in Chat (Section 3.4)",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          45.087890625,
+          249.78515625
+        ],
+        [
+          370.669921875,
+          249.78515625
+        ],
+        [
+          370.669921875,
+          261.0821228027344
+        ],
+        [
+          45.087890625,
+          261.0821228027344
+        ]
+      ]
+    },
+    {
+      "title": "C Prompt for Taxonomy Application (Section 3.5)",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          45.503173828125,
+          601.5234375
+        ],
+        [
+          276.697265625,
+          601.5234375
+        ],
+        [
+          276.697265625,
+          612.5706024169922
+        ],
+        [
+          45.503173828125,
+          612.5706024169922
+        ]
+      ]
+    },
+    {
+      "title": "Examples",
+      "heading_level": null,
+      "page_id": 26,
+      "polygon": [
+        [
+          45.4141845703125,
+          448.9453125
+        ],
+        [
+          88.63330078125,
+          448.9453125
+        ],
+        [
+          88.63330078125,
+          460.8984375
+        ],
+        [
+          45.4141845703125,
+          460.8984375
+        ]
+      ]
+    },
+    {
+      "title": "Tips",
+      "heading_level": null,
+      "page_id": 26,
+      "polygon": [
+        [
+          45.68115234375,
+          485.15625
+        ],
+        [
+          66.08935546875,
+          485.15625
+        ],
+        [
+          66.08935546875,
+          497.109375
+        ],
+        [
+          45.68115234375,
+          497.109375
+        ]
+      ]
+    },
+    {
+      "title": "D Prompt for Comparing Search and Chat User Intent Taxonomy Generation\n(Section 5.1)",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          45.20654296875,
+          176.572265625
+        ],
+        [
+          401.044921875,
+          176.572265625
+        ],
+        [
+          401.044921875,
+          201.09375
+        ],
+        [
+          45.20654296875,
+          201.09375
+        ]
+      ]
+    },
+    {
+      "title": "Context and data description",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          44.909912109375,
+          203.90625
+        ],
+        [
+          177.2666015625,
+          203.90625
+        ],
+        [
+          177.2666015625,
+          215.5078125
+        ],
+        [
+          44.909912109375,
+          215.5078125
+        ]
+      ]
+    },
+    {
+      "title": "Your primary goal is to generate a taxonomy that can serve for the following use cases",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          45.20654296875,
+          419.4140625
+        ],
+        [
+          435.216796875,
+          419.4140625
+        ],
+        [
+          435.216796875,
+          431.3671875
+        ],
+        [
+          45.20654296875,
+          431.3671875
+        ]
+      ]
+    },
+    {
+      "title": "Here are the criteria of a good taxonomy",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          45.44384765625,
+          478.828125
+        ],
+        [
+          230.77880859375,
+          478.828125
+        ],
+        [
+          230.77880859375,
+          490.3932647705078
+        ],
+        [
+          45.44384765625,
+          490.3932647705078
+        ]
+      ]
+    },
+    {
+      "title": "Requirements of your output taxonomy",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          45.77299880981445,
+          598.359375
+        ],
+        [
+          228.76171875,
+          598.359375
+        ],
+        [
+          228.76171875,
+          610.3125
+        ],
+        [
+          45.77299880981445,
+          610.3125
+        ]
+      ]
+    },
+    {
+      "title": "E Final Outline of the Taxonomy for user Intents in Search vs. Chat (Section 5.1)",
+      "heading_level": null,
+      "page_id": 28,
+      "polygon": [
+        [
+          43.54541015625,
+          280.37109375
+        ],
+        [
+          414.333984375,
+          280.37109375
+        ],
+        [
+          414.333984375,
+          292.32421875
+        ],
+        [
+          43.54541015625,
+          292.32421875
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          110
+        ],
+        [
+          "Line",
+          44
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "Picture",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          119
+        ],
+        [
+          "Line",
+          48
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          109
+        ],
+        [
+          "Line",
+          40
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          133
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "TextInlineMath",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 4,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          165
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "TextInlineMath",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 5,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          109
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "PageHeader",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Footnote",
+          2
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 6,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          83
+        ],
+        [
+          "Line",
+          36
+        ],
+        [
+          "ListItem",
+          5
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 7,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          118
+        ],
+        [
+          "Line",
+          49
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 8,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          187
+        ],
+        [
+          "TableCell",
+          102
+        ],
+        [
+          "Line",
+          87
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 9,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          110
+        ],
+        [
+          "Line",
+          48
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "ListItem",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 10,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          156
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "TableCell",
+          44
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "ListItem",
+          2
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 11,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          185
+        ],
+        [
+          "TableCell",
+          58
+        ],
+        [
+          "Line",
+          46
+        ],
+        [
+          "Footnote",
+          4
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 12,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          178
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "TableCell",
+          36
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 13,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          144
+        ],
+        [
+          "Line",
+          46
+        ],
+        [
+          "TableCell",
+          25
+        ],
+        [
+          "ListItem",
+          4
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 14,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          73
+        ],
+        [
+          "Line",
+          36
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 15,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          128
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "ListItem",
+          5
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 16,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          64
+        ],
+        [
+          "Line",
+          33
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 17,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          111
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "PageHeader",
+          3
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 18,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          107
+        ],
+        [
+          "Line",
+          48
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "ListItem",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 19,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          119
+        ],
+        [
+          "Line",
+          50
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 20,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          179
+        ],
+        [
+          "Line",
+          58
+        ],
+        [
+          "ListItem",
+          23
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 21,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          177
+        ],
+        [
+          "Line",
+          58
+        ],
+        [
+          "ListItem",
+          21
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 22,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          184
+        ],
+        [
+          "Line",
+          58
+        ],
+        [
+          "ListItem",
+          24
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 23,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          133
+        ],
+        [
+          "Line",
+          51
+        ],
+        [
+          "ListItem",
+          19
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 24,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          87
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "ListItem",
+          14
+        ],
+        [
+          "ListGroup",
+          4
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 25,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          111
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "ListItem",
+          8
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 26,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          106
+        ],
+        [
+          "Line",
+          47
+        ],
+        [
+          "ListItem",
+          7
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 27,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          88
+        ],
+        [
+          "Line",
+          44
+        ],
+        [
+          "ListItem",
+          14
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "Code",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 28,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          88
+        ],
+        [
+          "Line",
+          38
+        ],
+        [
+          "ListItem",
+          11
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "debug_data/20250908_220534_Using_Large_Language_Models_to_Generate_Validate_a"
+}

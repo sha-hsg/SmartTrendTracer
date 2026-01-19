@@ -2,25 +2,44 @@
 Fast RAG service with proper indexing and progress feedback
 """
 import os
-import json
-import pickle
 import time
-import asyncio
-from typing import List, Dict, Optional, Tuple, Any, AsyncGenerator
+from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 import numpy as np
 from dataclasses import dataclass, asdict
-import hashlib
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
 import faiss
-import openai
-from sqlalchemy.orm import Session
-from sqlalchemy import text
 
-from app.models import Tweet, SubstackArticle, ArticleSnippet, Tag
 from app.services.llm_service import LLMService
+from app.services.rag_helpers import (
+    # Embedding functions
+    get_embedding_dimension,
+    get_embedding_with_cache,
+    get_embeddings_batch,
+    # Index management
+    load_faiss_index,
+    save_faiss_index,
+    load_pickle_file,
+    save_pickle_file,
+    load_index_info,
+    save_index_info,
+    # Document processing
+    process_tweet_for_index,
+    process_article_for_index,
+    process_snippet_for_index,
+    process_paper_for_index,
+    # Text utilities
+    chunk_text,
+    # Search utilities
+    format_search_result,
+    build_rag_context,
+    generate_fallback_answer,
+    # Migration helpers
+    migrate_metadata_if_needed,
+    migrate_doc_map_if_needed,
+)
 
 
 @dataclass
@@ -38,47 +57,33 @@ class IndexStatus:
 
 class FastRAGService:
     """Fast RAG service with persistent index and progress feedback"""
-    
+
     _instance = None
     _lock = threading.Lock()
-    
-    def __new__(cls, db: Session = None):
+
+    def __new__(cls, db=None):
         """Singleton pattern to ensure single index instance"""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
         return cls._instance
-    
-    def __init__(self, db: Session = None):
+
+    def __init__(self, db=None):
         """Initialize fast RAG service"""
         # Skip if already initialized
         if hasattr(self, '_initialized'):
             if db:
                 self.db = db
             return
-        
+
         self.db = db
         self.llm_service = LLMService()
         self.status = IndexStatus()
-        
-        # Initialize Google Gemini for embeddings
-        self.google_api_key = os.getenv('GOOGLE_API_KEY')
-        if not self.google_api_key:
-            # Fallback to OpenAI if Google API key not found
-            self.openai_api_key = os.getenv('OPENAI_API_KEY')
-            if not self.openai_api_key:
-                raise ValueError("Neither GOOGLE_API_KEY nor OPENAI_API_KEY found")
-            
-            from openai import OpenAI
-            self.openai_client = OpenAI(api_key=self.openai_api_key)
-            self.use_gemini_embeddings = False
-        else:
-            import google.generativeai as genai
-            genai.configure(api_key=self.google_api_key)
-            self.use_gemini_embeddings = True
-            print("Using Gemini embeddings (text-embedding-004)")
-        
+
+        # Initialize embedding provider
+        self._init_embedding_provider()
+
         # Index paths
         self.index_dir = 'data/rag_index'
         self.index_path = os.path.join(self.index_dir, 'faiss.index')
@@ -86,74 +91,102 @@ class FastRAGService:
         self.doc_map_path = os.path.join(self.index_dir, 'doc_map.pkl')
         self.embeddings_cache_path = os.path.join(self.index_dir, 'embeddings_cache.pkl')
         self.index_info_path = os.path.join(self.index_dir, 'index_info.json')
-        
+
         os.makedirs(self.index_dir, exist_ok=True)
-        
+
         # Initialize index components
         self.index = None
         self.doc_map = {}
         self.metadata = {}
         self.embeddings_cache = {}
-        
+
         # Thread pool for background operations
         self.executor = ThreadPoolExecutor(max_workers=2)
-        
+
         # Load existing index
         self._load_index()
-        
+
         # Mark as initialized
         self._initialized = True
-    
+
+    def _init_embedding_provider(self):
+        """Initialize Google Gemini or OpenAI for embeddings"""
+        self.google_api_key = os.getenv('GOOGLE_API_KEY')
+        if not self.google_api_key:
+            self.openai_api_key = os.getenv('OPENAI_API_KEY')
+            if not self.openai_api_key:
+                raise ValueError("Neither GOOGLE_API_KEY nor OPENAI_API_KEY found")
+
+            from openai import OpenAI
+            self.openai_client = OpenAI(api_key=self.openai_api_key)
+            self.use_gemini_embeddings = False
+        else:
+            import google.generativeai as genai
+            genai.configure(api_key=self.google_api_key)
+            self.openai_client = None
+            self.use_gemini_embeddings = True
+            print("Using Gemini embeddings (text-embedding-004)")
+
     def get_status(self) -> Dict[str, Any]:
         """Get current index status"""
         return asdict(self.status)
-    
+
     def _update_status(self, **kwargs):
         """Update index status"""
         for key, value in kwargs.items():
             if hasattr(self.status, key):
                 setattr(self.status, key, value)
-    
+
     def _load_index(self):
         """Load existing index if available"""
         try:
-            if all(os.path.exists(p) for p in [
-                self.index_path, self.metadata_path, 
+            if not all(os.path.exists(p) for p in [
+                self.index_path, self.metadata_path,
                 self.doc_map_path, self.index_info_path
             ]):
-                self._update_status(current_step="Loading existing index...")
-                
-                # Load FAISS index
-                self.index = faiss.read_index(self.index_path)
-                
-                # Load metadata
-                with open(self.metadata_path, 'rb') as f:
-                    self.metadata = pickle.load(f)
-                
-                with open(self.doc_map_path, 'rb') as f:
-                    self.doc_map = pickle.load(f)
-                
-                # Load index info
-                with open(self.index_info_path, 'r') as f:
-                    info = json.load(f)
-                
-                # Load embeddings cache
-                if os.path.exists(self.embeddings_cache_path):
-                    with open(self.embeddings_cache_path, 'rb') as f:
-                        self.embeddings_cache = pickle.load(f)
-                
                 self._update_status(
-                    is_ready=True,
-                    total_documents=self.index.ntotal,
-                    indexed_documents=self.index.ntotal,
-                    last_updated=datetime.fromisoformat(info['last_updated']),
-                    current_step=f"Index ready with {self.index.ntotal} documents",
-                    progress_percent=100
+                    is_ready=False,
+                    current_step="Index not found, rebuild required"
                 )
-                
-                print(f"✅ Loaded RAG index with {self.index.ntotal} documents")
-                return True
-                
+                return False
+
+            self._update_status(current_step="Loading existing index...")
+
+            # Load FAISS index
+            self.index = load_faiss_index(self.index_path)
+            if self.index is None:
+                raise Exception("Failed to load FAISS index")
+
+            # Load metadata with migration
+            loaded_metadata = load_pickle_file(self.metadata_path, {})
+            self.metadata, metadata_migrated = migrate_metadata_if_needed(loaded_metadata)
+            if metadata_migrated:
+                save_pickle_file(self.metadata, self.metadata_path)
+
+            # Load doc_map with migration
+            loaded_doc_map = load_pickle_file(self.doc_map_path, {})
+            self.doc_map, doc_map_migrated = migrate_doc_map_if_needed(loaded_doc_map)
+            if doc_map_migrated:
+                save_pickle_file(self.doc_map, self.doc_map_path)
+
+            # Load index info
+            info = load_index_info(self.index_info_path)
+
+            # Load embeddings cache
+            self.embeddings_cache = load_pickle_file(self.embeddings_cache_path, {})
+
+            self._update_status(
+                is_ready=True,
+                total_documents=self.index.ntotal,
+                indexed_documents=self.index.ntotal,
+                last_updated=datetime.fromisoformat(info['last_updated']) if 'last_updated' in info else None,
+                current_step=f"Index ready with {self.index.ntotal} documents",
+                progress_percent=100
+            )
+
+            print(f"✅ Loaded RAG index with {self.index.ntotal} documents")
+            return True
+
         except Exception as e:
             print(f"Could not load index: {e}")
             self._update_status(
@@ -161,74 +194,53 @@ class FastRAGService:
                 current_step="Index not found, rebuild required",
                 error=str(e)
             )
-        
+
         return False
-    
+
     def _save_index(self):
         """Save index to disk"""
         try:
             self._update_status(current_step="Saving index to disk...")
-            
-            # Save FAISS index
-            faiss.write_index(self.index, self.index_path)
-            
-            # Save metadata
-            with open(self.metadata_path, 'wb') as f:
-                pickle.dump(self.metadata, f)
-            
-            with open(self.doc_map_path, 'wb') as f:
-                pickle.dump(self.doc_map, f)
-            
-            # Save embeddings cache
-            with open(self.embeddings_cache_path, 'wb') as f:
-                pickle.dump(self.embeddings_cache, f)
-            
-            # Save index info
+
+            save_faiss_index(self.index, self.index_path)
+            save_pickle_file(self.metadata, self.metadata_path)
+            save_pickle_file(self.doc_map, self.doc_map_path)
+            save_pickle_file(self.embeddings_cache, self.embeddings_cache_path)
+
             info = {
                 'last_updated': datetime.now().isoformat(),
                 'total_documents': self.index.ntotal,
                 'embedding_model': 'text-embedding-ada-002'
             }
-            with open(self.index_info_path, 'w') as f:
-                json.dump(info, f)
-            
+            save_index_info(info, self.index_info_path)
+
             print(f"✅ Saved index with {self.index.ntotal} documents")
-            
+
         except Exception as e:
             print(f"Error saving index: {e}")
             self._update_status(error=f"Failed to save index: {e}")
-    
+
     def needs_rebuild(self) -> bool:
         """Check if index needs rebuilding"""
         if not self.status.is_ready:
             return True
-        
+
         # Check if index is stale (older than 24 hours)
         if self.status.last_updated:
             age = datetime.now() - self.status.last_updated
             if age > timedelta(hours=24):
                 return True
-        
-        # Check document count mismatch
-        if self.db:
-            tweet_count = self.db.query(Tweet).count()
-            article_count = self.db.query(SubstackArticle).count()
-            expected_min = tweet_count + article_count
-            
-            if self.status.total_documents < expected_min * 0.9:  # 90% threshold
-                return True
-        
+
         return False
-    
+
     def build_index_async(self):
         """Build index in background"""
         if self.status.is_building:
             return {"status": "already_building", "progress": self.status.progress_percent}
-        
-        # Start background build
+
         future = self.executor.submit(self._build_index_internal)
         return {"status": "started", "message": "Index building started in background"}
-    
+
     def _build_index_internal(self):
         """Internal method to build index with progress updates"""
         try:
@@ -239,146 +251,170 @@ class FastRAGService:
                 current_step="Starting index build...",
                 progress_percent=0
             )
-            
+
             documents = []
-            
-            # Count total documents
-            tweet_count = self.db.query(Tweet).count()
-            article_count = self.db.query(SubstackArticle).count()
-            snippet_count = self.db.query(ArticleSnippet).count()
-            total = tweet_count + article_count + snippet_count
-            
+            processed = 0
+
+            # Get counts from MongoDB
+            tweet_count = self.db.tweets.count_documents({})
+            article_count = self.db.articles.count_documents({})
+            snippet_count = self.db.article_snippets.count_documents({}) if 'article_snippets' in self.db.list_collection_names() else 0
+            paper_count = self.db.papers.count_documents({'processed': True})
+            total = tweet_count + article_count + snippet_count + paper_count
+
             self._update_status(
                 total_documents=total,
                 current_step=f"Processing {total} documents..."
             )
-            
-            processed = 0
-            
+
             # Process tweets
             self._update_status(current_step=f"Processing {tweet_count} tweets...")
-            tweets = self.db.query(Tweet).all()
-            
-            for tweet in tweets:
-                tags = self.db.query(Tag).filter(Tag.tweet_id == tweet.id).all()
-                tag_list = [tag.tag for tag in tags]
-                
-                doc_id = f"tweet_{tweet.id}"
-                documents.append({
-                    'id': doc_id,
-                    'content': tweet.text,
-                    'type': 'tweet',
-                    'metadata': {
-                        'author': tweet.author_username,
-                        'created_at': tweet.created_at,
-                        'tags': tag_list,
-                        'url': f"https://twitter.com/{tweet.author_username}/status/{tweet.id}"
-                    }
-                })
-                
+            for tweet in self.db.tweets.find():
+                # Get tags for tweet
+                tag_instances = list(self.db.tag_instances.find({
+                    'content_type': 'tweet',
+                    'content_id': str(tweet['_id'])
+                }))
+                tag_ids = [ti.get('concept_id') for ti in tag_instances if ti.get('concept_id')]
+                tags = []
+                for tag_id in tag_ids:
+                    concept = self.db.tag_concepts_v2.find_one({'_id': tag_id})
+                    if concept:
+                        tags.append(concept.get('name', ''))
+
+                doc = process_tweet_for_index(
+                    tweet_id=str(tweet['_id']),
+                    text=tweet.get('text', ''),
+                    author_username=tweet.get('author_username', ''),
+                    created_at=tweet.get('created_at'),
+                    tags=tags
+                )
+                documents.append(doc)
+
                 processed += 1
                 if processed % 100 == 0:
                     self._update_status(
                         indexed_documents=processed,
                         progress_percent=int((processed / total) * 100)
                     )
-            
+
             # Process articles
             self._update_status(current_step=f"Processing {article_count} articles...")
-            articles = self.db.query(SubstackArticle).all()
-            
-            for article in articles:
-                # Main article
-                doc_id = f"article_{article.id}"
-                content = article.content_markdown or article.preview or ""
-                
-                # Chunk long articles
-                if len(content) > 2000:
-                    chunks = self._chunk_text(content, 1500, 200)
-                    for i, chunk in enumerate(chunks):
-                        chunk_id = f"article_{article.id}_chunk_{i}"
-                        documents.append({
-                            'id': chunk_id,
-                            'content': chunk,
-                            'type': 'article',
-                            'metadata': {
-                                'title': article.title,
-                                'author': article.author.name if article.author else 'Unknown',
-                                'published_at': article.published_at.isoformat() if article.published_at else None,
-                                'url': article.url,
-                                'chunk': i
-                            }
-                        })
-                else:
-                    documents.append({
-                        'id': doc_id,
-                        'content': content,
-                        'type': 'article',
-                        'metadata': {
-                            'title': article.title,
-                            'author': article.author.name if article.author else 'Unknown',
-                            'published_at': article.published_at.isoformat() if article.published_at else None,
-                            'url': article.url
-                        }
-                    })
-                
+            for article in self.db.articles.find():
+                content = article.get('content_markdown') or article.get('preview') or ""
+                author_name = 'Unknown'
+                if article.get('author_id'):
+                    author = self.db.substack_authors.find_one({'_id': article['author_id']})
+                    if author:
+                        author_name = author.get('name', 'Unknown')
+
+                article_docs = process_article_for_index(
+                    article_id=str(article['_id']),
+                    title=article.get('title', ''),
+                    content=content,
+                    author_name=author_name,
+                    published_at=article.get('published_at'),
+                    url=article.get('url', '')
+                )
+                documents.extend(article_docs)
+
                 processed += 1
                 if processed % 10 == 0:
                     self._update_status(
                         indexed_documents=processed,
                         progress_percent=int((processed / total) * 100)
                     )
-            
+
             # Process snippets
-            self._update_status(current_step=f"Processing {snippet_count} snippets...")
-            snippets = self.db.query(ArticleSnippet).all()
-            
-            for snippet in snippets:
-                doc_id = f"snippet_{snippet.id}"
-                documents.append({
-                    'id': doc_id,
-                    'content': f"{snippet.text}\n\nNote: {snippet.annotation}" if snippet.annotation else snippet.text,
-                    'type': 'snippet',
-                    'metadata': {
-                        'article_id': snippet.article_id,
-                        'category': snippet.category,
-                        'created_at': snippet.created_at.isoformat() if snippet.created_at else None
-                    }
-                })
-                
+            if snippet_count > 0:
+                self._update_status(current_step=f"Processing {snippet_count} snippets...")
+                for snippet in self.db.article_snippets.find():
+                    doc = process_snippet_for_index(
+                        snippet_id=str(snippet['_id']),
+                        text=snippet.get('text', ''),
+                        annotation=snippet.get('annotation'),
+                        article_id=str(snippet.get('article_id', '')),
+                        category=snippet.get('category', ''),
+                        created_at=snippet.get('created_at')
+                    )
+                    documents.append(doc)
+                    processed += 1
+
+            # Process papers
+            self._update_status(current_step=f"Processing {paper_count} papers...")
+            for paper in self.db.papers.find({'processed': True}):
+                # Get tags for paper
+                tag_instances = list(self.db.tag_instances.find({
+                    'content_type': 'paper',
+                    'content_id': str(paper['_id'])
+                }))
+                tag_ids = [ti.get('concept_id') for ti in tag_instances if ti.get('concept_id')]
+                tags = []
+                for tag_id in tag_ids:
+                    concept = self.db.tag_concepts_v2.find_one({'_id': tag_id})
+                    if concept:
+                        tags.append(concept.get('name', ''))
+
+                doc = process_paper_for_index(
+                    paper_id=str(paper['_id']),
+                    title=paper.get('title'),
+                    abstract=paper.get('abstract'),
+                    content=paper.get('content'),
+                    authors=paper.get('authors', ''),
+                    conference=paper.get('conference'),
+                    journal=paper.get('journal'),
+                    publication_date=paper.get('publication_date'),
+                    arxiv_id=paper.get('arxiv_id'),
+                    doi=paper.get('doi'),
+                    page_count=paper.get('page_count'),
+                    tags=tags
+                )
+                if doc:
+                    documents.append(doc)
+
                 processed += 1
-            
+                if processed % 10 == 0:
+                    self._update_status(
+                        indexed_documents=processed,
+                        progress_percent=int((processed / total) * 80)
+                    )
+
             # Create embeddings
             self._update_status(
                 current_step="Creating embeddings (this may take a while)...",
                 progress_percent=80
             )
-            
+
             contents = [doc['content'] for doc in documents]
-            embeddings = self._get_embeddings_batch(contents)
-            
+            embeddings = get_embeddings_batch(
+                texts=contents,
+                use_gemini=self.use_gemini_embeddings,
+                progress_callback=lambda msg, pct: self._update_status(current_step=msg, progress_percent=pct),
+                openai_client=self.openai_client,
+                cache=self.embeddings_cache
+            )
+
             # Build FAISS index
             self._update_status(
                 current_step="Building FAISS index...",
                 progress_percent=90
             )
-            
-            # Dimension depends on embedding model
-            dimension = 768 if self.use_gemini_embeddings else 1536
+
+            dimension = get_embedding_dimension(self.use_gemini_embeddings)
             self.index = faiss.IndexFlatL2(dimension)
             self.index.add(embeddings)
-            
+
             # Store metadata
             self.doc_map = {i: doc['id'] for i, doc in enumerate(documents)}
             self.metadata = {doc['id']: doc for doc in documents}
-            
+
             # Save index
             self._update_status(
                 current_step="Saving index...",
                 progress_percent=95
             )
             self._save_index()
-            
+
             # Update status
             self._update_status(
                 is_ready=True,
@@ -389,9 +425,9 @@ class FastRAGService:
                 current_step=f"Index ready with {len(documents)} documents",
                 progress_percent=100
             )
-            
+
             print(f"✅ Built index with {len(documents)} documents")
-            
+
         except Exception as e:
             print(f"Error building index: {e}")
             self._update_status(
@@ -401,132 +437,16 @@ class FastRAGService:
                 current_step="Index build failed",
                 progress_percent=0
             )
-    
-    def _chunk_text(self, text: str, chunk_size: int = 1500, overlap: int = 200) -> List[str]:
-        """Split text into overlapping chunks"""
-        chunks = []
-        start = 0
-        
-        while start < len(text):
-            end = start + chunk_size
-            chunk = text[start:end]
-            
-            # Try to break at sentence boundary
-            if end < len(text):
-                last_period = chunk.rfind('. ')
-                if last_period > chunk_size - 300:
-                    end = start + last_period + 1
-                    chunk = text[start:end]
-            
-            chunks.append(chunk)
-            start = end - overlap
-        
-        return chunks
-    
+
     def _get_embedding(self, text: str) -> np.ndarray:
-        """Get embedding with caching (Gemini or OpenAI)"""
-        text_hash = hashlib.md5(text.encode()).hexdigest()
-        
-        if text_hash in self.embeddings_cache:
-            return np.array(self.embeddings_cache[text_hash])
-        
-        try:
-            if self.use_gemini_embeddings:
-                # Use Gemini embeddings
-                import google.generativeai as genai
-                # Gemini embedding dimension is 768
-                result = genai.embed_content(
-                    model="models/text-embedding-004",
-                    content=text[:8000],
-                    task_type="retrieval_document",
-                    title="Document"
-                )
-                embedding = np.array(result['embedding'])
-            else:
-                # Fallback to OpenAI
-                response = self.openai_client.embeddings.create(
-                    model="text-embedding-ada-002",
-                    input=text[:8000]
-                )
-                embedding = np.array(response.data[0].embedding)
-            
-            self.embeddings_cache[text_hash] = embedding.tolist()
-            return embedding
-            
-        except Exception as e:
-            print(f"Embedding error: {e}")
-            # Return zeros with correct dimension
-            return np.zeros(768 if self.use_gemini_embeddings else 1536)
-    
-    def _get_embeddings_batch(self, texts: List[str]) -> np.ndarray:
-        """Get embeddings for multiple texts efficiently"""
-        embeddings = []
-        
-        if self.use_gemini_embeddings:
-            # Gemini batch embedding
-            import google.generativeai as genai
-            batch_size = 100  # Gemini can handle large batches
-            
-            for i in range(0, len(texts), batch_size):
-                batch = texts[i:i+batch_size]
-                
-                try:
-                    # Gemini supports batch embedding
-                    batch_results = genai.embed_content(
-                        model="models/text-embedding-004",
-                        content=batch,
-                        task_type="retrieval_document"
-                    )
-                    
-                    # Extract embeddings from results
-                    for embedding in batch_results['embedding']:
-                        embeddings.append(np.array(embedding))
-                    
-                except Exception as e:
-                    print(f"Batch embedding failed, falling back to individual: {e}")
-                    # Fallback to individual embeddings
-                    for text in batch:
-                        embedding = self._get_embedding(text)
-                        embeddings.append(embedding)
-                
-                # Update progress
-                progress = 80 + int((i / len(texts)) * 10)
-                self._update_status(
-                    current_step=f"Creating Gemini embeddings... ({min(i + batch_size, len(texts))}/{len(texts)})",
-                    progress_percent=progress
-                )
-                
-                # Small delay to respect rate limits
-                if i + batch_size < len(texts):
-                    import time
-                    time.sleep(0.1)
-        else:
-            # OpenAI batch processing
-            batch_size = 100
-            
-            for i in range(0, len(texts), batch_size):
-                batch = texts[i:i+batch_size]
-                
-                batch_embeddings = []
-                for text in batch:
-                    embedding = self._get_embedding(text)
-                    batch_embeddings.append(embedding)
-                
-                embeddings.extend(batch_embeddings)
-                
-                # Update progress
-                progress = 80 + int((i / len(texts)) * 10)
-                self._update_status(
-                    current_step=f"Creating OpenAI embeddings... ({min(i + batch_size, len(texts))}/{len(texts)})",
-                    progress_percent=progress
-                )
-                
-                if i + batch_size < len(texts):
-                    import time
-                    time.sleep(0.1)
-        
-        return np.array(embeddings)
-    
+        """Get embedding with caching"""
+        return get_embedding_with_cache(
+            text=text,
+            cache=self.embeddings_cache,
+            use_gemini=self.use_gemini_embeddings,
+            openai_client=self.openai_client
+        )
+
     def search(self, query: str, k: int = 10) -> List[Dict[str, Any]]:
         """Search the index"""
         if not self.status.is_ready:
@@ -540,91 +460,114 @@ class FastRAGService:
                 return [{
                     'error': 'Index not ready. Please build the index first.'
                 }]
-        
+
         # Get query embedding
         query_embedding = self._get_embedding(query)
         query_vector = query_embedding.reshape(1, -1)
-        
+
         # Search
         distances, indices = self.index.search(query_vector, k)
-        
+
         # Format results
         results = []
         for i, (dist, idx) in enumerate(zip(distances[0], indices[0])):
             if idx == -1:
                 continue
-            
-            doc_id = self.doc_map[idx]
-            doc = self.metadata[doc_id]
-            
-            results.append({
-                'content': doc['content'][:500],
-                'type': doc['type'],
-                'score': float(1 / (1 + dist)),  # Convert distance to similarity
-                'metadata': doc['metadata'],
-                'rank': i + 1
-            })
-        
+
+            doc_id = self.doc_map.get(idx)
+
+            # Handle legacy Document objects
+            if hasattr(doc_id, 'id'):
+                doc_id = doc_id.id
+            elif not doc_id or not isinstance(doc_id, str):
+                print(f"Warning: Invalid doc_id at index {idx}: {doc_id}")
+                continue
+
+            doc = self.metadata.get(doc_id)
+            if not doc:
+                print(f"Warning: No metadata for doc_id: {doc_id}")
+                continue
+
+            result = format_search_result(doc, dist, i + 1)
+            results.append(result)
+
         return results
-    
+
     async def search_with_answer(self, query: str, k: int = 10) -> Dict[str, Any]:
         """Search and generate an answer"""
-        # First check if index is ready
         if not self.status.is_ready:
             return {
                 'error': 'Index not ready',
                 'status': self.get_status()
             }
-        
+
         # Search for relevant documents
         search_results = self.search(query, k)
-        
+
         if not search_results:
             return {
                 'answer': "No relevant information found.",
                 'sources': []
             }
-        
-        # Prepare context for LLM
-        context_parts = []
-        for result in search_results[:5]:  # Use top 5 results
-            context_parts.append(f"[{result['type']}]: {result['content']}")
-        
-        context = "\n\n".join(context_parts)
-        
+
+        # Build context for LLM
+        max_context_sources = min(k, 10)
+        context = build_rag_context(search_results, max_context_sources)
+
         # Generate answer using configured prompts and model
-        # Load prompts from configuration
         prompts_config = self.llm_service.prompts if hasattr(self.llm_service, 'prompts') else {}
         rag_config = prompts_config.get('rag_query', {})
-        
-        # Get system and user template from config
+
         system_prompt = rag_config.get('system', 'You are a helpful AI assistant.')
-        user_template = rag_config.get('user_template', 
+        user_template = rag_config.get('user_template',
             'Based on the context, answer the question.\n\nContext:\n{context}\n\nQuestion: {question}\n\nAnswer:')
-        
-        # Format the prompt
+
         prompt = user_template.format(context=context, question=query)
-        
-        # Get model from config
-        model_config = self.llm_service.llm_config.get('models', {}).get('chat_general', {})
-        model_name = model_config.get('model', None)
-        if not model_name:
-            raise ValueError("No chat_general model configured in llm.json")
-        
-        answer = await self.llm_service.generate_completion_async(
-            prompt=prompt,
-            model=model_name,
-            temperature=model_config.get('temperature', 0.3)
-        )
-        
-        return {
-            'answer': answer,
-            'sources': search_results[:5],
-            'total_results': len(search_results)
-        }
+
+        try:
+            models_config = self.llm_service.llm_config.get('models', {})
+            model_config = models_config.get('rag_answer') or models_config.get('chat_general', {})
+            model_name = model_config.get('model', None)
+            if not model_name:
+                raise ValueError("No rag_answer or chat_general model configured in llm.json")
+
+            print(f"RAG: Using model {model_name} for answer generation")
+            print(f"RAG: Prompt length: {len(prompt)} chars")
+            print(f"RAG: Context sources: {max_context_sources} (from {len(search_results)} total)")
+
+            answer = await self.llm_service.generate_completion_async(
+                prompt=prompt,
+                model=model_name,
+                temperature=model_config.get('temperature', 0.3),
+                max_tokens=model_config.get('max_tokens', 2000)
+            )
+
+            print(f"RAG: Answer generated, length: {len(answer) if answer else 0} chars")
+
+            if not answer or answer.strip() == "":
+                print("Warning: Empty answer generated, using fallback")
+                answer = generate_fallback_answer(query, search_results)
+
+            return {
+                'answer': answer,
+                'sources': search_results,
+                'total_results': len(search_results)
+            }
+
+        except Exception as e:
+            print(f"Error generating RAG answer: {e}")
+            import traceback
+            traceback.print_exc()
+
+            return {
+                'answer': f"I found {len(search_results)} relevant documents but encountered an error generating a summary: {str(e)}",
+                'sources': search_results,
+                'total_results': len(search_results),
+                'error': str(e)
+            }
 
 
 # Singleton instance getter
-def get_rag_service(db: Session = None) -> FastRAGService:
+def get_rag_service(db=None) -> FastRAGService:
     """Get the singleton RAG service instance"""
     return FastRAGService(db)

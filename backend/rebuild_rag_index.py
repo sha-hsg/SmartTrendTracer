@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 """
-Rebuild the RAG index for AI-powered search
+Rebuild the RAG index for AI-powered search (MongoDB version)
 """
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app.models import get_db
-from app.services.rag_service_fast import get_rag_service
+from app.services.rag_service_concepts import ConceptBasedRAGService
 
 def rebuild_index():
     """Rebuild the RAG index from scratch"""
-    print("🔄 Starting RAG index rebuild...")
-    
-    # Get database session
-    db = next(get_db())
+    print("🔄 Starting RAG index rebuild (MongoDB)...")
     
     # Get RAG service
-    rag_service = get_rag_service(db)
+    rag_service = ConceptBasedRAGService()
     
     # Clear existing index
     print("🗑️  Clearing existing index...")
@@ -30,16 +26,25 @@ def rebuild_index():
     print("🏗️  Building new index...")
     result = rag_service.build_index_async()
     
-    if result.get('status') == 'building':
+    if result.get('status') in ['building', 'started']:
         print("✅ Index rebuild started successfully!")
-        print(f"📊 Processing {result.get('total_documents', 0)} documents")
+        
+        # Get document count from the status
+        status = rag_service.get_status()
+        total_docs = status.get('total_documents', 0)
+        
+        print(f"📊 Processing {total_docs} documents")
         print("\n⏳ The index is being built in the background.")
         print("   This may take a few minutes depending on the number of documents.")
         print("\n💡 You can use the search interface while the index is building,")
         print("   but results may be incomplete until it finishes.")
+    elif result.get('status') == 'already_building':
+        print("⚠️  Index rebuild is already in progress")
+        print(f"   Progress: {result.get('progress', 0)}%")
     else:
         print("❌ Failed to start index rebuild")
-        print(f"   Error: {result.get('error', 'Unknown error')}")
+        print(f"   Status: {result.get('status', 'Unknown')}")
+        print(f"   Error: {result.get('error', result.get('message', 'Unknown error'))}")
     
     # Close database session
     db.close()

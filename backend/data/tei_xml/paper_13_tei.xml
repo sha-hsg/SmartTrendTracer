@@ -1,0 +1,1514 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xml:space="preserve" xmlns="http://www.tei-c.org/ns/1.0" 
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	<teiHeader xml:lang="en">
+		<fileDesc>
+			<titleStmt>
+				<title level="a" type="main">Knowledge Graphs for Enhancing Large Language Models in Entity Disambiguation</title>
+			</titleStmt>
+			<publicationStmt>
+				<publisher/>
+				<availability  status="unknown">
+					<licence/>
+				</availability>
+				<date type="published" when="2025-05-06">6 May 2025</date>
+			</publicationStmt>
+			<sourceDesc>
+				<biblStruct>
+					<analytic>
+						<author>
+							<persName><forename type="first">Gerard</forename><surname>Pons</surname></persName>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Universitat Politècnica de Catalunya , UPC-BarcelonaTech</note>
+								<orgName type="institution" key="instit1">Universitat Politècnica de Catalunya</orgName>
+								<orgName type="institution" key="instit2">UPC-BarcelonaTech</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Besim</forename><surname>Bilalli</surname></persName>
+							<email>besim.bialli@upc.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Universitat Politècnica de Catalunya , UPC-BarcelonaTech</note>
+								<orgName type="institution" key="instit1">Universitat Politècnica de Catalunya</orgName>
+								<orgName type="institution" key="instit2">UPC-BarcelonaTech</orgName>
+							</affiliation>
+						</author>
+						<author>
+							<persName><forename type="first">Anna</forename><surname>Queralt</surname></persName>
+							<email>anna.queralt@upc.edu</email>
+							<affiliation key="aff0">
+								<note type="raw_affiliation">Universitat Politècnica de Catalunya , UPC-BarcelonaTech</note>
+								<orgName type="institution" key="instit1">Universitat Politècnica de Catalunya</orgName>
+								<orgName type="institution" key="instit2">UPC-BarcelonaTech</orgName>
+							</affiliation>
+						</author>
+						<title level="a" type="main">Knowledge Graphs for Enhancing Large Language Models in Entity Disambiguation</title>
+					</analytic>
+					<monogr>
+						<imprint>
+							<date type="published" when="2025-05-06">6 May 2025</date>
+						</imprint>
+					</monogr>
+					<idno type="MD5">C5AF47A2E4DE41E953E512EE9A4DDCD9</idno>
+					<idno type="arXiv">arXiv:2505.02737v2[cs.LG]</idno>
+				</biblStruct>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<appInfo>
+				<application version="0.8.1" ident="GROBID" when="2025-08-19T19:42+0000">
+					<desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+					<ref target="https://github.com/kermitt2/grobid"/>
+				</application>
+			</appInfo>
+		</encodingDesc>
+		<profileDesc>
+			<textClass>
+				<keywords>
+					<term>Knowledge Graphs</term>
+					<term>Entity Disambiguation</term>
+					<term>Large Language Models</term>
+				</keywords>
+			</textClass>
+			<abstract>
+<div xmlns="http://www.tei-c.org/ns/1.0"><p>Recent advances in Large Language Models (LLMs) have positioned them as a prominent solution for Natural Language Processing tasks. Notably, they can approach these problems in a zero or few-shot manner, thereby eliminating the need for training or fine-tuning taskspecific models. However, LLMs face some challenges, including hallucination and the presence of outdated knowledge or missing information from specific domains in the training data. These problems cannot be easily solved by retraining the models with new data as it is a timeconsuming and expensive process. To mitigate these issues, Knowledge Graphs (KGs) have been proposed as a structured external source of information to enrich LLMs. With this idea, in this work we use KGs to enhance LLMs for zero-shot Entity Disambiguation (ED). For that purpose, we leverage the hierarchical representation of the entities' classes in a KG to gradually prune the candidate space as well as the entities' descriptions to enrich the input prompt with additional factual knowledge. Our evaluation on popular ED datasets shows that the proposed method outperforms non-enhanced and description-only enhanced LLMs, and has a higher degree of adaptability than task-specific models. Furthermore, we conduct an error analysis and discuss the impact of the leveraged KG's semantic expressivity on the ED performance.</p></div>
+			</abstract>
+		</profileDesc>
+	</teiHeader>
+	<text xml:lang="en">
+		<body>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="1">Introduction</head><p>The association of textual mentions in a document to the entities they refer to in a Knowledge Graph (KG) is crucial for many Natural Language Processing (NLP) applications, such as question answering or information retrieval. This task is known as Entity Linking (EL), and it is a fundamental step in the transformation of unstructured text into structured knowledge. EL is usually performed as a pipeline with three different steps. The first one is Mention Detection, which detects the text spans that could possibly be linked to entities. It is followed by the Candidate Generation stage, which selects for each mention the top k entities from the KG that could refer to it, usually based on precomputed probability distributions from entity-mention hyperlink pairs. Finally in the Entity Disambiguation (ED) step, a final entity is selected from the previously generated set.</p><p>Usually, the ED problem is tackled by designing and training task-specific models with large amounts of data (e.g., Wikipedia dumps) <ref type="bibr" target="#b9">[10,</ref><ref type="bibr" target="#b4">5]</ref>. In recent years, language models have been used for this task by making use of the mention's context in the document to disambiguate between the possible solutions <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b9">10,</ref><ref type="bibr" target="#b6">7]</ref>. Additionally, some approaches incorporate the candidates' descriptions <ref type="bibr" target="#b24">[25]</ref>, classes <ref type="bibr" target="#b31">[32]</ref> (e.g., the categories they are tagged with in Wikipedia) or both <ref type="bibr" target="#b4">[5]</ref> in the model's input, by generating encodings for these text items. The addition of this knowledge allows zero-shot ED, enabling the models to classify entities that may have not been seen during training time.</p><p>Lately, new advances in Large Language Models (LLMs) such as GPT-3 <ref type="bibr" target="#b7">[8]</ref>, GPT-4 <ref type="bibr" target="#b1">[2]</ref> or LLaMA-2 <ref type="bibr" target="#b39">[40]</ref>, have demonstrated remarkable performance in numerous NLP problems <ref type="bibr" target="#b43">[44]</ref>. Given their large-scale and diverse training corpus, they are good candidates to perform tasks, even zero-shot ones, where general knowledge is needed for language processing, such as ED <ref type="bibr" target="#b11">[12]</ref>. However, these LLMs still face some challenges, such as hallucination (i.e., the generation of statements that are factually incorrect) <ref type="bibr" target="#b19">[20]</ref>, and the lack of knowledge about concepts outside their training corpus. To mitigate these issues, the use of KGs to enhance LLMs has been proposed to address different problems <ref type="bibr" target="#b32">[33]</ref>. There exist a large variety of KGs, storing information which can be encyclopedic (e.g., DBpedia <ref type="bibr" target="#b2">[3]</ref> or YAGO <ref type="bibr" target="#b37">[38]</ref>, which extract information from Wikipedia), commonsense knowledge (e.g., ConceptNet <ref type="bibr" target="#b36">[37]</ref>, with information such as ⟨house, has, door⟩ or ⟨bed, usedF or, sleep⟩) or domain specific <ref type="bibr" target="#b0">[1]</ref>. The explicit and structured knowledge they contain can be used to enhance the performance of LLMs, by leveraging it either during pre-training by enriching the training data <ref type="bibr" target="#b18">[19]</ref>, or during the inference stage <ref type="bibr" target="#b41">[42,</ref><ref type="bibr" target="#b5">6,</ref><ref type="bibr" target="#b38">39]</ref>. Following the nomenclature proposed in <ref type="bibr" target="#b32">[33]</ref>, in this work we focus on KG-enhanced LLM inference, and apply it to the ED task. Our approach takes advantage of KGs to avoid retraining the LLM, and improves the effectiveness of zero-shot LLM approaches for ED.</p><p>Solving the ED problem using only LLMs would require to instruct them to choose one of the entities from the candidate set given the document containing the mention. Instead, we propose to extract the candidates' class taxonomy from a KG and use it to guide the disambiguation. For example, taking Query 1 in Figure <ref type="figure" target="#fig_0">1</ref>, given 'MTV awards' appearing in the context, the entity 'Justin' is more likely to be a Musician than a Politician. Thus, we can use this context to guide the LLM by eliminating invalid solutions such as 'Justin Trudeau', rather than letting the LLM directly predict the entity. Moreover, when all the remaining candidates fall directly under the same class, we retrieve the candidates' descriptions from a Knowledge Base (KB), such as Wikipedia, and append them to the disambiguation prompt (see Figure <ref type="figure" target="#fig_0">1</ref>, query 2). With this Retrieval Augmented Generation (RAG) <ref type="bibr" target="#b22">[23]</ref> stage, we provide the LLM with reliable information, reducing hallucination and enabling the LLM to perform predictions over new or unusual entities which may not have been present in the training corpus. Therefore, our contributions are as follows:</p><p>-We present a method to enhance LLMs in the ED task by leveraging the candidate entity class taxonomies available in KGs. Moreover, we also augment the prompt with the entity descriptions, in order to allow the disambiguation of unseen or difficult entities. -We evaluate the method against non-enhanced LLMs, description-only enhanced LLMs and a task-specific model by using ten ED datasets. The results show that our approach improves the disambiguation capabilities of LLMs and has a higher degree of adaptability to different domains than the task-specific model. -We discuss how using KGs with different levels of semantic expressivity (e.g., YAGO and DBpedia) affects the proposed pruning algorithm, by studying both the ED results and the algorithm's performance. -We study and classify the cases in which our method fails to correctly disambiguate the mention and provide insights on the possible improvements.</p><p>The remainder of the paper is structured as follows. In Section 2 we discuss the Related Work. In Section 3 we formalize the problem and present the proposed approach. In Section 4 we describe the different experiments, discuss the results, and conduct an error analysis. Finally, in Section 5 we provide our conclusions and ideas for future work.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2">Related Work</head><p>This section begins with an overview of different ED methods which leverage external information to improve their predictions. Then, the recently emerged concept of KG-enhanced LLMs is introduced, enumerating some of the proposed methods for tackling NLP tasks.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.1">Knowledge-augmented ED</head><p>Various ED approaches use model architectures that leverage the mention, its surrounding context and candidate entities to generate a solution <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b9">10,</ref><ref type="bibr" target="#b6">7]</ref>. However, some recent works incorporate additional knowledge to the model's input in order to improve the disambiguation of entities which are not present in the training dataset. This extra information is usually gathered from online sources (e.g., Wikipedia and Wikia) and provided in the form of entity descriptions <ref type="bibr" target="#b24">[25]</ref>, entity types <ref type="bibr" target="#b31">[32]</ref> or both <ref type="bibr" target="#b4">[5]</ref>. Additionally, some works leverage the structured information contained in KGs to enhance the model's performance. In <ref type="bibr" target="#b34">[35]</ref>, information about the entity types from DBpedia and knowledge graph embeddings extracted from Wikipedia's graph structure are incorporated into the model's input. In <ref type="bibr" target="#b3">[4]</ref>, KG triples are used to train a component of the model's architecture which predicts the existence of facts between mentions in a given document. The result of this prediction is used as input for the final model, which also leverages entity types and descriptions. Finally in <ref type="bibr" target="#b28">[29]</ref>, the triples from the KG are verbalized and appended to the input sentence before being fed to the model.</p><p>These knowledge-augmented ED approaches incorporate the additional information to their model's input, which are mainly built by leveraging LLMs such as BERT <ref type="bibr" target="#b10">[11]</ref>, RoBERTa <ref type="bibr" target="#b23">[24]</ref> or BART <ref type="bibr" target="#b21">[22]</ref>, and need to be trained or fine-tuned with large amounts of data (e.g., Wikipedia dumps with millions of entities). In contrast, in our approach we rely on the new generation of generative LLMs (e.g., GPT-3 <ref type="bibr" target="#b7">[8]</ref>, GPT-4 <ref type="bibr" target="#b1">[2]</ref> or LLaMA-2 <ref type="bibr" target="#b39">[40]</ref>), and solve the ED task by prompting the LLMs in a zero-shot manner without needing to train a task-specific model. This approach has also been explored in <ref type="bibr" target="#b11">[12]</ref>, where the document's context and the inherent knowledge from the LLM are enriched with the entity descriptions, following a RAG approach <ref type="bibr" target="#b22">[23]</ref>. RAG has been shown to be useful for incorporating new or relevant information to LLMs, and it has also been leveraged in a specific step of our proposal. However, our main focus is on the usage of KGs to obtain the class hierarchy for the candidate entities, which allows our method to solve the ED task by guiding the LLM to the correct answer (see Section 3.2).</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="2.2">KG-enhanced LLMs</head><p>LLMs can be used to solve a wide range of tasks, not just ED. However, as introduced in Section 1, LLMs suffer from problems such as hallucination, which can be accentuated if the information requested is outdated or not present in the training data. Retraining LLMs to incorporate this missing knowledge is expensive and time-consuming, and fine-tuning them could lead to problems such as catastrophically forgetting (i.e., the LLMs' tendency to lose previously obtained knowledge when being fine-tuned with new data) <ref type="bibr" target="#b25">[26]</ref>. To solve these issues, KGs can be used as a source of additional structured information in different NLP tasks. In particular, information from a KG can be added to the prompt fed to the LLMs, a technique coined as KG Prompting <ref type="bibr" target="#b32">[33]</ref>, which has already been explored for Question Answering. In <ref type="bibr" target="#b41">[42]</ref>, the approach starts by identifying the entities in the question, and then the KG is queried to build subgraphs including them. After that, the LLM is prompted to comprehend and aggregate the subgraphs, and based on the consolidated result it is asked to reason over it and provide the answer. Similarly in <ref type="bibr" target="#b38">[39]</ref>, the LLM generates these subgraphs by iteratively exploring a KG to create a reasoning path over it. In each iteration, if the LLM believes that has enough information, an answer is provided. Otherwise, it is prompted to continue to traverse the graph, adding the most promising relation to the existing reasoning path each time. Finally in <ref type="bibr" target="#b5">[6]</ref>, the entities are also first extracted from the question, which are then used to retrieve the triples they participate in within the KG. Then, the triples are verbalized and appended to the prompt as context, which is fed to the LLM to obtain the answer.</p><p>In our approach, however, we solve a different task, ED, and we rely on the KG's ontology rather than on the annotated instances, guiding the disambiguation of the entities using the class hierarchy.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3">ED with KG-enhanced LLMs</head><p>In this section we lay out the formulation of the problem to be solved and describe the two different steps of the proposed method.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.1">Problem Formulation</head><p>Let C = {e 1 , e 2 , ...e |C| } be a set of k candidate entities belonging to a KG, containing a class hierarchy in which the entities are annotated, and m be a mention in a document d. The objective of ED is to assign to m the entity e it refers to, such that e ∈ C.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="3.2">Method</head><p>Our proposed method for the disambiguation of the mention can be divided in two steps. First, a subgraph is generated containing the candidate entities together with their taxonomy of classes. Then, a pruning algorithm is applied to iteratively discard the candidate entities until there is only one left in the subgraph, which will be the solution (see Figure <ref type="figure" target="#fig_0">1</ref>). The implementation can be found in the Supplemental Material.</p><p>Subgraph Generation Given the candidate set C for a mention m, a directedacyclic graph (DAG) G is created from the KG, having the general class T hing as its 'root' (i.e., the only node without predecessors) and the candidate entities as 'leaves' (i.e., the nodes without successors). Note that G cannot be considered a tree as a node can have multiple predecessors (e.g., 'Justin Timberlake' is a linked to the class Musician and also to the class Actor ).</p><p>First of all, the candidate entities are linked to the classes they belong to (see Figure <ref type="figure" target="#fig_1">2</ref>, step 1). Then, the classes that are not predecessors of any of the candidates are removed from G (see Figure <ref type="figure" target="#fig_1">2</ref>, step 2). Next, the relations that can be inferred by traversing G through more granular path of relations are also removed, as well as self-pointing relations (see Figure <ref type="figure" target="#fig_1">2</ref>, step 3). Finally, intermediate nodes which only have one direct successor and that successor is not an entity are also iteratively removed from G, linking the direct successor to the node's direct predecessors (see Figure <ref type="figure" target="#fig_1">2</ref>, step 4). With this last step, we aim to increase the granularity and ease the disambiguation, as the classes in the higher levels of the hierarchy tend to be more abstract (e.g., for the class Musician, the path from the root in DBpedia is Thing → Species → Eukaryote → Person → Artist → Musician). In some of the more complex KGs (e.g., YAGO), an entity could also be considered a class. Therefore, if there exist other entities in the candidate set that are linked to this entity, an extra preprocessing step is needed to transform the entity into a leaf, by removing the links to its direct successors while linking them to its direct predecessors.  Pruning Algorithm The pruning algorithm is outlined in Algorithm 1. Given the generated graph G and the initial candidate entities (i.e., its leaves), the algorithm starts by finding the Lowest Common Ancestor (LCA) of the candidate entities. The LCA is defined as the deepest node (i.e., the furthest from the root) which is an ancestor of all the candidates (see dashed nodes in Figure <ref type="figure" target="#fig_4">3</ref>). Then, the direct successors of the LCA are retrieved, which leads to three different scenarios:</p><p>1. All the direct successors are classes (Figure <ref type="figure" target="#fig_4">3</ref>, case 1): The LLM is prompted to select to which classes the mention m belongs to. All the candidate classes that are not chosen by the LLM are removed from G, along with all the nodes that have become disconnected from the root. This case corresponds to lines 5-12 in Algorithm 1. 2. All the direct successors are entities (Figure <ref type="figure" target="#fig_4">3</ref>, case 2): The LLM is prompted to directly select the entity m refers to. Here, the description of each candidate entity is retrieved from a KB and appended to the prompt. The non-selected candidates are then removed from G. This case corresponds to lines 13-15 in Algorithm 1. During the initial tests it was found that the LLM may not return a valid response when it considered that none of the presented classes matched the mention. Therefore, in case 1 we additionally add the class None, which triggers a case 2 prompt with the remaining candidates if it is selected. Finally, in order to guarantee that the LLM always has information about the entity before making a decision, the response is assessed by the LLM when a single entity is left after a case 1 or case 3 step. If it is negatively evaluated, a complete case 2 prompt is triggered.</p><p>The algorithm runs until there is only one leaf (i.e., entity) left in G, which will be the final response. Therefore, in the worst-case scenario the LLM will be prompted k times.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4">Experiments</head><p>In this section we discuss the experiments performed. First, we describe the experimental settings, then we evaluate our proposal against different methods and also analyze the effect of the KG used. Finally we study the different scenarios that lead to our method failing to correctly disambiguate the mention.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.1">Settings and Datasets</head><p>Datasets We evaluate the approach on ten popular ED datasets, the same as in <ref type="bibr" target="#b11">[12]</ref>, which are from news and online articles (MSN <ref type="bibr" target="#b8">[9]</ref>, AQU <ref type="bibr" target="#b26">[27]</ref>, ACE04 <ref type="bibr" target="#b33">[34]</ref>, CWEB <ref type="bibr" target="#b12">[13]</ref>, R128 <ref type="bibr" target="#b35">[36]</ref> and R500 <ref type="bibr" target="#b35">[36]</ref>), from Wikipedia (WIKI <ref type="bibr" target="#b14">[15]</ref>, OKE15 <ref type="bibr" target="#b29">[30]</ref> and OKE16 <ref type="bibr" target="#b30">[31]</ref>) or from hand-crafted, brief and ambiguous sentences (KORE <ref type="bibr" target="#b16">[17]</ref>). These datasets contain documents for which one or various mentions have been annotated with the ground truth entity they refer to. The dataset statistics are summarized in Table <ref type="table" target="#tab_0">1</ref>.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head>Candidate Sets</head><p>To allow comparability, we borrow the candidate sets from <ref type="bibr" target="#b11">[12]</ref>, which combine two methods to obtain sets of size 10. First, as done in previous works <ref type="bibr" target="#b20">[21,</ref><ref type="bibr" target="#b9">10,</ref><ref type="bibr" target="#b4">5]</ref>, Wikipedia hyperlink count statistics from mention-entity pairs are used to generate the candidates. If not enough candidates are found, the set is augmented by generating candidates with the BLINK model <ref type="bibr" target="#b42">[43]</ref>, which is based on dense retrieval from context and descriptions. Knowledge Graphs To obtain the hierarchical representation of the classes we use YAGO <ref type="bibr" target="#b37">[38]</ref>. It primarily leverages the information from Wikipedia's infoboxes for generating the relations between entities, and for the taxonomy it borrows the top-level representation from the schema.org ontology <ref type="bibr" target="#b13">[14]</ref>, which is further refined by carefully integrating it with the fine-grained Wikidata <ref type="bibr" target="#b40">[41]</ref> taxonomy. Additionally, in Section 4.3 we study the effect of the granularity of the annotation of the classes. To this end, we use another KG with a more simple class hierarchy, DBpedia <ref type="bibr" target="#b2">[3]</ref>, which is also built on top of Wikipedia but uses a shallow and manually created ontology to define the representation of classes. Finally, to retrieve the entity descriptions we use Wikipedia as a KB, and they are truncated at 250 characters before being appended to the prompt.</p><p>Evaluation Metric We report our results with inKB micro-F1 score (see Equation 1). InKB means that we only consider a mention if the ground truth entity is present in the KG used. To allow comparability between KGs (i.e., YAGO and DBpedia do not have the same entities annotated), we also report the results by considering the percentage of the Gold F1 score achieved. The Gold F1 score is the maximum inKB micro-F1 score that could be obtained, as the candidate sets do not always contain the ground truth entity.</p><p>micro-F1 = TP TP + 1 2 (FP + FN)</p><p>Additionally, given the differences in dataset sizes we report the weighted average, weighting each score by considering the number of instances of each dataset.</p><p>Large Language Models To perform our experiments we use GPT-3.5, concretely the gpt-3.5-turbo-1106 model from OpenAI API, setting its temperature to 0 to decrease the randomness and the creativity of the response, as we are interested in factual answers. The reason behind the selection of this LLM is in a trade-off between reasoning capabilities, operating cost and API availability.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.2">Results</head><p>To evaluate the proposed method we compare it to a non-enhanced LLM baseline and to ChatEL <ref type="bibr" target="#b11">[12]</ref>, the only approach that to the best of our knowledge also directly prompts LLMs to solve in a zero-shot manner the ED task, without training or fine-tuning any model. Additionally, we compare it to ReFinED <ref type="bibr" target="#b4">[5]</ref>, the task-specific model, which requires extensive training, that obtained the best ED performance in the results reported in <ref type="bibr" target="#b11">[12]</ref>:</p><p>-Baseline: The baseline consists in asking the LLM to directly select one of the entities within the set of candidates. Therefore, it does not have the class representation nor the entities' description. This baseline corresponds to a non-enhanced LLM approach. Its implementation can be found in the Supplemental Material. -ChatEL <ref type="bibr" target="#b11">[12]</ref>: The ED task is solved in two steps. First, the LLM is asked to describe what the mention in the document is referring to. Then, another prompt is created asking the LLM to select the candidate entity that best matches the description generated in the previous response, by also enriching the candidates with their descriptions from Wikipedia. It must be noted that in our approach an answer is always returned. However, in <ref type="bibr" target="#b11">[12]</ref> an empty result is produced (i.e., a prediction is not performed) when the LLMs response does not contain any candidate entity, which we observe that happens when the response is not on the candidate set or when there is not enough context. This affects the computation of the precision (and thus the inKB and Gold F1-score), as the number of false negatives can potentially be reduced. These observed differences in the F1-score have been mitigated by computing the achieved gold percentage, making the proposals comparable. -ReFinED <ref type="bibr" target="#b4">[5]</ref>: Is a ED-specific method built over the RoBERTa architecture, leveraging entity types and descriptions. It is pretrained with a Wikipedia dataset, with more than 100M mention-entity pairs, and finetuned on AIDA-CoNLL <ref type="bibr" target="#b17">[18]</ref>, a news related ED dataset with approximately 25.000 annotated mentions.</p><p>The results are shown in Table <ref type="table" target="#tab_1">2</ref>. First of all, it can be observed that the proposed approach outperforms the baseline in all of the datasets. This demonstrates that even with the vast amounts of data with which the LLMs have been trained and their reasoning capabilities, the addition of external knowledge on the prompts and the guidance during the disambiguation can be helpful to improve the performance on the ED task. One of the most frequent mistakes made by the baseline approach is to give more importance to the context than to the mention. For instance, in the sentence 'A six-game begins this Friday in Phoenix and the team hopes to get O'Neal [...]', the baseline links the mention to the entity 'Phoenix Suns', presumably given the basketball context. However, the mention is referring to a place, which is correctly resolved by the KG-enhanced approach, as in the first iteration the LLM correctly disambiguates between the classes Organization, Place, Product or FictionalEntity. Regarding the comparison with ChatEL, it can be observed that better results are obtained by our approach in 6 ouf of 10 datasets, with a weighted average score of 1.8 percentage points higher. Additionally, in the complete ChatEL evaluation GPT-4 is used, which is bigger and more powerful LLM than GPT-3.5 <ref type="bibr" target="#b1">[2]</ref> with a cost per token more than 20 times higher. 1 Therefore, even while using a much less powerful LLM, the proposed approach leads to improvements in the ED task. Additionally, the added cost of the manipulation of the graph structure (e.g., finding the LCA and pruning) is limited by the small number of candidates used in ED, which typically ranges from 5 to 30, and its execution time is two orders of magnitude lower than the LLM calls.</p><p>For the task-specific model, we can observe that it obtains a better performance in 6 of the datasets, and an average weighted score of 1.5 percentage points higher. However, it is worth noting that it has been trained over a huge Wikipedia dataset and fine-tuned on an ED dataset about news, and for the only dataset out of these domains, KORE, our model outperforms it by more than 25 percentage points. Therefore, the LLM methods show a greater degree of adaptability, and could compensate the decrease in performance on some datasets by not requiring the training of specific models.</p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.3">KG Expressivity Impact</head><p>In this section we evaluate how the differences in the semantic expressivity of the taxonomy of classes in the KG affects our approach. Concretely, we explore if reducing the granularity of the taxonomy affects its disambiguation capabilities. To this end, we use YAGO and DBpedia KGs, whose statistics are summarized in Table <ref type="table" target="#tab_2">3</ref>. It can be observed that YAGO has more than a thousand times as many classes as DBpedia, and nearly doubles the average depth of the path from an entity to the root. Therefore, YAGO has a more granular class representation and also annotates more semantic interpretations of the entities. For instance, as it is exemplified in Figure <ref type="figure" target="#fig_5">4</ref>, in the annotation of Barcelona in YAGO a distinction is made between its representation as a Place and as a Organization, whereas in DBpedia Barcelona is only considered as a Place. Additionally, we can also observe the difference in the number of classes and its granularity. For example, DBpedia stops at the city level, while YAGO classifies the municipalities also within their country and region.</p><p>To evaluate the two KGs under study, we repeat the same experimental settings as in Section 4.1, keeping in mind that the inKB entities do not completely overlap on both KGs, thus affecting the Gold F1-score. The results can be seen in Table <ref type="table" target="#tab_1">2</ref>, where in 7 out of 10 datasets the more granular class representation, YAGO, has a better performance, and the weighted average score is 2.4 percentage points higher. This reinforces the hypothesis that having a more semantically rich class taxonomy can help in the disambiguation task. We can observe that YAGO does not outperform DBpedia primarily in the OKE datasets, which contain a large number of mentions referring to generic occupations (e.g., Governor, Judge, Engineer, etc.). For instance, in the second iteration of the method for the sentence 'As governor, Reagan raised taxes [...]', the disambiguation is between the entity 'Governor' which is the ground truth answer, and the class Head of Government, which has other entities as successors (e.g., 'Governor of California'). This causes a case 3 (see Section 3.2) disambiguation between Head of Government and Other, which leads to the LLM selecting the former as it properly fits the context. Regarding the number of iterations both KGs exhibit a similar behavior, having a mean value close to 2.2 (see Table <ref type="table" target="#tab_3">4</ref>). Therefore, even though YAGO has a deeper taxonomy, it is compensated by its superiority in semantic expressivity and mitigated by the elimination of intermediary nodes in the preprocessing step (see Section 3.2). Hence, given that the execution time of the graph manipulation is two orders of magnitude lower than the LLM calls, using deeper graphs does not significantly affect the performance. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="4.4">Error Analysis</head><p>We thoroughly examined and categorized the scenarios that led to our method producing an incorrect disambiguation, as understanding them is crucial for assessing the capabilities and limitations of LLMs in this task.</p><p>Ground truth errors These errors consider the inaccuracies in the annotation of the datasets. For instance, in the sentence '[...] it is required excellent English communication skills [...]', the mention English is annotated as 'England' instead of 'English Language'.</p><p>KG errors These errors encompass the problems derived from the annotation of the entities' classes in the KGs. For example, in the sentence 'Mars, Galaxy and Bounty are chocolate [...]' the ground truth answer 'Bounty (chocolate bar)' is wrongly annotated in DBpedia as an Architectural Structure, causing the pruning algorithm to fail. Additionally, the annotations could also suffer from inconsistencies. For instance, the 'Supreme Court of Florida' falls under the Organization class, while the 'Supreme Court of California' is considered a Building.</p><p>Ambiguous errors Some datasets contain sentences with high degree of ambiguity. For instance, in the sentence 'Justin, Stefani and Kate are among the most popular people both on MTV and Twitter', the disambiguation between 'Justin Timberlake' and 'Justin Bieber' is not clear as both are popular celebrities in those platforms and have collaborated with the other mentioned artists. Moreover, there are some ground truth labels that could be argued to be incorrect. For example, in the sentence 'accepted the post of principal and only teacher at a primary school in rural Blaauwbosch, Newcastle.', principal is annotated in the ground truth as 'Principal (Academia)', yet for primary schools in the UK a more appropriate term would be 'head teacher', which is also found in the candidate set.</p><p>LLM errors Finally, some errors are produced by the LLM's response. These are usually originated by the LLM missing information from the context and incorrectly resolving the entity or by wrongly interpreting the mention and assigning it to an erroneous class.</p><p>In Table <ref type="table" target="#tab_4">5</ref>, all the errors from the two smaller datasets (i.e., KORE and ACE2004) have been classified according to the presented types of error. This study has not been extended to all the datasets as it is unfeasible due to their sizes. Regarding the ground truth error, it corresponds to the sentence 'Onassis married Kennedy on October 20, 1968', where the mention Onassis is annotated as 'Jacqueline Kennedy Onassis' instead of 'Aristotle Onassis'. For the KG errors, 2 are originated from a missing class annotation and 1 from a wrong labeling of an entity. Also, 3 errors for the ambiguous sentences are originated by the context not being sufficient to disambiguate the mention and in 2 of them the LLM's response could arguably be considered also correct (e.g, in the sentence 'The Isle of Wight festival in 1970 was the biggest at its time', the mention could be both referring to the musical festival and to the concrete festival's edition). Finally, 5 of the LLM errors are caused by missed context (e.g., in the short sentence 'Tiger lost the US Open', the mention Tiger, likely referring to Tiger Woods, helps to disambiguate between 'US Open (tennis)' and 'US Open (golf)' but it is missed by the LLM) and 7 by a wrong interpretation of the class (e.g., in the sentence '[...] ran adjacent to an advertisement for a golf tournament on Fox Sports sponsored by Sun Microsystems.' the mention is interpreted as a TV program rather than a TV channel). These last LLM errors could potentially be solved by using LLMs with more powerful reasoning capabilities. To explore this idea, a small experiment with GPT-4 and Mistral Large <ref type="bibr" target="#b27">[28]</ref> has been run, where the models are able to correctly disambiguate 8 and 7 of these 12 errors, respectively. </p></div>
+<div xmlns="http://www.tei-c.org/ns/1.0"><head n="5">Conclusions</head><p>In this work we present a novel method to enhance LLMs with KGs to solve the ED task. For this purpose, we leverage the entities' class taxonomy annotated in a KG to gradually prune the candidates' search space. Additionally, when the disambiguation is at the entity level we add the entities' descriptions to the prompt. This proposal allows solving the ED task without training taskspecific models or fine-tuning them on domain-specific or new data, which is a time-consuming and expensive process. In the experiments we show that the proposed method outperforms both non-enhanced and description-enhanced LLM approaches, and that it has a higher degree of adaptability to different domains than task-specific methods, which rely on the data they have been trained with. Additionally, we observe how using more semantically expressive KGs improves the ED results without degrading the pruning algorithm's performance. Finally, we analyze the different disambiguation errors and classify them according to their type, drawing conclusions about them. Specifically, and as a future line of work, the usage of more powerful LLMs could be studied, which could help in the disambiguation of difficult mentions.</p><p>Supplemental Material Statement: Datasets and scripts containing the prompts and the algorithms can be found in the attached repository. </p></div><figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0"><head>Fig. 1 .</head><label>1</label><figDesc>Fig. 1. Overview of the two steps of our approach.</figDesc><graphic coords="3,134.77,115.83,345.83,150.32" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1"><head>Fig. 2 .</head><label>2</label><figDesc>Fig. 2. Overview of the steps for the creation of the DAG.</figDesc><graphic coords="6,134.77,115.83,345.82,127.89" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2"><head>Fig. 3 . 8 G</head><label>38</label><figDesc>Fig. 3. Example of the three different configurations of the LCA's direct successors.</figDesc><graphic coords="6,169.35,540.60,276.66,99.66" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3"><head>17 response 21 G</head><label>1721</label><figDesc>← multiChoice(Dc ∪ {Other}, m, d); 18 if response = Other then 19 G ← prune(G, Dc); 20 else ← prune(G, directSuccessors \ {response}); 22 candidates ← leaves(G);</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4"><head>3 .</head><label>3</label><figDesc>Direct successors are classes and entities (Figure 3, case 3): The direct successors are organized into classes (D c ), and entities (D e ). The LLM is then prompted to select a class from D ′ c = D c ∪ Other, where Other is an additional class which encompasses D e . If the LLM selects a class belonging to D c , the remaining classes and the entities D e are removed from G. If Other is selected, the classes from D c are removed. Finally, the nodes which have become disconnected from the root are also removed. This case corresponds to lines 16-22 in Algorithm 1.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5"><head>1Fig. 4 .</head><label>4</label><figDesc>Fig. 4. Class representation of the entity Barcelona in DBpedia (left) and YAGO (right) KGs.</figDesc></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0"><head></head><label></label><figDesc></figDesc><graphic coords="13,134.77,115.84,311.24,199.26" type="bitmap" /></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_0"><head>Table 1 .</head><label>1</label><figDesc>Overview of ten considered datasets' statistics.</figDesc><table><row><cell></cell><cell cols="3"># Docs # Mentions Avg. # Characters</cell></row><row><cell>KORE</cell><cell>50</cell><cell>144</cell><cell>76.4</cell></row><row><cell>ACE04</cell><cell>35</cell><cell>257</cell><cell>2285.0</cell></row><row><cell cols="2">OKE16 173</cell><cell>288</cell><cell>186.2</cell></row><row><cell>R500</cell><cell>357</cell><cell>524</cell><cell>164.8</cell></row><row><cell cols="2">OKE15 101</cell><cell>536</cell><cell>183.9</cell></row><row><cell>R128</cell><cell>113</cell><cell>650</cell><cell>818.8</cell></row><row><cell>MSN</cell><cell>20</cell><cell>656</cell><cell>3380.1</cell></row><row><cell>AQU</cell><cell>50</cell><cell>727</cell><cell>1415.9</cell></row><row><cell>WIKI</cell><cell>319</cell><cell>6793</cell><cell>1624.6</cell></row><row><cell>CWEB</cell><cell>320</cell><cell>11154</cell><cell>7575.9</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1"><head>Table 2 .</head><label>2</label><figDesc>Results for the inKB micro F1-score for the ED experiments with ten datasets. The ChatEL and ReFinED scores are taken from the results reported by the authors in<ref type="bibr" target="#b11">[12]</ref>. The weighted average weights each score by taking into consideration the sizes of the datasets. The best score for each dataset is highlighted in bold. KORE ACE04 OKE16 R500 OKE15 R128 MSN AQU WIKI CWEB Avg. Wt. avg.</figDesc><table><row><cell></cell><cell></cell><cell>75.4</cell><cell></cell><cell></cell><cell>82.6</cell><cell></cell><cell></cell><cell>79.3</cell><cell></cell><cell></cell><cell>78.8</cell><cell></cell><cell></cell><cell>81.1</cell></row><row><cell></cell><cell></cell><cell>80.8</cell><cell></cell><cell></cell><cell>82.8</cell><cell></cell><cell></cell><cell>85.2</cell><cell></cell><cell></cell><cell>85.0</cell><cell></cell><cell></cell><cell>85.5</cell></row><row><cell>65.0</cell><cell>89.3</cell><cell>72.8</cell><cell>73.8</cell><cell>94.3</cell><cell>78.2</cell><cell>70.9</cell><cell>94.3</cell><cell>75.1</cell><cell>67.7</cell><cell>89.4</cell><cell>75.7</cell><cell>69.6</cell><cell>89.3</cell><cell>77.9</cell></row><row><cell>69.5</cell><cell>89.4</cell><cell>77.7</cell><cell>84.1</cell><cell>94.4</cell><cell>89.0</cell><cell>79.1</cell><cell>94.4</cell><cell>83.7</cell><cell>72.5</cell><cell>90.4</cell><cell>80.2</cell><cell>74.4</cell><cell>88.9</cell><cell>83.6</cell></row><row><cell>62.4</cell><cell>96.2</cell><cell>64.8</cell><cell>86.1</cell><cell>98.1</cell><cell>87.7</cell><cell>76.7</cell><cell>98.1</cell><cell>78.1</cell><cell>72.0</cell><cell>96.3</cell><cell>74.8</cell><cell>72.0</cell><cell>94.4</cell><cell>76.2</cell></row><row><cell>82.3</cell><cell>94.0</cell><cell>87.5</cell><cell>89.1</cell><cell>97.0</cell><cell>91.8</cell><cell>88.1</cell><cell>97.0</cell><cell>90.8</cell><cell>84.2</cell><cell>94.1</cell><cell>89.4</cell><cell>81.2</cell><cell>92.2</cell><cell>88.0</cell></row><row><cell>68.7</cell><cell>83.6</cell><cell>82.1</cell><cell>68.0</cell><cell>91.1</cell><cell>74.6</cell><cell>78.9</cell><cell>91.1</cell><cell>86.6</cell><cell>75.0</cell><cell>85.9</cell><cell>87.3</cell><cell>75.8</cell><cell>84.8</cell><cell>89.4</cell></row><row><cell>64.1</cell><cell>82.2</cell><cell>78.0</cell><cell>78.1</cell><cell>90.3</cell><cell>86.4</cell><cell>75.8</cell><cell>90.3</cell><cell>83.9</cell><cell>73.5</cell><cell>82.2</cell><cell>89.3</cell><cell>70.3</cell><cell>82.3</cell><cell>85.4</cell></row><row><cell>77.4</cell><cell>85.3</cell><cell>90.8</cell><cell>70.8</cell><cell>92.1</cell><cell>76.8</cell><cell>82.2</cell><cell>92.1</cell><cell>89.2</cell><cell>75.4</cell><cell>85.6</cell><cell>88.0</cell><cell>78.3</cell><cell>85.2</cell><cell>91.9</cell></row><row><cell>59.0</cell><cell>82.2</cell><cell>71.7</cell><cell>79.4</cell><cell>90.3</cell><cell>87.9</cell><cell>75.2</cell><cell>90.3</cell><cell>83.2</cell><cell>65.9</cell><cell>79.8</cell><cell>82.5</cell><cell>65.8</cell><cell>83.7</cell><cell>78.6</cell></row><row><cell>89.1</cell><cell>95.4</cell><cell>93.4</cell><cell>86.4</cell><cell>96.9</cell><cell>89.1</cell><cell>89.3</cell><cell>96.9</cell><cell>92.1</cell><cell>89.4</cell><cell>95.7</cell><cell>93.3</cell><cell>88.7</cell><cell>94.3</cell><cell>94.0</cell></row><row><cell>68.2</cell><cell>76.5</cell><cell>89.3</cell><cell>56.7</cell><cell>88.0</cell><cell>64.4</cell><cell>78.7</cell><cell>88.0</cell><cell>89.4</cell><cell>71.3</cell><cell>80.1</cell><cell>88.9</cell><cell>71.8</cell><cell>79.6</cell><cell>90.1</cell></row><row><cell>F1-Score</cell><cell>Gold F1</cell><cell>% Gold</cell><cell>F1-Score</cell><cell>Gold F1</cell><cell>% Gold</cell><cell>F1-Score</cell><cell>Gold F1</cell><cell>% Gold</cell><cell>F1-Score</cell><cell>Gold F1</cell><cell>% Gold</cell><cell>F1-Score</cell><cell>Gold F1</cell><cell>% Gold</cell></row><row><cell cols="2">Baseline</cell><cell></cell><cell cols="3">ReFinED[5]</cell><cell cols="3">ChatEL[12]</cell><cell cols="3">Our DBpedia</cell><cell cols="3">OurYAGO</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2"><head>Table 3 .</head><label>3</label><figDesc>Metric comparisons from YAGO and DBpedia KGs<ref type="bibr" target="#b15">[16]</ref>.</figDesc><table><row><cell></cell><cell cols="2">DBpedia YAGO</cell></row><row><cell># Instances</cell><cell cols="2">5,044,223 6,349,359</cell></row><row><cell># Classes</cell><cell>760</cell><cell>819,292</cell></row><row><cell>Avg. tree depth</cell><cell>3.51</cell><cell>6.61</cell></row><row><cell>Avg. branching factor</cell><cell>4.53</cell><cell>8.48</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_3"><head>Table 4 .</head><label>4</label><figDesc>Percentage of disambiguated entities in which the pruning algorithm reached a final single entity within the specified number of iterations.</figDesc><table><row><cell></cell><cell></cell><cell></cell><cell cols="2">Iterations</cell><cell></cell><cell>Avg. Iterations</cell></row><row><cell></cell><cell>1</cell><cell>2</cell><cell>3</cell><cell>4</cell><cell>5</cell><cell>6</cell></row><row><cell>YAGO</cell><cell cols="6">26.24% 37.36% 26.60% 8.30% 1.32% 0.15%</cell><cell>2.21</cell></row><row><cell>DBpedia</cell><cell cols="6">23.57% 43.00% 26.68% 6.12% 0.42% 0.01%</cell><cell>2.18</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_4"><head>Table 5 .</head><label>5</label><figDesc>Error types for the ACE2004 and KORE datasets, using YAGO as the KG.</figDesc><table><row><cell>Error Type</cell><cell># Errors</cell></row><row><cell>LLM error</cell><cell>12</cell></row><row><cell>Ambiguous error</cell><cell>5</cell></row><row><cell>KG error</cell><cell>3</cell></row><row><cell>Ground truth error</cell><cell>1</cell></row></table></figure>
+<figure xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_5"><head>2</head><label></label><figDesc>Disclaimer: This preprint has not undergone peer review (when applicable) or any post-submission improvements or corrections. The Version of Record of this contribution is published in The Semantic Web -ISWC 2024: 23rd International Semantic Web Conference, Baltimore, MD, USA, November 11-15, 2024, Proceedings, Part I, and it is available online at https://doi.org/10.1007/978-3-031-77844-5 9 .</figDesc><table /></figure>
+		</body>
+		<back>
+			<div type="references">
+
+				<listBibl>
+
+<biblStruct xml:id="b0">
+	<analytic>
+		<title level="a" type="main">Domain-specific knowledge graphs: A survey</title>
+		<author>
+			<persName><forename type="first">Bilal</forename><surname>Abu-Salih</surname></persName>
+			<idno type="ORCID">0000-0001-9875-4369</idno>
+		</author>
+		<idno type="DOI">10.1016/j.jnca.2021.103076</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Journal of Network and Computer Applications</title>
+		<title level="j" type="abbrev">Journal of Network and Computer Applications</title>
+		<idno type="ISSN">1084-8045</idno>
+		<imprint>
+			<biblScope unit="volume">185</biblScope>
+			<biblScope unit="page">103076</biblScope>
+			<date type="published" when="2021-07">2021</date>
+			<publisher>Elsevier BV</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Abu-Salih, B.: Domain-specific knowledge graphs: A survey. Journal of Network and Computer Applications 185, 103076 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b1">
+	<monogr>
+		<title/>
+		<author>
+			<persName><forename type="first">J</forename><surname>Achiam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Adler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Agarwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Ahmad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Akkaya</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><forename type="middle">L</forename><surname>Aleman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Almeida</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Altenschmidt</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Altman</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Anadkat</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2303.08774</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Achiam, J., Adler, S., Agarwal, S., Ahmad, L., Akkaya, I., Aleman, F.L., Almeida, D., Altenschmidt, J., Altman, S., Anadkat, S., et al.: Gpt-4 technical report. arXiv preprint arXiv:2303.08774 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b2">
+	<analytic>
+		<title level="a" type="main">DBpedia: A Nucleus for a Web of Open Data</title>
+		<author>
+			<persName><forename type="first">Sören</forename><surname>Auer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christian</forename><surname>Bizer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Georgi</forename><surname>Kobilarov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jens</forename><surname>Lehmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Richard</forename><surname>Cyganiak</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zachary</forename><surname>Ives</surname></persName>
+		</author>
+		<idno type="DOI">10.1007/978-3-540-76298-0_52</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Lecture Notes in Computer Science</title>
+		<imprint>
+			<publisher>Springer Berlin Heidelberg</publisher>
+			<date type="published" when="2007">2007</date>
+			<biblScope unit="page" from="722" to="735" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Auer, S., Bizer, C., Kobilarov, G., Lehmann, J., Cyganiak, R., Ives, Z.: Dbpedia: A nucleus for a web of open data. In: international semantic web conference. pp. 722-735. Springer (2007)</note>
+</biblStruct>
+
+<biblStruct xml:id="b3">
+	<analytic>
+		<title level="a" type="main">Improving Entity Disambiguation by Reasoning over a Knowledge Base</title>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Ayoola</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><surname>Fisher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrea</forename><surname>Pierleoni</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.naacl-main.210</idno>
+		<idno type="arXiv">arXiv:2207.04106</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</title>
+		<meeting>the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="page" from="2899" to="2912" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ayoola, T., Fisher, J., Pierleoni, A.: Improving entity disambiguation by reasoning over a knowledge base. arXiv preprint arXiv:2207.04106 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b4">
+	<analytic>
+		<title level="a" type="main">ReFinED: An Efficient Zero-shot-capable Approach to End-to-End Entity Linking</title>
+		<author>
+			<persName><forename type="first">Tom</forename><surname>Ayoola</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Shubhi</forename><surname>Tyagi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joseph</forename><surname>Fisher</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Christos</forename><surname>Christodoulopoulos</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Andrea</forename><surname>Pierleoni</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.naacl-industry.24</idno>
+		<idno type="arXiv">arXiv:2207.04108</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies: Industry Track</title>
+		<meeting>the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies: Industry Track</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ayoola, T., Tyagi, S., Fisher, J., Christodoulopoulos, C., Pierleoni, A.: Refined: An efficient zero-shot-capable approach to end-to-end entity linking. arXiv preprint arXiv:2207.04108 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b5">
+	<analytic>
+		<title level="a" type="main">Knowledge-Augmented Language Model Prompting for Zero-Shot Knowledge Graph Question Answering</title>
+		<author>
+			<persName><forename type="first">Jinheon</forename><surname>Baek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Alham</forename><forename type="middle">Fikri</forename><surname>Aji</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Amir</forename><surname>Saffari</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2023.nlrse-1.7</idno>
+		<idno type="arXiv">arXiv:2306.04136</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 1st Workshop on Natural Language Reasoning and Structured Explanations (NLRSE)</title>
+		<meeting>the 1st Workshop on Natural Language Reasoning and Structured Explanations (NLRSE)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="78" to="106" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Baek, J., Aji, A.F., Saffari, A.: Knowledge-augmented language model prompting for zero-shot knowledge graph question answering. arXiv preprint arXiv:2306.04136 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b6">
+	<analytic>
+		<title level="a" type="main">ExtEnD: Extractive Entity Disambiguation</title>
+		<author>
+			<persName><forename type="first">Edoardo</forename><surname>Barba</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Luigi</forename><surname>Procopio</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Roberto</forename><surname>Navigli</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2022.acl-long.177</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2022">2022</date>
+			<biblScope unit="volume">1</biblScope>
+			<biblScope unit="page" from="2478" to="2488" />
+		</imprint>
+	</monogr>
+	<note>Long Papers</note>
+	<note type="raw_reference">Barba, E., Procopio, L., Navigli, R.: Extend: Extractive entity disambiguation. In: Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 2478-2488 (2022)</note>
+</biblStruct>
+
+<biblStruct xml:id="b7">
+	<analytic>
+		<title level="a" type="main">Language models are few-shot learners</title>
+		<author>
+			<persName><forename type="first">T</forename><surname>Brown</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Mann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Ryder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Subbiah</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><forename type="middle">D</forename><surname>Kaplan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Dhariwal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Neelakantan</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Shyam</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Sastry</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Askell</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in neural information processing systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="1877" to="1901" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J.D., Dhariwal, P., Nee- lakantan, A., Shyam, P., Sastry, G., Askell, A., et al.: Language models are few-shot learners. Advances in neural information processing systems 33, 1877-1901 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b8">
+	<analytic>
+		<title level="a" type="main">Large-scale named entity disambiguation based on wikipedia data</title>
+		<author>
+			<persName><forename type="first">S</forename><surname>Cucerzan</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2007 joint conference on empirical methods in natural language processing and computational natural language learning (EMNLP-CoNLL)</title>
+		<meeting>the 2007 joint conference on empirical methods in natural language processing and computational natural language learning (EMNLP-CoNLL)</meeting>
+		<imprint>
+			<date type="published" when="2007">2007</date>
+			<biblScope unit="page" from="708" to="716" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Cucerzan, S.: Large-scale named entity disambiguation based on wikipedia data. In: Proceedings of the 2007 joint conference on empirical methods in natural language processing and computational natural language learning (EMNLP-CoNLL). pp. 708-716 (2007)</note>
+</biblStruct>
+
+<biblStruct xml:id="b9">
+	<monogr>
+		<title level="m" type="main">Autoregressive entity retrieval</title>
+		<author>
+			<persName><forename type="first">N</forename><surname>De Cao</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Izacard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2010.00904</idno>
+		<imprint>
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">De Cao, N., Izacard, G., Riedel, S., Petroni, F.: Autoregressive entity retrieval. arXiv preprint arXiv:2010.00904 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b10">
+	<monogr>
+		<title level="m" type="main">Bert: Pre-training of deep bidirectional transformers for language understanding</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">W</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Toutanova</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1810.04805</idno>
+		<ptr target="https://github.com/doubleBlindReview2048/KGLLMs4ED" />
+		<imprint>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Devlin, J., Chang, M.W., Lee, K., Toutanova, K.: Bert: Pre-training of deep bidirec- tional transformers for language understanding. arXiv preprint arXiv:1810.04805 (2018) 2 https://github.com/doubleBlindReview2048/KGLLMs4ED</note>
+</biblStruct>
+
+<biblStruct xml:id="b11">
+	<monogr>
+		<title level="m" type="main">Chatel: Entity linking with chatbots</title>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Ding</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Zeng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Weninger</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2402.14858</idno>
+		<imprint>
+			<date type="published" when="2024">2024</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Ding, Y., Zeng, Q., Weninger, T.: Chatel: Entity linking with chatbots. arXiv preprint arXiv:2402.14858 (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b12">
+	<monogr>
+		<title level="m" type="main">Facc1: Freebase annotation of clueweb corpora, version 1 (</title>
+		<author>
+			<persName><forename type="first">E</forename><surname>Gabrilovich</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ringgaard</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Subramanya</surname></persName>
+		</author>
+		<imprint/>
+	</monogr>
+	<note>release date 2013-06-26, format version 1, correction level 0) (06 2013)</note>
+	<note type="raw_reference">Gabrilovich, E., Ringgaard, M., Subramanya, A.: Facc1: Freebase annotation of clueweb corpora, version 1 (release date 2013-06-26, format version 1, correction level 0) (06 2013)</note>
+</biblStruct>
+
+<biblStruct xml:id="b13">
+	<analytic>
+		<title level="a" type="main">Schema.org</title>
+		<author>
+			<persName><forename type="first">R</forename><forename type="middle">V</forename><surname>Guha</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Brickley</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Steve</forename><surname>Macbeth</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2844544</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Communications of the ACM</title>
+		<title level="j" type="abbrev">Commun. ACM</title>
+		<idno type="ISSN">0001-0782</idno>
+		<idno type="ISSNe">1557-7317</idno>
+		<imprint>
+			<biblScope unit="volume">59</biblScope>
+			<biblScope unit="issue">2</biblScope>
+			<biblScope unit="page" from="44" to="51" />
+			<date type="published" when="2016-01-25">2016</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Guha, R.V., Brickley, D., Macbeth, S.: Schema. org: evolution of structured data on the web. Communications of the ACM 59(2), 44-51 (2016)</note>
+</biblStruct>
+
+<biblStruct xml:id="b14">
+	<analytic>
+		<title level="a" type="main">Robust named entity disambiguation with random walks</title>
+		<author>
+			<persName><forename type="first">Zhaochen</forename><surname>Guo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Denilson</forename><surname>Barbosa</surname></persName>
+		</author>
+		<idno type="DOI">10.3233/sw-170273</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Semantic Web</title>
+		<title level="j" type="abbrev">SW</title>
+		<idno type="ISSN">1570-0844</idno>
+		<idno type="ISSNe">2210-4968</idno>
+		<imprint>
+			<biblScope unit="volume">9</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="459" to="479" />
+			<date type="published" when="2018-06-29">2018</date>
+			<publisher>SAGE Publications</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Guo, Z., Barbosa, D.: Robust named entity disambiguation with random walks. Semantic Web 9(4), 459-479 (2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b15">
+	<analytic>
+		<title level="a" type="main">Knowledge graphs on the web-an overview</title>
+		<author>
+			<persName><forename type="first">N</forename><surname>Heist</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Hertling</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Ringler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Knowledge Graphs for eXplainable Artificial Intelligence</title>
+		<imprint>
+			<biblScope unit="page" from="3" to="22" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Heist, N., Hertling, S., Ringler, D., Paulheim, H.: Knowledge graphs on the web-an overview. Knowledge Graphs for eXplainable Artificial Intelligence pp. 3-22 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b16">
+	<analytic>
+		<title level="a" type="main">Kore: keyphrase overlap relatedness for entity disambiguation</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Hoffart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Seufert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><forename type="middle">B</forename><surname>Nguyen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Theobald</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Weikum</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 21st ACM international conference on Information and knowledge management</title>
+		<meeting>the 21st ACM international conference on Information and knowledge management</meeting>
+		<imprint>
+			<date type="published" when="2012">2012</date>
+			<biblScope unit="page" from="545" to="554" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hoffart, J., Seufert, S., Nguyen, D.B., Theobald, M., Weikum, G.: Kore: keyphrase overlap relatedness for entity disambiguation. In: Proceedings of the 21st ACM international conference on Information and knowledge management. pp. 545-554 (2012)</note>
+</biblStruct>
+
+<biblStruct xml:id="b17">
+	<analytic>
+		<title level="a" type="main">Robust disambiguation of named entities in text</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Hoffart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><forename type="middle">A</forename><surname>Yosef</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><surname>Bordino</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Fürstenau</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Pinkal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Spaniol</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Taneva</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Thater</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">G</forename><surname>Weikum</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 2011 conference on empirical methods in natural language processing</title>
+		<meeting>the 2011 conference on empirical methods in natural language processing</meeting>
+		<imprint>
+			<date type="published" when="2011">2011</date>
+			<biblScope unit="page" from="782" to="792" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hoffart, J., Yosef, M.A., Bordino, I., Fürstenau, H., Pinkal, M., Spaniol, M., Taneva, B., Thater, S., Weikum, G.: Robust disambiguation of named entities in text. In: Proceedings of the 2011 conference on empirical methods in natural language processing. pp. 782-792 (2011)</note>
+</biblStruct>
+
+<biblStruct xml:id="b18">
+	<analytic>
+		<title level="a" type="main">A Survey of Knowledge Enhanced Pre-Trained Language Models</title>
+		<author>
+			<persName><forename type="first">Linmei</forename><surname>Hu</surname></persName>
+			<idno type="ORCID">0000-0003-0993-8495</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Zeyi</forename><surname>Liu</surname></persName>
+			<idno type="ORCID">0000-0002-5691-6849</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Ziwang</forename><surname>Zhao</surname></persName>
+			<idno type="ORCID">0000-0001-5538-3190</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Lei</forename><surname>Hou</surname></persName>
+			<idno type="ORCID">0000-0002-8907-3526</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Liqiang</forename><surname>Nie</surname></persName>
+			<idno type="ORCID">0000-0003-1476-0273</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Juanzi</forename><surname>Li</surname></persName>
+			<idno type="ORCID">0000-0002-6244-0664</idno>
+		</author>
+		<idno type="DOI">10.1109/tkde.2023.3310002</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Knowledge and Data Engineering</title>
+		<title level="j" type="abbrev">IEEE Trans. Knowl. Data Eng.</title>
+		<idno type="ISSN">1041-4347</idno>
+		<idno type="ISSNe">2326-3865</idno>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="issue">4</biblScope>
+			<biblScope unit="page" from="1413" to="1430" />
+			<date type="published" when="2023">2023</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Hu, L., Liu, Z., Zhao, Z., Hou, L., Nie, L., Li, J.: A survey of knowledge enhanced pre-trained language models. IEEE Transactions on Knowledge and Data Engi- neering (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b19">
+	<analytic>
+		<title level="a" type="main">Survey of Hallucination in Natural Language Generation</title>
+		<author>
+			<persName><forename type="first">Ziwei</forename><surname>Ji</surname></persName>
+			<idno type="ORCID">0000-0002-0206-7861</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Nayeon</forename><surname>Lee</surname></persName>
+			<idno type="ORCID">0000-0003-1144-1103</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Rita</forename><surname>Frieske</surname></persName>
+			<idno type="ORCID">0000-0002-3921-3519</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Tiezheng</forename><surname>Yu</surname></persName>
+			<idno type="ORCID">0000-0001-5396-950X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Dan</forename><surname>Su</surname></persName>
+			<idno type="ORCID">0000-0001-5746-9545</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Yan</forename><surname>Xu</surname></persName>
+			<idno type="ORCID">0000-0003-2205-2429</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Etsuko</forename><surname>Ishii</surname></persName>
+			<idno type="ORCID">0000-0002-6423-539X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Ye</forename><forename type="middle">Jin</forename><surname>Bang</surname></persName>
+			<idno type="ORCID">0000-0002-2968-0033</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Andrea</forename><surname>Madotto</surname></persName>
+			<idno type="ORCID">0000-0002-8672-715X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Pascale</forename><surname>Fung</surname></persName>
+			<idno type="ORCID">0000-0002-0628-7132</idno>
+		</author>
+		<idno type="DOI">10.1145/3571730</idno>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Computing Surveys</title>
+		<title level="j" type="abbrev">ACM Comput. Surv.</title>
+		<idno type="ISSN">0360-0300</idno>
+		<idno type="ISSNe">1557-7341</idno>
+		<imprint>
+			<biblScope unit="volume">55</biblScope>
+			<biblScope unit="issue">12</biblScope>
+			<biblScope unit="page" from="1" to="38" />
+			<date type="published" when="2023-03-03">2023</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ji, Z., Lee, N., Frieske, R., Yu, T., Su, D., Xu, Y., Ishii, E., Bang, Y.J., Madotto, A., Fung, P.: Survey of hallucination in natural language generation. ACM Computing Surveys 55(12), 1-38 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b20">
+	<analytic>
+		<title level="a" type="main">Improving Entity Linking by Modeling Latent Relations between Mentions</title>
+		<author>
+			<persName><forename type="first">Phong</forename><surname>Le</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ivan</forename><surname>Titov</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p18-1148</idno>
+		<idno type="arXiv">arXiv:1804.10637</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2018">2018</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Le, P., Titov, I.: Improving entity linking by modeling latent relations between mentions. arXiv preprint arXiv:1804.10637 (2018)</note>
+</biblStruct>
+
+<biblStruct xml:id="b21">
+	<monogr>
+		<title level="m" type="main">Bart: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ghazvininejad</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Mohamed</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Stoyanov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1910.13461</idno>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Lewis, M., Liu, Y., Goyal, N., Ghazvininejad, M., Mohamed, A., Levy, O., Stoyanov, V., Zettlemoyer, L.: Bart: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension. arXiv preprint arXiv:1910.13461 (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b22">
+	<analytic>
+		<title level="a" type="main">Retrieval-augmented generation for knowledge-intensive nlp tasks</title>
+		<author>
+			<persName><forename type="first">P</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">E</forename><surname>Perez</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Piktus</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Karpukhin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Küttler</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">W</forename><forename type="middle">T</forename><surname>Yih</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">T</forename><surname>Rocktäschel</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">Advances in Neural Information Processing Systems</title>
+		<imprint>
+			<biblScope unit="volume">33</biblScope>
+			<biblScope unit="page" from="9459" to="9474" />
+			<date type="published" when="2020">2020</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., Küttler, H., Lewis, M., Yih, W.t., Rocktäschel, T., et al.: Retrieval-augmented generation for knowledge-intensive nlp tasks. Advances in Neural Information Processing Systems 33, 9459-9474 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b23">
+	<monogr>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Liu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Ott</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Goyal</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Du</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Joshi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Chen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">O</forename><surname>Levy</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Lewis</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Stoyanov</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1907.11692</idno>
+		<title level="m">Roberta: A robustly optimized bert pretraining approach</title>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Liu, Y., Ott, M., Goyal, N., Du, J., Joshi, M., Chen, D., Levy, O., Lewis, M., Zettlemoyer, L., Stoyanov, V.: Roberta: A robustly optimized bert pretraining approach. arXiv preprint arXiv:1907.11692 (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b24">
+	<analytic>
+		<title level="a" type="main">Zero-Shot Entity Linking by Reading Entity Descriptions</title>
+		<author>
+			<persName><forename type="first">Lajanugen</forename><surname>Logeswaran</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Ming-Wei</forename><surname>Chang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kenton</forename><surname>Lee</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kristina</forename><surname>Toutanova</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jacob</forename><surname>Devlin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Honglak</forename><surname>Lee</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/p19-1335</idno>
+		<idno type="arXiv">arXiv:1906.07348</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics</title>
+		<meeting>the 57th Annual Meeting of the Association for Computational Linguistics</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Logeswaran, L., Chang, M.W., Lee, K., Toutanova, K., Devlin, J., Lee, H.: Zero- shot entity linking by reading entity descriptions. arXiv preprint arXiv:1906.07348 (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b25">
+	<monogr>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Luo</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Z</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Meng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Li</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Zhou</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Zhang</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2308.08747</idno>
+		<title level="m">An empirical study of catastrophic forgetting in large language models during continual fine-tuning</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Luo, Y., Yang, Z., Meng, F., Li, Y., Zhou, J., Zhang, Y.: An empirical study of catastrophic forgetting in large language models during continual fine-tuning. arXiv preprint arXiv:2308.08747 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b26">
+	<analytic>
+		<title level="a" type="main">Learning to link with wikipedia</title>
+		<author>
+			<persName><forename type="first">D</forename><surname>Milne</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">I</forename><forename type="middle">H</forename><surname>Witten</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 17th ACM conference on Information and knowledge management</title>
+		<meeting>the 17th ACM conference on Information and knowledge management</meeting>
+		<imprint>
+			<date type="published" when="2008">2008</date>
+			<biblScope unit="page" from="509" to="518" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Milne, D., Witten, I.H.: Learning to link with wikipedia. In: Proceedings of the 17th ACM conference on Information and knowledge management. pp. 509-518 (2008)</note>
+</biblStruct>
+
+<biblStruct xml:id="b27">
+	<analytic>
+		<title level="a" type="main">Mistral AI lance Mistral Large et Chat</title>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">I</forename><surname>Mistral</surname></persName>
+		</author>
+		<idno type="DOI">10.3917/arma.373.0010</idno>
+		<ptr target="https://mistral.ai/news/mistral-large/" />
+	</analytic>
+	<monogr>
+		<title level="j">Archimag</title>
+		<idno type="ISSN">2260-166X</idno>
+		<imprint>
+			<biblScope unit="volume">N° 373</biblScope>
+			<biblScope unit="issue">3</biblScope>
+			<biblScope unit="page" from="10" to="10" />
+			<date type="published" when="2024-06-10">2024</date>
+			<publisher>CAIRN</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mistral AI: Mistral Large (2024), https://mistral.ai/news/mistral-large/</note>
+</biblStruct>
+
+<biblStruct xml:id="b28">
+	<analytic>
+		<title level="a" type="main">Evaluating the Impact of Knowledge Graph Context on Entity Disambiguation Models</title>
+		<author>
+			<persName><forename type="first">Isaiah</forename><forename type="middle">Onando</forename><surname>Mulang'</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Kuldeep</forename><surname>Singh</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chaitali</forename><surname>Prabhu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Abhishek</forename><surname>Nadgeri</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Johannes</forename><surname>Hoffart</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jens</forename><surname>Lehmann</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3340531.3412159</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 29th ACM International Conference on Information &amp; Knowledge Management</title>
+		<meeting>the 29th ACM International Conference on Information &amp; Knowledge Management</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2020-10-19">2020</date>
+			<biblScope unit="page" from="2157" to="2160" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Mulang&apos;, I.O., Singh, K., Prabhu, C., Nadgeri, A., Hoffart, J., Lehmann, J.: Evalu- ating the impact of knowledge graph context on entity disambiguation models. In: Proceedings of the 29th ACM International Conference on Information &amp; Knowl- edge Management. pp. 2157-2160 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b29">
+	<analytic>
+		<title level="a" type="main">Open knowledge extraction challenge</title>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">G</forename><surname>Nuzzolese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">L</forename><surname>Gentile</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gangemi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Garigliotti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Navigli</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Semantic Web Evaluation Challenges: Second SemWebEval Challenge at ESWC 2015</title>
+		<meeting><address><addrLine>Portorož, Slovenia</addrLine></address></meeting>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2015-06-04">May 31-June 4, 2015. 2015</date>
+			<biblScope unit="page" from="3" to="15" />
+		</imprint>
+	</monogr>
+	<note>Revised Selected Papers</note>
+	<note type="raw_reference">Nuzzolese, A.G., Gentile, A.L., Presutti, V., Gangemi, A., Garigliotti, D., Navigli, R.: Open knowledge extraction challenge. In: Semantic Web Evaluation Challenges: Second SemWebEval Challenge at ESWC 2015, Portorož, Slovenia, May 31-June 4, 2015, Revised Selected Papers. pp. 3-15. Springer (2015)</note>
+</biblStruct>
+
+<biblStruct xml:id="b30">
+	<analytic>
+		<title level="a" type="main">The second open knowledge extraction challenge</title>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">G</forename><surname>Nuzzolese</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><forename type="middle">L</forename><surname>Gentile</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">V</forename><surname>Presutti</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Gangemi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Meusel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Paulheim</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Semantic Web Evaluation Challenge</title>
+		<imprint>
+			<publisher>Springer</publisher>
+			<date type="published" when="2016">2016</date>
+			<biblScope unit="page" from="3" to="16" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Nuzzolese, A.G., Gentile, A.L., Presutti, V., Gangemi, A., Meusel, R., Paulheim, H.: The second open knowledge extraction challenge. In: Semantic Web Evaluation Challenge, pp. 3-16. Springer (2016)</note>
+</biblStruct>
+
+<biblStruct xml:id="b31">
+	<analytic>
+		<title level="a" type="main">Fine-Grained Entity Typing for Domain Independent Entity Linking</title>
+		<author>
+			<persName><forename type="first">Yasumasa</forename><surname>Onoe</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Greg</forename><surname>Durrett</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v34i05.6380</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">34</biblScope>
+			<biblScope unit="issue">05</biblScope>
+			<biblScope unit="page" from="8576" to="8583" />
+			<date type="published" when="2020-04-03">2020</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Onoe, Y., Durrett, G.: Fine-grained entity typing for domain independent entity linking. In: Proceedings of the AAAI Conference on Artificial Intelligence. vol. 34, pp. 8576-8583 (2020)</note>
+</biblStruct>
+
+<biblStruct xml:id="b32">
+	<analytic>
+		<title level="a" type="main">Unifying Large Language Models and Knowledge Graphs: A Roadmap</title>
+		<author>
+			<persName><forename type="first">Shirui</forename><surname>Pan</surname></persName>
+			<idno type="ORCID">0000-0003-0794-527X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Linhao</forename><surname>Luo</surname></persName>
+			<idno type="ORCID">0000-0003-0027-942X</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Yufei</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Chen</forename><surname>Chen</surname></persName>
+			<idno type="ORCID">0000-0002-4637-9250</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Jiapu</forename><surname>Wang</surname></persName>
+			<idno type="ORCID">0000-0001-7639-5289</idno>
+		</author>
+		<author>
+			<persName><forename type="first">Xindong</forename><surname>Wu</surname></persName>
+			<idno type="ORCID">0000-0003-2396-1704</idno>
+		</author>
+		<idno type="DOI">10.1109/tkde.2024.3352100</idno>
+	</analytic>
+	<monogr>
+		<title level="j">IEEE Transactions on Knowledge and Data Engineering</title>
+		<title level="j" type="abbrev">IEEE Trans. Knowl. Data Eng.</title>
+		<idno type="ISSN">1041-4347</idno>
+		<idno type="ISSNe">2326-3865</idno>
+		<imprint>
+			<biblScope unit="volume">36</biblScope>
+			<biblScope unit="issue">7</biblScope>
+			<biblScope unit="page" from="3580" to="3599" />
+			<date type="published" when="2024-07">2024</date>
+			<publisher>Institute of Electrical and Electronics Engineers (IEEE)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Pan, S., Luo, L., Wang, Y., Chen, C., Wang, J., Wu, X.: Unifying large language models and knowledge graphs: A roadmap. IEEE Transactions on Knowledge and Data Engineering (2024)</note>
+</biblStruct>
+
+<biblStruct xml:id="b33">
+	<analytic>
+		<title level="a" type="main">Local and global algorithms for disambiguation to wikipedia</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Ratinov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Roth</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Downey</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Anderson</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 49th annual meeting of the association for computational linguistics: Human language technologies</title>
+		<meeting>the 49th annual meeting of the association for computational linguistics: Human language technologies</meeting>
+		<imprint>
+			<date type="published" when="2011">2011</date>
+			<biblScope unit="page" from="1375" to="1384" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ratinov, L., Roth, D., Downey, D., Anderson, M.: Local and global algorithms for disambiguation to wikipedia. In: Proceedings of the 49th annual meeting of the association for computational linguistics: Human language technologies. pp. 1375-1384 (2011)</note>
+</biblStruct>
+
+<biblStruct xml:id="b34">
+	<analytic>
+		<title level="a" type="main">KG-ZESHEL: Knowledge Graph-Enhanced Zero-Shot Entity Linking</title>
+		<author>
+			<persName><forename type="first">Petar</forename><surname>Ristoski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zhizhong</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Qunzhi</forename><surname>Zhou</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/3460210.3493549</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 11th Knowledge Capture Conference</title>
+		<meeting>the 11th Knowledge Capture Conference</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2021-12-02">2021</date>
+			<biblScope unit="page" from="49" to="56" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Ristoski, P., Lin, Z., Zhou, Q.: Kg-zeshel: knowledge graph-enhanced zero-shot entity linking. In: Proceedings of the 11th Knowledge Capture Conference. pp. 49-56 (2021)</note>
+</biblStruct>
+
+<biblStruct xml:id="b35">
+	<analytic>
+		<title level="a" type="main">N 3 -a collection of datasets for named entity recognition and disambiguation in the nlp interchange format</title>
+		<author>
+			<persName><forename type="first">M</forename><surname>Röder</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Usbeck</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Hellmann</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">D</forename><surname>Gerber</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Both</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="m">LREC</title>
+		<imprint>
+			<date type="published" when="2014">2014</date>
+			<biblScope unit="page" from="3529" to="3533" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Röder, M., Usbeck, R., Hellmann, S., Gerber, D., Both, A.: N 3 -a collection of datasets for named entity recognition and disambiguation in the nlp interchange format. In: LREC. pp. 3529-3533 (2014)</note>
+</biblStruct>
+
+<biblStruct xml:id="b36">
+	<analytic>
+		<title level="a" type="main">ConceptNet 5.5: An Open Multilingual Graph of General Knowledge</title>
+		<author>
+			<persName><forename type="first">Robyn</forename><surname>Speer</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Joshua</forename><surname>Chin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Catherine</forename><surname>Havasi</surname></persName>
+		</author>
+		<idno type="DOI">10.1609/aaai.v31i1.11164</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Proceedings of the AAAI Conference on Artificial Intelligence</title>
+		<title level="j" type="abbrev">AAAI</title>
+		<idno type="ISSN">2159-5399</idno>
+		<idno type="ISSNe">2374-3468</idno>
+		<imprint>
+			<biblScope unit="volume">31</biblScope>
+			<biblScope unit="issue">1</biblScope>
+			<date type="published" when="2017-02-12">2017</date>
+			<publisher>Association for the Advancement of Artificial Intelligence (AAAI)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Speer, R., Chin, J., Havasi, C.: Conceptnet 5.5: An open multilingual graph of general knowledge. In: Proceedings of the AAAI conference on artificial intelligence. vol. 31 (2017)</note>
+</biblStruct>
+
+<biblStruct xml:id="b37">
+	<analytic>
+		<title level="a" type="main">Yago</title>
+		<author>
+			<persName><forename type="first">Fabian</forename><forename type="middle">M</forename><surname>Suchanek</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gjergji</forename><surname>Kasneci</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Gerhard</forename><surname>Weikum</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/1242572.1242667</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 16th international conference on World Wide Web</title>
+		<meeting>the 16th international conference on World Wide Web</meeting>
+		<imprint>
+			<publisher>ACM</publisher>
+			<date type="published" when="2007-05-08">2007</date>
+			<biblScope unit="page" from="697" to="706" />
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Suchanek, F.M., Kasneci, G., Weikum, G.: Yago: a core of semantic knowledge. In: Proceedings of the 16th international conference on World Wide Web. pp. 697-706 (2007)</note>
+</biblStruct>
+
+<biblStruct xml:id="b38">
+	<monogr>
+		<title level="m" type="main">Thinkon-graph: Deep and responsible reasoning of large language model with knowledge graph</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Sun</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Xu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">C</forename><surname>Lin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Gong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><forename type="middle">Y</forename><surname>Shum</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">J</forename><surname>Guo</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2307.07697</idno>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Sun, J., Xu, C., Tang, L., Wang, S., Lin, C., Gong, Y., Shum, H.Y., Guo, J.: Think- on-graph: Deep and responsible reasoning of large language model with knowledge graph. arXiv preprint arXiv:2307.07697 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b39">
+	<monogr>
+		<author>
+			<persName><forename type="first">H</forename><surname>Touvron</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Martin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">K</forename><surname>Stone</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Albert</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">A</forename><surname>Almahairi</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Y</forename><surname>Babaei</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">N</forename><surname>Bashlykov</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Batra</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">P</forename><surname>Bhargava</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Bhosale</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:2307.09288</idno>
+		<title level="m">Llama 2: Open foundation and fine-tuned chat models</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Touvron, H., Martin, L., Stone, K., Albert, P., Almahairi, A., Babaei, Y., Bash- lykov, N., Batra, S., Bhargava, P., Bhosale, S., et al.: Llama 2: Open foundation and fine-tuned chat models. arXiv preprint arXiv:2307.09288 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b40">
+	<analytic>
+		<title level="a" type="main">Wikidata</title>
+		<author>
+			<persName><forename type="first">Denny</forename><surname>Vrandečić</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Markus</forename><surname>Krötzsch</surname></persName>
+		</author>
+		<idno type="DOI">10.1145/2629489</idno>
+	</analytic>
+	<monogr>
+		<title level="j">Communications of the ACM</title>
+		<title level="j" type="abbrev">Commun. ACM</title>
+		<idno type="ISSN">0001-0782</idno>
+		<idno type="ISSNe">1557-7317</idno>
+		<imprint>
+			<biblScope unit="volume">57</biblScope>
+			<biblScope unit="issue">10</biblScope>
+			<biblScope unit="page" from="78" to="85" />
+			<date type="published" when="2014-09-23">2014</date>
+			<publisher>Association for Computing Machinery (ACM)</publisher>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Vrandečić, D., Krötzsch, M.: Wikidata: a free collaborative knowledgebase. Com- munications of the ACM 57(10), 78-85 (2014)</note>
+</biblStruct>
+
+<biblStruct xml:id="b41">
+	<analytic>
+		<title level="a" type="main">MindMap: Knowledge Graph Prompting Sparks Graph of Thoughts in Large Language Models</title>
+		<author>
+			<persName><forename type="first">Yilin</forename><surname>Wen</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Zifeng</forename><surname>Wang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Jimeng</forename><surname>Sun</surname></persName>
+		</author>
+		<idno type="DOI">10.18653/v1/2024.acl-long.558</idno>
+		<idno type="arXiv">arXiv:2308.09729</idno>
+	</analytic>
+	<monogr>
+		<title level="m">Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</title>
+		<meeting>the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)</meeting>
+		<imprint>
+			<publisher>Association for Computational Linguistics</publisher>
+			<date type="published" when="2023">2023</date>
+			<biblScope unit="page" from="10370" to="10388" />
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wen, Y., Wang, Z., Sun, J.: Mindmap: Knowledge graph prompting sparks graph of thoughts in large language models. arXiv preprint arXiv:2308.09729 (2023)</note>
+</biblStruct>
+
+<biblStruct xml:id="b42">
+	<monogr>
+		<title level="m" type="main">Scalable zero-shot entity linking with dense entity retrieval</title>
+		<author>
+			<persName><forename type="first">L</forename><surname>Wu</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">F</forename><surname>Petroni</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">M</forename><surname>Josifoski</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Riedel</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">L</forename><surname>Zettlemoyer</surname></persName>
+		</author>
+		<idno type="arXiv">arXiv:1911.03814</idno>
+		<imprint>
+			<date type="published" when="2019">2019</date>
+		</imprint>
+	</monogr>
+	<note type="report_type">arXiv preprint</note>
+	<note type="raw_reference">Wu, L., Petroni, F., Josifoski, M., Riedel, S., Zettlemoyer, L.: Scalable zero-shot entity linking with dense entity retrieval. arXiv preprint arXiv:1911.03814 (2019)</note>
+</biblStruct>
+
+<biblStruct xml:id="b43">
+	<analytic>
+		<title level="a" type="main">Harnessing the power of llms in practice: A survey on chatgpt and beyond</title>
+		<author>
+			<persName><forename type="first">J</forename><surname>Yang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Jin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">R</forename><surname>Tang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Han</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">Q</forename><surname>Feng</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">H</forename><surname>Jiang</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">S</forename><surname>Zhong</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">B</forename><surname>Yin</surname></persName>
+		</author>
+		<author>
+			<persName><forename type="first">X</forename><surname>Hu</surname></persName>
+		</author>
+	</analytic>
+	<monogr>
+		<title level="j">ACM Transactions on Knowledge Discovery from Data</title>
+		<imprint>
+			<date type="published" when="2023">2023</date>
+		</imprint>
+	</monogr>
+	<note type="raw_reference">Yang, J., Jin, H., Tang, R., Han, X., Feng, Q., Jiang, H., Zhong, S., Yin, B., Hu, X.: Harnessing the power of llms in practice: A survey on chatgpt and beyond. ACM Transactions on Knowledge Discovery from Data (2023)</note>
+</biblStruct>
+
+				</listBibl>
+			</div>
+		</back>
+	</text>
+</TEI>

@@ -1,0 +1,897 @@
+{
+  "table_of_contents": [
+    {
+      "title": "Overcoming the Bottleneck \u2013 GraphRAG for Reliable Financial\nAnnual Report Retrieval and Comprehension",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          59.7760009765625,
+          81.017578125
+        ],
+        [
+          552.533203125,
+          81.017578125
+        ],
+        [
+          552.533203125,
+          119.908447265625
+        ],
+        [
+          59.7760009765625,
+          119.908447265625
+        ]
+      ]
+    },
+    {
+      "title": "Abstract",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          50.6513671875,
+          162.5185546875
+        ],
+        [
+          96.521484375,
+          162.5185546875
+        ],
+        [
+          96.521484375,
+          173.91265869140625
+        ],
+        [
+          50.6513671875,
+          173.91265869140625
+        ]
+      ]
+    },
+    {
+      "title": "CCS Concepts",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          46.69189453125,
+          329.423583984375
+        ],
+        [
+          123.07078552246094,
+          329.423583984375
+        ],
+        [
+          123.07078552246094,
+          340.3326721191406
+        ],
+        [
+          46.69189453125,
+          340.3326721191406
+        ]
+      ]
+    },
+    {
+      "title": "Keywords",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          43.890380859375,
+          375.2955322265625
+        ],
+        [
+          102.8780517578125,
+          375.2955322265625
+        ],
+        [
+          102.8780517578125,
+          386.2046203613281
+        ],
+        [
+          43.890380859375,
+          386.2046203613281
+        ]
+      ]
+    },
+    {
+      "title": "ACM Reference Format:",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          38.6982421875,
+          448.9311828613281
+        ],
+        [
+          140.49664306640625,
+          448.9311828613281
+        ],
+        [
+          140.49664306640625,
+          457.48828125
+        ],
+        [
+          38.6982421875,
+          457.48828125
+        ]
+      ]
+    },
+    {
+      "title": "1 Introduction",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          50.539306640625,
+          527.2735290527344
+        ],
+        [
+          133.576171875,
+          527.2735290527344
+        ],
+        [
+          133.576171875,
+          538.1826324462891
+        ],
+        [
+          50.539306640625,
+          538.1826324462891
+        ]
+      ]
+    },
+    {
+      "title": "1.1 Motivation: The Retrieval Bottleneck",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          50.27783203125,
+          542.9645385742188
+        ],
+        [
+          262.390869140625,
+          542.9645385742188
+        ],
+        [
+          262.390869140625,
+          553.8736419677734
+        ],
+        [
+          50.27783203125,
+          553.8736419677734
+        ]
+      ]
+    },
+    {
+      "title": "",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          50.539306640625,
+          654.328125
+        ],
+        [
+          86.8095703125,
+          654.328125
+        ],
+        [
+          86.8095703125,
+          664.3828125
+        ],
+        [
+          50.539306640625,
+          664.3828125
+        ]
+      ]
+    },
+    {
+      "title": "1.2 Contributions",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          317.35546875,
+          282.64654541015625
+        ],
+        [
+          412.504150390625,
+          282.64654541015625
+        ],
+        [
+          412.504150390625,
+          293.5556335449219
+        ],
+        [
+          317.35546875,
+          293.5556335449219
+        ]
+      ]
+    },
+    {
+      "title": "2 Related Work",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          317.35546875,
+          361.1915588378906
+        ],
+        [
+          402.5550842285156,
+          361.1915588378906
+        ],
+        [
+          402.5550842285156,
+          372.10064697265625
+        ],
+        [
+          317.35546875,
+          372.10064697265625
+        ]
+      ]
+    },
+    {
+      "title": "2.1 Financial Document Analysis and Question\nAnswering",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          317.35546875,
+          376.8835754394531
+        ],
+        [
+          558.2109375,
+          376.8835754394531
+        ],
+        [
+          558.2109375,
+          400.74365234375
+        ],
+        [
+          317.35546875,
+          400.74365234375
+        ]
+      ]
+    },
+    {
+      "title": "2.2 Retrieval-Augmented Generation",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          45.2724609375,
+          245.7635498046875
+        ],
+        [
+          243.1254119873047,
+          245.7635498046875
+        ],
+        [
+          243.1254119873047,
+          256.67266845703125
+        ],
+        [
+          45.2724609375,
+          256.67266845703125
+        ]
+      ]
+    },
+    {
+      "title": "3 Data",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          49.642822265625,
+          593.0025634765625
+        ],
+        [
+          93.26712036132812,
+          593.0025634765625
+        ],
+        [
+          93.26712036132812,
+          603.9116668701172
+        ],
+        [
+          49.642822265625,
+          603.9116668701172
+        ]
+      ]
+    },
+    {
+      "title": "3.1 Financial Touchstone Dataset",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          47.513671875,
+          608.6935577392578
+        ],
+        [
+          224.17633056640625,
+          608.6935577392578
+        ],
+        [
+          224.17633056640625,
+          619.6026611328125
+        ],
+        [
+          47.513671875,
+          619.6026611328125
+        ]
+      ]
+    },
+    {
+      "title": "3.2 Dataset Characteristics Motivating\nGraphRAG",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          315.861328125,
+          384.978515625
+        ],
+        [
+          513.685546875,
+          384.978515625
+        ],
+        [
+          513.685546875,
+          408.8966369628906
+        ],
+        [
+          315.861328125,
+          408.8966369628906
+        ]
+      ]
+    },
+    {
+      "title": "4 Methods",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          317.9549865722656,
+          566.7285766601562
+        ],
+        [
+          377.419921875,
+          566.7285766601562
+        ],
+        [
+          377.419921875,
+          577.6376800537109
+        ],
+        [
+          317.9549865722656,
+          577.6376800537109
+        ]
+      ]
+    },
+    {
+      "title": "4.1 Baseline RAG Architecture",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          317.056640625,
+          582.4195709228516
+        ],
+        [
+          475.98419189453125,
+          582.4195709228516
+        ],
+        [
+          475.98419189453125,
+          593.3286743164062
+        ],
+        [
+          317.056640625,
+          593.3286743164062
+        ]
+      ]
+    },
+    {
+      "title": "4.2 GraphRAG Architecture",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          317.654296875,
+          652.5295715332031
+        ],
+        [
+          462.7623596191406,
+          652.5295715332031
+        ],
+        [
+          462.7623596191406,
+          663.4386749267578
+        ],
+        [
+          317.654296875,
+          663.4386749267578
+        ]
+      ]
+    },
+    {
+      "title": "4.3 Evaluation Framework",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          317.056640625,
+          140.530517578125
+        ],
+        [
+          456.1623840332031,
+          140.530517578125
+        ],
+        [
+          456.1623840332031,
+          151.43963623046875
+        ],
+        [
+          317.056640625,
+          151.43963623046875
+        ]
+      ]
+    },
+    {
+      "title": "5 Results",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          317.35546875,
+          351.819580078125
+        ],
+        [
+          370.9077453613281,
+          351.819580078125
+        ],
+        [
+          370.9077453613281,
+          362.7286682128906
+        ],
+        [
+          317.35546875,
+          362.7286682128906
+        ]
+      ]
+    },
+    {
+      "title": "5.1 Overall Performance Improvement",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          316.458984375,
+          367.51055908203125
+        ],
+        [
+          516.2169799804688,
+          367.51055908203125
+        ],
+        [
+          516.2169799804688,
+          378.4196472167969
+        ],
+        [
+          316.458984375,
+          378.4196472167969
+        ]
+      ]
+    },
+    {
+      "title": "Figure 4: Performance Comparison - Previous Approach:\nBaseline performance metrics from the original RAG im-\nplementation for reference and comparison.",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          49.97900390625,
+          313.435546875
+        ],
+        [
+          295.6475830078125,
+          313.435546875
+        ],
+        [
+          295.6475830078125,
+          345.919921875
+        ],
+        [
+          49.97900390625,
+          345.919921875
+        ]
+      ]
+    },
+    {
+      "title": "5.2 Error Analysis",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          48.93310546875,
+          531.9815673828125
+        ],
+        [
+          152.17822265625,
+          531.9815673828125
+        ],
+        [
+          152.17822265625,
+          542.953125
+        ],
+        [
+          48.93310546875,
+          542.953125
+        ]
+      ]
+    },
+    {
+      "title": "6 Discussion and Conclusion",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          315.5625,
+          118.08355712890625
+        ],
+        [
+          467.9005432128906,
+          118.08355712890625
+        ],
+        [
+          467.9005432128906,
+          128.99267578125
+        ],
+        [
+          315.5625,
+          128.99267578125
+        ]
+      ]
+    },
+    {
+      "title": "6.1 Key Findings",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          315.861328125,
+          133.7745361328125
+        ],
+        [
+          407.900390625,
+          133.7745361328125
+        ],
+        [
+          407.900390625,
+          144.68365478515625
+        ],
+        [
+          315.861328125,
+          144.68365478515625
+        ]
+      ]
+    },
+    {
+      "title": "6.2 Limitations and Future Work",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          316.7578125,
+          223.986572265625
+        ],
+        [
+          487.2314758300781,
+          223.986572265625
+        ],
+        [
+          487.2314758300781,
+          234.89569091796875
+        ],
+        [
+          316.7578125,
+          234.89569091796875
+        ]
+      ]
+    },
+    {
+      "title": "6.3 Implications for Financial AI",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          316.16015625,
+          539.0859375
+        ],
+        [
+          486.4896545410156,
+          539.0859375
+        ],
+        [
+          486.4896545410156,
+          550.3126525878906
+        ],
+        [
+          316.16015625,
+          550.3126525878906
+        ]
+      ]
+    },
+    {
+      "title": "References",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          317.654296875,
+          640.5745849609375
+        ],
+        [
+          372.3041076660156,
+          640.5745849609375
+        ],
+        [
+          372.3041076660156,
+          651.62109375
+        ],
+        [
+          317.654296875,
+          651.62109375
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          476
+        ],
+        [
+          "Line",
+          212
+        ],
+        [
+          "Text",
+          21
+        ],
+        [
+          "SectionHeader",
+          11
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "ListItem",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          438
+        ],
+        [
+          "Line",
+          198
+        ],
+        [
+          "Text",
+          16
+        ],
+        [
+          "SectionHeader",
+          7
+        ],
+        [
+          "PageHeader",
+          3
+        ],
+        [
+          "Figure",
+          2
+        ],
+        [
+          "Reference",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          459
+        ],
+        [
+          "Line",
+          220
+        ],
+        [
+          "Text",
+          18
+        ],
+        [
+          "TableCell",
+          12
+        ],
+        [
+          "ListItem",
+          9
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageHeader",
+          2
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          403
+        ],
+        [
+          "Line",
+          194
+        ],
+        [
+          "Text",
+          13
+        ],
+        [
+          "SectionHeader",
+          7
+        ],
+        [
+          "Reference",
+          4
+        ],
+        [
+          "PageHeader",
+          3
+        ],
+        [
+          "Figure",
+          3
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 4,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          501
+        ],
+        [
+          "Line",
+          199
+        ],
+        [
+          "ListItem",
+          22
+        ],
+        [
+          "Reference",
+          22
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "PageHeader",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "debug_data/20251004_191500_453da586_GraphRAG_2025_Michael_Siegfried_Jan"
+}

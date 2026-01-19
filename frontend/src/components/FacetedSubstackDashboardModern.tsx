@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import ReactMarkdown from 'react-markdown'
+import { decodeHtmlEntities } from '@/utils/htmlDecoder'
+import remarkGfm from 'remark-gfm'
+import conceptService from '@/services/conceptService'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,21 +11,23 @@ import { Badge } from "@/components/ui/badge"
 import { TagBadge } from "@/components/ui/tag-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import ArticleViewerModern from './ArticleViewerModern'
+import ArticleViewerErrorBoundary from './ArticleViewerErrorBoundary'
 import ArticleTagSuggestionModalModern from './ArticleTagSuggestionModalModern'
-import { 
-  Search, 
-  FileText, 
-  User, 
-  Hash, 
+import ArticleImportModal from './ArticleImportModal'
+import ArticleImportEnhancedModal from './ArticleImportEnhancedModal'
+import {
+  Search,
+  FileText,
+  User,
+  Tag,
   Calendar,
   Loader2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   RefreshCw,
-  Tag,
   Clock,
   BookOpen,
   Sparkles,
@@ -29,10 +35,11 @@ import {
   EyeOff,
   MessageSquare,
   Bookmark,
-  TrendingUp,
-  Filter,
   X,
-  Plus
+  Plus,
+  Trash2,
+  Download,
+  ExternalLink
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 
@@ -42,35 +49,43 @@ interface AuthorFacet {
   count: number
 }
 
-interface TagFacet {
-  tag: string
+interface ConceptFacet {
+  concept_id: string
+  slug: string
+  display_name: string
   count: number
 }
 
+interface ArticleConcept {
+  concept_id: string
+  display_name: string
+  slug: string
+}
+
 interface Article {
-  id: number
+  id: string  // MongoDB ObjectId as string
   title: string
   subtitle: string | null
   author?: {
-    id: number
     name: string
     subdomain: string
   }
   published_at: string | null
-  word_count: number
-  reading_time_minutes: number
+  word_count?: number
+  reading_time_minutes?: number
   preview: string
   summary?: string | null
   has_summary?: boolean
-  tags: any[]  // Can be string[] or {tag: string, type: string}[]
-  snippet_count: number
+  concepts: ArticleConcept[]  // Updated to use concepts
+  snippet_count?: number
+  url?: string
 }
 
 interface FacetedSearchResponse {
   articles: Article[]
   facets: {
     authors: AuthorFacet[]
-    tags: TagFacet[]
+    concepts: ConceptFacet[]
   }
   total: number
   page: number
@@ -79,31 +94,88 @@ interface FacetedSearchResponse {
 
 export default function FacetedSubstackDashboardModern() {
   const [articles, setArticles] = useState<Article[]>([])
-  const [facets, setFacets] = useState<{ authors: AuthorFacet[]; tags: TagFacet[] }>({
+  const [facets, setFacets] = useState<{ authors: AuthorFacet[]; concepts: ConceptFacet[] }>({
     authors: [],
-    tags: []
+    concepts: []
   })
-  const [selectedAuthors, setSelectedAuthors] = useState<number[]>([])
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([])  // Now uses author names
+  const [selectedConcepts, setSelectedConcepts] = useState<string[]>([])  // Now uses concept_ids
   const [searchTerm, setSearchTerm] = useState('')
   const [hasSummary, setHasSummary] = useState<boolean | null>(null)
   const [hasSnippets, setHasSnippets] = useState<boolean | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalArticles, setTotalArticles] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [selectedArticleId, setSelectedArticleId] = useState<number | null>(null)
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null)
   const [selectedArticleForTags, setSelectedArticleForTags] = useState<Article | null>(null)
   const [showAllTags, setShowAllTags] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [addingTagForArticle, setAddingTagForArticle] = useState<number | null>(null)
+  const [addingTagForArticle, setAddingTagForArticle] = useState<string | null>(null)
   const [newTag, setNewTag] = useState('')
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [showEnhancedImportModal, setShowEnhancedImportModal] = useState(false)
+  const [expandedSummaries, setExpandedSummaries] = useState<Set<string>>(new Set())
 
   const pageSize = 20
   const totalPages = Math.ceil(totalArticles / pageSize)
 
   useEffect(() => {
     fetchArticles()
-  }, [selectedAuthors, selectedTags, searchTerm, hasSummary, hasSnippets, currentPage])
+  }, [selectedAuthors, selectedConcepts, searchTerm, hasSummary, hasSnippets, currentPage])
+
+  // Listen for snippet updates from ArticleViewerModern
+  useEffect(() => {
+    const handleSnippetsUpdated = (event: CustomEvent) => {
+      const { articleId } = event.detail
+      // Increment snippet_count locally
+      setArticles(prev => prev.map(article =>
+        article.id === articleId
+          ? { ...article, snippet_count: (article.snippet_count || 0) + 1 }
+          : article
+      ))
+    }
+
+    window.addEventListener('articleSnippetsUpdated', handleSnippetsUpdated as EventListener)
+    return () => {
+      window.removeEventListener('articleSnippetsUpdated', handleSnippetsUpdated as EventListener)
+    }
+  }, [])
+
+  // Listen for article viewer close to refresh article data
+  useEffect(() => {
+    const handleViewerClosed = async (event: CustomEvent) => {
+      const { articleId } = event.detail
+      console.log('🟠 articleViewerClosed event received for:', articleId)
+
+      try {
+        const response = await axios.get(`http://localhost:8000/api/articles/${articleId}`)
+        const updatedArticle = response.data
+        console.log('🟠 Fetched updated article:', {
+          snippet_count: updatedArticle.snippets?.length,
+          has_summary: !!updatedArticle.summary
+        })
+
+        setArticles(prev => prev.map(article =>
+          article.id === articleId
+            ? {
+                ...article,
+                concepts: updatedArticle.concepts,
+                snippet_count: updatedArticle.snippets?.length || 0,
+                summary: updatedArticle.summary,
+                has_summary: !!updatedArticle.summary
+              }
+            : article
+        ))
+      } catch (error) {
+        console.error('🟠 Error fetching updated article:', error)
+      }
+    }
+
+    window.addEventListener('articleViewerClosed', handleViewerClosed as EventListener)
+    return () => {
+      window.removeEventListener('articleViewerClosed', handleViewerClosed as EventListener)
+    }
+  }, [])
 
   const fetchArticles = async () => {
     setLoading(true)
@@ -111,26 +183,28 @@ export default function FacetedSubstackDashboardModern() {
       const params = new URLSearchParams()
       params.append('page', currentPage.toString())
       params.append('page_size', pageSize.toString())
-      
+
       if (searchTerm) {
         params.append('search', searchTerm)
       }
-      
+
       if (hasSummary !== null) {
         params.append('has_summary', hasSummary.toString())
       }
-      
+
       if (hasSnippets !== null) {
         params.append('has_snippets', hasSnippets.toString())
       }
-      
-      selectedAuthors.forEach(authorId => params.append('author_ids', authorId.toString()))
-      selectedTags.forEach(tag => params.append('tags', tag))
-      
+
+      // Use author names for filtering
+      selectedAuthors.forEach(authorName => params.append('authors', authorName))
+      // Use concept_ids for filtering
+      selectedConcepts.forEach(conceptId => params.append('concept_ids', conceptId))
+
       const response = await axios.get<FacetedSearchResponse>(
-        `http://localhost:8000/api/v2/substack/articles/faceted-search?${params.toString()}`
+        `http://localhost:8000/api/articles/faceted-search?${params.toString()}`
       )
-      
+
       setArticles(response.data.articles)
       setFacets(response.data.facets)
       setTotalArticles(response.data.total)
@@ -141,56 +215,67 @@ export default function FacetedSubstackDashboardModern() {
     }
   }
 
-  const toggleAuthor = (authorId: number) => {
-    if (!authorId) return // Prevent undefined IDs
+  const toggleAuthor = (authorName: string) => {
+    if (!authorName) return
     setSelectedAuthors(prev => {
-      if (prev.includes(authorId)) {
-        return prev.filter(id => id !== authorId)
+      if (prev.includes(authorName)) {
+        return prev.filter(name => name !== authorName)
       }
-      return [...prev, authorId]
+      return [...prev, authorName]
     })
     setCurrentPage(1)
   }
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => {
-      if (prev.includes(tag)) {
-        return prev.filter(t => t !== tag)
+  const toggleConcept = (conceptId: string) => {
+    setSelectedConcepts(prev => {
+      if (prev.includes(conceptId)) {
+        return prev.filter(id => id !== conceptId)
       }
-      return [...prev, tag]
+      return [...prev, conceptId]
     })
     setCurrentPage(1)
   }
 
   const clearFilters = () => {
     setSelectedAuthors([])
-    setSelectedTags([])
+    setSelectedConcepts([])
     setSearchTerm('')
     setHasSummary(null)
     setHasSnippets(null)
     setCurrentPage(1)
   }
 
-  const handleAddTag = async (articleId: number, tag: string) => {
+  const handleAddConcept = async (articleId: string, text: string) => {
     try {
-      await axios.post(`http://localhost:8000/api/v2/substack/articles/${articleId}/tags`, {
-        tag: tag,
-        tag_type: 'manual'
-      })
-      fetchArticles() // Refresh to show new tag
+      const concept = await conceptService.addConceptToContent('article', articleId, text)
+      if (concept) {
+        // Local state update - no full refresh needed
+        setArticles(prev => prev.map(article =>
+          article.id === articleId
+            ? { ...article, concepts: [...(article.concepts || []), concept] }
+            : article
+        ))
+      }
       setNewTag('')
       setAddingTagForArticle(null)
     } catch (error) {
-      console.error('Error adding tag:', error)
+      console.error('Error adding concept:', error)
     }
   }
 
-  const handleRemoveTag = async (articleId: number, tag: string) => {
+  const handleRemoveConcept = async (articleId: string, conceptId: string) => {
     try {
-      await axios.delete(`http://localhost:8000/api/v2/substack/articles/${articleId}/tags/${tag}`)
-      fetchArticles() // Refresh to update tags
+      const success = await conceptService.removeConceptFromContent('article', articleId, conceptId)
+      if (success) {
+        // Local state update - no full refresh needed
+        setArticles(prev => prev.map(article =>
+          article.id === articleId
+            ? { ...article, concepts: article.concepts?.filter(c => c.concept_id !== conceptId) }
+            : article
+        ))
+      }
     } catch (error) {
-      console.error('Error removing tag:', error)
+      console.error('Error removing concept:', error)
     }
   }
 
@@ -204,6 +289,35 @@ export default function FacetedSubstackDashboardModern() {
     }).format(date)
   }
 
+  const handleDeleteArticle = async (articleId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent opening the article
+
+    if (!window.confirm('Are you sure you want to delete this article?')) {
+      return
+    }
+
+    try {
+      await axios.delete(`http://localhost:8000/api/articles/${articleId}`)
+      fetchArticles() // Refresh the list
+    } catch (error) {
+      console.error('Error deleting article:', error)
+      alert('Failed to delete article')
+    }
+  }
+
+  const toggleSummary = (articleId: string, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent opening the article
+    setExpandedSummaries(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(articleId)) {
+        newSet.delete(articleId)
+      } else {
+        newSet.add(articleId)
+      }
+      return newSet
+    })
+  }
+
   const renderArticleCard = (article: Article) => (
     <Card 
       className="h-full flex flex-col hover:shadow-lg transition-all duration-200 cursor-pointer"
@@ -212,9 +326,22 @@ export default function FacetedSubstackDashboardModern() {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-lg line-clamp-2">
-            {article.title}
+            {decodeHtmlEntities(article.title)}
           </CardTitle>
-          <div className="flex gap-1 shrink-0">
+          <div className="flex gap-1 shrink-0 items-start">
+            {article.url && (
+              <Badge 
+                variant="outline" 
+                className="border-green-200 bg-green-50 cursor-pointer hover:bg-green-100" 
+                title="Has external URL - Click to open"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  window.open(article.url, '_blank')
+                }}
+              >
+                <ExternalLink className="h-3 w-3 text-green-600" />
+              </Badge>
+            )}
             {article.has_summary && (
               <Badge variant="outline" className="border-purple-200 bg-purple-50" title="Has AI Summary">
                 <Sparkles className="h-3 w-3 text-purple-600" />
@@ -226,6 +353,15 @@ export default function FacetedSubstackDashboardModern() {
                 {article.snippet_count}
               </Badge>
             )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 hover:bg-red-100 hover:text-red-600"
+              onClick={(e) => handleDeleteArticle(article.id, e)}
+              title="Delete article"
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
           </div>
         </div>
         {article.subtitle && (
@@ -250,42 +386,95 @@ export default function FacetedSubstackDashboardModern() {
             <span>{article.reading_time_minutes} min</span>
           </div>
         </div>
-        
-        {article.has_summary && article.summary ? (
-          <p className="text-sm text-gray-600 line-clamp-4">
-            {article.summary}
-          </p>
-        ) : (
-          <p className="text-sm text-gray-600 line-clamp-5">
+
+        {/* Preview text (always shown) */}
+        <div className="text-sm text-gray-600 line-clamp-3 prose prose-sm max-w-none mb-2">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({children}) => <p className="mb-2">{children}</p>,
+              a: ({children}) => <span className="text-blue-600">{children}</span>,
+              strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+              em: ({children}) => <em className="italic">{children}</em>,
+              ul: ({children}) => <ul className="list-disc ml-4">{children}</ul>,
+              ol: ({children}) => <ol className="list-decimal ml-4">{children}</ol>,
+              li: ({children}) => <li className="mb-1">{children}</li>,
+              h1: ({children}) => <span className="font-bold">{children}</span>,
+              h2: ({children}) => <span className="font-bold">{children}</span>,
+              h3: ({children}) => <span className="font-semibold">{children}</span>,
+              blockquote: ({children}) => <span className="italic">{children}</span>,
+              code: ({children}) => <code className="bg-gray-100 px-1 rounded">{children}</code>,
+            }}
+          >
             {article.preview}
-          </p>
+          </ReactMarkdown>
+        </div>
+
+        {/* Expandable AI Summary Section */}
+        {article.has_summary && article.summary && (
+          <div className="mt-2">
+            <button
+              onClick={(e) => toggleSummary(article.id, e)}
+              className="flex items-center gap-2 text-sm font-medium text-green-700 hover:text-green-800 transition-colors"
+            >
+              {expandedSummaries.has(article.id) ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+              <Sparkles className="h-3 w-3" />
+              AI Summary
+            </button>
+
+            {expandedSummaries.has(article.id) && (
+              <div className="mt-2 p-3 rounded-lg border border-green-200 bg-green-50">
+                <div className="text-sm text-gray-700 prose prose-sm max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({children}) => <p className="mb-2">{children}</p>,
+                      a: ({children}) => <span className="text-green-700 underline">{children}</span>,
+                      strong: ({children}) => <strong className="font-semibold">{children}</strong>,
+                      em: ({children}) => <em className="italic">{children}</em>,
+                      ul: ({children}) => <ul className="list-disc ml-4 mb-2">{children}</ul>,
+                      ol: ({children}) => <ol className="list-decimal ml-4 mb-2">{children}</ol>,
+                      li: ({children}) => <li className="mb-1">{children}</li>,
+                      h1: ({children}) => <span className="font-bold text-green-800">{children}</span>,
+                      h2: ({children}) => <span className="font-bold text-green-800">{children}</span>,
+                      h3: ({children}) => <span className="font-semibold text-green-700">{children}</span>,
+                      blockquote: ({children}) => <blockquote className="border-l-2 border-green-300 pl-3 italic">{children}</blockquote>,
+                      code: ({children}) => <code className="bg-green-100 px-1 rounded text-green-800">{children}</code>,
+                    }}
+                  >
+                    {article.summary}
+                  </ReactMarkdown>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
       
       <CardFooter className="pt-0">
         <div className="w-full space-y-2">
-          {/* Tags Display */}
-          {article.tags && article.tags.length > 0 && (
+          {/* Concepts Display */}
+          {article.concepts && article.concepts.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {article.tags.map((tag, idx) => {
-                const tagText = typeof tag === 'string' ? tag : tag.tag
-                const tagType = typeof tag === 'string' ? 'manual' : tag.type
-                return (
-                  <TagBadge 
-                    key={`${article.id}-tag-${idx}`} 
-                    variant={tagType === 'ai' || tagType === 'llm' ? 'ai' : 'default'} 
-                    size="sm"
-                    removable
-                    onRemove={() => handleRemoveTag(article.id, tagText)}
-                  >
-                    {tagText}
-                  </TagBadge>
-                )
-              })}
+              {article.concepts.map((concept) => (
+                <TagBadge
+                  key={`${article.id}-concept-${concept.concept_id}`}
+                  variant="default"
+                  size="sm"
+                  removable
+                  onRemove={() => handleRemoveConcept(article.id, concept.concept_id)}
+                >
+                  {concept.display_name}
+                </TagBadge>
+              ))}
             </div>
           )}
-          
-          {/* Tag Management UI */}
+
+          {/* Concept Management UI */}
           <div className="flex gap-2">
             {addingTagForArticle === article.id ? (
               <>
@@ -295,22 +484,22 @@ export default function FacetedSubstackDashboardModern() {
                   onKeyPress={(e) => {
                     if (e.key === 'Enter' && newTag.trim()) {
                       e.stopPropagation()
-                      handleAddTag(article.id, newTag.trim())
+                      handleAddConcept(article.id, newTag.trim())
                     }
                   }}
-                  placeholder="Enter tag name..."
+                  placeholder="Enter concept name..."
                   className="flex-1 h-8"
                   onClick={(e) => e.stopPropagation()}
                   autoFocus
                 />
-                <Button 
+                <Button
                   onClick={(e) => {
                     e.stopPropagation()
                     if (newTag.trim()) {
-                      handleAddTag(article.id, newTag.trim())
+                      handleAddConcept(article.id, newTag.trim())
                     }
-                  }} 
-                  size="sm" 
+                  }}
+                  size="sm"
                   variant="default"
                 >
                   <Plus className="h-3 w-3" />
@@ -349,7 +538,7 @@ export default function FacetedSubstackDashboardModern() {
                   }}
                 >
                   <Sparkles className="h-3 w-3 mr-1" />
-                  Suggest Tags
+                  Suggest Concept Tags
                 </Button>
               </>
             )}
@@ -359,14 +548,55 @@ export default function FacetedSubstackDashboardModern() {
     </Card>
   )
 
-  const displayedTags = showAllTags ? facets.tags : facets.tags.slice(0, 20)
+  const displayedConcepts = showAllTags ? facets.concepts : facets.concepts.slice(0, 20)
 
   return (
     <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Newsletter Articles</h1>
-        <p className="text-gray-600">Browse and analyze Substack newsletters with AI insights</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Newsletter Articles
+              {totalArticles > 0 && (
+                <span className="ml-3 text-lg font-normal text-gray-500">
+                  ({totalArticles} {totalArticles === 1 ? 'article' : 'articles'})
+                </span>
+              )}
+            </h1>
+            <p className="text-gray-600">
+              Browse and analyze Substack newsletters with AI insights
+              {(hasSummary !== null || hasSnippets !== null) && (
+                <span className="ml-2 text-sm">
+                  • Filtering: 
+                  {hasSummary === true && " With summaries"}
+                  {hasSummary === false && " Without summaries"}
+                  {hasSummary !== null && hasSnippets !== null && " and"}
+                  {hasSnippets === true && " With snippets"}
+                  {hasSnippets === false && " Without snippets"}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowImportModal(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Import from URL
+            </Button>
+            <Button
+              onClick={() => setShowEnhancedImportModal(true)}
+              variant="default"
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Import (Subscriber)
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -388,32 +618,56 @@ export default function FacetedSubstackDashboardModern() {
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="has-summary"
-                  checked={hasSummary === true}
-                  onCheckedChange={(checked) => {
-                    setHasSummary(checked === true ? true : null)
+              <div className="flex gap-2">
+                <Button
+                  variant={hasSummary === true ? "default" : hasSummary === false ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    // Cycle through: null -> true -> false -> null
+                    if (hasSummary === null) {
+                      setHasSummary(true)
+                    } else if (hasSummary === true) {
+                      setHasSummary(false)
+                    } else {
+                      setHasSummary(null)
+                    }
                     setCurrentPage(1)
                   }}
-                />
-                <label htmlFor="has-summary" className="text-sm cursor-pointer">
-                  Has Summary
-                </label>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="has-snippets"
-                  checked={hasSnippets === true}
-                  onCheckedChange={(checked) => {
-                    setHasSnippets(checked === true ? true : null)
+                  className="flex items-center gap-1"
+                >
+                  {hasSummary === true ? (
+                    <><Sparkles className="h-3 w-3" /> With Summary</>
+                  ) : hasSummary === false ? (
+                    <><X className="h-3 w-3" /> No Summary</>
+                  ) : (
+                    <><Sparkles className="h-3 w-3" /> Summary Filter</>
+                  )}
+                </Button>
+                
+                <Button
+                  variant={hasSnippets === true ? "default" : hasSnippets === false ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    // Cycle through: null -> true -> false -> null
+                    if (hasSnippets === null) {
+                      setHasSnippets(true)
+                    } else if (hasSnippets === true) {
+                      setHasSnippets(false)
+                    } else {
+                      setHasSnippets(null)
+                    }
                     setCurrentPage(1)
                   }}
-                />
-                <label htmlFor="has-snippets" className="text-sm cursor-pointer">
-                  Has Snippets
-                </label>
+                  className="flex items-center gap-1"
+                >
+                  {hasSnippets === true ? (
+                    <><Bookmark className="h-3 w-3" /> With Snippets</>
+                  ) : hasSnippets === false ? (
+                    <><X className="h-3 w-3" /> No Snippets</>
+                  ) : (
+                    <><Bookmark className="h-3 w-3" /> Snippet Filter</>
+                  )}
+                </Button>
               </div>
             </div>
             
@@ -422,7 +676,7 @@ export default function FacetedSubstackDashboardModern() {
                 <RefreshCw className={cn("h-4 w-4 mr-2", loading && "animate-spin")} />
                 Refresh
               </Button>
-              {(selectedAuthors.length > 0 || selectedTags.length > 0 || searchTerm) && (
+              {(selectedAuthors.length > 0 || selectedConcepts.length > 0 || searchTerm) && (
                 <Button onClick={clearFilters} variant="outline">
                   <X className="h-4 w-4 mr-2" />
                   Clear
@@ -447,19 +701,19 @@ export default function FacetedSubstackDashboardModern() {
             <CardContent className="p-0">
               <ScrollArea className="h-[250px]">
                 <div className="px-4 pb-4">
-                  {facets.authors.filter(author => author.id).map(author => (
+                  {facets.authors.filter(author => author.name).map(author => (
                     <div
-                      key={`author-${author.id}`}
+                      key={`author-${author.name}`}
                       className={cn(
                         "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors mb-1",
-                        selectedAuthors.includes(author.id) && "bg-blue-50"
+                        selectedAuthors.includes(author.name) && "bg-blue-50"
                       )}
-                      onClick={() => toggleAuthor(author.id)}
+                      onClick={() => toggleAuthor(author.name)}
                     >
                       <div className="flex items-center gap-2">
                         <Checkbox
-                          checked={selectedAuthors.includes(author.id)}
-                          onCheckedChange={() => toggleAuthor(author.id)}
+                          checked={selectedAuthors.includes(author.name)}
+                          onCheckedChange={() => toggleAuthor(author.name)}
                           onClick={(e) => e.stopPropagation()}
                         />
                         <span className="text-sm font-medium text-gray-900">{author.name || 'Unknown Author'}</span>
@@ -474,43 +728,43 @@ export default function FacetedSubstackDashboardModern() {
             </CardContent>
           </Card>
 
-          {/* Tags Filter */}
+          {/* Concepts Filter */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Hash className="h-4 w-4" />
-                Tags
+                <Tag className="h-4 w-4" />
+                Concepts
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[350px]">
                 <div className="px-4 pb-4 space-y-1">
-                  {displayedTags.map(tag => (
+                  {displayedConcepts.map(concept => (
                     <div
-                      key={`tag-${tag.tag}`}
+                      key={`concept-${concept.concept_id}`}
                       className={cn(
                         "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-                        selectedTags.includes(tag.tag) && "bg-blue-50"
+                        selectedConcepts.includes(concept.concept_id) && "bg-blue-50"
                       )}
-                      onClick={() => toggleTag(tag.tag)}
+                      onClick={() => toggleConcept(concept.concept_id)}
                     >
                       <div className="flex items-center gap-2">
                         <Checkbox
-                          checked={selectedTags.includes(tag.tag)}
-                          onCheckedChange={() => toggleTag(tag.tag)}
+                          checked={selectedConcepts.includes(concept.concept_id)}
+                          onCheckedChange={() => toggleConcept(concept.concept_id)}
                           onClick={(e) => e.stopPropagation()}
                         />
                         <TagBadge variant="default" size="sm">
-                          {tag.tag}
+                          {concept.display_name}
                         </TagBadge>
                       </div>
                       <Badge variant="secondary" className="text-xs">
-                        {tag.count}
+                        {concept.count}
                       </Badge>
                     </div>
                   ))}
                 </div>
-                {facets.tags.length > 20 && (
+                {facets.concepts.length > 20 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -525,7 +779,7 @@ export default function FacetedSubstackDashboardModern() {
                     ) : (
                       <>
                         <Eye className="h-3 w-3 mr-2" />
-                        Show All ({facets.tags.length})
+                        Show All ({facets.concepts.length})
                       </>
                     )}
                   </Button>
@@ -549,9 +803,9 @@ export default function FacetedSubstackDashboardModern() {
                   {selectedAuthors.length} author{selectedAuthors.length !== 1 ? 's' : ''} selected
                 </Badge>
               )}
-              {selectedTags.length > 0 && (
+              {selectedConcepts.length > 0 && (
                 <Badge variant="secondary" className="py-1.5 px-3">
-                  {selectedTags.length} tag{selectedTags.length !== 1 ? 's' : ''} selected
+                  {selectedConcepts.length} concept{selectedConcepts.length !== 1 ? 's' : ''} selected
                 </Badge>
               )}
             </div>
@@ -643,13 +897,15 @@ export default function FacetedSubstackDashboardModern() {
 
       {/* Article Viewer Modal */}
       {selectedArticleId && (
-        <ArticleViewerModern
-          articleId={selectedArticleId}
-          onClose={() => {
-            setSelectedArticleId(null)
-            fetchArticles() // Refresh to show updated tags
-          }}
-        />
+        <ArticleViewerErrorBoundary>
+          <ArticleViewerModern
+            articleId={selectedArticleId}
+            onClose={() => {
+              // Article data update handled by articleViewerClosed event
+              setSelectedArticleId(null)
+            }}
+          />
+        </ArticleViewerErrorBoundary>
       )}
 
       {/* Tag Suggestion Modal */}
@@ -658,9 +914,42 @@ export default function FacetedSubstackDashboardModern() {
           article={selectedArticleForTags}
           isOpen={!!selectedArticleForTags}
           onClose={() => setSelectedArticleForTags(null)}
-          onTagsUpdated={fetchArticles}
+          onTagsUpdated={async () => {
+            // Fetch only the updated article's concepts - no full refresh needed
+            try {
+              const response = await axios.get(`http://localhost:8000/api/articles/${selectedArticleForTags.id}`)
+              const updatedArticle = response.data
+              setArticles(prev => prev.map(article =>
+                article.id === selectedArticleForTags.id
+                  ? { ...article, concepts: updatedArticle.concepts }
+                  : article
+              ))
+            } catch (error) {
+              console.error('Error fetching updated article:', error)
+            }
+          }}
         />
       )}
+
+      {/* Article Import Modal */}
+      <ArticleImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportSuccess={() => {
+          fetchArticles()
+          setShowImportModal(false)
+        }}
+      />
+
+      {/* Enhanced Article Import Modal */}
+      <ArticleImportEnhancedModal
+        isOpen={showEnhancedImportModal}
+        onClose={() => setShowEnhancedImportModal(false)}
+        onImportSuccess={() => {
+          fetchArticles()
+          setShowEnhancedImportModal(false)
+        }}
+      />
     </div>
   )
 }

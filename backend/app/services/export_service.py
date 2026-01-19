@@ -7,11 +7,7 @@ import csv
 import io
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from sqlalchemy.orm import Session
 import pandas as pd
-
-from app.models.substack import SubstackArticle, ArticleSnippet, ArticleTag
-
 
 class ExportService:
     """Service for exporting articles and annotations in various formats"""
