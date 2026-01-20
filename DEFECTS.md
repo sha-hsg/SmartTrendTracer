@@ -1,6 +1,6 @@
 # SmartTrendTracer - Defects & Known Issues
 
-*Zuletzt aktualisiert: 2025-12-31*
+*Zuletzt aktualisiert: 2026-01-20*
 
 ---
 
@@ -88,18 +88,20 @@ React Strict Mode Development Checks - False Positive
 ---
 
 ### DEF-006: Forwarded Substack Articles - HTML in Previews
-**Status:** Has Workaround
+**Status:** Needs MongoDB Migration
 **Priorität:** Low
 **Bereich:** Backend - Substack
 
 **Problem:**
 Weitergeleitete Substack Artikel haben HTML-Artefakte in den Previews.
 
-**Lösung:**
-```bash
-cd backend
-python fix_previews.py
-```
+**Aktueller Status:**
+`clean_substack_footers.py` nutzt noch alte SQLite-Imports (`app.models`, `sqlalchemy`).
+Script muss auf MongoDB migriert werden.
+
+**TODO:**
+- Script auf PyMongo umstellen
+- `from app.models import get_db` → `from pymongo import MongoClient`
 
 ---
 
@@ -133,12 +135,18 @@ Zu viele Requests in 15-Minuten Window führen zu Rate Limit Errors.
 
 ## Architecture / Technical Debt
 
-### DEBT-001: Hybrid Database State
+### DEBT-001: Legacy SQLite Scripts
 **Status:** Technical Debt
 **Bereich:** Database Architecture
 
 **Problem:**
-Tag Ontology nutzt MongoDB, aber manche Tweet/Paper/Article Tag Operationen nutzen noch alte Patterns.
+Einige Utility-Scripts nutzen noch alte SQLite-Imports obwohl das System vollständig auf MongoDB migriert ist.
+
+**Betroffene Scripts:**
+- `clean_substack_footers.py` - SQLite imports
+- Weitere möglicherweise in `backend/*.py`
+
+**Lösung:** Scripts auf PyMongo umstellen oder entfernen wenn nicht mehr benötigt.
 
 **Referenz:** Siehe `TAG_SYSTEM_ANALYSIS.md`
 
