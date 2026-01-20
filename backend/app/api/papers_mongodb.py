@@ -1291,7 +1291,23 @@ def update_paper_metadata(paper_id: str, metadata: dict):
         update_data['arxiv_id'] = metadata['arxiv_id']
     if 'doi' in metadata:
         update_data['doi'] = metadata['doi']
-    
+
+    # Handle flagged status (bookmark/mark for later)
+    if 'flagged' in metadata:
+        update_data['flagged'] = bool(metadata['flagged'])
+
+    # Handle star rating (1-5 stars, or null to clear)
+    if 'rating' in metadata:
+        rating = metadata['rating']
+        if rating is None:
+            update_data['rating'] = None
+        elif isinstance(rating, (int, float)) and 1 <= rating <= 5:
+            update_data['rating'] = int(rating)
+
+    # Handle notes/comments
+    if 'notes' in metadata:
+        update_data['notes'] = metadata['notes']
+
     # Handle authors - update both authors string and authors_detailed
     if 'authors' in metadata:
         if isinstance(metadata['authors'], list):

@@ -16,6 +16,8 @@ class RAGQuery(BaseModel):
     """Model for RAG query request"""
     question: str
     k: int = 10
+    content_types: Optional[List[str]] = None  # ['tweet', 'article', 'paper']
+    model: Optional[str] = None  # Optional model override
 
 
 @router.get("/stats")
@@ -32,7 +34,12 @@ def get_index_stats(db=Depends(get_database)):
             "last_updated": status.get('last_updated'),
             "current_step": status.get('current_step', ''),
             "progress_percent": status.get('progress_percent', 0),
-            "error": status.get('error')
+            "error": status.get('error'),
+            # Document type counts for filtering UI
+            "tweets": status.get('tweets', 0),
+            "articles": status.get('articles', 0),
+            "papers": status.get('papers', 0),
+            "snippets": status.get('snippets', 0)
         }
     except Exception as e:
         print(f"Error in get_index_stats: {e}")
@@ -43,7 +50,11 @@ def get_index_stats(db=Depends(get_database)):
             "last_updated": None,
             "current_step": '',
             "progress_percent": 0,
-            "error": str(e)
+            "error": str(e),
+            "tweets": 0,
+            "articles": 0,
+            "papers": 0,
+            "snippets": 0
         }
 
 
@@ -89,12 +100,12 @@ async def ask_question(query: RAGQuery, db=Depends(get_database)):
                 }
             }
 
-        # Get answer with sources
-        result = await rag_service.search_with_answer(query.question, query.k)
+        # Get answer with sources (with optional content type filtering)
+        result = await rag_service.search_with_answer(query.question, query.k, query.content_types)
 
         if "error" in result:
             # If there's an error, return a simple search instead
-            search_results = rag_service.search(query.question, query.k)
+            search_results = rag_service.search(query.question, query.k, query.content_types)
             return {
                 "question": query.question,
                 "answer": f"Found {len(search_results)} relevant documents. Please review them below.",

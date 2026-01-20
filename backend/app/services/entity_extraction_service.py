@@ -522,7 +522,9 @@ class EntityExtractionService:
 
         return {
             "id": concept_id,
+            "_id": concept_id,  # Include _id for compatibility with tag_instances
             "tag": slug,
+            "slug": slug,
             "display_name": entity.text,
             "description": concept["description"]
         }

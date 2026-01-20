@@ -509,7 +509,12 @@ fi
 
 # Calculate total startup time
 SCRIPT_END=$(date +%s)
-SCRIPT_START=$(date -r "$STARTUP_LOG" +%s 2>/dev/null || echo $SCRIPT_END)
+# Platform-specific file modification time
+if [[ "$PLATFORM" == "macos" ]]; then
+    SCRIPT_START=$(date -r "$STARTUP_LOG" +%s 2>/dev/null || echo $SCRIPT_END)
+else
+    SCRIPT_START=$(stat -c %Y "$STARTUP_LOG" 2>/dev/null || echo $SCRIPT_END)
+fi
 TOTAL_TIME=$((SCRIPT_END - SCRIPT_START))
 
 # Collect all PIDs for summary

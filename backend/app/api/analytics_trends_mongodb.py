@@ -795,11 +795,25 @@ def generate_summary(
     # Get concept IDs if filtering by tags
     concept_ids = get_concept_ids_from_tags(db, tags) if tags else None
 
-    # When filtering by Twitter author, exclude articles/papers (author = Twitter username)
+    # Author filter handling - depends on which sources are selected
+    # If only tweets are selected: author = Twitter username
+    # If only articles are selected: author = Substack author name
+    # If multiple sources or no specific source: ignore author filter (would be ambiguous)
+    author_filter_for_tweets = None
+    author_filter_for_articles = None
+
     if author:
-        include_articles = False
-        include_papers = False
-        logger.info(f"Author filter '{author}' applied - excluding articles/papers (Twitter-only filter)")
+        if include_tweets and not include_articles and not include_papers:
+            # Only tweets selected - author is Twitter username
+            author_filter_for_tweets = author
+            logger.info(f"Author filter '{author}' applied for Twitter")
+        elif include_articles and not include_tweets and not include_papers:
+            # Only articles selected - author is Substack author name
+            author_filter_for_articles = author
+            logger.info(f"Author filter '{author}' applied for Articles")
+        else:
+            # Multiple sources selected - ignore author filter (would be ambiguous)
+            logger.info(f"Author filter '{author}' ignored - multiple sources selected (would be ambiguous)")
 
     # Count total available before limits
     tweet_filter = {'created_at': {'$gte': start_date, '$lte': end_date}}
@@ -852,8 +866,11 @@ def generate_summary(
         # Default: use created_at (import date)
         paper_filter = {'created_at': {'$gte': start_date, '$lte': end_date}}
 
-    if author:
-        tweet_filter['author_username'] = author
+    # Apply author filters
+    if author_filter_for_tweets:
+        tweet_filter['author_username'] = author_filter_for_tweets
+    if author_filter_for_articles:
+        article_filter['author_name'] = author_filter_for_articles
 
     # Apply tag filters to counts
     if concept_ids:
@@ -876,7 +893,8 @@ def generate_summary(
         include_tweets=include_tweets,
         include_articles=include_articles,
         include_papers=include_papers,
-        author=author,
+        author=author_filter_for_tweets,
+        article_author=author_filter_for_articles,
         concept_ids=concept_ids,
         max_tweets=max_tweets,
         max_articles=max_articles,

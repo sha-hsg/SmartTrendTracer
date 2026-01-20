@@ -64,6 +64,8 @@ import {
   Edit2,
   Cpu,
   GraduationCap,
+  Star,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -167,6 +169,9 @@ interface Paper {
   pdf_path?: string;
   sections?: PaperSection[];
   snippets?: PaperSnippet[];
+  flagged?: boolean;
+  rating?: number | null;  // 1-5 stars
+  notes?: string;
   metadata?: {
     supplementary?: Array<{
       type: string;
@@ -1389,6 +1394,37 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
     setSelectedAffiliations(newSelection);
   };
 
+  // Toggle flag status for paper
+  const handleToggleFlag = async () => {
+    if (!paper) return;
+
+    const newFlagged = !paper.flagged;
+    try {
+      await axios.put(`http://localhost:8000/api/papers/${paperId}/metadata`, {
+        flagged: newFlagged
+      });
+      setPaper({ ...paper, flagged: newFlagged });
+    } catch (err) {
+      console.error("Failed to update flag:", err);
+    }
+  };
+
+  // Set star rating for paper (1-5, or null to clear)
+  const handleSetRating = async (rating: number | null) => {
+    if (!paper) return;
+
+    // If clicking the same rating, clear it
+    const newRating = paper.rating === rating ? null : rating;
+    try {
+      await axios.put(`http://localhost:8000/api/papers/${paperId}/metadata`, {
+        rating: newRating
+      });
+      setPaper({ ...paper, rating: newRating });
+    } catch (err) {
+      console.error("Failed to update rating:", err);
+    }
+  };
+
   const handleEditMetadata = () => {
     console.log("Edit metadata clicked");
     if (!paper) {
@@ -1781,6 +1817,49 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
                       {paper.tags.length}
                     </Badge>
                   )}
+                </div>
+
+                {/* Flag and Rating Controls */}
+                <div className="flex items-center gap-3 mt-2">
+                  {/* Flag Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleToggleFlag}
+                    className={`h-7 px-2 ${paper.flagged ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-gray-400 hover:text-red-500 hover:bg-red-50'}`}
+                    title={paper.flagged ? "Remove flag" : "Flag this paper"}
+                  >
+                    <Flag className={`h-4 w-4 ${paper.flagged ? 'fill-current' : ''}`} />
+                  </Button>
+
+                  {/* Star Rating */}
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => handleSetRating(star)}
+                        className={`p-0.5 transition-colors ${
+                          paper.rating && star <= paper.rating
+                            ? 'text-yellow-400'
+                            : 'text-gray-300 hover:text-yellow-300'
+                        }`}
+                        title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                      >
+                        <Star
+                          className={`h-4 w-4 ${paper.rating && star <= paper.rating ? 'fill-current' : ''}`}
+                        />
+                      </button>
+                    ))}
+                    {paper.rating && (
+                      <button
+                        onClick={() => handleSetRating(null)}
+                        className="ml-1 text-xs text-gray-400 hover:text-gray-600"
+                        title="Clear rating"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

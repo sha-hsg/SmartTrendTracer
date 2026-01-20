@@ -234,6 +234,49 @@ sudo systemctl stop mongod
 6. ✅ **Log everything** with timestamps, PIDs, and timing information
 7. ✅ **Test on both macOS and Linux** before considering code complete
 
+## Recent Enhancements (January 20, 2026)
+
+### RAG Search Content Type Filtering Fix - COMPLETE
+
+#### Problem
+When searching with multiple content types selected (e.g., Tweets + Articles), only tweets appeared in results despite articles like "AI Agents of the Week" being relevant to queries about "agentic AI".
+
+#### Root Cause
+The RAG search used FAISS similarity ranking, which returns results sorted by embedding similarity. With ~11,422 tweets but only ~65 articles in the index, tweets dominated the top rankings and filled all result slots (k=50) before any articles appeared.
+
+**Example**: First article might appear at position 847 in FAISS ranking, but search stopped after collecting 50 results.
+
+#### Solution Implemented
+**Proportional blending** when multiple content types are selected:
+
+1. **Collect ALL matching results separately by type** (not just first k)
+2. **Ensure minimum quota** from each type:
+   - At least 3 items from each selected type
+   - Or `k / (2 * num_types)` items
+3. **Fill remaining slots** with highest-scoring items across all types
+4. **Sort final results** by similarity score
+
+**Code Location**: `backend/app/services/rag_service_concepts.py:312-402`
+
+#### Enhanced Logging Added
+```
+FIRST ARTICLE at position 847: AI Agents of the Week: Papers You Should Know About
+COLLECTED per type (before blending): tweets=11000, articles=65, papers=0
+Added 12 tweets (minimum quota)
+Added 12 articles (minimum quota)
+FINAL results by type: tweets=38, articles=12, papers=0
+```
+
+#### Files Modified
+- `backend/app/services/rag_service_concepts.py` - Proportional blending logic and debug logging
+- `backend/app/services/rag_helpers.py` - Added doc_id and inferred_type parameters
+- `backend/app/api/rag_simple.py` - content_types parameter in RAGQuery model
+
+#### Result
+When selecting Tweets + Articles, results now include representation from both types instead of being dominated by tweets.
+
+---
+
 ## Recent Enhancements (January 19, 2026)
 
 ### TypeScript Error Cleanup - COMPLETE

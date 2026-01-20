@@ -128,8 +128,34 @@ class FastRAGService:
             print("Using Gemini embeddings (text-embedding-004)")
 
     def get_status(self) -> Dict[str, Any]:
-        """Get current index status"""
-        return asdict(self.status)
+        """Get current index status with document type counts"""
+        status_dict = asdict(self.status)
+
+        # Count documents by type from metadata
+        type_counts = {'tweet': 0, 'article': 0, 'paper': 0, 'snippet': 0}
+        for doc_id, doc in self.metadata.items():
+            # Try to get type from doc, or infer from doc_id
+            doc_type = doc.get('type', '') if isinstance(doc, dict) else ''
+            if not doc_type and doc_id:
+                # Infer type from doc_id format: "tweet_123", "article_456", "paper_789"
+                if doc_id.startswith('tweet_'):
+                    doc_type = 'tweet'
+                elif doc_id.startswith('article_'):
+                    doc_type = 'article'
+                elif doc_id.startswith('paper_'):
+                    doc_type = 'paper'
+                elif doc_id.startswith('snippet_'):
+                    doc_type = 'snippet'
+
+            if doc_type in type_counts:
+                type_counts[doc_type] += 1
+
+        status_dict['tweets'] = type_counts['tweet']
+        status_dict['articles'] = type_counts['article']
+        status_dict['papers'] = type_counts['paper']
+        status_dict['snippets'] = type_counts['snippet']
+
+        return status_dict
 
     def _update_status(self, **kwargs):
         """Update index status"""
@@ -447,16 +473,31 @@ class FastRAGService:
             openai_client=self.openai_client
         )
 
-    def search(self, query: str, k: int = 10) -> List[Dict[str, Any]]:
-        """Search the index"""
+    def search(self, query: str, k: int = 10, content_types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """Search the index with optional content type filtering
+
+        Args:
+            query: Search query string
+            k: Number of results to return
+            content_types: Optional list of content types to filter by ['tweet', 'article', 'paper']
+        """
+        print(f"\n{'='*60}")
+        print(f"RAG SEARCH DEBUG LOG")
+        print(f"{'='*60}")
+        print(f"Query: {query[:100]}...")
+        print(f"Requested k: {k}")
+        print(f"Content types filter: {content_types}")
+
         if not self.status.is_ready:
             if self.status.is_building:
+                print(f"ERROR: Index is building")
                 return [{
                     'error': 'Index is currently building',
                     'progress': self.status.progress_percent,
                     'step': self.status.current_step
                 }]
             else:
+                print(f"ERROR: Index not ready")
                 return [{
                     'error': 'Index not ready. Please build the index first.'
                 }]
@@ -465,11 +506,55 @@ class FastRAGService:
         query_embedding = self._get_embedding(query)
         query_vector = query_embedding.reshape(1, -1)
 
-        # Search
-        distances, indices = self.index.search(query_vector, k)
+        # Search - fetch more results if filtering to ensure we get enough after filtering
+        search_k = k * 5 if content_types else k  # Fetch 5x more when filtering
+        actual_search_k = min(search_k, self.index.ntotal)
+        print(f"Searching FAISS index for top {actual_search_k} results (index has {self.index.ntotal} docs)")
 
-        # Format results
+        distances, indices = self.index.search(query_vector, actual_search_k)
+
+        # Debug: Count types in raw search results
+        raw_type_counts = {'tweet': 0, 'article': 0, 'paper': 0, 'snippet': 0, 'unknown': 0}
+        raw_results_debug = []
+
+        for idx in indices[0]:
+            if idx == -1:
+                continue
+            doc_id = self.doc_map.get(idx)
+            if hasattr(doc_id, 'id'):
+                doc_id = doc_id.id
+            if doc_id:
+                if doc_id.startswith('tweet_'):
+                    raw_type_counts['tweet'] += 1
+                elif doc_id.startswith('article_'):
+                    raw_type_counts['article'] += 1
+                    raw_results_debug.append(doc_id)
+                elif doc_id.startswith('paper_'):
+                    raw_type_counts['paper'] += 1
+                    raw_results_debug.append(doc_id)
+                elif doc_id.startswith('snippet_'):
+                    raw_type_counts['snippet'] += 1
+                else:
+                    raw_type_counts['unknown'] += 1
+
+        print(f"\nRAW FAISS results (before filtering):")
+        print(f"  Tweets: {raw_type_counts['tweet']}")
+        print(f"  Articles: {raw_type_counts['article']}")
+        print(f"  Papers: {raw_type_counts['paper']}")
+        print(f"  Snippets: {raw_type_counts['snippet']}")
+        print(f"  Unknown: {raw_type_counts['unknown']}")
+
+        if raw_results_debug:
+            print(f"\nArticles/Papers in raw results:")
+            for doc_id in raw_results_debug[:10]:
+                doc = self.metadata.get(doc_id, {})
+                title = doc.get('metadata', {}).get('title', doc.get('title', 'N/A'))
+                print(f"  - {doc_id}: {title[:60] if title else 'N/A'}...")
+
+        # Format results with optional content type filtering
         results = []
+        filtered_out = {'tweet': 0, 'article': 0, 'paper': 0, 'snippet': 0}
+
         for i, (dist, idx) in enumerate(zip(distances[0], indices[0])):
             if idx == -1:
                 continue
@@ -480,29 +565,82 @@ class FastRAGService:
             if hasattr(doc_id, 'id'):
                 doc_id = doc_id.id
             elif not doc_id or not isinstance(doc_id, str):
-                print(f"Warning: Invalid doc_id at index {idx}: {doc_id}")
                 continue
 
             doc = self.metadata.get(doc_id)
             if not doc:
-                print(f"Warning: No metadata for doc_id: {doc_id}")
                 continue
 
-            result = format_search_result(doc, dist, i + 1)
+            # Determine doc type
+            doc_type = doc.get('type', '') if isinstance(doc, dict) else ''
+            if not doc_type and doc_id:
+                if doc_id.startswith('tweet_'):
+                    doc_type = 'tweet'
+                elif doc_id.startswith('article_'):
+                    doc_type = 'article'
+                elif doc_id.startswith('paper_'):
+                    doc_type = 'paper'
+                elif doc_id.startswith('snippet_'):
+                    doc_type = 'snippet'
+
+            # Apply content type filter if specified
+            if content_types:
+                if doc_type not in content_types:
+                    if doc_type in filtered_out:
+                        filtered_out[doc_type] += 1
+                    continue
+
+            result = format_search_result(doc, dist, len(results) + 1, doc_id=doc_id, inferred_type=doc_type)
             results.append(result)
+
+            # Stop once we have enough results
+            if len(results) >= k:
+                break
+
+        # Final results summary
+        final_type_counts = {'tweet': 0, 'article': 0, 'paper': 0, 'snippet': 0}
+        for r in results:
+            rtype = r.get('type', 'unknown')
+            if rtype in final_type_counts:
+                final_type_counts[rtype] += 1
+
+        print(f"\nFILTERED OUT (not in requested types):")
+        print(f"  Tweets: {filtered_out['tweet']}")
+        print(f"  Articles: {filtered_out['article']}")
+        print(f"  Papers: {filtered_out['paper']}")
+
+        print(f"\nFINAL RESULTS ({len(results)} items):")
+        print(f"  Tweets: {final_type_counts['tweet']}")
+        print(f"  Articles: {final_type_counts['article']}")
+        print(f"  Papers: {final_type_counts['paper']}")
+        print(f"  Snippets: {final_type_counts['snippet']}")
+
+        if final_type_counts['article'] > 0 or final_type_counts['paper'] > 0:
+            print(f"\nArticles/Papers in final results:")
+            for r in results:
+                if r.get('type') in ['article', 'paper']:
+                    print(f"  - [{r.get('type')}] {r.get('title', r.get('metadata', {}).get('title', 'N/A'))[:60]}...")
+
+        print(f"{'='*60}\n")
 
         return results
 
-    async def search_with_answer(self, query: str, k: int = 10) -> Dict[str, Any]:
-        """Search and generate an answer"""
+    async def search_with_answer(self, query: str, k: int = 10, content_types: Optional[List[str]] = None) -> Dict[str, Any]:
+        """Search and generate an answer with optional content type filtering
+
+        Args:
+            query: Search query string
+            k: Number of results to return
+            content_types: Optional list of content types to filter by ['tweet', 'article', 'paper']
+        """
         if not self.status.is_ready:
             return {
                 'error': 'Index not ready',
                 'status': self.get_status()
             }
 
-        # Search for relevant documents
-        search_results = self.search(query, k)
+        # Search for relevant documents with content type filtering
+        search_results = self.search(query, k, content_types)
 
         if not search_results:
             return {

@@ -2,6 +2,39 @@
 
 # SmartTrendTracer - Stop All Services
 # This script stops all components of the SmartTrendTracer system
+# Cross-platform compatible: macOS and Linux
+#
+# Usage: ./stop_stt.sh [--mongo-yes|-y|--mongo-no|-n]
+#   --mongo-yes, -y   Stop MongoDB without asking
+#   --mongo-no, -n    Keep MongoDB running without asking
+#   (no parameter)    Interactive - ask about MongoDB
+
+# Parse command line arguments
+MONGO_ACTION=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --mongo-yes|-y)
+            MONGO_ACTION="yes"
+            shift
+            ;;
+        --mongo-no|-n)
+            MONGO_ACTION="no"
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: ./stop_stt.sh [--mongo-yes|-y|--mongo-no|-n]"
+            echo "  --mongo-yes, -y   Stop MongoDB without asking"
+            echo "  --mongo-no, -n    Keep MongoDB running without asking"
+            echo "  (no parameter)    Interactive - ask about MongoDB"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use --help for usage information"
+            exit 1
+            ;;
+    esac
+done
 
 echo "========================================="
 echo "Stopping SmartTrendTracer Services"
@@ -16,6 +49,20 @@ NC='\033[0m' # No Color
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
+
+# Detect platform
+detect_platform() {
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        PLATFORM="macos"
+    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        PLATFORM="linux"
+    else
+        PLATFORM="unknown"
+    fi
+    echo "Platform detected: $PLATFORM"
+}
+
+detect_platform
 
 # Function to stop a service by PID file
 stop_service_by_pid() {
@@ -147,17 +194,67 @@ else
     stop_service_by_port 8000 "Backend API"
 fi
 
-# Ask about MongoDB
+# Handle MongoDB
 echo ""
 echo -e "${YELLOW}7. MongoDB Management${NC}"
-read -p "Do you want to stop MongoDB? (y/N): " -n 1 -r
-echo ""
-if [[ $REPLY =~ ^[Yy]$ ]]; then
+
+# Determine MongoDB action based on parameter or interactive prompt
+STOP_MONGO=false
+if [ "$MONGO_ACTION" = "yes" ]; then
+    echo "Stopping MongoDB (--mongo-yes specified)..."
+    STOP_MONGO=true
+elif [ "$MONGO_ACTION" = "no" ]; then
+    echo "Keeping MongoDB running (--mongo-no specified)..."
+    STOP_MONGO=false
+else
+    # Interactive mode
+    read -p "Do you want to stop MongoDB? (y/N): " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        STOP_MONGO=true
+    fi
+fi
+
+if [ "$STOP_MONGO" = true ]; then
     echo "Stopping MongoDB..."
-    brew services stop mongodb-community
+
+    # Platform-specific MongoDB stop
+    case "$PLATFORM" in
+        macos)
+            echo "Using brew services (macOS)..."
+            brew services stop mongodb-community 2>/dev/null
+            ;;
+        linux)
+            echo "Using systemctl (Linux)..."
+            # Try systemctl first (systemd)
+            if command -v systemctl &> /dev/null; then
+                sudo systemctl stop mongod 2>/dev/null || \
+                systemctl --user stop mongod 2>/dev/null || \
+                echo "systemctl failed, trying direct kill..."
+            fi
+            # Fallback: kill mongod directly
+            if pgrep -x "mongod" > /dev/null; then
+                echo "Killing mongod process directly..."
+                pkill -x mongod 2>/dev/null
+            fi
+            ;;
+        *)
+            echo "Unknown platform, trying generic stop..."
+            pkill -x mongod 2>/dev/null
+            ;;
+    esac
+
     sleep 2
     if pgrep -x "mongod" > /dev/null; then
         echo -e "${RED}✗ MongoDB still running (may need manual stop)${NC}"
+        case "$PLATFORM" in
+            macos)
+                echo "   Try: brew services stop mongodb-community"
+                ;;
+            linux)
+                echo "   Try: sudo systemctl stop mongod"
+                ;;
+        esac
     else
         echo -e "${GREEN}✓ MongoDB stopped${NC}"
     fi
@@ -168,6 +265,16 @@ fi
 # Clean up any orphaned processes
 echo ""
 echo "8. Cleaning up orphaned processes..."
+
+# Kill Playwright browser processes
+playwright_pids=$(pgrep -f "chromium.*playwright" 2>/dev/null)
+if [ -n "$playwright_pids" ]; then
+    echo -n "Found Playwright browser processes, cleaning up..."
+    pkill -f "chromium.*playwright" 2>/dev/null
+    pkill -f "Chromium" 2>/dev/null
+    sleep 1
+    echo -e " ${GREEN}✓${NC}"
+fi
 
 # Check for any uvicorn processes
 uvicorn_pids=$(pgrep -f "uvicorn")

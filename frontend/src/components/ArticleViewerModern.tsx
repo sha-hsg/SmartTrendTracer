@@ -44,7 +44,8 @@ import {
   Trash2,
   Calendar,
   Plus,
-  Wand2
+  Wand2,
+  RefreshCw
 } from 'lucide-react'
 
 interface ArticleViewerProps {
@@ -82,9 +83,10 @@ interface FullArticle {
   }[]
 }
 
-function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
+function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleViewerProps) {
   try {
   const [article, setArticle] = useState<FullArticle | null>(null)
+  const [hasChanges, setHasChanges] = useState(false)  // Track if article was modified
   const [loading, setLoading] = useState(true)
   const [showSummary, setShowSummary] = useState(false)
   const [selectedText, setSelectedText] = useState('')
@@ -104,6 +106,7 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
   const [selectionCoords, setSelectionCoords] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const [hasSelectedText, setHasSelectedText] = useState(false)
   const [generatingSummary, setGeneratingSummary] = useState(false)
+  const [recollecting, setRecollecting] = useState(false)
   const [keyPoints, setKeyPoints] = useState<string[]>([])
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -264,9 +267,17 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
       if (data.summary) {
         const points = data.summary
           .split('\n')
-          .filter((line: string) => line.trim().startsWith('•') || line.trim().startsWith('-'))
+          .filter((line: string) => {
+            const trimmed = line.trim()
+            // Must start with bullet point
+            if (!trimmed.startsWith('•') && !trimmed.startsWith('-')) return false
+            // Exclude horizontal rules (lines that are only dashes)
+            if (/^-+$/.test(trimmed)) return false
+            // Must have actual content after the bullet
+            const content = trimmed.replace(/^[•\-]\s*/, '').trim()
+            return content.length > 0
+          })
           .map((line: string) => line.replace(/^[•\-]\s*/, '').trim())
-          .filter((point: string) => point.length > 0)
         setKeyPoints(points)
         
         // Extract model info from summary
@@ -301,9 +312,17 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
         // Extract key points
         const points = data.summary
           .split('\n')
-          .filter((line: string) => line.trim().startsWith('•') || line.trim().startsWith('-'))
+          .filter((line: string) => {
+            const trimmed = line.trim()
+            // Must start with bullet point
+            if (!trimmed.startsWith('•') && !trimmed.startsWith('-')) return false
+            // Exclude horizontal rules (lines that are only dashes)
+            if (/^-+$/.test(trimmed)) return false
+            // Must have actual content after the bullet
+            const content = trimmed.replace(/^[•\-]\s*/, '').trim()
+            return content.length > 0
+          })
           .map((line: string) => line.replace(/^[•\-]\s*/, '').trim())
-          .filter((point: string) => point.length > 0)
         setKeyPoints(points)
 
         // Extract model info
@@ -338,6 +357,37 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
       }
     } finally {
       setGeneratingSummary(false)
+    }
+  }
+
+  const recollectArticle = async () => {
+    if (!article) return
+
+    setRecollecting(true)
+    try {
+      const response = await fetch(`http://localhost:8000/api/articles/${article.id}/recollect`, {
+        method: 'POST'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          // Refresh the article to show new content
+          fetchArticle()
+          setHasChanges(true)
+          alert(`Article recollected successfully!\nWord count: ${data.word_count}\nReading time: ${data.reading_time_minutes} min`)
+        } else {
+          alert(`Failed to recollect: ${data.error}`)
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+        alert(`Failed to recollect article: ${errorData.detail}`)
+      }
+    } catch (error) {
+      console.error('Error recollecting article:', error)
+      alert('Failed to recollect article. Please check if the backend is running.')
+    } finally {
+      setRecollecting(false)
     }
   }
 
@@ -497,6 +547,7 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
           ...prev,
           tags: prev.tags.filter(t => t.id !== tagId)
         } : null)
+        setHasChanges(true)  // Mark as changed for list refresh
       }
     } catch (error) {
       console.error('Error removing tag:', error)
@@ -778,6 +829,7 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
         console.log(`✅ Concept "${tagEditText}" created and added to article`)
         // Refresh article to get new concepts
         fetchArticle()
+        setHasChanges(true)  // Mark as changed for list refresh
         // Reset form
         cancelSelection()
       } else if (response.status === 400) {
@@ -966,6 +1018,11 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
             return
           }
           console.log('🟣 Dialog is being closed, calling onClose')
+          // Refresh list if changes were made
+          if (hasChanges && onArticleUpdated) {
+            console.log('🟣 Changes detected, refreshing list')
+            onArticleUpdated()
+          }
           onClose()
         }
       }}>
@@ -1026,6 +1083,11 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
                       window.dispatchEvent(new CustomEvent('articleViewerClosed', {
                         detail: { articleId: article.id }
                       }))
+                      // Refresh list if changes were made
+                      if (hasChanges && onArticleUpdated) {
+                        console.log('🔵 Changes detected, refreshing list')
+                        onArticleUpdated()
+                      }
                       onClose()
                     }}
                     className="rounded-full"
@@ -1171,7 +1233,7 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
                       className="flex items-center gap-1 hover:text-foreground transition-colors"
                     >
                       <Calendar className="h-4 w-4" />
-                      {article.published_at ? new Date(article.published_at).toLocaleDateString() : 'No date'}
+                      {article.published_at ? new Date(article.published_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'No date'}
                       <Edit3 className="h-3 w-3 ml-1 opacity-50" />
                     </button>
                   )}
@@ -1331,6 +1393,48 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
                     )}
                   </Button>
 
+                  {article.summary && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={generateSummary}
+                      disabled={generatingSummary || !summarizerModel}
+                      title="Regenerate summary with current model"
+                    >
+                      {generatingSummary ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Regenerating...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Redo Summary
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={recollectArticle}
+                    disabled={recollecting || !article.url}
+                    title="Re-fetch article content from URL"
+                  >
+                    {recollecting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Recollecting...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Recollect
+                      </>
+                    )}
+                  </Button>
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -1477,6 +1581,7 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
                                   const articleResponse = await fetch(`http://localhost:8000/api/articles/${article.id}`)
                                   const articleData = await articleResponse.json()
                                   setArticle(articleData)
+                                  setHasChanges(true)  // Mark as changed for list refresh
                                   setSelectedSummaryText('')
                                   window.getSelection()?.removeAllRanges()
                                 }
@@ -2550,6 +2655,7 @@ function ArticleViewerModern({ articleId, onClose }: ArticleViewerProps) {
               onComplete={() => {
                 setShowEntityAnnotation(false)
                 fetchArticle()
+                setHasChanges(true)  // Mark as changed for list refresh
               }}
             />
           </DialogContent>

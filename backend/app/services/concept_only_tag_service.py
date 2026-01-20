@@ -250,6 +250,10 @@ class ConceptOnlyTagService:
     
     def get_concept_by_id(self, concept_id) -> Optional[Dict]:
         """Get concept details by ID (accepts ObjectId or string)"""
+        # Return None for null/empty concept_ids (orphan tags)
+        if concept_id is None or concept_id == '' or concept_id == 'None':
+            return None
+
         try:
             # If it's already an ObjectId, use it directly
             if isinstance(concept_id, ObjectId):

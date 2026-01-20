@@ -558,7 +558,9 @@ def format_search_result(
     doc: dict,
     distance: float,
     rank: int,
-    max_content_length: int = 500
+    max_content_length: int = 500,
+    doc_id: str = None,
+    inferred_type: str = None
 ) -> dict:
     """Format a search result for API response.
 
@@ -567,6 +569,8 @@ def format_search_result(
         distance: FAISS distance
         rank: Result rank (1-based)
         max_content_length: Max content chars to return
+        doc_id: Document ID (optional, for inferring type)
+        inferred_type: Pre-inferred type (optional, overrides doc type)
 
     Returns:
         Formatted search result dict
@@ -574,19 +578,35 @@ def format_search_result(
     # Handle both dict format and legacy Document objects
     if isinstance(doc, dict):
         content = doc.get('content', '')
-        doc_type = doc.get('type', 'unknown')
+        doc_type = doc.get('type', '')
         metadata = doc.get('metadata', {})
     else:
         content = getattr(doc, 'content', '')
-        doc_type = getattr(doc, 'source_type', 'unknown')
+        doc_type = getattr(doc, 'source_type', '')
         metadata = getattr(doc, 'metadata', {})
+
+    # Use inferred type if provided, or infer from doc_id
+    if inferred_type:
+        doc_type = inferred_type
+    elif not doc_type and doc_id:
+        if doc_id.startswith('tweet_'):
+            doc_type = 'tweet'
+        elif doc_id.startswith('article_'):
+            doc_type = 'article'
+        elif doc_id.startswith('paper_'):
+            doc_type = 'paper'
+        elif doc_id.startswith('snippet_'):
+            doc_type = 'snippet'
+        else:
+            doc_type = 'unknown'
 
     return {
         'content': truncate_content(content, max_content_length),
         'type': doc_type,
         'score': distance_to_similarity(distance),
         'metadata': metadata,
-        'rank': rank
+        'rank': rank,
+        'id': doc_id  # Include doc_id in result for navigation
     }
 
 

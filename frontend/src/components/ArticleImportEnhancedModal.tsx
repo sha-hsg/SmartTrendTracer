@@ -155,13 +155,28 @@ export default function ArticleImportEnhancedModal({
     }
   }
 
+  // Extract URL from cURL command
+  const extractUrlFromCurl = (curl: string): string | null => {
+    // Try to find URL in cURL command
+    const urlMatch = curl.match(/['"]?(https?:\/\/[^\s'"]+)['"]?/)
+    return urlMatch ? urlMatch[1] : null
+  }
+
   const handleCurlImport = async () => {
-    if (!url.trim() || !curlCommand.trim()) {
-      setError('Please enter both URL and cURL command')
+    if (!curlCommand.trim()) {
+      setError('Please enter a cURL command')
       return
     }
 
-    console.log('Starting cURL import with:', { url, curlCommandLength: curlCommand.length })
+    // Use provided URL or extract from cURL
+    const importUrl = url.trim() || extractUrlFromCurl(curlCommand)
+
+    if (!importUrl) {
+      setError('Could not find URL in cURL command. Please check the command.')
+      return
+    }
+
+    console.log('Starting cURL import with:', { url: importUrl, curlCommandLength: curlCommand.length })
 
     setIsImporting(true)
     setError(null)
@@ -170,9 +185,9 @@ export default function ArticleImportEnhancedModal({
     try {
       const response = await axios.post(
         'http://localhost:8000/api/v2/articles/enhanced/import-with-cookies',
-        { 
-          url,
-          curl_command: curlCommand 
+        {
+          url: importUrl,
+          curl_command: curlCommand
         }
       )
 
@@ -471,6 +486,9 @@ export default function ArticleImportEnhancedModal({
                       <li>Find the main article request</li>
                       <li>Right-click → Copy → Copy as cURL</li>
                     </ol>
+                    <p className="text-xs text-purple-600 mt-2">
+                      ✨ URL is extracted automatically from the cURL command!
+                    </p>
                   </div>
                 </div>
               </div>
@@ -487,13 +505,19 @@ export default function ArticleImportEnhancedModal({
                   className="font-mono text-xs"
                 />
                 <div className="text-xs text-gray-500">
-                  Paste the complete cURL command from your browser's DevTools
+                  Paste the complete cURL command - URL will be extracted automatically
                 </div>
+                {curlCommand && extractUrlFromCurl(curlCommand) && (
+                  <div className="text-xs text-green-600 flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    URL detected: {extractUrlFromCurl(curlCommand)?.substring(0, 60)}...
+                  </div>
+                )}
               </div>
 
-              <Button 
-                onClick={handleCurlImport} 
-                disabled={isImporting || !url.trim() || !curlCommand.trim()}
+              <Button
+                onClick={handleCurlImport}
+                disabled={isImporting || !curlCommand.trim()}
                 className="w-full"
               >
                 {isImporting ? (

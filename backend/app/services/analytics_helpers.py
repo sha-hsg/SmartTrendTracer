@@ -309,6 +309,7 @@ def fetch_articles_in_range(
     db,
     start_date: datetime,
     end_date: datetime,
+    author_name: Optional[str] = None,
     content_ids: Optional[List[ObjectId]] = None,
     limit: Optional[int] = None
 ) -> List[Dict]:
@@ -319,6 +320,7 @@ def fetch_articles_in_range(
         db: MongoDB database instance
         start_date: Start datetime
         end_date: End datetime
+        author_name: Optional author name filter (Substack author)
         content_ids: Optional list of specific article ObjectIds
         limit: Optional maximum number to return
 
@@ -326,6 +328,9 @@ def fetch_articles_in_range(
         List of article documents
     """
     query = {'published_at': {'$gte': start_date, '$lte': end_date}}
+
+    if author_name:
+        query['author_name'] = author_name
 
     if content_ids is not None:
         query['_id'] = {'$in': content_ids}
@@ -426,6 +431,7 @@ def fetch_all_content_in_range(
     include_articles: bool = True,
     include_papers: bool = True,
     author: Optional[str] = None,
+    article_author: Optional[str] = None,
     concept_ids: Optional[List[ObjectId]] = None,
     max_tweets: int = 100,
     max_articles: int = 50,
@@ -442,7 +448,8 @@ def fetch_all_content_in_range(
         include_tweets: Whether to include tweets
         include_articles: Whether to include articles
         include_papers: Whether to include papers
-        author: Optional author filter for tweets
+        author: Optional author filter for tweets (Twitter username)
+        article_author: Optional author filter for articles (Substack author name)
         concept_ids: Optional concept IDs to filter by
         max_tweets: Maximum tweets to return
         max_articles: Maximum articles to return
@@ -487,6 +494,7 @@ def fetch_all_content_in_range(
     if include_articles:
         result['articles'] = fetch_articles_in_range(
             db, start_date, end_date,
+            author_name=article_author,
             content_ids=article_ids,
             limit=max_articles
         )

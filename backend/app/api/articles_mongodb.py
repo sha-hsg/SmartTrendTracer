@@ -137,6 +137,7 @@ def get_articles(
         
         # Get concept details
         concepts = []
+        tags = []  # Frontend-compatible format
         for cid in concept_ids:
             concept = concept_service.get_concept_by_id(cid)
             if concept:
@@ -145,7 +146,12 @@ def get_articles(
                     'display_name': concept.get('display_name'),
                     'slug': concept.get('slug')
                 })
-        
+                tags.append({
+                    'id': str(cid),
+                    'tag': concept.get('display_name'),
+                    'type': 'concept'
+                })
+
         result.append({
             'id': str(article['_id']),
             'substack_id': article.get('substack_id'),
@@ -166,6 +172,7 @@ def get_articles(
             'summary': article.get('summary'),
             'has_summary': bool(article.get('summary')),
             'concepts': concepts,
+            'tags': tags,  # Frontend-compatible format
             'processed': article.get('processed', False),
             'summarized': article.get('summarized', False),
             'snippet_count': len(article.get('snippets', [])),
@@ -442,6 +449,7 @@ def faceted_search(
         
         # Get concept details
         concepts = []
+        tags = []  # Frontend-compatible format
         for cid in concept_ids:
             concept = concept_service.get_concept_by_id(cid)
             if concept:
@@ -450,7 +458,12 @@ def faceted_search(
                     'display_name': concept.get('display_name'),
                     'slug': concept.get('slug')
                 })
-        
+                tags.append({
+                    'id': str(cid),
+                    'tag': concept.get('display_name'),
+                    'type': 'concept'
+                })
+
         # Get content safely (use standardized content_markdown field)
         content = article.get('content_markdown', '')
 
@@ -471,6 +484,7 @@ def faceted_search(
             } if author else None,
             'published_at': article.get('published_at').isoformat() if article.get('published_at') else None,
             'concepts': concepts,
+            'tags': tags,  # Frontend-compatible format
             'metrics': article.get('metrics', {}),
             'summarized': article.get('summarized', False),
             'summary': summary,
@@ -628,6 +642,7 @@ def get_article(article_id: str):
 
     # Get concept details
     concepts = []
+    tags = []  # Frontend-compatible format
     for cid in concept_ids:
         concept = concept_service.get_concept_by_id(cid)
         if concept:
@@ -635,6 +650,12 @@ def get_article(article_id: str):
                 'concept_id': str(cid),  # Convert ObjectId to string
                 'display_name': concept.get('display_name'),
                 'slug': concept.get('slug')
+            })
+            # Also add to tags array for frontend compatibility
+            tags.append({
+                'id': str(cid),
+                'tag': concept.get('display_name'),
+                'type': 'concept'
             })
     
     # Format response
@@ -661,6 +682,7 @@ def get_article(article_id: str):
         'sentiment': article.get('sentiment'),
         'snippets': article.get('snippets', []),
         'concepts': concepts,
+        'tags': tags,  # Frontend-compatible format
         'processed': article.get('processed', False),
         'summarized': article.get('summarized', False)
     }
@@ -829,6 +851,54 @@ def remove_concept_from_article(article_id: str, concept_id: str):
     )
     
     return {"message": "Concept removed successfully"}
+
+
+@router.delete("/{article_id}/tags/{tag_name}")
+def remove_tag_from_article(article_id: str, tag_name: str):
+    """Remove a tag from an article by tag name (display_name)"""
+
+    try:
+        if len(article_id) == 24:
+            article = db.articles.find_one({'_id': ObjectId(article_id)})
+        else:
+            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
+    except:
+        article = None
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Find the concept by display_name
+    concept = db.tag_concepts_v2.find_one({
+        '$or': [
+            {'display_name': tag_name},
+            {'display_name': {'$regex': f'^{tag_name}$', '$options': 'i'}},
+            {'slug': tag_name.lower().replace(' ', '-')}
+        ]
+    })
+
+    if not concept:
+        raise HTTPException(status_code=404, detail=f"Concept '{tag_name}' not found")
+
+    concept_id = str(concept['_id'])
+
+    # Remove from concept service
+    success = concept_service.remove_tag('article', str(article['_id']), concept_id)
+
+    # Also try with old_sqlite_id if present
+    if not success and article.get('old_sqlite_id'):
+        success = concept_service.remove_tag('article', str(article['old_sqlite_id']), concept_id)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Tag not found on this article")
+
+    # Update article's concept_ids in MongoDB
+    db.articles.update_one(
+        {'_id': article['_id']},
+        {'$pull': {'concept_ids': concept_id}}
+    )
+
+    return {"message": "Tag removed successfully", "removed_tag": tag_name}
 
 
 @router.post("/{article_id}/tags/suggest")
@@ -1600,13 +1670,100 @@ def update_article(article_id: str, updates: Dict[str, Any] = Body(...)):
     if update_doc:
         # Add updated timestamp
         update_doc['updated_at'] = datetime.utcnow()
-        
+
         # Update the article
         db.articles.update_one(
             {'_id': article['_id']},
             {'$set': update_doc}
         )
-        
+
         return {"message": "Article updated successfully", "updated_fields": list(update_doc.keys())}
     else:
         return {"message": "No fields to update"}
+
+
+@router.post("/{article_id}/recollect")
+async def recollect_article(article_id: str):
+    """
+    Re-collect an article using Playwright to get fresh/complete content.
+
+    Useful when an article was initially imported incompletely or
+    when you want to refresh the content.
+    """
+    # Find the article
+    try:
+        if len(article_id) == 24:
+            article = db.articles.find_one({'_id': ObjectId(article_id)})
+        else:
+            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
+    except:
+        article = None
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    # Get the URL
+    url = article.get('url')
+    if not url:
+        raise HTTPException(status_code=400, detail="Article has no URL to recollect from")
+
+    try:
+        from app.collectors.playwright_collector import PlaywrightCollector
+
+        collector = PlaywrightCollector()
+        try:
+            result = await collector.fetch_article(url)
+
+            if not result.get('success'):
+                return {
+                    'success': False,
+                    'error': result.get('error', 'Failed to fetch article'),
+                    'requires_auth': result.get('requires_auth', False),
+                    'site': result.get('site'),
+                    'auth_url': result.get('auth_url')
+                }
+
+            # Update the article with new content
+            update_doc = {
+                'content_html': result.get('content_html'),
+                'content_markdown': result.get('content_markdown'),
+                'preview': result.get('preview'),
+                'word_count': result.get('word_count', 0),
+                'reading_time_minutes': result.get('reading_time_minutes', 0),
+                'recollected_at': datetime.utcnow(),
+            }
+
+            # Update title if we got a better one (not just a number)
+            new_title = result.get('title')
+            if new_title and not new_title.isdigit() and new_title != article.get('title'):
+                update_doc['title'] = new_title
+
+            # Update author if we got one and didn't have one before
+            if result.get('author') and not article.get('author_name'):
+                update_doc['author_name'] = result.get('author')
+
+            db.articles.update_one(
+                {'_id': article['_id']},
+                {'$set': update_doc}
+            )
+
+            return {
+                'success': True,
+                'article_id': str(article['_id']),
+                'title': update_doc.get('title', article.get('title')),
+                'word_count': result.get('word_count', 0),
+                'reading_time_minutes': result.get('reading_time_minutes', 0),
+                'updated_fields': list(update_doc.keys())
+            }
+
+        finally:
+            await collector.close()
+
+    except ImportError:
+        raise HTTPException(
+            status_code=503,
+            detail="Playwright not installed. Run: pip install playwright && playwright install chromium"
+        )
+    except Exception as e:
+        logger.error(f"Failed to recollect article: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

@@ -1,10 +1,12 @@
 """
 MongoDB-compatible API endpoints for importing articles from URLs
+
+Supports both simple HTTP requests and Playwright-based authenticated collection.
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from pydantic import BaseModel, HttpUrl
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
@@ -16,6 +18,15 @@ from bson import ObjectId
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _check_playwright_available() -> bool:
+    """Check if Playwright is installed."""
+    try:
+        from playwright.async_api import async_playwright
+        return True
+    except ImportError:
+        return False
 
 router = APIRouter()
 
@@ -37,7 +48,7 @@ class URLImportResponse(BaseModel):
     error: Optional[str] = None
 
 class EnhancedImportRequest(BaseModel):
-    url: HttpUrl
+    url: Optional[HttpUrl] = None  # Optional - can be extracted from curl_command
     curl_command: Optional[str] = None
     cookies: Optional[Dict[str, str]] = None
 
@@ -282,17 +293,35 @@ def import_article_enhanced(request: EnhancedImportRequest):
     - Direct cookie dictionary
     """
     try:
-        url = str(request.url)
+        import shlex
+        import re
+
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
         }
-        
-        # Parse cookies from curl command if provided
+
+        # Parse cookies and URL from curl command if provided
         cookies = {}
+        url = str(request.url) if request.url else None
+
         if request.curl_command:
-            # Parse curl command to extract cookies
-            import shlex
+            # Parse curl command
             parts = shlex.split(request.curl_command)
+
+            # Extract URL from curl command if not provided
+            if not url:
+                for part in parts:
+                    # URL is usually the last argument or after 'curl'
+                    if part.startswith('http://') or part.startswith('https://'):
+                        url = part
+                        break
+                # Also check for URL in quotes
+                if not url:
+                    url_match = re.search(r'["\']?(https?://[^\s"\']+)["\']?', request.curl_command)
+                    if url_match:
+                        url = url_match.group(1)
+
+            # Extract cookies from headers
             for i, part in enumerate(parts):
                 if part == '-H' and i + 1 < len(parts):
                     header = parts[i + 1]
@@ -304,6 +333,13 @@ def import_article_enhanced(request: EnhancedImportRequest):
                                 cookies[key] = value
         elif request.cookies:
             cookies = request.cookies
+
+        # Validate URL
+        if not url:
+            return URLImportResponse(
+                success=False,
+                error="No URL provided. Either provide a URL or a cURL command containing the URL."
+            )
         
         # Fetch the article with cookies
         response = requests.get(url, headers=headers, cookies=cookies)
@@ -497,3 +533,254 @@ def import_batch(urls: list[str]):
 def test_import_endpoint():
     """Test if the import endpoints are working"""
     return {"status": "ok", "message": "Article import endpoints are active"}
+
+
+# ============================================================================
+# Playwright-based authenticated article collection endpoints
+# ============================================================================
+
+@router.get("/auth-sites")
+def list_supported_auth_sites():
+    """
+    List sites that support authenticated collection.
+
+    Returns list of supported sites with their login URLs and session status.
+    """
+    try:
+        from app.collectors.playwright_collector.session_manager import (
+            SessionManager, SUPPORTED_SITES
+        )
+
+        sm = SessionManager()
+        sessions = sm.list_sessions()
+
+        sites = []
+        for key, config in SUPPORTED_SITES.items():
+            sites.append({
+                'key': key,
+                'name': config['name'],
+                'login_url': config['login_url'],
+                'has_session': key in sessions,
+                'session_info': sessions.get(key)
+            })
+
+        return {
+            'sites': sites,
+            'playwright_installed': _check_playwright_available()
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to list auth sites: {e}")
+        return {
+            'sites': [],
+            'playwright_installed': _check_playwright_available(),
+            'error': str(e)
+        }
+
+
+@router.get("/auth-status/{site}")
+async def get_auth_status(site: str):
+    """
+    Check authentication status for a site.
+
+    Returns whether we have valid saved credentials for sites like
+    Substack, Medium, etc.
+
+    Path params:
+    - site: Site identifier (substack, medium, patreon)
+    """
+    if not _check_playwright_available():
+        return {
+            'site': site,
+            'supported': False,
+            'authenticated': False,
+            'error': "Playwright not installed"
+        }
+
+    try:
+        from app.collectors.playwright_collector import PlaywrightCollector
+
+        collector = PlaywrightCollector()
+        try:
+            status = await collector.check_auth_status(site)
+            return status
+        finally:
+            await collector.close()
+
+    except Exception as e:
+        logger.error(f"Failed to check auth status: {e}")
+        return {
+            'site': site,
+            'supported': False,
+            'authenticated': False,
+            'error': str(e)
+        }
+
+
+@router.post("/start-auth/{site}")
+async def start_auth_flow(site: str):
+    """
+    Start interactive authentication flow - opens a browser window.
+
+    This endpoint spawns a visible browser for the user to log in.
+    Works because frontend and backend run on the same local machine.
+
+    Path params:
+    - site: Site identifier (substack, medium, patreon)
+    """
+    if not _check_playwright_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Playwright not installed. Run: pip install playwright && playwright install chromium"
+        )
+
+    try:
+        from app.collectors.playwright_collector.session_manager import SUPPORTED_SITES
+        from app.collectors.playwright_collector import PlaywrightCollector
+
+        site_config = SUPPORTED_SITES.get(site)
+        if not site_config:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown site: {site}. Supported: {list(SUPPORTED_SITES.keys())}"
+            )
+
+        # Open browser for authentication (headless=False shows the window)
+        collector = PlaywrightCollector(headless=False)
+        try:
+            logger.info(f"Starting interactive authentication for {site}")
+            success = await collector.authenticate(site, timeout_seconds=300)
+
+            return {
+                'success': success,
+                'site': site,
+                'name': site_config['name'],
+                'message': f"Authentication {'successful' if success else 'failed or timed out'} for {site_config['name']}"
+            }
+        finally:
+            await collector.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to authenticate: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/auth/{site}")
+def clear_auth_session(site: str):
+    """
+    Clear saved authentication session for a site.
+
+    Path params:
+    - site: Site identifier (substack, medium, patreon)
+    """
+    try:
+        from app.collectors.playwright_collector.session_manager import SessionManager
+
+        sm = SessionManager()
+        success = sm.delete_session(site)
+
+        return {
+            'success': success,
+            'message': f"Session cleared for {site}" if success else f"No session found for {site}"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to clear session: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/import-url-playwright")
+async def import_article_playwright(request: Dict[str, Any] = Body(...)):
+    """
+    Import an article from URL using Playwright browser automation.
+
+    Uses saved session cookies for authenticated access to Substack, Medium, etc.
+
+    Request body:
+    - url: Article URL to import
+
+    Returns:
+    - success: Whether import was successful
+    - article_id: MongoDB ID if saved
+    - title, author, word_count, etc.
+    - requires_auth: True if authentication is needed
+    - site: Site that requires auth (e.g., 'substack')
+    """
+    if not _check_playwright_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Playwright not installed. Run: pip install playwright && playwright install chromium"
+        )
+
+    url = request.get('url')
+    if not url:
+        raise HTTPException(status_code=400, detail="URL is required")
+
+    try:
+        from app.collectors.playwright_collector import PlaywrightCollector
+
+        collector = PlaywrightCollector()
+        try:
+            result = await collector.fetch_article(url)
+
+            if not result.get('success'):
+                return {
+                    'success': False,
+                    'error': result.get('error', 'Failed to fetch article'),
+                    'requires_auth': result.get('requires_auth', False),
+                    'site': result.get('site'),
+                    'auth_url': result.get('auth_url')
+                }
+
+            # Check if article already exists
+            existing = db.articles.find_one({'url': url})
+            if existing:
+                return {
+                    'success': True,
+                    'article_id': str(existing['_id']),
+                    'title': existing.get('title'),
+                    'author': existing.get('author_name'),
+                    'word_count': existing.get('word_count', 0),
+                    'already_exists': True
+                }
+
+            # Save to database
+            doc = {
+                'title': result.get('title'),
+                'subtitle': result.get('subtitle'),
+                'url': url,
+                'author_name': result.get('author'),
+                'author_url': result.get('author_url'),
+                'published_at': result.get('published_at'),
+                'content_html': result.get('content_html'),
+                'content_markdown': result.get('content_markdown'),
+                'preview': result.get('preview'),
+                'word_count': result.get('word_count', 0),
+                'reading_time_minutes': result.get('reading_time_minutes', 0),
+                'source': 'playwright_collector',
+                'source_site': result.get('source_site'),
+                'has_paywall': result.get('has_paywall', False),
+                'collected_at': datetime.utcnow(),
+                'created_at': datetime.utcnow(),
+            }
+
+            insert_result = db.articles.insert_one(doc)
+
+            return {
+                'success': True,
+                'article_id': str(insert_result.inserted_id),
+                'title': result.get('title'),
+                'author': result.get('author'),
+                'word_count': result.get('word_count', 0),
+                'reading_time_minutes': result.get('reading_time_minutes', 0),
+                'has_paywall': result.get('has_paywall', False)
+            }
+
+        finally:
+            await collector.close()
+
+    except Exception as e:
+        logger.error(f"Failed to import article from URL: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

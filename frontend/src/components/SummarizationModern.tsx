@@ -67,6 +67,7 @@ export default function SummarizationModern() {
   const [selectedAuthor, setSelectedAuthor] = useState<string>('all')
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [availableAuthors, setAvailableAuthors] = useState<{username: string, count: number}[]>([])
+  const [articleAuthors, setArticleAuthors] = useState<{name: string, count: number}[]>([])
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null)
   const [loading, setLoading] = useState(false)
   const [tagInput, setTagInput] = useState('')
@@ -115,10 +116,16 @@ export default function SummarizationModern() {
 
   useEffect(() => {
     fetchAvailableTags()
-    fetchAvailableAuthors()
+    fetchTwitterAuthors()
+    fetchArticleAuthors()
   }, [])
 
-  const fetchAvailableAuthors = async () => {
+  // Reset author selection when content source changes
+  useEffect(() => {
+    setSelectedAuthor('all')
+  }, [includeTweets, includeArticles, includePapers])
+
+  const fetchTwitterAuthors = async () => {
     try {
       // Fetch authors from tweets faceted-search endpoint
       const response = await axios.get('http://localhost:8000/api/tweets/faceted-search?page=1&page_size=1')
@@ -129,8 +136,24 @@ export default function SummarizationModern() {
         .sort((a: any, b: any) => (b.count || 0) - (a.count || 0))
       setAvailableAuthors(sortedAuthors)
     } catch (error) {
-      console.error('Error fetching authors:', error)
+      console.error('Error fetching Twitter authors:', error)
       setAvailableAuthors([])
+    }
+  }
+
+  const fetchArticleAuthors = async () => {
+    try {
+      // Fetch authors from articles faceted-search endpoint
+      const response = await axios.get('http://localhost:8000/api/articles/faceted-search?page=1&page_size=1')
+      const authors = response.data.facets?.authors || []
+      // Sort by count (most articles first)
+      const sortedAuthors = authors
+        .filter((a: any) => a.name)
+        .sort((a: any, b: any) => (b.count || 0) - (a.count || 0))
+      setArticleAuthors(sortedAuthors)
+    } catch (error) {
+      console.error('Error fetching Article authors:', error)
+      setArticleAuthors([])
     }
   }
 
@@ -407,24 +430,41 @@ export default function SummarizationModern() {
               </Select>
             </div>
 
-            {/* Author Filter */}
-            <div className="space-y-2">
-              <Label>Filter by Author</Label>
-              <Select value={selectedAuthor} onValueChange={setSelectedAuthor}>
-                <SelectTrigger>
-                  <User className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="All Authors" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Authors ({availableAuthors.reduce((sum, a) => sum + (a.count || 0), 0)} tweets)</SelectItem>
-                  {availableAuthors.map(author => (
-                    <SelectItem key={author.username} value={author.username}>
-                      @{author.username} ({author.count} tweets)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Author Filter - Only show when exactly one source type is selected (Tweets or Articles) */}
+            {((includeTweets && !includeArticles && !includePapers) ||
+              (!includeTweets && includeArticles && !includePapers)) && (
+              <div className="space-y-2">
+                <Label>Filter by Author {includeTweets ? '(Twitter)' : '(Substack)'}</Label>
+                <Select value={selectedAuthor} onValueChange={setSelectedAuthor}>
+                  <SelectTrigger>
+                    <User className="h-4 w-4 mr-2" />
+                    <SelectValue placeholder="All Authors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {includeTweets && !includeArticles && (
+                      <>
+                        <SelectItem value="all">All Authors ({availableAuthors.reduce((sum, a) => sum + (a.count || 0), 0)} tweets)</SelectItem>
+                        {availableAuthors.map(author => (
+                          <SelectItem key={author.username} value={author.username}>
+                            @{author.username} ({author.count} tweets)
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                    {includeArticles && !includeTweets && (
+                      <>
+                        <SelectItem value="all">All Authors ({articleAuthors.reduce((sum, a) => sum + (a.count || 0), 0)} articles)</SelectItem>
+                        {articleAuthors.map(author => (
+                          <SelectItem key={author.name} value={author.name}>
+                            {author.name} ({author.count} articles)
+                          </SelectItem>
+                        ))}
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Model Selection - Unified Model Selector (same as RAG Search) */}
             <UnifiedModelSelector
