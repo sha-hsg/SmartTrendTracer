@@ -275,6 +275,58 @@ FINAL results by type: tweets=38, articles=12, papers=0
 #### Result
 When selecting Tweets + Articles, results now include representation from both types instead of being dominated by tweets.
 
+### Cross-Platform Scripts Enhancement - COMPLETE
+
+#### Overview
+Complete rewrite of startup/shutdown scripts for seamless macOS ↔ Linux operation.
+
+#### setup_python.sh - New Commands
+```bash
+./setup_python.sh           # Full setup (backend + frontend)
+./setup_python.sh backend   # Backend only (all Python venvs)
+./setup_python.sh frontend  # Frontend only (npm install)
+./setup_python.sh check     # Check environment status
+./setup_python.sh activate  # Print venv activation command
+```
+
+#### Features Implemented
+| Feature | Description |
+|---------|-------------|
+| **venv validation** | Detects broken symlinks from other platform, auto-recreates |
+| **node_modules check** | Detects wrong platform's native modules (@rollup/rollup-darwin vs linux) |
+| **mise integration** | Auto-activates mise for Python version management |
+| **API key check** | Validates ~/.env contains required LLM keys |
+| **Status display** | Shows all environments, MongoDB status, API keys |
+
+#### stop_stt.sh - CLI Arguments
+```bash
+./stop_stt.sh              # Interactive (asks about MongoDB)
+./stop_stt.sh -y           # Stop MongoDB without asking
+./stop_stt.sh -n           # Keep MongoDB running without asking
+./stop_stt.sh --help       # Show usage
+```
+
+#### Platform-Specific Handling
+| Operation | macOS | Linux |
+|-----------|-------|-------|
+| MongoDB start | `brew services start mongodb-community` | `systemctl start mongod` |
+| MongoDB stop | `brew services stop mongodb-community` | `systemctl stop mongod` |
+| File timestamps | `date -r` / `stat -f` | `stat -c` |
+| Native modules | `@rollup/rollup-darwin-*` | `@rollup/rollup-linux-x64-gnu` |
+
+#### Files Modified
+- `setup_python.sh` - Complete rewrite with all features above
+- `start_stt.sh` - Fixed `date -r` → `stat -c` for Linux
+- `stop_stt.sh` - Added platform detection, CLI args, Linux MongoDB support
+
+#### Workflow beim Plattformwechsel
+```bash
+# Auf neuem System:
+cd backend && ./sync-in.sh     # MongoDB importieren
+cd .. && ./setup_python.sh     # Erkennt & fixt alles automatisch
+./start_stt.sh                 # Starten
+```
+
 ---
 
 ## Recent Enhancements (January 19, 2026)
