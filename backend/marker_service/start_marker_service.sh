@@ -59,20 +59,21 @@ fi
 source "$VENV_DIR/bin/activate"
 export PATH="$VENV_DIR/bin:$PATH"
 
-# Ensure runtime deps (uvicorn, python-multipart) are present
+# Ensure runtime deps (uvicorn, python-multipart, psutil) are present
 if ! python - <<'PY'
 import sys
 try:
     import uvicorn  # noqa: F401
     import multipart  # noqa: F401
+    import psutil  # noqa: F401
 except Exception:
     sys.exit(1)
 else:
     sys.exit(0)
 PY
 then
-  echo "Installing runtime deps (uvicorn, python-multipart) ..."
-  python -m pip install -q "uvicorn>=0.30.0,<1" "python-multipart>=0.0.9"
+  echo "Installing runtime deps (uvicorn, python-multipart, psutil) ..."
+  python -m pip install -q "uvicorn>=0.30.0,<1" "python-multipart>=0.0.9" "psutil>=5.9.0"
 fi
 
 # Discover executables in this venv

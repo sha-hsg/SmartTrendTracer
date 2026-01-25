@@ -219,6 +219,7 @@ def _parse_marker_progress(line: str) -> Optional[dict]:
 def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] = None) -> Tuple[bool, str, Optional[int]]:
     cmd = ["marker_single", pdf_path, "--output_dir", out_dir]
     env = os.environ.copy(); env.setdefault("PYTHONUNBUFFERED", "1"); env.setdefault("TQDM_DISABLE", "0")
+    master_fd = None  # Track for cleanup in finally
     try:
         logger.info("CLI: %s %s", cmd[0], " ".join(cmd[1:]))
         master_fd, slave_fd = pty.openpty()
@@ -312,6 +313,7 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
                                     break  # Only send last progress update
                 break
         os.close(master_fd)
+        master_fd = None  # Mark as closed
         combined = "".join(chunks); rc = proc.returncode; ok = (rc == 0)
         
         # Send completion callback
@@ -337,6 +339,13 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
     except Exception as e:
         msg = f"unexpected CLI error: {e}"
         logger.error(msg); return False, msg, None
+    finally:
+        # Always close master_fd if it was opened but not yet closed
+        if master_fd is not None:
+            try:
+                os.close(master_fd)
+            except OSError:
+                pass  # Already closed or invalid
 
 def _cli_find_markdown_and_meta(root: str, stem_preference: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
     root_p = Path(root); md_path: Optional[str] = None
