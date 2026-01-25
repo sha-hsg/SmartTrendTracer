@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { decodeHtmlEntities } from '@/utils/htmlDecoder'
@@ -35,7 +35,8 @@ import {
   Edit2,
   Save,
   X as CancelIcon,
-  Star
+  Star,
+  RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -44,13 +45,17 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/utils'
 
 import PaperUploadModern from './PaperUploadModern'
-import PaperViewerOptimized from './PaperViewerOptimized'
 import UnifiedImportDialog from './UnifiedImportDialog'
+
+// Lazy-loaded components for code-splitting (reduces initial bundle size)
+const PaperViewerOptimized = React.lazy(() => import('./PaperViewerOptimized'))
 import PaperTagSuggestionModal from './PaperTagSuggestionModal'
 
 interface Paper {
@@ -124,6 +129,7 @@ interface Facets {
     no_conference: number
     no_affiliation: number
     no_annotations: number
+    no_mollick_summary: number
   }
   paper_status?: {
     flagged: number
@@ -137,19 +143,6 @@ interface Facets {
     '1_star': number
     'unrated': number
     [key: string]: number  // Allow dynamic key access
-  }
-}
-
-interface FacetResponse {
-  facets: Facets
-  total_results: number
-  active_filters: {
-    search?: string
-    author?: string
-    tag?: string
-    conference?: string
-    year?: number
-    affiliation?: string
   }
 }
 
@@ -187,6 +180,7 @@ const FacetedPapersDashboard: React.FC = () => {
   const [showNoConference, setShowNoConference] = useState(false)
   const [showNoAffiliation, setShowNoAffiliation] = useState(false)
   const [showNoAnnotations, setShowNoAnnotations] = useState(false)
+  const [showNoMollickSummary, setShowNoMollickSummary] = useState(false)
 
   // Rating filters
   const [selectedRating, setSelectedRating] = useState<number | null>(null)  // Exact rating filter (1-5)
@@ -202,14 +196,79 @@ const FacetedPapersDashboard: React.FC = () => {
   const [expandedTags, setExpandedTags] = useState<Set<number>>(new Set())
   const [showTagSuggestionModal, setShowTagSuggestionModal] = useState(false)
   const [selectedPaperForTags, setSelectedPaperForTags] = useState<any | null>(null)
-  
+
+  // Multi-paper selection for batch analysis
+  const [selectedPapersForAnalysis, setSelectedPapersForAnalysis] = useState<Set<number>>(new Set())
+
+  // Analysis batch processing state
+  const [analysisBatchProgress, setAnalysisBatchProgress] = useState<{
+    isProcessing: boolean
+    totalPapers: number
+    completedPapers: number
+    currentPaper: string | null
+    currentPaperId: number | null
+    totalAnalyses: number
+    completedAnalyses: number
+    currentAnalysis: string | null
+    failed: number
+    skipped: number
+  } | null>(null)
+
+  // Batch processing state - persisted to localStorage
+  const [batchProgress, setBatchProgress] = useState<{
+    isProcessing: boolean
+    total: number
+    completed: number
+    current: string | null  // Current paper title
+    failed: number
+    skipped: number
+    papers?: any[]  // Papers to process
+    currentIndex?: number  // Current position in papers array
+  } | null>(() => {
+    // Initialize from localStorage if available
+    try {
+      const saved = localStorage.getItem('batchProcessingProgress')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        // Only restore if it was still processing
+        if (parsed.isProcessing) {
+          return parsed
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load batch progress from localStorage:', e)
+    }
+    return null
+  })
+
+  // Ref to prevent duplicate batch processing (React StrictMode runs effects twice)
+  const batchProcessingActiveRef = useRef(false)
+  // AbortController for cancelling batch processing on unmount (RES-009)
+  const batchAbortControllerRef = useRef<AbortController | null>(null)
+  // AbortController for cancelling analysis batch processing on unmount
+  const analysisAbortControllerRef = useRef<AbortController | null>(null)
+
+  // Cleanup batch processing on unmount (RES-009)
+  useEffect(() => {
+    return () => {
+      if (batchAbortControllerRef.current) {
+        batchAbortControllerRef.current.abort()
+        batchAbortControllerRef.current = null
+      }
+      if (analysisAbortControllerRef.current) {
+        analysisAbortControllerRef.current.abort()
+        analysisAbortControllerRef.current = null
+      }
+    }
+  }, [])
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPapers, setTotalPapers] = useState(0)
   const pageSize = 20
 
   // Function to assign colors to tags
-  const getTagColor = (tag: string, index: number) => {
+  const getTagColor = (_tag: string, _index: number) => {
     return 'border-blue-200 text-blue-800 bg-blue-50 hover:bg-blue-100'
   }
 
@@ -276,7 +335,8 @@ const FacetedPapersDashboard: React.FC = () => {
     } finally {
       setLoadingFacets(false)
     }
-  }, [searchTerm, selectedAuthors, selectedTags, selectedConferences, selectedYears, selectedAffiliations])
+  // PERF: Quick Win #5 - Added selectedProcessors to dependencies (was missing, caused stale data)
+  }, [searchTerm, selectedAuthors, selectedTags, selectedConferences, selectedYears, selectedAffiliations, selectedProcessors])
 
   // Load papers
   const loadPapers = useCallback(async () => {
@@ -284,27 +344,8 @@ const FacetedPapersDashboard: React.FC = () => {
     setError(null)
     
     try {
-      if (searchMode === 'semantic' && searchTerm) {
-        // Use semantic search
-        const response = await axios.get(`http://localhost:8000/api/papers/search`, {
-          params: { q: searchTerm, limit: pageSize }
-        })
-        
-        // Convert search results to paper format
-        const paperIds = response.data.results.map((r: any) => r.paper_id)
-        if (paperIds.length > 0) {
-          const papersPromises = paperIds.map((id: number) => 
-            axios.get(`http://localhost:8000/api/papers/${id}`)
-          )
-          const papersResponses = await Promise.all(papersPromises)
-          setPapers(papersResponses.map(r => r.data))
-          setTotalPapers(papersResponses.length)
-        } else {
-          setPapers([])
-          setTotalPapers(0)
-        }
-      } else {
-        // Use standard filtering with facets
+      // Note: Semantic search endpoint not implemented, using standard text search for all modes
+      // Use standard filtering with facets
         const params = new URLSearchParams({
           page: currentPage.toString(),
           page_size: pageSize.toString()
@@ -335,6 +376,7 @@ const FacetedPapersDashboard: React.FC = () => {
         if (showNoConference) params.append('no_conference', 'true')
         if (showNoAffiliation) params.append('no_affiliation', 'true')
         if (showNoAnnotations) params.append('no_annotations', 'true')
+        if (showNoMollickSummary) params.append('no_mollick_summary', 'true')
 
         // Rating filters
         if (selectedRating !== null) params.append('rating', selectedRating.toString())
@@ -353,22 +395,21 @@ const FacetedPapersDashboard: React.FC = () => {
         setPapers(papersData)
         // Set total from response or count the papers
         setTotalPapers(response.data.total || papersData.length)
-      }
     } catch (err: any) {
       setError('Failed to load papers: ' + (err.response?.data?.detail || err.message))
     } finally {
       setLoading(false)
     }
-  }, [searchMode, searchTerm, selectedAuthors, selectedTags, selectedConferences, selectedYears, selectedAffiliations, selectedProcessors, currentPage, sortBy, sortOrder, showFlagged, showNoProcessor, showNoYear, showNoConference, showNoAffiliation, showNoAnnotations, selectedRating, minRating, showUnratedOnly])
+  }, [searchTerm, selectedAuthors, selectedTags, selectedConferences, selectedYears, selectedAffiliations, selectedProcessors, currentPage, sortBy, sortOrder, showFlagged, showNoProcessor, showNoYear, showNoConference, showNoAffiliation, showNoAnnotations, showNoMollickSummary, selectedRating, minRating, showUnratedOnly])
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:8000/api/papers/stats/overview')
       setStats(response.data)
     } catch (err: any) {
       console.error('Failed to load stats:', err)
     }
-  }
+  }, [])
 
   const handleUploadComplete = () => {
     loadStats()
@@ -555,7 +596,7 @@ const FacetedPapersDashboard: React.FC = () => {
       
       // Update the local paper data
       setPapers(prev => prev.map(p => {
-        if (p.id === paperId && p.analyses) {
+        if (String(p.id) === String(paperId) && p.analyses) {
           const updatedAnalyses = p.analyses.map((a: any) => {
             if (a.analysis_type === 'mollick_summary' || 
                 a.analysis_name === 'mollick_summary' ||
@@ -657,6 +698,183 @@ const FacetedPapersDashboard: React.FC = () => {
     }
   }
 
+  // Wait for a paper's Marker processing to complete
+  const waitForProcessingComplete = async (paperId: string): Promise<void> => {
+    const maxAttempts = 360  // 60 minutes max (10s intervals)
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        const status = await axios.get(`http://localhost:8000/api/papers/${paperId}/processing-status`)
+
+        if (status.data.status === 'completed') return
+        if (status.data.status === 'failed') throw new Error('Processing failed')
+        if (status.data.status === 'cancelled') throw new Error('Processing cancelled')
+
+        await new Promise(resolve => setTimeout(resolve, 10000))  // 10s polling
+      } catch (err: any) {
+        // If we get a 404, the paper doesn't have processing status yet - wait and retry
+        if (err.response?.status === 404) {
+          await new Promise(resolve => setTimeout(resolve, 10000))
+          continue
+        }
+        throw err
+      }
+    }
+    throw new Error('Processing timeout')
+  }
+
+  // Handle batch processing of all unprocessed papers
+  const handleBatchProcess = async () => {
+    // Prevent duplicate execution (React StrictMode / double-click)
+    if (batchProcessingActiveRef.current) {
+      console.log('Batch processing already active, skipping duplicate call')
+      return
+    }
+    batchProcessingActiveRef.current = true
+
+    // Create AbortController for this batch (RES-009)
+    batchAbortControllerRef.current = new AbortController()
+    const signal = batchAbortControllerRef.current.signal
+
+    try {
+      // 1. Fetch all unprocessed papers (paginated since max page_size is 100)
+      let allUnprocessedPapers: any[] = []
+      let page = 1
+      const pageSize = 100
+
+      while (true) {
+        const response = await axios.get('http://localhost:8000/api/papers/', {
+          params: {
+            no_processor: true,
+            page: page,
+            page_size: pageSize
+          }
+        })
+
+        const papers = response.data.papers || response.data || []
+        allUnprocessedPapers = [...allUnprocessedPapers, ...papers]
+
+        // If we got fewer papers than pageSize, we've reached the end
+        if (papers.length < pageSize) break
+        page++
+      }
+
+      if (allUnprocessedPapers.length === 0) {
+        alert('No unprocessed papers found')
+        return
+      }
+
+      const unprocessedPapers = allUnprocessedPapers
+
+      // 2. Initialize progress state with papers list for resume capability
+      setBatchProgress({
+        isProcessing: true,
+        total: unprocessedPapers.length,
+        completed: 0,
+        current: null,
+        failed: 0,
+        skipped: 0,
+        papers: unprocessedPapers,
+        currentIndex: 0
+      })
+
+      // 3. Process sequentially (one at a time - Marker semaphore allows only 1)
+      for (let i = 0; i < unprocessedPapers.length; i++) {
+        // Check if batch was aborted (component unmounted)
+        if (signal.aborted) {
+          console.log('Batch processing aborted')
+          break
+        }
+
+        const paper = unprocessedPapers[i]
+        const paperId = paper._id || paper.id
+        const paperTitle = paper.title || 'Untitled'
+
+        try {
+          setBatchProgress(prev => ({
+            ...prev!,
+            current: paperTitle,
+            currentIndex: i
+          }))
+
+          // Check if paper has a PDF path (skip if not)
+          if (!paper.pdf_path) {
+            setBatchProgress(prev => ({
+              ...prev!,
+              skipped: prev!.skipped + 1,
+              current: null
+            }))
+            continue
+          }
+
+          // Check current processing status from backend before attempting
+          try {
+            const statusResponse = await axios.get(`http://localhost:8000/api/papers/${paperId}/processing-status`)
+            const currentStatus = statusResponse.data?.status
+
+            if (currentStatus === 'failed') {
+              // Already failed - skip
+              setBatchProgress(prev => ({
+                ...prev!,
+                failed: prev!.failed + 1,
+                current: null
+              }))
+              continue
+            }
+
+            if (currentStatus === 'completed') {
+              // Already completed - skip
+              setBatchProgress(prev => ({
+                ...prev!,
+                completed: prev!.completed + 1,
+                current: null
+              }))
+              continue
+            }
+          } catch (statusErr: any) {
+            // 404 means no status yet - proceed with processing
+            if (statusErr.response?.status !== 404) {
+              throw statusErr
+            }
+          }
+
+          // Start processing
+          await axios.post(`http://localhost:8000/api/papers/${paperId}/process-with-marker`)
+
+          // Poll for completion
+          await waitForProcessingComplete(paperId)
+
+          setBatchProgress(prev => ({
+            ...prev!,
+            completed: prev!.completed + 1,
+            current: null
+          }))
+        } catch (error: any) {
+          console.error(`Failed to process paper ${paperId}:`, error)
+          setBatchProgress(prev => ({
+            ...prev!,
+            failed: prev!.failed + 1,
+            current: null
+          }))
+        }
+      }
+
+      // 4. Complete - refresh list and clear localStorage
+      setBatchProgress(prev => ({ ...prev!, isProcessing: false, current: null, papers: undefined, currentIndex: undefined }))
+      localStorage.removeItem('batchProcessingProgress')
+      batchProcessingActiveRef.current = false
+      batchAbortControllerRef.current = null
+      loadPapers()
+      loadFacets()
+    } catch (error: any) {
+      console.error('Batch processing error:', error)
+      setBatchProgress(prev => prev ? { ...prev, isProcessing: false, papers: undefined, currentIndex: undefined } : null)
+      localStorage.removeItem('batchProcessingProgress')
+      batchProcessingActiveRef.current = false
+      batchAbortControllerRef.current = null
+      setError('Failed to start batch processing: ' + (error.message || 'Unknown error'))
+    }
+  }
+
   const totalPages = Math.ceil(totalPapers / pageSize)
   const activeFilterCount = 
     (searchTerm ? 1 : 0) +
@@ -681,8 +899,7 @@ const FacetedPapersDashboard: React.FC = () => {
     loadStats()
     loadFacets() // Always load facets - will update based on filters
     loadPapers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTags, selectedAuthors, selectedConferences, selectedYears, selectedAffiliations, selectedProcessors, searchTerm, currentPage, sortBy, sortOrder, showFlagged, showNoProcessor, showNoYear, showNoConference, showNoAffiliation, showNoAnnotations, selectedRating, minRating, showUnratedOnly])
+  }, [loadStats, loadFacets, loadPapers, selectedTags, selectedAuthors, selectedConferences, selectedYears, selectedAffiliations, selectedProcessors, searchTerm, currentPage, sortBy, sortOrder, showFlagged, showNoProcessor, showNoYear, showNoConference, showNoAffiliation, showNoAnnotations, showNoMollickSummary, selectedRating, minRating, showUnratedOnly])
 
   // Periodically check for processing status updates when papers are being processed
   useEffect(() => {
@@ -696,6 +913,328 @@ const FacetedPapersDashboard: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processingPapers.size])
+
+  // Persist batch progress to localStorage when it changes
+  useEffect(() => {
+    if (batchProgress) {
+      localStorage.setItem('batchProcessingProgress', JSON.stringify(batchProgress))
+    } else {
+      localStorage.removeItem('batchProcessingProgress')
+    }
+  }, [batchProgress])
+
+  // Resume batch processing if we loaded an active batch from localStorage
+  useEffect(() => {
+    const resumeBatchProcessing = async () => {
+      if (!batchProgress?.isProcessing || !batchProgress?.papers || batchProgress.currentIndex === undefined) {
+        return
+      }
+
+      // Prevent duplicate execution (React StrictMode runs effects twice)
+      if (batchProcessingActiveRef.current) {
+        console.log('Batch processing already active, skipping resume')
+        return
+      }
+      batchProcessingActiveRef.current = true
+
+      // Create AbortController for this batch (RES-009)
+      batchAbortControllerRef.current = new AbortController()
+      const signal = batchAbortControllerRef.current.signal
+
+      // Resume from where we left off
+      const papers = batchProgress.papers
+      const startIndex = batchProgress.currentIndex
+
+      for (let i = startIndex; i < papers.length; i++) {
+        // Check if batch was aborted (component unmounted)
+        if (signal.aborted) {
+          console.log('Resumed batch processing aborted')
+          break
+        }
+
+        const paper = papers[i]
+        const paperId = paper._id || paper.id
+        const paperTitle = paper.title || 'Untitled'
+
+        try {
+          setBatchProgress(prev => ({
+            ...prev!,
+            current: paperTitle,
+            currentIndex: i
+          }))
+
+          // Check if paper has a PDF path (skip if not)
+          if (!paper.pdf_path) {
+            setBatchProgress(prev => ({
+              ...prev!,
+              skipped: prev!.skipped + 1,
+              current: null
+            }))
+            continue
+          }
+
+          // Check current processing status from backend before attempting
+          try {
+            const statusResponse = await axios.get(`http://localhost:8000/api/papers/${paperId}/processing-status`)
+            const currentStatus = statusResponse.data?.status
+
+            if (currentStatus === 'failed') {
+              // Already failed - skip
+              setBatchProgress(prev => ({
+                ...prev!,
+                failed: prev!.failed + 1,
+                current: null
+              }))
+              continue
+            }
+
+            if (currentStatus === 'completed') {
+              // Already completed - skip
+              setBatchProgress(prev => ({
+                ...prev!,
+                completed: prev!.completed + 1,
+                current: null
+              }))
+              continue
+            }
+          } catch (statusErr: any) {
+            // 404 means no status yet - proceed with processing
+            if (statusErr.response?.status !== 404) {
+              throw statusErr
+            }
+          }
+
+          // Start processing
+          await axios.post(`http://localhost:8000/api/papers/${paperId}/process-with-marker`)
+
+          // Poll for completion
+          await waitForProcessingComplete(paperId)
+
+          setBatchProgress(prev => ({
+            ...prev!,
+            completed: prev!.completed + 1,
+            current: null
+          }))
+        } catch (error: any) {
+          console.error(`Failed to process paper ${paperId}:`, error)
+          setBatchProgress(prev => ({
+            ...prev!,
+            failed: prev!.failed + 1,
+            current: null
+          }))
+        }
+      }
+
+      // Complete - refresh list
+      setBatchProgress(prev => ({ ...prev!, isProcessing: false, current: null, papers: undefined, currentIndex: undefined }))
+      localStorage.removeItem('batchProcessingProgress')
+      batchProcessingActiveRef.current = false
+      batchAbortControllerRef.current = null
+      loadPapers()
+      loadFacets()
+    }
+
+    resumeBatchProcessing().catch((error) => {
+      console.error('Resume batch processing error:', error)
+      batchProcessingActiveRef.current = false
+      batchAbortControllerRef.current = null
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Only run once on mount
+
+  // Toggle paper selection for batch analysis
+  const togglePaperSelection = (paperId: number) => {
+    setSelectedPapersForAnalysis(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(paperId)) {
+        newSet.delete(paperId)
+      } else {
+        newSet.add(paperId)
+      }
+      return newSet
+    })
+  }
+
+  // Select/Deselect all visible papers
+  const toggleSelectAllPapers = () => {
+    if (selectedPapersForAnalysis.size === papers.length) {
+      setSelectedPapersForAnalysis(new Set())
+    } else {
+      setSelectedPapersForAnalysis(new Set(papers.map(p => p.id)))
+    }
+  }
+
+  // Available analysis types - must match prompts_config.json paper_analyses section
+  const ANALYSIS_TYPES = [
+    { id: 'layman_summary', name: 'Layman Summary' },
+    { id: 'mollick_summary', name: 'Mollick-Style Summary' },
+    { id: 'summary', name: 'Concise Summary' },
+    { id: 'pareto_summary', name: 'Pareto Summary (80/20)' },
+    { id: 'sas_summary', name: 'SAS Summary' },
+    { id: 'switt_analysis', name: 'SWITT Analysis' },
+    { id: 'evaluation', name: 'Critical Evaluation' },
+    { id: 'key_findings', name: 'Key Findings' },
+    { id: 'methodology', name: 'Methodology Analysis' },
+    { id: 'limitations', name: 'Limitations & Future Work' },
+    { id: 'glossary', name: 'Technical Glossary' },
+    { id: 'review', name: 'Academic Review' },
+  ]
+
+  // Concurrency limit for parallel API calls (adjust based on API rate limits)
+  const ANALYSIS_CONCURRENCY = 4
+
+  // Helper to run promises with concurrency limit and abort support
+  const runWithConcurrency = async <T,>(
+    tasks: (() => Promise<T>)[],
+    concurrency: number,
+    onTaskComplete?: (result: T, index: number) => void,
+    signal?: AbortSignal
+  ): Promise<T[]> => {
+    const results: T[] = []
+    let currentIndex = 0
+    let aborted = false
+
+    const runNext = async (): Promise<void> => {
+      if (aborted || signal?.aborted) {
+        aborted = true
+        return
+      }
+
+      const index = currentIndex++
+      if (index >= tasks.length) return
+
+      const result = await tasks[index]()
+      results[index] = result
+      onTaskComplete?.(result, index)
+
+      if (!signal?.aborted) {
+        await runNext()
+      }
+    }
+
+    // Start `concurrency` number of workers
+    await Promise.all(
+      Array(Math.min(concurrency, tasks.length))
+        .fill(null)
+        .map(() => runNext())
+    )
+
+    return results
+  }
+
+  // Batch generate analyses for selected papers (parallelized with abort support)
+  const batchGenerateAnalyses = async () => {
+    if (selectedPapersForAnalysis.size === 0) {
+      alert('Please select at least one paper')
+      return
+    }
+
+    // Create AbortController for this batch
+    analysisAbortControllerRef.current = new AbortController()
+    const signal = analysisAbortControllerRef.current.signal
+
+    const selectedPapersList = papers.filter(p => selectedPapersForAnalysis.has(p.id))
+    const totalAnalyses = selectedPapersList.length * ANALYSIS_TYPES.length
+
+    setAnalysisBatchProgress({
+      isProcessing: true,
+      totalPapers: selectedPapersList.length,
+      completedPapers: 0,
+      currentPaper: null,
+      currentPaperId: null,
+      totalAnalyses,
+      completedAnalyses: 0,
+      currentAnalysis: `Running ${ANALYSIS_CONCURRENCY} in parallel`,
+      failed: 0,
+      skipped: 0
+    })
+
+    let completedAnalyses = 0
+    let failedCount = 0
+    let skippedCount = 0
+    let completedPapers = 0
+
+    try {
+      for (const paper of selectedPapersList) {
+        // Check for abort before processing each paper
+        if (signal.aborted) {
+          console.log('Analysis batch processing aborted')
+          break
+        }
+
+        setAnalysisBatchProgress(prev => ({
+          ...prev!,
+          currentPaper: paper.title,
+          currentPaperId: paper.id,
+          currentAnalysis: `Running ${ANALYSIS_CONCURRENCY} in parallel`
+        }))
+
+        // Create tasks for all analysis types for this paper
+        const analysisTasks = ANALYSIS_TYPES.map(analysisType => async () => {
+          // Check abort before each task
+          if (signal.aborted) {
+            return { success: false, skipped: true, name: analysisType.name, aborted: true }
+          }
+          try {
+            const response = await axios.post(
+              `http://localhost:8000/api/papers/${paper.id}/analyses/generate`,
+              { analysis_type: analysisType.id, regenerate: false }
+            )
+            return { success: true, skipped: response.data.was_skipped, name: analysisType.name }
+          } catch (error) {
+            console.error(`Failed to generate ${analysisType.name} for paper ${paper.id}:`, error)
+            return { success: false, skipped: false, name: analysisType.name }
+          }
+        })
+
+        // Run analyses in parallel with concurrency limit and abort support
+        await runWithConcurrency(analysisTasks, ANALYSIS_CONCURRENCY, (result) => {
+          if (result.aborted) return
+          completedAnalyses++
+          if (!result.success) {
+            failedCount++
+          } else if (result.skipped) {
+            skippedCount++
+          }
+          setAnalysisBatchProgress(prev => ({
+            ...prev!,
+            completedAnalyses,
+            skipped: skippedCount,
+            failed: failedCount
+          }))
+        }, signal)
+
+        completedPapers++
+        setAnalysisBatchProgress(prev => ({
+          ...prev!,
+          completedPapers
+        }))
+      }
+
+      // Show completion message (only if not aborted)
+      if (!signal.aborted) {
+        const generated = totalAnalyses - skippedCount - failedCount
+        alert(
+          `Batch analysis complete!\n\n` +
+          `Papers processed: ${completedPapers}/${selectedPapersList.length}\n` +
+          `Analyses generated: ${generated}\n` +
+          `Already existed (skipped): ${skippedCount}\n` +
+          `Failed: ${failedCount}`
+        )
+      }
+
+    } catch (error) {
+      if (!signal.aborted) {
+        console.error('Batch analysis error:', error)
+        alert('Batch analysis encountered an error. Check console for details.')
+      }
+    } finally {
+      analysisAbortControllerRef.current = null
+      setAnalysisBatchProgress(null)
+      setSelectedPapersForAnalysis(new Set())
+      loadPapers()  // Refresh to show updated analysis counts
+    }
+  }
 
   // Listen for switch to upload event from import dialog
   useEffect(() => {
@@ -1269,6 +1808,22 @@ const FacetedPapersDashboard: React.FC = () => {
                           </div>
                           <span className="text-xs text-gray-400">({facets?.missing_data?.no_annotations || 0})</span>
                         </label>
+                        <label className="flex items-center justify-between space-x-2 px-2 py-1 hover:bg-gray-50 cursor-pointer rounded">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={showNoMollickSummary}
+                              onCheckedChange={(checked) => {
+                                setShowNoMollickSummary(checked as boolean)
+                                setCurrentPage(1)
+                              }}
+                            />
+                            <div className="flex items-center gap-1">
+                              <BarChart3 className="h-3 w-3 text-gray-400" />
+                              <span className="text-sm text-gray-600">Mollick Summary</span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-400">({facets?.missing_data?.no_mollick_summary || 0})</span>
+                        </label>
                       </div>
                     </div>
 
@@ -1347,7 +1902,7 @@ const FacetedPapersDashboard: React.FC = () => {
                 <FileDown className="h-4 w-4" />
                 Import Paper
               </Button>
-              <Button 
+              <Button
                 onClick={() => setShowUploadModal(true)}
                 variant="default"
                 className="flex items-center gap-2"
@@ -1355,9 +1910,117 @@ const FacetedPapersDashboard: React.FC = () => {
                 <Upload className="h-4 w-4" />
                 Upload PDF
               </Button>
+              <Button
+                onClick={() => loadPapers()}
+                variant="outline"
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                Refresh
+              </Button>
+              <Button
+                onClick={handleBatchProcess}
+                variant="outline"
+                disabled={batchProgress?.isProcessing || (facets?.missing_data?.no_processor || 0) === 0}
+                className="flex items-center gap-2"
+              >
+                <Cpu className={cn("h-4 w-4", batchProgress?.isProcessing && "animate-pulse")} />
+                Process All ({facets?.missing_data?.no_processor || 0})
+              </Button>
+              {selectedPapersForAnalysis.size > 0 && (
+                <Button
+                  onClick={batchGenerateAnalyses}
+                  variant="default"
+                  disabled={analysisBatchProgress?.isProcessing}
+                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700"
+                >
+                  <BarChart3 className={cn("h-4 w-4", analysisBatchProgress?.isProcessing && "animate-pulse")} />
+                  Generate Analyses ({selectedPapersForAnalysis.size})
+                </Button>
+              )}
             </div>
           </div>
-          
+
+          {/* Batch Processing Progress Banner */}
+          {batchProgress && (
+            <Alert className="mb-4 relative">
+              <Cpu className="h-4 w-4" />
+              <AlertTitle>
+                {batchProgress.isProcessing ? 'Processing Papers with Marker...' : 'Batch Processing Complete'}
+              </AlertTitle>
+              <AlertDescription>
+                <div className="flex items-center gap-4 mt-2">
+                  <Progress
+                    value={batchProgress.total > 0 ? ((batchProgress.completed + batchProgress.failed + batchProgress.skipped) / batchProgress.total) * 100 : 0}
+                    className="flex-1"
+                  />
+                  <span className="text-sm whitespace-nowrap">
+                    {batchProgress.completed}/{batchProgress.total} completed
+                    {batchProgress.failed > 0 && <span className="text-red-600 ml-1">({batchProgress.failed} failed)</span>}
+                    {batchProgress.skipped > 0 && <span className="text-yellow-600 ml-1">({batchProgress.skipped} skipped)</span>}
+                  </span>
+                </div>
+                {batchProgress.current && (
+                  <p className="text-sm mt-2 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 inline mr-1 animate-spin" />
+                    Currently processing: {batchProgress.current.length > 50 ? batchProgress.current.substring(0, 50) + '...' : batchProgress.current}
+                  </p>
+                )}
+              </AlertDescription>
+              {!batchProgress.isProcessing && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setBatchProgress(null)
+                    localStorage.removeItem('batchProcessingProgress')
+                  }}
+                  className="absolute top-2 right-2"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </Alert>
+          )}
+
+          {/* Analysis Batch Processing Progress Banner */}
+          {analysisBatchProgress && (
+            <Alert className="mb-4 relative border-purple-200 bg-purple-50">
+              <BarChart3 className="h-4 w-4 text-purple-600" />
+              <AlertTitle className="text-purple-800">
+                {analysisBatchProgress.isProcessing ? 'Generating Analyses for Selected Papers...' : 'Batch Analysis Complete'}
+              </AlertTitle>
+              <AlertDescription>
+                <div className="flex items-center gap-4 mt-2">
+                  <Progress
+                    value={analysisBatchProgress.totalAnalyses > 0
+                      ? (analysisBatchProgress.completedAnalyses / analysisBatchProgress.totalAnalyses) * 100
+                      : 0}
+                    className="flex-1"
+                  />
+                  <span className="text-sm whitespace-nowrap text-purple-700">
+                    Paper {analysisBatchProgress.completedPapers}/{analysisBatchProgress.totalPapers} •
+                    Analysis {analysisBatchProgress.completedAnalyses}/{analysisBatchProgress.totalAnalyses}
+                    {analysisBatchProgress.failed > 0 && <span className="text-red-600 ml-1">({analysisBatchProgress.failed} failed)</span>}
+                    {analysisBatchProgress.skipped > 0 && <span className="text-yellow-600 ml-1">({analysisBatchProgress.skipped} skipped)</span>}
+                  </span>
+                </div>
+                {analysisBatchProgress.currentPaper && (
+                  <p className="text-sm mt-2 text-purple-600">
+                    <Loader2 className="h-3 w-3 inline mr-1 animate-spin" />
+                    {analysisBatchProgress.currentPaper.length > 40
+                      ? analysisBatchProgress.currentPaper.substring(0, 40) + '...'
+                      : analysisBatchProgress.currentPaper}
+                    {analysisBatchProgress.currentAnalysis && (
+                      <span className="ml-2 text-purple-500">→ {analysisBatchProgress.currentAnalysis}</span>
+                    )}
+                  </p>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Statistics Cards */}
           {stats && (
             <div className="grid grid-cols-4 gap-4 mb-6">
@@ -1549,14 +2212,46 @@ const FacetedPapersDashboard: React.FC = () => {
                   </Card>
                 ) : (
                   <>
+                    {/* Select All Header */}
+                    {papers.length > 0 && (
+                      <div className="flex items-center gap-2 mb-2 px-1">
+                        <Checkbox
+                          id="select-all-papers"
+                          checked={selectedPapersForAnalysis.size === papers.length && papers.length > 0}
+                          onCheckedChange={toggleSelectAllPapers}
+                          className="h-4 w-4"
+                        />
+                        <label
+                          htmlFor="select-all-papers"
+                          className="text-sm text-gray-600 cursor-pointer select-none"
+                        >
+                          Select all ({papers.length}) for batch analysis
+                        </label>
+                        {selectedPapersForAnalysis.size > 0 && (
+                          <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700">
+                            {selectedPapersForAnalysis.size} selected
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                     <div className="grid gap-3">
                       {papers.map((paper) => (
-                        <Card key={paper.id} className="hover:shadow-md transition-all duration-200 bg-white border-gray-200">
+                        <Card key={paper.id} className={cn(
+                          "hover:shadow-md transition-all duration-200 bg-white border-gray-200",
+                          selectedPapersForAnalysis.has(paper.id) && "ring-2 ring-purple-300 border-purple-300"
+                        )}>
                           <CardContent className="p-3">
                             <div className="flex justify-between items-start gap-3">
                               <div className="flex-1 min-w-0">
                                 {/* Title and Main Actions in same row */}
                                 <div className="flex items-start gap-2 mb-2">
+                                  {/* Selection checkbox for batch analysis */}
+                                  <Checkbox
+                                    checked={selectedPapersForAnalysis.has(paper.id)}
+                                    onCheckedChange={() => togglePaperSelection(paper.id)}
+                                    className="h-4 w-4 mt-1 flex-shrink-0"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
                                   <h3 className="text-base font-semibold text-gray-900 line-clamp-2 flex-1">
                                     {decodeHtmlEntities(paper.title)}
                                   </h3>
@@ -1587,7 +2282,7 @@ const FacetedPapersDashboard: React.FC = () => {
                                         className="h-7 w-7 p-0"
                                         onClick={(e) => {
                                           e.stopPropagation()
-                                          window.open(`http://localhost:8000/papers/${paper.pdf_path.split('/').pop()}`, '_blank')
+                                          window.open(`http://localhost:8000/papers/${paper.pdf_path?.split('/').pop()}`, '_blank')
                                         }}
                                         title="Download PDF"
                                       >
@@ -1687,55 +2382,57 @@ const FacetedPapersDashboard: React.FC = () => {
                                 
                                 {/* Processing Status Badge */}
                                 {paper.processing_error && (
-                                  <div className="mb-2 flex items-center gap-2">
-                                    <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
-                                      ⚠️ Processing Error
-                                    </Badge>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={async (e) => {
-                                        e.stopPropagation()
-                                        setProcessingPapers(prev => new Set(prev).add(paper.id))
-                                        setProcessingMessage(`Retrying processing for paper ${paper.id}...`)
-                                        try {
-                                          const response = await axios.post(`http://localhost:8000/api/papers/${paper.id}/process`)
-                                          if (response.data.success) {
-                                            setProcessingMessage(`Successfully started processing paper ${paper.id}`)
-                                            await loadPapers()
-                                            await loadFacets()
-                                          } else {
-                                            setProcessingMessage(response.data.message || 'Failed to retry processing')
+                                  <div className="mb-2">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
+                                        ⚠️ Processing Error
+                                      </Badge>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={async (e) => {
+                                          e.stopPropagation()
+                                          setProcessingPapers(prev => new Set(prev).add(paper.id))
+                                          setProcessingMessage(`Retrying processing for paper ${paper.id}...`)
+                                          try {
+                                            const response = await axios.post(`http://localhost:8000/api/papers/${paper.id}/process`)
+                                            if (response.data.success) {
+                                              setProcessingMessage(`Successfully started processing paper ${paper.id}`)
+                                              await loadPapers()
+                                              await loadFacets()
+                                            } else {
+                                              setProcessingMessage(response.data.message || 'Failed to retry processing')
+                                            }
+                                          } catch (error: any) {
+                                            const errorMsg = error.response?.data?.detail || error.message || 'Failed to retry processing'
+                                            setProcessingMessage(`Error: ${errorMsg}`)
+                                            console.error('Failed to retry processing:', error)
+                                          } finally {
+                                            setProcessingPapers(prev => {
+                                              const newSet = new Set(prev)
+                                              newSet.delete(paper.id)
+                                              return newSet
+                                            })
+                                            setTimeout(() => setProcessingMessage(null), 3000)
                                           }
-                                        } catch (error: any) {
-                                          const errorMsg = error.response?.data?.detail || error.message || 'Failed to retry processing'
-                                          setProcessingMessage(`Error: ${errorMsg}`)
-                                          console.error('Failed to retry processing:', error)
-                                        } finally {
-                                          setProcessingPapers(prev => {
-                                            const newSet = new Set(prev)
-                                            newSet.delete(paper.id)
-                                            return newSet
-                                          })
-                                          setTimeout(() => setProcessingMessage(null), 3000)
-                                        }
-                                      }}
-                                      disabled={processingPapers.has(paper.id)}
-                                      className="h-5 px-2 text-xs"
-                                      title={paper.processing_error}
-                                    >
-                                      {processingPapers.has(paper.id) ? (
-                                        <>
-                                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                          Retrying...
-                                        </>
-                                      ) : (
-                                        <>
-                                          <RotateCcw className="h-3 w-3 mr-1" />
-                                          Retry
-                                        </>
-                                      )}
-                                    </Button>
+                                        }}
+                                        disabled={processingPapers.has(paper.id)}
+                                        className="h-5 px-2 text-xs"
+                                      >
+                                        {processingPapers.has(paper.id) ? (
+                                          <>
+                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                            Retrying...
+                                          </>
+                                        ) : (
+                                          <>
+                                            <RotateCcw className="h-3 w-3 mr-1" />
+                                            Retry
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
+                                    <p className="text-xs text-red-600 pl-1">{paper.processing_error}</p>
                                   </div>
                                 )}
                                 {!paper.processed && !paper.processing_error && (
@@ -2100,17 +2797,17 @@ const FacetedPapersDashboard: React.FC = () => {
                                 </div>
                                 
                                 {/* Tags Section - Ultra compact inline */}
-                                {(paper.tags?.length > 0 || paper.concepts?.length > 0) && (
+                                {((paper.tags?.length ?? 0) > 0 || (paper.concepts?.length ?? 0) > 0) && (
                                   <div className="flex flex-wrap items-center gap-1 mb-2">
                                     <TagIcon className="h-3 w-3 text-gray-400" />
                                     <span className="text-[10px] font-medium text-gray-500 mr-1">
                                       {paper.tags?.length || paper.concepts?.length || 0}
                                     </span>
-                                      {(paper.tags || paper.concepts || [])
+                                      {([...(paper.tags || []), ...(paper.concepts || [])] as Array<string | { concept_id: string; display_name: string }>)
                                         .slice(0, expandedTags.has(paper.id) ? undefined : 6)
                                         .map((item, index) => {
-                                        const tagName = typeof item === 'string' ? item : item.display_name
-                                        const tagId = typeof item === 'string' ? item : item.concept_id
+                                        const tagName = typeof item === 'string' ? item : (item as { display_name: string }).display_name
+                                        const tagId = typeof item === 'string' ? item : (item as { concept_id: string }).concept_id
                                         return (
                                           <Badge 
                                             key={`${paper.id}-tag-${index}`} 
@@ -2169,19 +2866,19 @@ const FacetedPapersDashboard: React.FC = () => {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    toggleSummary(paper.id)
+                                    toggleSummary(String(paper.id))
                                   }}
                                   className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors w-full text-left"
                                 >
                                   <span className="text-purple-600">🎓</span>
                                   <span>Mollick-Style Summary</span>
-                                  {expandedSummaries.has(paper.id) ? (
+                                  {expandedSummaries.has(String(paper.id)) ? (
                                     <ChevronUp className="h-4 w-4 ml-auto" />
                                   ) : (
                                     <ChevronDown className="h-4 w-4 ml-auto" />
                                   )}
                                 </button>
-                                {expandedSummaries.has(paper.id) && (
+                                {expandedSummaries.has(String(paper.id)) && (
                                   <div className="mt-3 p-3 bg-purple-50 rounded-lg">
                                     <div className="prose prose-sm max-w-none">
                                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{paper.ai_summary}</p>
@@ -2388,36 +3085,43 @@ const FacetedPapersDashboard: React.FC = () => {
         </div>
       )}
       
-      {/* Paper Viewer Modal */}
+      {/* Paper Viewer Modal - Lazy loaded for code splitting */}
       {selectedPaperId && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg w-full max-w-7xl max-h-[90vh] overflow-auto shadow-2xl">
-            <PaperViewerOptimized 
-              paperId={selectedPaperId} 
-              onClose={() => setSelectedPaperId(null)}
-              onMetadataUpdate={async () => {
-                // Update the specific paper in the list without full reload
-                try {
-                  const response = await axios.get(`http://localhost:8000/api/papers/${selectedPaperId}`)
-                  const updatedPaper = response.data
-                  
-                  // Update the paper in the papers list
-                  setPapers(prevPapers => 
-                    prevPapers.map(p => 
-                      p.id === selectedPaperId 
-                        ? { ...p, tags: updatedPaper.tags, ...updatedPaper }
-                        : p
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <span className="ml-2 text-gray-600">Loading Paper Viewer...</span>
+              </div>
+            }>
+              <PaperViewerOptimized
+                paperId={selectedPaperId}
+                onClose={() => setSelectedPaperId(null)}
+                onMetadataUpdate={async () => {
+                  // Update the specific paper in the list without full reload
+                  try {
+                    const response = await axios.get(`http://localhost:8000/api/papers/${selectedPaperId}`)
+                    const updatedPaper = response.data
+
+                    // Update the paper in the papers list
+                    setPapers(prevPapers =>
+                      prevPapers.map(p =>
+                        p.id === selectedPaperId
+                          ? { ...p, tags: updatedPaper.tags, ...updatedPaper }
+                          : p
+                      )
                     )
-                  )
-                  
-                  // Only refresh facets and stats to update counts
-                  loadFacets()
-                  loadStats()
-                } catch (error) {
-                  console.error('Error updating paper:', error)
-                }
-              }}
-            />
+
+                    // Only refresh facets and stats to update counts
+                    loadFacets()
+                    loadStats()
+                  } catch (error) {
+                    console.error('Error updating paper:', error)
+                  }
+                }}
+              />
+            </Suspense>
           </div>
         </div>
       )}

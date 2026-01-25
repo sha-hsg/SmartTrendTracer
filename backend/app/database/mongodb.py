@@ -10,15 +10,84 @@ from __future__ import annotations
 
 import logging
 import os
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass
-from functools import lru_cache
-from typing import Dict, Optional
+from functools import lru_cache, wraps
+from typing import Any, Callable, Dict, Generator, Optional, TypeVar
 
-from pymongo import MongoClient, ASCENDING, DESCENDING
+from pymongo import MongoClient, ASCENDING, DESCENDING, TEXT
 from pymongo.database import Database
 
 
 logger = logging.getLogger(__name__)
+
+# Slow query threshold in seconds (configurable via environment)
+SLOW_QUERY_THRESHOLD = float(os.getenv("MONGODB_SLOW_QUERY_MS", "100")) / 1000  # Default 100ms
+
+T = TypeVar("T")
+
+
+@contextmanager
+def timed_query(operation: str, collection: str = "", extra: str = "") -> Generator[None, None, None]:
+    """Context manager to log slow MongoDB queries.
+
+    Usage:
+        with timed_query("find", "papers", "filter={'processed': True}"):
+            result = db.papers.find({'processed': True})
+    """
+    start = time.perf_counter()
+    try:
+        yield
+    finally:
+        elapsed = time.perf_counter() - start
+        if elapsed >= SLOW_QUERY_THRESHOLD:
+            details = f"{collection}.{operation}" if collection else operation
+            if extra:
+                details = f"{details} ({extra})"
+            logger.warning(
+                "SLOW_QUERY: %s took %.2fms (threshold: %.0fms)",
+                details,
+                elapsed * 1000,
+                SLOW_QUERY_THRESHOLD * 1000
+            )
+        elif elapsed >= SLOW_QUERY_THRESHOLD * 0.5:
+            # Log queries approaching threshold at debug level
+            details = f"{collection}.{operation}" if collection else operation
+            logger.debug(
+                "QUERY: %s completed in %.2fms",
+                details,
+                elapsed * 1000
+            )
+
+
+def log_slow_queries(operation: str = "", collection: str = "") -> Callable[[Callable[..., T]], Callable[..., T]]:
+    """Decorator to log slow MongoDB operations.
+
+    Usage:
+        @log_slow_queries("aggregate", "papers")
+        def get_paper_stats():
+            return list(db.papers.aggregate([...]))
+    """
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> T:
+            op = operation or func.__name__
+            start = time.perf_counter()
+            try:
+                return func(*args, **kwargs)
+            finally:
+                elapsed = time.perf_counter() - start
+                if elapsed >= SLOW_QUERY_THRESHOLD:
+                    details = f"{collection}.{op}" if collection else op
+                    logger.warning(
+                        "SLOW_QUERY: %s took %.2fms (threshold: %.0fms)",
+                        details,
+                        elapsed * 1000,
+                        SLOW_QUERY_THRESHOLD * 1000
+                    )
+        return wrapper
+    return decorator
 
 
 @dataclass(frozen=True)
@@ -29,7 +98,7 @@ class MongoSettings:
     database: str
     replica_set: Optional[str] = None
     app_name: Optional[str] = None
-    options: Dict[str, str] = None  # Additional driver options
+    options: Optional[Dict[str, str]] = None  # Additional driver options
 
     @classmethod
     def from_env(cls) -> "MongoSettings":
@@ -101,35 +170,74 @@ def _ensure_indexes(db: Database) -> None:
     if _indexes_initialized:
         return
 
-    try:
-        db.tweets.create_index([("created_at", DESCENDING)])
-        db.tweets.create_index([("author_username", ASCENDING)])
+    # Define all indexes with descriptive names for logging
+    index_definitions = [
+        ("tweets", [("created_at", DESCENDING)]),
+        ("tweets", [("author_username", ASCENDING)]),
+        ("papers", [("created_at", DESCENDING)]),
+        ("papers", [("processed", ASCENDING)]),
+        ("papers", [("conference", ASCENDING)]),
+        ("papers", [("concept_ids", ASCENDING)]),
+        ("papers", [("authors_detailed.name", ASCENDING)]),  # PERF-002: Index for author name searches
+        ("tag_instances", [("content_type", ASCENDING), ("content_id", ASCENDING), ("concept_id", ASCENDING)]),
+        ("tag_instances", [("concept_id", ASCENDING)]),
+        ("articles", [("created_at", DESCENDING)]),
+        ("articles", [("author_id", ASCENDING)]),
+        ("reddit_posts", [("created_utc", DESCENDING)]),
+        ("books", [("uploaded_at", DESCENDING)]),
+        ("books", [("processing_status", ASCENDING)]),
+        ("books", [("concept_ids", ASCENDING)]),
+        ("books", [("file_type", ASCENDING)]),
+        ("books", [("publisher", ASCENDING)]),
+        ("books", [("publication_year", ASCENDING)]),
+    ]
 
-        db.papers.create_index([("created_at", DESCENDING)])
-        db.papers.create_index([("processed", ASCENDING)])
-        db.papers.create_index([("conference", ASCENDING)])
-        db.papers.create_index([("concept_ids", ASCENDING)])
+    # Text indexes for full-text search (PERF-002)
+    # Note: MongoDB allows only ONE text index per collection, so we combine fields
+    text_index_definitions = [
+        # Papers: search across title, abstract, and content
+        ("papers", [("title", TEXT), ("abstract", TEXT), ("content_markdown", TEXT)], "papers_text_search"),
+        # Articles: search across title and content
+        ("articles", [("title", TEXT), ("content_markdown", TEXT)], "articles_text_search"),
+        # Tweets: search across full_text
+        ("tweets", [("full_text", TEXT)], "tweets_text_search"),
+    ]
 
-        db.tag_instances.create_index([
-            ("content_type", ASCENDING),
-            ("content_id", ASCENDING)
-        ])
-        db.tag_instances.create_index([("concept_id", ASCENDING)])
+    failed_indexes = []
+    successful_count = 0
 
-        db.articles.create_index([("created_at", DESCENDING)])
-        db.articles.create_index([("author_id", ASCENDING)])
+    for collection_name, index_fields in index_definitions:
+        try:
+            db[collection_name].create_index(index_fields)
+            successful_count += 1
+        except Exception as exc:
+            index_desc = f"{collection_name}.{[f[0] for f in index_fields]}"
+            logger.error("Failed to create index %s: %s", index_desc, exc)
+            failed_indexes.append(index_desc)
 
-        db.reddit_posts.create_index([("created_utc", DESCENDING)])
+    # Create text indexes for full-text search (PERF-002)
+    text_successful = 0
+    for collection_name, index_fields, index_name in text_index_definitions:
+        try:
+            db[collection_name].create_index(index_fields, name=index_name)
+            text_successful += 1
+        except Exception as exc:
+            # Text index may already exist or conflict - log but don't fail
+            if "already exists" in str(exc).lower() or "Index with name" in str(exc):
+                logger.debug("Text index %s already exists, skipping", index_name)
+                text_successful += 1
+            else:
+                logger.error("Failed to create text index %s: %s", index_name, exc)
+                failed_indexes.append(index_name)
 
-        # Books collection indexes
-        db.books.create_index([("uploaded_at", DESCENDING)])
-        db.books.create_index([("processing_status", ASCENDING)])
-        db.books.create_index([("concept_ids", ASCENDING)])
-        db.books.create_index([("file_type", ASCENDING)])
-        db.books.create_index([("publisher", ASCENDING)])
-        db.books.create_index([("publication_year", ASCENDING)])
+    _indexes_initialized = True
 
-        _indexes_initialized = True
-        logger.info("MongoDB performance indexes ensured")
-    except Exception as exc:
-        logger.warning("Failed to ensure MongoDB indexes: %s", exc)
+    total_indexes = len(index_definitions) + len(text_index_definitions)
+    total_successful = successful_count + text_successful
+
+    if failed_indexes:
+        logger.error("MongoDB index creation: %d/%d succeeded, %d failed: %s",
+                     total_successful, total_indexes, len(failed_indexes), failed_indexes)
+    else:
+        logger.info("MongoDB performance indexes ensured (%d regular + %d text indexes)",
+                    successful_count, text_successful)

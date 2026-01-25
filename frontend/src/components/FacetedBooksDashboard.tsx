@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import axios from 'axios'
 import {
   BookOpen,
@@ -19,7 +19,8 @@ import {
   Cpu,
   GraduationCap,
   FileCode,
-  Library
+  Library,
+  RefreshCw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,9 +30,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 
-import BookViewerOptimized from './BookViewerOptimized'
 import BookUploadModal from './BookUploadModal'
+
+// Lazy-loaded components for code-splitting (reduces initial bundle size)
+const BookViewerOptimized = React.lazy(() => import('./BookViewerOptimized'))
 
 interface Book {
   _id: string
@@ -48,15 +52,16 @@ interface Book {
   page_count?: number
   file_type: string // 'pdf' or 'epub'
   file_size?: number
-  file_url?: string
-  file_name?: string
+  file_url?: string | null
+  file_name?: string | null
   processor?: string
+  processing_method?: string
   processing_status?: string
   markdown_content?: string
   table_of_contents?: Array<{ chapter: string; page: number }>
   glossary_terms?: Array<{ term: string; definition: string }>
   concept_ids: string[]
-  concepts?: Array<{ _id: string; name: string; description?: string }>
+  concepts?: Array<{ concept_id?: string; _id?: string; display_name?: string; name?: string; description?: string; slug?: string }>
   summary?: string
   key_themes: string[]
   reading_difficulty?: string
@@ -140,14 +145,14 @@ const FacetedBooksDashboard: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [pageSize, _setPageSize] = useState(20)
 
   // UI state
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showFilters, setShowFilters] = useState(true)
-  const [sortBy, setSortBy] = useState('uploaded_at')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [_sortBy, _setSortBy] = useState('uploaded_at')
+  const [_sortOrder, _setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   // Progressive disclosure state for filter sections
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
@@ -299,14 +304,21 @@ const FacetedBooksDashboard: React.FC = () => {
 
   if (selectedBook) {
     return (
-      <BookViewerOptimized
-        book={selectedBook}
-        onBack={() => setSelectedBook(null)}
-        onBookUpdate={(updated) => {
-          setSelectedBook(updated)
-          setBooks(prev => prev.map(book => (book._id === updated._id ? updated : book)))
-        }}
-      />
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+          <span className="ml-2 text-gray-600">Loading Book Viewer...</span>
+        </div>
+      }>
+        <BookViewerOptimized
+          book={selectedBook}
+          onBack={() => setSelectedBook(null)}
+          onBookUpdate={(updated) => {
+            setSelectedBook(updated)
+            setBooks(prev => prev.map(book => (book._id === updated._id ? updated : book)))
+          }}
+        />
+      </Suspense>
     )
   }
 
@@ -776,6 +788,15 @@ const FacetedBooksDashboard: React.FC = () => {
                 <span className="hidden sm:inline">Upload Book</span>
                 <span className="sm:hidden">Upload</span>
               </Button>
+              <Button
+                onClick={() => loadBooks()}
+                variant="outline"
+                disabled={loading}
+                size="sm"
+              >
+                <RefreshCw className={cn("w-4 h-4 mr-1 md:mr-2", loading && "animate-spin")} />
+                <span className="hidden sm:inline">Refresh</span>
+              </Button>
             </div>
           </div>
         </header>
@@ -850,14 +871,17 @@ const FacetedBooksDashboard: React.FC = () => {
               <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No books found</h3>
               <p className="text-gray-600 mb-4">
-                {Object.keys({
-                  searchTerm, selectedAuthors, selectedPublishers, selectedGenres,
-                  selectedSubjectAreas, selectedLanguages, selectedDifficulties,
-                  selectedProcessors, selectedFileTypes, selectedYears
-                }).some(key => {
-                  const value = eval(key)
-                  return Array.isArray(value) ? value.length > 0 : Boolean(value)
-                }) ? 'Try adjusting your filters.' : 'Upload your first book to get started.'}
+                {(() => {
+                  const filters = {
+                    searchTerm, selectedAuthors, selectedPublishers, selectedGenres,
+                    selectedSubjectAreas, selectedLanguages, selectedDifficulties,
+                    selectedProcessors, selectedFileTypes, selectedYears
+                  }
+                  const hasActiveFilter = Object.values(filters).some(value =>
+                    Array.isArray(value) ? value.length > 0 : Boolean(value)
+                  )
+                  return hasActiveFilter ? 'Try adjusting your filters.' : 'Upload your first book to get started.'
+                })()}
               </p>
               <Button onClick={() => setShowUploadModal(true)} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="w-4 h-4 mr-2" />
