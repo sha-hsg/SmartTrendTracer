@@ -154,18 +154,22 @@ async def convert_pdf(
         tmp_file.write(content)
         pdf_path = tmp_file.name
     
+    # Track output_dir for cleanup in finally block
+    output_dir = None
+    processing_successful = False
+
     try:
         # Store the original filename before it gets reassigned
         original_filename = file.filename
         logger.info(f"Processing PDF: {original_filename}")
-        
+
         # Send initial progress
         send_progress_callback(callback_url, {
             "stage": "initializing",
             "message": "Starting PDF processing with MinerU",
             "progress": 0
         })
-        
+
         # Create a unique output directory for this processing job
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         job_id = f"{timestamp}_{paper_id or 'temp'}_{Path(original_filename).stem}"
@@ -190,7 +194,7 @@ async def convert_pdf(
             logger.info("Table detection disabled for stability")
 
         logger.info(f"Running command: {' '.join(cmd)}")
-        
+
         # Run MinerU with progress monitoring
         process = subprocess.Popen(
             cmd,
@@ -200,7 +204,7 @@ async def convert_pdf(
             bufsize=1,
             universal_newlines=True
         )
-        
+
         # Monitor progress
         progress_stages = {
             "Initializing": 20,
@@ -212,29 +216,43 @@ async def convert_pdf(
             "Generating markdown": 80,
             "Finalizing": 90
         }
-        
+
         last_progress = 10
         output_lines = []
-        
-        # Read output line by line
-        for line in iter(process.stdout.readline, ''):
-            if line:
-                output_lines.append(line)
-                logger.debug(f"MinerU output: {line.strip()}")
-                
-                # Check for progress indicators
-                for stage, progress_value in progress_stages.items():
-                    if stage.lower() in line.lower() and progress_value > last_progress:
-                        send_progress_callback(callback_url, {
-                            "stage": "processing",
-                            "message": f"MinerU: {stage}...",
-                            "progress": progress_value
-                        })
-                        last_progress = progress_value
-                        break
-        
-        # Wait for process to complete
-        process.wait()
+
+        try:
+            # Read output line by line
+            for line in iter(process.stdout.readline, ''):
+                if line:
+                    output_lines.append(line)
+                    logger.debug(f"MinerU output: {line.strip()}")
+
+                    # Check for progress indicators
+                    for stage, progress_value in progress_stages.items():
+                        if stage.lower() in line.lower() and progress_value > last_progress:
+                            send_progress_callback(callback_url, {
+                                "stage": "processing",
+                                "message": f"MinerU: {stage}...",
+                                "progress": progress_value
+                            })
+                            last_progress = progress_value
+                            break
+
+            # Wait for process to complete
+            process.wait()
+        except Exception as e:
+            # Ensure subprocess is terminated on any exception
+            logger.error(f"Exception during MinerU processing: {e}")
+            try:
+                process.terminate()
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+            except Exception:
+                pass  # Process may already be dead
+            # Re-raise to let outer finally handle cleanup
+            raise
         
         if process.returncode != 0:
             error_output = ''.join(output_lines)
@@ -245,8 +263,9 @@ async def convert_pdf(
                 "progress": 0,
                 "error": error_output[:500]  # Limit error message size
             })
+            # Cleanup will be handled by finally block
             raise HTTPException(
-                status_code=500, 
+                status_code=500,
                 detail=f"MinerU processing failed: {error_output[:500]}"
             )
         
@@ -285,6 +304,7 @@ async def convert_pdf(
         
         if not md_files:
             logger.error("No markdown output generated")
+            # Cleanup will be handled by finally block
             raise HTTPException(
                 status_code=500,
                 detail="MinerU did not generate any output"
@@ -450,28 +470,44 @@ async def convert_pdf(
             "message": f"Successfully processed with MinerU ({len(image_metadata)} images extracted)",
             "progress": 100
         })
-        
+
+        # Mark processing as successful so finally block doesn't clean up output_dir
+        processing_successful = True
+
         return JSONResponse({
             "success": True,
             "content": markdown_content,
             "metadata": metadata,
             "message": f"Processed with MinerU" + (f" ({len(image_metadata)} images extracted)" if paper_id else "")
         })
-            
+
     except subprocess.TimeoutExpired:
         logger.error("MinerU processing timeout")
         raise HTTPException(status_code=504, detail="Processing timeout")
-        
+
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is (they already have proper error info)
+        raise
+
     except Exception as e:
         logger.error(f"Error converting PDF: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-        
+
     finally:
-        # Clean up temp file
+        # Clean up temp PDF file
         try:
             os.unlink(pdf_path)
         except:
             pass
+
+        # Clean up output directory on failure to prevent disk exhaustion
+        # Only clean up if processing was NOT successful
+        if not processing_successful and output_dir is not None and output_dir.exists():
+            try:
+                shutil.rmtree(output_dir, ignore_errors=True)
+                logger.info(f"Cleaned up output directory after failure: {output_dir}")
+            except Exception as cleanup_error:
+                logger.warning(f"Failed to clean up output directory {output_dir}: {cleanup_error}")
 
 @app.post("/convert_advanced")
 async def convert_pdf_advanced(
