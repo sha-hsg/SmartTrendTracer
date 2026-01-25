@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import ModelBadge from './ModelBadge'
 import './EntityAnnotationReview.css'
 
@@ -31,7 +31,7 @@ function EntityAnnotationReview({ articleId, tweetId, onComplete }: EntityAnnota
   const [selectedEntities, setSelectedEntities] = useState<Set<string>>(new Set())
   const [filterType, setFilterType] = useState<string>('all')
   const [sortBy, setSortBy] = useState<'confidence' | 'type' | 'text'>('confidence')
-  const [showOnlyUnreviewed, setShowOnlyUnreviewed] = useState(true)
+  const [_showOnlyUnreviewed, _setShowOnlyUnreviewed] = useState(true)
   const [stats, setStats] = useState<any>({})
   const [undoStack, setUndoStack] = useState<UndoAction[]>([])
   const [schema, setSchema] = useState<any>(null)
@@ -258,7 +258,7 @@ function EntityAnnotationReview({ articleId, tweetId, onComplete }: EntityAnnota
     })
   }
 
-  const saveEntityEdit = (entityId: string) => {
+  const saveEntityEdit = (_entityId: string) => {
     setEditingEntity(null)
     // The edited values will be used when accepting the entity
   }

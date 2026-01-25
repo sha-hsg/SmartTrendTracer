@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -212,10 +212,6 @@ const FacetedRedditDashboardModern: React.FC = () => {
     setMinScore(minScore === newScore ? null : newScore)
   }
 
-  const handlePostTypeFilter = (postType: string) => {
-    setSelectedPostType(selectedPostType === postType ? '' : postType)
-  }
-
   const handleConceptSelect = (conceptId: string, displayName: string) => {
     setSelectedConcept({ id: conceptId, concept_id: conceptId, display_name: displayName, slug: displayName.toLowerCase().replace(/\s+/g, '_') } as Concept)
     setConceptSearchOpen(false)
@@ -235,13 +231,6 @@ const FacetedRedditDashboardModern: React.FC = () => {
   const openTagModal = (post: RedditPost) => {
     setSelectedPostForTagging(post)
     setTagModalOpen(true)
-  }
-
-  const handleTagUpdate = async (postId: string, newConcepts: Concept[]) => {
-    // Update local state
-    setPosts(prevPosts => prevPosts.map(post => 
-      post._id === postId ? { ...post, concepts: newConcepts } : post
-    ))
   }
 
   // Utility functions
@@ -712,19 +701,28 @@ const FacetedRedditDashboardModern: React.FC = () => {
           }}
           onTagsUpdated={() => {
             // Refresh posts to get updated tags
-            fetchPosts()
+            loadData()
           }}
         />
       )}
 
-      {/* Concept Search Modal */}
+      {/* Concept Search */}
       {conceptSearchOpen && (
-        <SemanticConceptSearch
-          isOpen={conceptSearchOpen}
-          onClose={() => setConceptSearchOpen(false)}
-          onConceptSelect={handleConceptSelect}
-          placeholder="Search concepts to filter posts..."
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg p-4 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold">Search Concepts</h3>
+              <Button variant="ghost" size="sm" onClick={() => setConceptSearchOpen(false)}>×</Button>
+            </div>
+            <SemanticConceptSearch
+              onConceptSelect={(conceptId, displayName) => {
+                handleConceptSelect(conceptId, displayName)
+                setConceptSearchOpen(false)
+              }}
+              placeholder="Search concepts to filter posts..."
+            />
+          </div>
+        </div>
       )}
     </div>
   )

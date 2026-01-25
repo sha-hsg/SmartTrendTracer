@@ -80,7 +80,7 @@ export const ACMImportModal: React.FC<ACMImportModalProps> = ({
       })
 
       if (response.data.success) {
-        const { paper_id, title, authors, doi, year, venue } = response.data
+        const { paper_id, title, authors, doi: _doi, year, venue } = response.data
         
         let successMsg = `Successfully imported: "${title}"`
         if (authors) {

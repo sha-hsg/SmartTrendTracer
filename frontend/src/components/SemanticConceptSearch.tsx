@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -180,7 +180,7 @@ export default function SemanticConceptSearch({
         />
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
           {loading && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
-          <Sparkles className="h-3 w-3 text-purple-400" title="Semantic Search" />
+          <Sparkles className="h-3 w-3 text-purple-400" />
           {query && (
             <Button
               variant="ghost"

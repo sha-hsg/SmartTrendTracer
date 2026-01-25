@@ -22,7 +22,7 @@ interface TweetCardProps {
   onSuggestTags?: (tweet: any) => void  // New prop name
 }
 
-function TweetCard({ tweet, onTagAdded, onTagRemoved, onTweetClick, onSuggestTags }: TweetCardProps) {
+const TweetCard = React.memo(function TweetCard({ tweet, onTagAdded, onTagRemoved, onTweetClick, onSuggestTags }: TweetCardProps) {
   const [isAddingTag, setIsAddingTag] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null)
@@ -478,6 +478,6 @@ function TweetCard({ tweet, onTagAdded, onTagRemoved, onTweetClick, onSuggestTag
       )}
     </div>
   )
-}
+})
 
 export default TweetCard

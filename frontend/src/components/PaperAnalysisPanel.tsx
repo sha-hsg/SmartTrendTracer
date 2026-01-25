@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import axios from 'axios'
 import {
@@ -84,7 +84,7 @@ const getRelativeTime = (date: Date): string => {
 }
 
 interface PaperAnalysisPanelProps {
-  paperId: number
+  paperId: string | number
   paperTitle?: string
   onTagCreate?: (tag: string) => void
   onSnippetCreate?: (text: string) => void
@@ -111,13 +111,6 @@ const categoryIcons: Record<string, React.ReactNode> = {
   analysis: <Microscope className="h-4 w-4" />,
   review: <ClipboardList className="h-4 w-4" />,
   reference: <Library className="h-4 w-4" />
-}
-
-const categoryColors: Record<string, string> = {
-  summaries: 'bg-blue-50 border-blue-200',
-  analysis: 'bg-purple-50 border-purple-200',
-  review: 'bg-orange-50 border-orange-200',
-  reference: 'bg-green-50 border-green-200'
 }
 
 // Specific color schemes for different analysis types - designed for readability and semantic meaning
@@ -258,7 +251,7 @@ export default function PaperAnalysisPanel({ paperId, paperTitle, onTagCreate, o
   })
 
   // Context menu state
-  const [selectedText, setSelectedText] = useState('')
+  const [_selectedText, setSelectedText] = useState('')
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
   const [showTagDialog, setShowTagDialog] = useState(false)
@@ -391,12 +384,12 @@ export default function PaperAnalysisPanel({ paperId, paperTitle, onTagCreate, o
 
   // Close context menu on click outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (_e: MouseEvent) => {
       if (showContextMenu) {
         setShowContextMenu(false)
       }
     }
-    
+
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showContextMenu])
@@ -853,16 +846,6 @@ export default function PaperAnalysisPanel({ paperId, paperTitle, onTagCreate, o
       all.push(...analyses)
     })
     return all
-  }
-
-  const getAnalysesToDisplay = () => {
-    if (selectedCategory === 'all') {
-      return getAllAnalyses()
-    }
-    if (selectedCategory === 'free') {
-      return [] // Free analyses are handled in their own tab content
-    }
-    return availableAnalyses[selectedCategory] || []
   }
 
   return (
@@ -1746,7 +1729,7 @@ export default function PaperAnalysisPanel({ paperId, paperTitle, onTagCreate, o
                     // Sort analyses to show newest first (by created_at)
                     [...freeAnalyses]
                       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                      .map((analysis, index) => {
+                      .map((analysis, _index) => {
                         const isExpanded = expandedFreeAnalyses.has(analysis.id)
                         const isEditing = editingFreeAnalysis === analysis.id
                         const analysisDate = new Date(analysis.created_at)

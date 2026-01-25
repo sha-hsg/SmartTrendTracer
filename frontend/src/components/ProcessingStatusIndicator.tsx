@@ -28,11 +28,11 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
   const [elapsedMinutes, setElapsedMinutes] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState(false);
-  const [progressData, setProgressData] = useState<any>(null);
   const [progressMessage, setProgressMessage] = useState<string>('');
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
   const [completedNotified, setCompletedNotified] = useState<boolean>(false);
   const [processHealth, setProcessHealth] = useState<any>(null);
+  const [_progressData, setProgressData] = useState<any>(null);
 
   useEffect(() => {
     // Start polling if processing
@@ -100,7 +100,8 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
     const interval = setInterval(checkStatus, 10000);
 
     return () => clearInterval(interval);
-  }, [paperId, status, onComplete, onStatusChange, isPolling]);
+  // Note: status removed from dependencies to avoid stale closures - it's set internally by setStatus()
+  }, [paperId, onComplete, onStatusChange, isPolling, completedNotified]);
 
   // Separate polling for process health (every 30 seconds)
   useEffect(() => {
@@ -158,7 +159,7 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
         method: 'POST'
       });
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         setStatus('processing_with_marker');
         setIsPolling(true);
         if (onStatusChange) {

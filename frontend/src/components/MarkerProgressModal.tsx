@@ -25,7 +25,7 @@ import axios from 'axios';
 interface MarkerProgressModalProps {
   isOpen: boolean;
   onClose: () => void;
-  paperId: string;
+  paperId: string | number;
   paperTitle?: string;
   onSuccess?: () => void;
 }
@@ -52,7 +52,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null);
 
   // Update elapsed time
   useEffect(() => {

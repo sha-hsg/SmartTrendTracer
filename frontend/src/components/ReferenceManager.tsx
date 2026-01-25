@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
   Copy,
@@ -104,9 +104,9 @@ export default function ReferenceManager() {
   
   // Filters
   const [yearFilter, setYearFilter] = useState<string>('all')
-  const [hasDoiFilter, setHasDoiFilter] = useState<boolean | null>(null)
-  const [inSystemFilter, setInSystemFilter] = useState<boolean | null>(null)
-  const [minCitations, setMinCitations] = useState<number>(0)
+  const [hasDoiFilter, _setHasDoiFilter] = useState<boolean | null>(null)
+  const [inSystemFilter, _setInSystemFilter] = useState<boolean | null>(null)
+  const [minCitations, _setMinCitations] = useState<number>(0)
   
   // Dialogs
   const [showBibtexDialog, setShowBibtexDialog] = useState(false)

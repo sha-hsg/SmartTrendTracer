@@ -503,7 +503,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
       const images: Array<{url: string; filename: string}> = []
 
       // Extract image URLs and replace with relative paths
-      processedMarkdown = processedMarkdown.replace(imageRegex, (match, alt, url) => {
+      processedMarkdown = processedMarkdown.replace(imageRegex, (_match, alt, url) => {
         const imagePath = url.split('/').pop()
         const relativeImagePath = `images/${imagePath}`
         images.push({url, filename: imagePath})

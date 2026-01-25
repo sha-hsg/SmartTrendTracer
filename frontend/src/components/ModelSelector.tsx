@@ -62,7 +62,7 @@ export default function ModelSelector({
   const availableModels = React.useMemo(() => {
     if (filterByTask && task) {
       const preset = MODEL_PRESETS[task]
-      const relevantValues = [preset.default, ...preset.alternatives]
+      const relevantValues: string[] = [preset.default, ...preset.alternatives]
       return AVAILABLE_MODELS.filter(m => relevantValues.includes(m.value))
     }
     return AVAILABLE_MODELS

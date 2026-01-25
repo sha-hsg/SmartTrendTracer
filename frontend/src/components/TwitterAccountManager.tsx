@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, RefreshCw, Search, Users, ToggleLeft, ToggleRight, Trash2, Edit2, ChevronDown, ChevronUp, ExternalLink, Activity, Clock, TrendingUp, BarChart3, Calendar, AlertTriangle, CheckCircle, XCircle, Zap, Download, Loader2, MinusCircle, AlertCircle, CircleDashed } from 'lucide-react';
 import axios from 'axios';
 
@@ -1291,25 +1291,21 @@ export default function TwitterAccountManager() {
                     const accountStats = stats?.accounts.find(a => a.id === account.id);
                     if (!accountStats) return <span className="text-gray-400">-</span>;
 
-                    const { check_status, minutes_since_check, tweets_in_last_check, is_overdue, last_error } = accountStats;
+                    const { check_status, minutes_since_check, tweets_in_last_check, is_overdue, last_error: _last_error } = accountStats;
 
                     // Determine icon and color based on status
                     let StatusIcon = CircleDashed;
                     let statusColor = 'text-gray-400';
-                    let statusTitle = 'Never checked';
 
                     if (check_status === 'success') {
                       StatusIcon = CheckCircle;
                       statusColor = 'text-green-500';
-                      statusTitle = `${tweets_in_last_check} new tweet${tweets_in_last_check !== 1 ? 's' : ''}`;
                     } else if (check_status === 'no_new_tweets') {
                       StatusIcon = MinusCircle;
                       statusColor = is_overdue ? 'text-yellow-500' : 'text-blue-400';
-                      statusTitle = is_overdue ? 'Due for check - no recent activity' : 'No new tweets';
                     } else if (check_status === 'error') {
                       StatusIcon = AlertCircle;
                       statusColor = 'text-red-500';
-                      statusTitle = last_error || 'Error';
                     }
 
                     // Format time
@@ -1326,7 +1322,7 @@ export default function TwitterAccountManager() {
 
                     return (
                       <div className="flex items-center gap-2">
-                        <StatusIcon className={`w-4 h-4 ${statusColor}`} title={statusTitle} />
+                        <StatusIcon className={`w-4 h-4 ${statusColor}`} />
                         <div>
                           <div className={is_overdue ? 'text-yellow-600 font-medium' : 'text-gray-600'}>
                             {timeStr}

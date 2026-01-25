@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, Suspense } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { decodeHtmlEntities } from '@/utils/htmlDecoder'
@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge"
 import { TagBadge } from "@/components/ui/tag-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import ArticleViewerModern from './ArticleViewerModern'
 import ArticleViewerErrorBoundary from './ArticleViewerErrorBoundary'
+
+// Lazy-loaded components for code-splitting (reduces initial bundle size)
+const ArticleViewerModern = React.lazy(() => import('./ArticleViewerModern'))
 import ArticleTagSuggestionModalModern from './ArticleTagSuggestionModalModern'
 import ArticleImportModal from './ArticleImportModal'
 import ArticleImportEnhancedModal from './ArticleImportEnhancedModal'
@@ -109,7 +111,7 @@ export default function FacetedSubstackDashboardModern() {
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null)
   const [selectedArticleForTags, setSelectedArticleForTags] = useState<Article | null>(null)
   const [showAllTags, setShowAllTags] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, _setViewMode] = useState<'grid' | 'list'>('grid')
   const [addingTagForArticle, setAddingTagForArticle] = useState<string | null>(null)
   const [newTag, setNewTag] = useState('')
   const [showImportModal, setShowImportModal] = useState(false)
@@ -141,41 +143,42 @@ export default function FacetedSubstackDashboardModern() {
     }
   }, [])
 
-  // Listen for article viewer close to refresh article data
-  useEffect(() => {
-    const handleViewerClosed = async (event: CustomEvent) => {
-      const { articleId } = event.detail
-      console.log('🟠 articleViewerClosed event received for:', articleId)
+  // Handler for article viewer close - extracted to useCallback for stable reference
+  const handleViewerClosed = useCallback(async (event: CustomEvent) => {
+    const { articleId } = event.detail
+    console.log('🟠 articleViewerClosed event received for:', articleId)
 
-      try {
-        const response = await axios.get(`http://localhost:8000/api/articles/${articleId}`)
-        const updatedArticle = response.data
-        console.log('🟠 Fetched updated article:', {
-          snippet_count: updatedArticle.snippets?.length,
-          has_summary: !!updatedArticle.summary
-        })
+    try {
+      const response = await axios.get(`http://localhost:8000/api/articles/${articleId}`)
+      const updatedArticle = response.data
+      console.log('🟠 Fetched updated article:', {
+        snippet_count: updatedArticle.snippets?.length,
+        has_summary: !!updatedArticle.summary
+      })
 
-        setArticles(prev => prev.map(article =>
-          article.id === articleId
-            ? {
-                ...article,
-                concepts: updatedArticle.concepts,
-                snippet_count: updatedArticle.snippets?.length || 0,
-                summary: updatedArticle.summary,
-                has_summary: !!updatedArticle.summary
-              }
-            : article
-        ))
-      } catch (error) {
-        console.error('🟠 Error fetching updated article:', error)
-      }
-    }
-
-    window.addEventListener('articleViewerClosed', handleViewerClosed as EventListener)
-    return () => {
-      window.removeEventListener('articleViewerClosed', handleViewerClosed as EventListener)
+      setArticles(prev => prev.map(article =>
+        article.id === articleId
+          ? {
+              ...article,
+              concepts: updatedArticle.concepts,
+              snippet_count: updatedArticle.snippets?.length || 0,
+              summary: updatedArticle.summary,
+              has_summary: !!updatedArticle.summary
+            }
+          : article
+      ))
+    } catch (error) {
+      console.error('🟠 Error fetching updated article:', error)
     }
   }, [])
+
+  // Listen for article viewer close to refresh article data
+  useEffect(() => {
+    window.addEventListener('articleViewerClosed', handleViewerClosed as unknown as EventListener)
+    return () => {
+      window.removeEventListener('articleViewerClosed', handleViewerClosed as unknown as EventListener)
+    }
+  }, [handleViewerClosed])
 
   const fetchArticles = async () => {
     setLoading(true)
@@ -347,7 +350,7 @@ export default function FacetedSubstackDashboardModern() {
                 <Sparkles className="h-3 w-3 text-purple-600" />
               </Badge>
             )}
-            {article.snippet_count > 0 && (
+            {(article.snippet_count ?? 0) > 0 && (
               <Badge variant="outline" className="border-blue-200 bg-blue-50" title={`${article.snippet_count} snippet${article.snippet_count !== 1 ? 's' : ''}`}>
                 <MessageSquare className="h-3 w-3 text-blue-600 mr-1" />
                 {article.snippet_count}
@@ -895,16 +898,25 @@ export default function FacetedSubstackDashboardModern() {
         </div>
       </div>
 
-      {/* Article Viewer Modal */}
+      {/* Article Viewer Modal - Lazy loaded for code splitting */}
       {selectedArticleId && (
         <ArticleViewerErrorBoundary>
-          <ArticleViewerModern
-            articleId={selectedArticleId}
-            onClose={() => {
-              // Article data update handled by articleViewerClosed event
-              setSelectedArticleId(null)
-            }}
-          />
+          <Suspense fallback={
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-8 flex items-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <span className="ml-2 text-gray-600">Loading Article Viewer...</span>
+              </div>
+            </div>
+          }>
+            <ArticleViewerModern
+              articleId={selectedArticleId}
+              onClose={() => {
+                // Article data update handled by articleViewerClosed event
+                setSelectedArticleId(null)
+              }}
+            />
+          </Suspense>
         </ArticleViewerErrorBoundary>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { TagBadge } from "@/components/ui/tag-badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import ArticleViewerModern from './ArticleViewerModern'
 import ArticleViewerErrorBoundary from './ArticleViewerErrorBoundary'
+
+// Lazy-loaded components for code-splitting (reduces initial bundle size)
+const ArticleViewerModern = React.lazy(() => import('./ArticleViewerModern'))
 import ArticleImportModal from './ArticleImportModal'
 import ArticleImportEnhancedModal from './ArticleImportEnhancedModal'
 import AuthorManagementModal from './AuthorManagementModal'
@@ -851,22 +853,31 @@ export default function FacetedArticlesDashboardModern() {
         </div>
       </div>
 
-      {/* Article Viewer Modal */}
+      {/* Article Viewer Modal - Lazy loaded for code splitting */}
       {showViewer && selectedArticle && (
-        <ArticleViewerErrorBoundary 
+        <ArticleViewerErrorBoundary
           onClose={() => {
             setShowViewer(false)
             setSelectedArticle(null)
           }}
         >
-          <ArticleViewerModern
-            articleId={selectedArticle?.id}
-            onClose={() => {
-              setShowViewer(false)
-              setSelectedArticle(null)
-            }}
-            onArticleUpdated={handleRefreshArticles}
-          />
+          <Suspense fallback={
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-8 flex items-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <span className="ml-2 text-gray-600">Loading Article Viewer...</span>
+              </div>
+            </div>
+          }>
+            <ArticleViewerModern
+              articleId={selectedArticle?.id}
+              onClose={() => {
+                setShowViewer(false)
+                setSelectedArticle(null)
+              }}
+              onArticleUpdated={handleRefreshArticles}
+            />
+          </Suspense>
         </ArticleViewerErrorBoundary>
       )}
 

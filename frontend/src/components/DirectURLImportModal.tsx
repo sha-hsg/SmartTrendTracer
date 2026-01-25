@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 import { X, Globe, AlertCircle, CheckCircle, Loader2, FileText, Download } from 'lucide-react'
 
@@ -13,7 +13,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
   const [title, setTitle] = useState('')
   const [authors, setAuthors] = useState('')
   const [tags, setTags] = useState('')
-  const [isValidating, setIsValidating] = useState(false)
+  const [_isValidating, _setIsValidating] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -29,7 +29,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
 
     // Basic URL validation
     try {
-      const urlObj = new URL(url)
+      new URL(url) // Validate URL format
       // Check if it's a PDF URL
       if (!url.toLowerCase().endsWith('.pdf')) {
         setError('URL must point directly to a PDF file')

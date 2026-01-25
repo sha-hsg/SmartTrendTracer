@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -99,16 +99,16 @@ export default function TwitterMediaGalleryModern() {
   const [pageSize] = useState(20)
   const [mediaType, setMediaType] = useState<string>('all')
   const [author, setAuthor] = useState<string>('all')
-  const [tag, setTag] = useState<string>('')
+  const [tag, _setTag] = useState<string>('')
   const [search, setSearch] = useState<string>('')
   const [days, setDays] = useState(7)
   const [sortBy, setSortBy] = useState<string>('date_desc')
-  const [total, setTotal] = useState(0)
+  const [_total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   
   // View mode
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [gridColumns, setGridColumns] = useState(4)
+  const [gridColumns, _setGridColumns] = useState(4)
   const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set())
 
   useEffect(() => {

@@ -51,7 +51,7 @@ interface PaperTagSuggestionModalProps {
   paper: any
   isOpen: boolean
   onClose: () => void
-  onTagsUpdated: () => void
+  onTagsUpdated: (updatedTags?: string[]) => void
 }
 
 export default function PaperTagSuggestionModal({
@@ -65,7 +65,7 @@ export default function PaperTagSuggestionModal({
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set())
   const [applying, setApplying] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [existingTags, setExistingTags] = useState<string[]>([])
+  const [_existingTags, setExistingTags] = useState<string[]>([])
   const [abortController, setAbortController] = useState<AbortController | null>(null)
   const [selectedModel, setSelectedModel] = useState<string>('')
   const [showModelSelector, setShowModelSelector] = useState(true)
@@ -196,28 +196,13 @@ export default function PaperTagSuggestionModal({
         })
       }
       
-      // Get updated tags from the server
-      const response = await axios.get(`http://localhost:8000/api/papers/${paper.id}`)
-      const updatedTags = response.data.tags || []
-      
-      onTagsUpdated(updatedTags)
+      onTagsUpdated()
       onClose()
     } catch (error: any) {
       console.error('Error applying tags:', error)
       setError('Failed to apply tags. Please try again.')
     } finally {
       setApplying(false)
-    }
-  }
-
-  const removeTag = async (tag: string) => {
-    try {
-      await axios.delete(`http://localhost:8000/api/papers/${paper.id}/tags/${encodeURIComponent(tag)}`)
-      const newTags = existingTags.filter(t => t !== tag)
-      setExistingTags(newTags)
-      onTagsUpdated(newTags)
-    } catch (error) {
-      console.error('Error removing tag:', error)
     }
   }
 
@@ -335,7 +320,7 @@ export default function PaperTagSuggestionModal({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-3" role="group" aria-label="Existing tag suggestions">
-                      {suggestions.existing_suggestions.map((suggestion, index) => {
+                      {suggestions.existing_suggestions.map((suggestion, _index) => {
                         const displayName = suggestion.display_name || suggestion.tag || ''
                         const isSelected = selectedTags.has(displayName)
                         const usageCount = suggestion.usage_count || 0
@@ -398,7 +383,7 @@ export default function PaperTagSuggestionModal({
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-3" role="group" aria-label="AI-generated tag suggestions">
-                      {suggestions.new_suggestions.map((suggestion, index) => {
+                      {suggestions.new_suggestions.map((suggestion, _index) => {
                         const displayName = suggestion.display_name || suggestion.tag || ''
                         const isSelected = selectedTags.has(displayName)
                         
@@ -473,7 +458,7 @@ export default function PaperTagSuggestionModal({
                 <X className="h-12 w-12 text-red-500 mx-auto mb-3" />
                 <p className="text-sm text-red-600">{error}</p>
                 <Button
-                  onClick={fetchSuggestions}
+                  onClick={() => fetchSuggestions()}
                   variant="outline"
                   size="sm"
                   className="mt-4"

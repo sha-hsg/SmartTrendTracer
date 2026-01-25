@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -312,7 +312,7 @@ export default function TrendAnalysisModern() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                     outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
@@ -429,7 +429,7 @@ export default function TrendAnalysisModern() {
 
                 <ScrollArea className="h-[200px] mt-4">
                   <div className="space-y-2">
-                    {trendData.concept_velocity.map((concept, index) => (
+                    {trendData.concept_velocity.map((concept, _index) => (
                       <div
                         key={concept.concept_id}
                         className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50 transition-colors"

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
   Dialog,
@@ -18,9 +18,6 @@ import {
   Loader2,
   Check,
   X,
-  TrendingUp,
-  Lightbulb,
-  Target,
   Zap,
   Brain
 } from 'lucide-react'
@@ -184,21 +181,6 @@ export default function TagSuggestionModalModern({
     }
     
     setApplying(false)
-  }
-
-  const getScoreColor = (score?: number) => {
-    if (!score) return 'text-gray-500'
-    if (score >= 0.8) return 'text-green-600'
-    if (score >= 0.6) return 'text-blue-600'
-    if (score >= 0.4) return 'text-yellow-600'
-    return 'text-gray-500'
-  }
-
-  const getScoreIcon = (score?: number) => {
-    if (!score) return null
-    if (score >= 0.8) return <Target className="h-3 w-3" />
-    if (score >= 0.6) return <TrendingUp className="h-3 w-3" />
-    return <Lightbulb className="h-3 w-3" />
   }
 
   return (

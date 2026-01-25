@@ -27,24 +27,33 @@ export interface Tweet {
   text: string;
   author_id: string;
   author_username: string;
+  author_name?: string;
   author_profile_image_url?: string;  // Profile image from twitter_accounts
   created_at: string;
-  metrics: {
+  is_retweet?: boolean;
+  metrics?: {
     likes: number;
     retweets: number;
     replies: number;
     quotes?: number;
+    // Alternative API field names
+    like_count?: number;
+    retweet_count?: number;
+    reply_count?: number;
+    quote_count?: number;
   };
-  media: TweetMedia[];
+  media?: TweetMedia[];
   concepts?: Concept[];      // Full concept objects
   concept_ids?: string[];    // Just concept IDs (when not expanded)
+  tags?: any;                // Legacy tag support
 }
 
 export interface TweetMedia {
-  media_key: string;
-  type: 'photo' | 'video' | 'animated_gif';
+  media_key?: string;
+  type: string;
   url: string;
   preview_image_url?: string;
+  thumbnail_url?: string;  // Alternative name for preview
   alt_text?: string;
   width?: number;
   height?: number;

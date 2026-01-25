@@ -72,7 +72,7 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete 
     setFiles(prev => [...prev, ...uploadFiles])
     
     // Upload each file
-    const uploadPromises = newFiles.map(async (file, index) => {
+    const uploadPromises = newFiles.map(async (file, _index) => {
       const formData = new FormData()
       formData.append('file', file)
       
@@ -84,7 +84,7 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete 
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              setFiles(prev => prev.map((f, i) => 
+              setFiles(prev => prev.map((f, _i) => 
                 f.file === file ? { ...f, progress } : f
               ))
             }

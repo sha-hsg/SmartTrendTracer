@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import OntologyAISuggestions from './OntologyAISuggestions'
 import TagReorganizer from './TagReorganizer'
@@ -132,7 +132,7 @@ function TagOntologyEditor() {
     }
   }
 
-  const removeSynonym = async (synonym: string) => {
+  const removeSynonym = async (_synonym: string) => {
     // This would need an endpoint to remove synonyms by name
     alert('Remove synonym functionality not yet implemented')
   }

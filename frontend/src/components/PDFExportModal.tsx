@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './PDFExportModal.css'
 
@@ -56,7 +56,7 @@ function PDFExportModal({ isOpen, onClose, selectedArticles = [], authorId, tag 
   const fetchTags = async () => {
     try {
       const response = await axios.get('http://localhost:8000/api/tags')
-      const uniqueTags = [...new Set(response.data.map((t: any) => t.tag))]
+      const uniqueTags = [...new Set(response.data.map((t: any) => t.tag))] as string[]
       setAvailableTags(uniqueTags.sort())
     } catch (error) {
       console.error('Error fetching tags:', error)

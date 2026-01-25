@@ -130,13 +130,13 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
           `http://localhost:8000/api/analytics/trends/timeline?days=${timeRange}`
         )
         trendsData = trendResponse.data
-        setTrendData(trendsData)
+        if (trendsData) setTrendData(trendsData)
 
         const tagResponse = await axios.get(
           `http://localhost:8000/api/analytics/trends/tags?days=${timeRange}`
         )
         tagsData = tagResponse.data
-        setTagData(tagsData)
+        if (tagsData) setTagData(tagsData)
       }
 
       // Generate quick insights

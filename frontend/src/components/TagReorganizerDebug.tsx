@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import axios from 'axios'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -24,13 +24,13 @@ import {
 } from 'lucide-react'
 
 interface TaskUpdate {
-  task_id: string
-  mode: string
+  task_id?: string
+  mode?: string
   status: string
-  progress: number
-  current_step: string
+  progress?: number
+  current_step?: string
   messages: { time: string; text: string }[]
-  elapsed_seconds: number
+  elapsed_seconds?: number
   debug_prompt?: string
   debug_prompt_full_size?: number
 }
@@ -372,7 +372,7 @@ export default function TagReorganizerDebug() {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              Elapsed: {Math.round(taskStatus.elapsed_seconds)}s
+              Elapsed: {Math.round(taskStatus.elapsed_seconds ?? 0)}s
             </div>
             
             {/* Messages Log */}

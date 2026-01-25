@@ -261,7 +261,7 @@ export function getModelByValue(value: string): ModelOption | undefined {
  */
 export function getModelsForTask(task: keyof typeof MODEL_PRESETS): ModelOption[] {
   const preset = MODEL_PRESETS[task]
-  const relevantValues = [preset.default, ...preset.alternatives]
+  const relevantValues: string[] = [preset.default, ...preset.alternatives]
   return AVAILABLE_MODELS.filter(m => relevantValues.includes(m.value))
 }
 

@@ -7,15 +7,15 @@ interface ProcessingTimerProps {
   estimatedMinutes?: number
   onCheckStatus?: () => Promise<boolean>
   onCancel?: () => void
-  paperId?: number
+  paperId?: string | number
 }
 
-export const ProcessingTimer: React.FC<ProcessingTimerProps> = ({ 
-  startTime = new Date(), 
+export const ProcessingTimer: React.FC<ProcessingTimerProps> = ({
+  startTime = new Date(),
   estimatedMinutes = 10,  // Changed to 10 minutes as Marker can take longer
   onCheckStatus,
   onCancel,
-  paperId 
+  paperId: _paperId
 }) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
@@ -53,8 +53,7 @@ export const ProcessingTimer: React.FC<ProcessingTimerProps> = ({
 
   const getEstimateMessage = (): string => {
     const estimatedSeconds = estimatedMinutes * 60
-    const percentComplete = Math.min(100, Math.floor((elapsedSeconds / estimatedSeconds) * 100))
-    
+
     if (elapsedSeconds < 60) {
       return `Just started... Marker processing with LLM can take up to ${estimatedMinutes} minutes`
     } else if (elapsedSeconds < estimatedSeconds * 0.5) {

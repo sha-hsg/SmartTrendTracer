@@ -32,12 +32,12 @@ interface TweetCardProps {
   onSuggestConcepts?: (tweet: Tweet) => void
 }
 
-export default function TweetCardModern({ 
-  tweet, 
-  onConceptAdded, 
-  onConceptRemoved, 
-  onTweetClick, 
-  onSuggestConcepts 
+const TweetCardModern = React.memo(function TweetCardModern({
+  tweet,
+  onConceptAdded,
+  onConceptRemoved,
+  onTweetClick,
+  onSuggestConcepts
 }: TweetCardProps) {
   const [isAddingConcept, setIsAddingConcept] = useState(false)
   const [newConceptText, setNewConceptText] = useState('')
@@ -162,22 +162,7 @@ export default function TweetCardModern({
     })
   }
 
-  const getConceptVariant = (concept: Concept) => {
-    // Determine badge variant based on entity type or other properties
-    if (concept.auto_generated) return 'secondary'
-    
-    switch(concept.entity_type) {
-      case 'person': return 'default'
-      case 'organisation': return 'success'
-      case 'location': return 'warning'
-      case 'event': return 'destructive'
-      case 'product': return 'outline'
-      case 'topic':
-      default: return 'default'
-    }
-  }
-
-  const getConceptBadgeStyle = (concept: Concept) => {
+  const getConceptBadgeStyle = (_concept: Concept) => {
     // Default: light-blue background with dark-blue text
     return {
       backgroundColor: '#DBEAFE', // light blue (blue-100)
@@ -197,8 +182,8 @@ export default function TweetCardModern({
     }
   }, [contextMenu, showConceptCreationForm])
 
-  const hasVisibleMedia = tweet.media.length > 0 && 
-    tweet.media.some((_, index) => !brokenImages.has(index))
+  const hasVisibleMedia = (tweet.media?.length ?? 0) > 0 &&
+    tweet.media?.some((_, index) => !brokenImages.has(index))
 
   // Get concepts for display
   const concepts = tweet.concepts || []
@@ -252,7 +237,7 @@ export default function TweetCardModern({
             {decodeHtmlEntities(tweet.text)}
           </div>
 
-          {hasVisibleMedia && (
+          {hasVisibleMedia && tweet.media && (
             <div className="mt-3 grid grid-cols-2 gap-2">
               {tweet.media.map((media, index) => (
                 !brokenImages.has(index) && (
@@ -580,4 +565,6 @@ export default function TweetCardModern({
       )}
     </>
   )
-}
+})
+
+export default TweetCardModern

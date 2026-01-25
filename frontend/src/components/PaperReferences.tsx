@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { 
   BookOpen, 
@@ -28,11 +28,11 @@ interface Reference {
 }
 
 interface PaperReferencesProps {
-  paperId: number
+  paperId: string | number
   paperTitle?: string
 }
 
-export default function PaperReferences({ paperId, paperTitle }: PaperReferencesProps) {
+export default function PaperReferences({ paperId, paperTitle: _paperTitle }: PaperReferencesProps) {
   const [references, setReferences] = useState<Reference[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

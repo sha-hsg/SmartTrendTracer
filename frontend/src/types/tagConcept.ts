@@ -64,6 +64,7 @@ export interface TagConcept {
   icon?: string;                 // Optional emoji icon
   color?: string;                // Optional hex color code
   usage_count: number;           // Total usage across content
+  concept_id?: string;           // Self-reference for compatibility with TagWithConcept
   created_at: string;            // ISO timestamp
   updated_at: string;            // ISO timestamp
 }
@@ -117,6 +118,7 @@ export interface TagWithConcept {
   icon?: string;                 // Icon if available
   color?: string;                // Color if available
   tag_type: string;              // Tag type (manual, ai, etc.)
+  usage_count?: number;          // Usage count if available
 }
 
 /**
@@ -226,11 +228,6 @@ export function getEntityTypeConfig(entityType?: EntityType): { color: string; i
  * Helper function to format display name
  */
 export function formatTagDisplay(tag: TagWithConcept | TagConcept): string {
-  if ('display_name' in tag) {
-    return tag.display_name;
-  }
-  if ('original_text' in tag) {
-    return tag.original_text;
-  }
-  return 'Unknown Tag';
+  // Both TagWithConcept and TagConcept have display_name
+  return tag.display_name || 'Unknown Tag';
 }

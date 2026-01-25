@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -544,7 +544,7 @@ export default function TrendAnalysisOverview() {
             <CardContent>
               <ScrollArea className="h-[600px]">
                 <div className="space-y-3">
-                  {velocityLeaders.map((concept, idx) => (
+                  {velocityLeaders.map((concept, _idx) => (
                     <Card key={concept.concept_id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -577,7 +577,7 @@ export default function TrendAnalysisOverview() {
                               <TrendingDown className="h-6 w-6 text-red-500" />
                             )}
                             <span className="text-2xl font-bold">
-                              {concept.velocity_percent > 0 ? '+' : ''}{concept.velocity_percent?.toFixed(0)}%
+                              {(concept.velocity_percent ?? 0) > 0 ? '+' : ''}{concept.velocity_percent?.toFixed(0)}%
                             </span>
                           </div>
                           <div className="text-sm text-gray-500">velocity</div>

@@ -45,7 +45,7 @@ interface PDFViewerModernProps {
 
 const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
   pdfUrl,
-  paperId,
+  // paperId is in props for interface compatibility but not currently used inside component
   onTextSelect,
   onTagCreate,
   className
@@ -54,7 +54,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
   const [pageNumber, setPageNumber] = useState(1)
   const [scale, setScale] = useState(1.0)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [_loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pageInput, setPageInput] = useState('1')
   const [selectedText, setSelectedText] = useState('')
@@ -188,7 +188,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
 
   // Close context menu on click outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (_e: MouseEvent) => {
       if (showContextMenu) {
         setShowContextMenu(false)
       }

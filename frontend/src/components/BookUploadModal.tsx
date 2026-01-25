@@ -179,7 +179,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
       if (subjectAreas.trim()) formData.append('subject_areas', subjectAreas.trim())
       if (language) formData.append('language', language)
 
-      const response = await axios.post('/api/books/upload', formData, {
+      await axios.post('/api/books/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

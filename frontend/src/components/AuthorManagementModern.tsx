@@ -74,7 +74,7 @@ const AuthorManagementModern: React.FC = () => {
   const [totalAuthors, setTotalAuthors] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, _setPageSize] = useState(50)
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortField, setSortField] = useState<SortField>('article_count')

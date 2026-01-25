@@ -39,7 +39,7 @@ function OntologyAISuggestions({ onProposalApplied, onClose }: OntologyAISuggest
   const [applyingBulk, setApplyingBulk] = useState(false)
 
   const [bulkLimit, setBulkLimit] = React.useState(100)  // Default to 100 tags
-  const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [_showResetConfirm, setShowResetConfirm] = useState(false)
 
   const fetchUncategorizedTags = async () => {
     try {
@@ -47,23 +47,6 @@ function OntologyAISuggestions({ onProposalApplied, onClose }: OntologyAISuggest
       setUncategorizedTags(response.data.tags)
     } catch (error) {
       console.error('Error fetching uncategorized tags:', error)
-    }
-  }
-
-  const resetProcessedTags = async () => {
-    try {
-      const response = await axios.post('http://localhost:8000/api/ontology/ai/reset-processed')
-      if (response.data.success) {
-        alert('Processed tags list has been reset. You can now re-process all tags.')
-        setShowResetConfirm(false)
-        // Refresh uncategorized tags
-        fetchUncategorizedTags()
-      } else {
-        alert(`Failed to reset: ${response.data.message}`)
-      }
-    } catch (error) {
-      console.error('Error resetting processed tags:', error)
-      alert('Failed to reset processed tags')
     }
   }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,7 +29,8 @@ import {
   Check,
   Settings,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Copy
 } from 'lucide-react'
 
 interface SummaryData {
@@ -95,6 +96,16 @@ export default function SummarizationModern() {
     return saved ? parseInt(saved, 10) : 50
   })
   const [showSettings, setShowSettings] = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  // Copy summary to clipboard
+  const copyToClipboard = async () => {
+    if (summaryData?.summary) {
+      await navigator.clipboard.writeText(summaryData.summary)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   // Save limits to localStorage when they change
   useEffect(() => {
@@ -715,11 +726,22 @@ export default function SummarizationModern() {
                   <Sparkles className="h-5 w-5" />
                   AI Summary
                 </CardTitle>
-                {summaryData.model_used && (
-                  <Badge variant="outline" className="font-mono text-xs">
-                    {getModelIcon(summaryData.model_used)} {summaryData.model_used}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2">
+                  {summaryData.model_used && (
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {getModelIcon(summaryData.model_used)} {summaryData.model_used}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyToClipboard}
+                    className="h-8 w-8 p-0"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -750,8 +772,9 @@ export default function SummarizationModern() {
                         {children}
                       </blockquote>
                     ),
-                    code: ({inline, children}) => {
-                      if (inline) {
+                    code: ({className, children}) => {
+                      const isInline = !className?.includes('language-');
+                      if (isInline) {
                         return <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">{children}</code>;
                       }
                       return (

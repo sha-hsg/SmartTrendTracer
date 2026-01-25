@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { FileCode, Download, Copy, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,11 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface TEIViewerProps {
-  paperId: number
+  paperId: string | number
   paperTitle?: string
 }
 
-export default function TEIViewer({ paperId, paperTitle }: TEIViewerProps) {
+export default function TEIViewer({ paperId, paperTitle: _paperTitle }: TEIViewerProps) {
   const [teiXml, setTeiXml] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

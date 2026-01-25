@@ -11,8 +11,6 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 class ConceptService {
   private conceptCache: Map<string, Concept> = new Map();
   private conceptsBySlug: Map<string, Concept> = new Map();
-  private lastFetchTime: number = 0;
-  private CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
   /**
    * Get a concept by ID, with caching
@@ -188,7 +186,6 @@ class ConceptService {
   clearCache() {
     this.conceptCache.clear();
     this.conceptsBySlug.clear();
-    this.lastFetchTime = 0;
   }
 
   /**

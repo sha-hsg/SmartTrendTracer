@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -174,7 +174,7 @@ export default function ConceptManagementCenter() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [_importDialogOpen, setImportDialogOpen] = useState(false)
   const [reorganizerDialogOpen, setReorganizerDialogOpen] = useState(false)
   
   // Form state
@@ -523,7 +523,9 @@ export default function ConceptManagementCenter() {
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          setFormData(selectedConcept)
+                          // Extract only Concept properties, excluding ConceptTreeNode-specific children
+                          const { children: _children, ...conceptData } = selectedConcept
+                          setFormData(conceptData)
                           setEditDialogOpen(true)
                         }}
                       >

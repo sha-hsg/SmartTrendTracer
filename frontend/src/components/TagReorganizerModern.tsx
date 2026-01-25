@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -250,7 +250,7 @@ export default function TagReorganizerModern() {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                toggleApproval(node.name)
+                toggleApproval(node.name || node.slug)
               }}
               className="ml-2 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
             >

@@ -70,7 +70,7 @@ const OntologyGraph: React.FC = () => {
   const [showOrphans, setShowOrphans] = useState(true);
   const [showSynonyms, setShowSynonyms] = useState(true);
   const [minUsage, setMinUsage] = useState(0);
-  const [highlightNeighbors, setHighlightNeighbors] = useState(true);
+  const [highlightNeighbors, _setHighlightNeighbors] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [layoutType, setLayoutType] = useState<'force' | 'elk'>('elk');
@@ -100,7 +100,6 @@ const OntologyGraph: React.FC = () => {
     };
 
     // Find root nodes (nodes without parents)
-    const nodeMap = new Map(data.nodes.map(n => [n.id, n]));
     const childIds = new Set(data.links
       .filter(l => l.type === 'parent-child')
       .map(l => l.target));
@@ -287,9 +286,9 @@ const OntologyGraph: React.FC = () => {
     }
   }, [layoutType]);
 
-  const handleNodeHover = useCallback((node: GraphNode | null) => {
+  const handleNodeHover = useCallback((_node: GraphNode | null) => {
     if (!highlightNeighbors || !graphRef.current) return;
-    
+
     // Highlight logic would go here
     // This would highlight connected nodes
   }, [highlightNeighbors]);
@@ -636,7 +635,7 @@ const OntologyGraph: React.FC = () => {
             onNodeClick={handleNodeClick}
             onNodeHover={handleNodeHover}
             enableNodeDrag={true}
-            enableZoomPanInteraction={true}
+            enableZoomInteraction={true}
             cooldownTicks={100}
             onEngineStop={() => graphRef.current?.zoomToFit(400)}
           />

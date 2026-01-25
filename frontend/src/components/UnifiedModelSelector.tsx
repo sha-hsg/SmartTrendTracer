@@ -13,7 +13,7 @@
  * - Compact inline design for use in modals/forms
  */
 
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
@@ -69,7 +69,7 @@ export default function UnifiedModelSelector({
   value,
   onValueChange,
   label,
-  description,
+  description: _description,
   userId = 'default',
   disabled = false,
   className = '',

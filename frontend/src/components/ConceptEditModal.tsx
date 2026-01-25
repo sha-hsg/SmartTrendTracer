@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
   Dialog,
@@ -276,7 +276,7 @@ export default function ConceptEditModal({
             </div>
 
             {/* Info about relationships */}
-            {(concept.parents?.length > 0 || concept.children?.length > 0) && (
+            {((concept.parents?.length ?? 0) > 0 || (concept.children?.length ?? 0) > 0) && (
               <div className="p-3 bg-blue-50 rounded-lg">
                 <div className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-blue-600 mt-0.5" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -308,7 +308,7 @@ export default function ConceptGraph() {
         <Card className="lg:col-span-3">
           <CardContent className="p-0">
             <div className="border rounded-lg" style={{ height: '600px' }}>
-              <ForceGraph2D
+                <ForceGraph2D
                 ref={fgRef}
                 graphData={graphData}
                 nodeLabel={showLabels ? 'name' : undefined}
@@ -317,7 +317,7 @@ export default function ConceptGraph() {
                 nodeVal={(node: any) => node.size * nodeSize[0]}
                 linkDirectionalParticles={2}
                 linkDirectionalParticleSpeed={0.005}
-                linkDistance={linkDistance[0]}
+                // Note: linkDistance is set via d3Force('link').distance()
                 onNodeClick={handleNodeClick}
                 onNodeHover={handleNodeHover}
                 nodeCanvasObject={(node: any, ctx, globalScale) => {

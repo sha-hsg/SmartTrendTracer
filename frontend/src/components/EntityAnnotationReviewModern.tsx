@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -280,7 +280,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     })
   }
 
-  const saveEntityEdit = (entityId: string) => {
+  const saveEntityEdit = (_entityId: string) => {
     setEditingEntity(null)
     // The edited values will be used when accepting the entity
   }

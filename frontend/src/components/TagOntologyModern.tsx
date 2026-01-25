@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,6 +86,8 @@ interface TagConcept {
 
 interface ConceptDetails {
   id: string  // v2 uses string IDs
+  _id?: string  // MongoDB _id
+  slug?: string  // Concept slug
   tag: string
   display_name: string
   description: string | null
@@ -124,6 +126,10 @@ interface ConceptDetails {
     paper_count: number
     total_count: number
   }
+  created_at?: string
+  created_by?: string
+  auto_generated?: boolean
+  original_tag_text?: string
 }
 
 export default function TagOntologyModern() {
@@ -131,7 +137,7 @@ export default function TagOntologyModern() {
   const [selectedConcept, setSelectedConcept] = useState<ConceptDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [editMode, setEditMode] = useState(false)
-  const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set())
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
   const [showAI, setShowAI] = useState(false)
   const [showReorganizer, setShowReorganizer] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
@@ -239,7 +245,7 @@ export default function TagOntologyModern() {
     }
   }
 
-  const deleteConcept = async (conceptId: number) => {
+  const deleteConcept = async (conceptId: string) => {
     if (!confirm('Are you sure you want to delete this concept?')) return
     
     setActionLoading(true)
@@ -273,7 +279,7 @@ export default function TagOntologyModern() {
     }
   }
 
-  const toggleNode = (nodeId: number) => {
+  const toggleNode = (nodeId: string) => {
     const newExpanded = new Set(expandedNodes)
     if (newExpanded.has(nodeId)) {
       newExpanded.delete(nodeId)
@@ -363,7 +369,7 @@ export default function TagOntologyModern() {
     }
   }
 
-  const renderTreeNode = (node: TagConcept, level: number = 0, isLast: boolean = false, parentPath: string = "") => {
+  const renderTreeNode = (node: TagConcept, level: number = 0, _isLast: boolean = false, parentPath: string = "") => {
     const isExpanded = expandedNodes.has(node.id)
     const hasChildren = node.children && node.children.length > 0
     const matchesSearch = !searchTerm || 
@@ -568,9 +574,8 @@ export default function TagOntologyModern() {
                       Get AI-powered suggestions for improving your tag hierarchy
                     </DialogDescription>
                   </DialogHeader>
-                  <OntologyAISuggestions 
-                    currentTree={tree}
-                    onApplySuggestion={fetchOntologyTree}
+                  <OntologyAISuggestions
+                    onProposalApplied={fetchOntologyTree}
                   />
                 </DialogContent>
               </Dialog>

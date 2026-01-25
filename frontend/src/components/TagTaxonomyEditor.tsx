@@ -80,7 +80,7 @@ const TagTaxonomyEditor: React.FC = () => {
       setViewMode('proposed');
       
       // Auto-expand root categories
-      const roots = new Set(response.data.root_categories);
+      const roots = new Set<string>(response.data.root_categories);
       setExpandedNodes(roots);
     } catch (error) {
       console.error('Error generating proposal:', error);
@@ -282,7 +282,7 @@ const TagTaxonomyEditor: React.FC = () => {
             )}
             {tagData.co_occurring_tags && tagData.co_occurring_tags.length > 0 && (
               <div className="co-occurring">
-                Often with: {tagData.co_occurring_tags.slice(0, 3).map(t => t.tag).join(', ')}
+                Often with: {tagData.co_occurring_tags.slice(0, 3).map((t: { tag: string }) => t.tag).join(', ')}
               </div>
             )}
           </div>

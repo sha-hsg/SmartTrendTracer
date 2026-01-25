@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -98,9 +98,9 @@ interface UserDetails {
 export default function UserTrendAnalysisModern() {
   const [userTrends, setUserTrends] = useState<UserTrendsResponse | null>(null)
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null)
+  const [_userDetails, setUserDetails] = useState<UserDetails | null>(null)
   const [loading, setLoading] = useState(true)
-  const [loadingDetails, setLoadingDetails] = useState(false)
+  const [_loadingDetails, setLoadingDetails] = useState(false)
   const [timeframe, setTimeframe] = useState(168) // 7 days default
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import {
   Dialog,
@@ -50,7 +50,7 @@ export default function MetadataImportDialog({
   grobidMetadata,
   onImport
 }: MetadataImportDialogProps) {
-  const [currentPaper, setCurrentPaper] = useState<any>(null)
+  const [_currentPaper, setCurrentPaper] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [fields, setFields] = useState<MetadataField[]>([])

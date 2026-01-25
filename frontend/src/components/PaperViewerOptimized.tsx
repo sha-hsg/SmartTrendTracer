@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import ReactDOM from "react-dom";
 import axios from "axios";
 import JSZip from "jszip";
@@ -17,6 +17,11 @@ const HTML_TAG_COMPONENTS = {
   ),
   topic: ({ children, ...props }: any) => (
     <span {...props} className={`italic text-blue-600 ${props.className ?? ""}`.trim()}>{children}</span>
+  ),
+  // Handle unknown/invalid HTML tags that may appear in PDF-extracted content
+  empty: () => null,  // Suppress <empty> tags from PDF extraction
+  figure_caption: ({ children, ...props }: any) => (
+    <figcaption {...props} className="text-sm text-gray-600 mt-2 italic">{children}</figcaption>
   ),
 };
 
@@ -89,12 +94,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import PDFViewerModern from "./PDFViewerModern";
+
+// Lazy-loaded heavy components for code-splitting
+const PDFViewerModern = React.lazy(() => import("./PDFViewerModern"));
 
 // Accessibility and UX enhancement styles
 const focusRingStyles =
   "focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2";
-const touchTargetStyles = "min-h-[44px] min-w-[44px]";
 import { ProcessingTimer } from "./ProcessingTimer";
 import { ProcessingStatusIndicator } from "./ProcessingStatusIndicator";
 import PaperAnalysisPanel from "./PaperAnalysisPanel";
@@ -128,6 +134,8 @@ interface PaperSnippet {
 interface PaperAuthor {
   name: string;
   email?: string;
+  affiliation?: string;
+  affiliation_index?: number;
 }
 
 interface Paper {
@@ -181,6 +189,8 @@ interface Paper {
     grobid_processed_at?: string;
     [key: string]: any;
   };
+  dblp_key?: string;
+  dblp_url?: string;
 }
 
 interface PaperViewerOptimizedProps {
@@ -976,7 +986,7 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
 
   // Close markdown context menu on click outside
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (_e: MouseEvent) => {
       if (showMarkdownContextMenu) {
         setShowMarkdownContextMenu(false);
       }
@@ -1331,7 +1341,7 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
       if (response.data.suggestions && response.data.suggestions.length > 0) {
         setAffiliationSuggestions(response.data.suggestions);
         // Pre-select all suggestions by default
-        const indices = new Set(response.data.suggestions.map((_: any, idx: number) => idx));
+        const indices = new Set<number>(response.data.suggestions.map((_: any, idx: number) => idx));
         setSelectedAffiliations(indices);
         setShowAffiliationDialog(true);
       } else {
@@ -1636,8 +1646,7 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
       if (response.data.success) {
         // Reload paper to get the new sections
         await loadPaperDetails();
-        
-        const sectionsFound = response.data.sections_found;
+
         const extractedCount = response.data.sections_extracted;
         
         // Show success message
@@ -1905,8 +1914,8 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
                 </div>
                 {(() => {
                   // Handle both string and array formats for authors
-                  let authorsList = [];
-                  
+                  let authorsList: Array<PaperAuthor | { name: string; affiliation?: string; affiliation_index?: number }> = [];
+
                   // First check for authors_detailed which contains affiliations
                   if (Array.isArray(paper.authors_detailed) && paper.authors_detailed.length > 0) {
                     // Use the detailed format which includes affiliations
@@ -1920,11 +1929,11 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
                     // Array format - already structured
                     authorsList = paper.authors;
                   }
-                  
+
                   // Check for affiliations in the paper object as fallback
                   const affiliations = paper.affiliations || [];
-                  const affiliationMap = {};
-                  
+                  const affiliationMap: Record<number, string> = {};
+
                   // Create a map of affiliations if they exist
                   if (Array.isArray(affiliations)) {
                     affiliations.forEach((aff, idx) => {
@@ -2862,29 +2871,36 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
               )}
             </div>
 
-            {/* Enhanced PDF Tab with Better Status Feedback */}
+            {/* Enhanced PDF Tab with Better Status Feedback - Lazy loaded */}
             <TabsContent value="pdf" className="flex-1 p-4">
               {pdfAvailable ? (
                 <div className="h-full bg-white rounded-lg border overflow-hidden">
-                  <PDFViewerModern
-                    pdfUrl={`http://localhost:8000/api/papers/${paperId}/pdf`}
-                    paperId={paperId}
-                    onTextSelect={(text, pageNumber) => {
-                      setSelectedText(text);
-                      // Provide visual feedback for text selection
-                      const toast = document.createElement("div");
-                      toast.textContent =
-                        "Text selected - switch to Notes tab to create snippet";
-                      toast.className =
-                        "fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm z-50 shadow-lg";
-                      document.body.appendChild(toast);
-                      setTimeout(() => {
-                        document.body.removeChild(toast);
-                      }, 3000);
-                    }}
-                    onTagCreate={handleCreateTagFromPDF}
-                    className="h-full"
-                  />
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                      <span className="ml-2 text-gray-600">Loading PDF Viewer...</span>
+                    </div>
+                  }>
+                    <PDFViewerModern
+                      pdfUrl={`http://localhost:8000/api/papers/${paperId}/pdf`}
+                      paperId={paperId}
+                      onTextSelect={(text, _pageNumber) => {
+                        setSelectedText(text);
+                        // Provide visual feedback for text selection
+                        const toast = document.createElement("div");
+                        toast.textContent =
+                          "Text selected - switch to Notes tab to create snippet";
+                        toast.className =
+                          "fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm z-50 shadow-lg";
+                        document.body.appendChild(toast);
+                        setTimeout(() => {
+                          document.body.removeChild(toast);
+                        }, 3000);
+                      }}
+                      onTagCreate={handleCreateTagFromPDF}
+                      className="h-full"
+                    />
+                  </Suspense>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full bg-white rounded-lg border">
@@ -4202,9 +4218,9 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
               <div className="h-full overflow-y-auto">
                 <BibTeXViewer
                   bibtex={paper.bibtex}
-                  paperId={paper.id}
+                  paperId={String(paper.id)}
                   title={paper.title}
-                  authors={paper.authors}
+                  authors={typeof paper.authors === 'string' ? paper.authors : paper.authors.map(a => a.name)}
                   year={paper.publication_date ? new Date(paper.publication_date).getFullYear() : undefined}
                   conference={paper.conference}
                   journal={paper.journal}
@@ -4752,16 +4768,18 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
           paper={paper}
           isOpen={showTagModal}
           onClose={() => setShowTagModal(false)}
-          onTagsUpdated={(updatedTags: string[]) => {
+          onTagsUpdated={(updatedTags?: string[]) => {
             // Update tags in local state without reloading entire paper
-            setPaper((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    tags: updatedTags,
-                  }
-                : null,
-            );
+            if (updatedTags) {
+              setPaper((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      tags: updatedTags,
+                    }
+                  : null,
+              );
+            }
 
             // Notify parent component to update the paper tile
             if (onMetadataUpdate) {

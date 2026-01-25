@@ -51,11 +51,11 @@ const ANALYSIS_COLORS: Record<string, string> = {
 
 export const PaperAnalysisViewer: React.FC<PaperAnalysisViewerProps> = ({
   paperId,
-  paperTitle
+  paperTitle: _paperTitle
 }) => {
   const [analyses, setAnalyses] = useState<Analysis[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<Analysis | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [_expandedSections, _setExpandedSections] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -140,16 +140,6 @@ export const PaperAnalysisViewer: React.FC<PaperAnalysisViewerProps> = ({
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const toggleSection = (type: string) => {
-    const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(type)) {
-      newExpanded.delete(type);
-    } else {
-      newExpanded.add(type);
-    }
-    setExpandedSections(newExpanded);
   };
 
   const updateRating = async (analysisId: number, rating: number) => {
@@ -415,8 +405,9 @@ export const PaperAnalysisViewer: React.FC<PaperAnalysisViewerProps> = ({
                       {children}
                     </blockquote>
                   ),
-                  code: ({inline, children}) => {
-                    if (inline) {
+                  code: ({className, children}) => {
+                    const isInline = !className?.includes('language-');
+                    if (isInline) {
                       return <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800">{children}</code>;
                     }
                     return (

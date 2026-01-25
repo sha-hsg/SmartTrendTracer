@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -938,7 +938,7 @@ export default function StatisticsDashboard() {
                           }}
                         />
                         <Bar dataKey="count" fill="#8b5cf6">
-                          {stats.llm_usage.model_distribution.map((entry, index) => (
+                          {stats.llm_usage.model_distribution.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Bar>
@@ -960,12 +960,12 @@ export default function StatisticsDashboard() {
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          label={(entry) => `${entry._id}: ${entry.count}`}
+                          label={(entry: any) => `${entry._id}: ${entry.count}`}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="count"
                         >
-                          {stats.llm_usage.task_distribution.map((entry, index) => (
+                          {stats.llm_usage.task_distribution.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>

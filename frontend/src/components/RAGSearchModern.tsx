@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
 import { Button } from "@/components/ui/button"
@@ -11,13 +11,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { 
-  Search, 
-  RefreshCw, 
-  ChevronRight, 
-  MessageSquare, 
-  TrendingUp, 
-  Newspaper, 
+import {
+  Search,
+  RefreshCw,
+  ChevronRight,
+  MessageSquare,
+  TrendingUp,
+  Newspaper,
   Twitter,
   User,
   Calendar,
@@ -29,15 +29,16 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  GraduationCap
+  GraduationCap,
+  Copy,
+  Check
 } from 'lucide-react'
-import ArticleViewerModern from './ArticleViewerModern'
 import UnifiedModelSelector from './UnifiedModelSelector'
+
+// Lazy-loaded components for code-splitting (reduces initial bundle size)
+const ArticleViewerModern = React.lazy(() => import('./ArticleViewerModern'))
 import { useModelSelector } from '@/hooks/useModelSelector'
 import { cn } from "@/lib/utils"
-
-// Use the configured axios base URL
-const API_BASE = '/api'
 
 interface Source {
   type: 'tweet' | 'article' | 'snippet' | 'paper'
@@ -92,6 +93,9 @@ interface IndexStats {
   current_step?: string
   progress_percent?: number
   error?: string
+  tweets?: number
+  articles?: number
+  papers?: number
 }
 
 interface SampleQuestions {
@@ -114,6 +118,18 @@ export default function RAGSearchModern() {
   const [includeTweets, setIncludeTweets] = useState(true)
   const [includeArticles, setIncludeArticles] = useState(true)
   const [includePapers, setIncludePapers] = useState(true)
+
+  // Copy to clipboard state
+  const [answerCopied, setAnswerCopied] = useState(false)
+
+  // Copy answer to clipboard
+  const copyAnswerToClipboard = async () => {
+    if (response?.answer) {
+      await navigator.clipboard.writeText(response.answer)
+      setAnswerCopied(true)
+      setTimeout(() => setAnswerCopied(false), 2000)
+    }
+  }
 
   // Use unified model selector hook for RAG search
   const {
@@ -723,6 +739,15 @@ export default function RAGSearchModern() {
                   {response.model_used && (
                     <Badge variant="secondary">{response.model_used}</Badge>
                   )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyAnswerToClipboard}
+                    className="h-8 w-8 p-0"
+                    title="Copy to clipboard"
+                  >
+                    {answerCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -777,12 +802,21 @@ export default function RAGSearchModern() {
         </div>
       )}
 
-      {/* Article Viewer Modal */}
+      {/* Article Viewer Modal - Lazy loaded for code splitting */}
       {selectedArticleId && (
-        <ArticleViewerModern 
-          articleId={selectedArticleId}
-          onClose={() => setSelectedArticleId(null)}
-        />
+        <Suspense fallback={
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white rounded-lg p-8 flex items-center">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+              <span className="ml-2 text-gray-600">Loading Article Viewer...</span>
+            </div>
+          </div>
+        }>
+          <ArticleViewerModern
+            articleId={selectedArticleId}
+            onClose={() => setSelectedArticleId(null)}
+          />
+        </Suspense>
       )}
     </div>
   )

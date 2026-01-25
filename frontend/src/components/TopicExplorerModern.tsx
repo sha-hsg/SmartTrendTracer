@@ -718,7 +718,7 @@ export default function TopicExplorerModern() {
                           border: '1px solid #e5e7eb',
                           borderRadius: '8px'
                         }}
-                        formatter={(value: any, name: string) => {
+                        formatter={(value: any, name?: string) => {
                           if (name === 'Topic 1 Count' || name === 'Topic 2 Count') {
                             return [value, name]
                           }

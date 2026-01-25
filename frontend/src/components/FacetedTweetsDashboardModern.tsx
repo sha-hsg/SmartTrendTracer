@@ -41,15 +41,6 @@ interface AuthorFacet {
   count: number
 }
 
-interface TagFacet {
-  tag: string
-  display_name?: string
-  count: number
-  level?: number
-  parent?: string | null
-  children?: TagFacet[]
-}
-
 interface YearFacet {
   year: number
   count: number
@@ -64,9 +55,10 @@ interface AnnotationFacet {
 interface Tweet {
   id: string
   text: string
+  author_id: string
   author_username: string
   author_name?: string
-  tags: any
+  tags?: any
   concepts?: Concept[]
   created_at: string
   is_retweet?: boolean
@@ -140,7 +132,7 @@ export default function FacetedTweetsDashboardModern() {
   const [selectedTweet, setSelectedTweet] = useState<Tweet | null>(null)
   const [showSuggestionModal, setShowSuggestionModal] = useState(false)
   const [showAllConcepts, setShowAllConcepts] = useState(false)
-  const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0)
+  const [_savedScrollPosition, setSavedScrollPosition] = useState<number>(0)
 
   // Batch annotation state
   const [batchAnnotating, setBatchAnnotating] = useState(false)
@@ -475,7 +467,7 @@ export default function FacetedTweetsDashboardModern() {
             }}
           >
             <span className="flex items-center gap-1">
-              <span>{conceptService.getConceptIcon(concept)}</span>
+              <span>{conceptService.getConceptIcon(concept as unknown as Concept)}</span>
               <span>{concept.display_name}</span>
             </span>
             <span className="ml-2 text-xs opacity-70">{concept.aggregate_count ?? concept.count}</span>
@@ -819,7 +811,7 @@ export default function FacetedTweetsDashboardModern() {
             {/* Semantic Concept Search */}
             <div className="px-4 pt-4 pb-2">
               <SemanticConceptSearch
-                onConceptSelect={(conceptId, displayName) => {
+                onConceptSelect={(conceptId, _displayName) => {
                   if (!selectedConcepts.includes(conceptId)) {
                     setSelectedConcepts([...selectedConcepts, conceptId])
                   }
@@ -866,7 +858,7 @@ export default function FacetedTweetsDashboardModern() {
                               color: '#1E40AF'
                             }}
                           >
-                            <span className="text-xs">{conceptService.getConceptIcon(concept)}</span>
+                            <span className="text-xs">{conceptService.getConceptIcon(concept as unknown as Concept)}</span>
                             <span>{concept.display_name}</span>
                           </div>
                         </div>

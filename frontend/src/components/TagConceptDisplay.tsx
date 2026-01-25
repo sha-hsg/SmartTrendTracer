@@ -1,7 +1,6 @@
 /**
  * Component for displaying tags with concept information
  */
-import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 

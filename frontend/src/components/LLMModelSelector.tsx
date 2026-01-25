@@ -34,11 +34,6 @@ interface TaskInfo {
   max_tokens?: number;
 }
 
-interface UserPreference {
-  task_type: string;
-  model_name: string;
-}
-
 interface LLMModelSelectorProps {
   open: boolean;
   onClose: () => void;
@@ -58,7 +53,6 @@ export const LLMModelSelector: React.FC<LLMModelSelectorProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
 
   // Fetch all data on mount

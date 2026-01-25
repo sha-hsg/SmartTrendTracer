@@ -28,7 +28,7 @@ interface ArticleCardProps {
   onDelete?: (articleId: number) => void
 }
 
-function ArticleCard({ article, onClick, onTagAdded, onTagRemoved, onDelete }: ArticleCardProps) {
+const ArticleCard = React.memo(function ArticleCard({ article, onClick, onTagAdded, onTagRemoved, onDelete }: ArticleCardProps) {
   const [isAddingTag, setIsAddingTag] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -77,7 +77,7 @@ function ArticleCard({ article, onClick, onTagAdded, onTagRemoved, onDelete }: A
           strong: ({ children }) => <strong>{children}</strong>,
           em: ({ children }) => <em>{children}</em>,
           code: ({ children }) => <code>{children}</code>,
-          a: ({ href, children }) => <span className="preview-link">{children}</span>
+          a: ({ href: _href, children }) => <span className="preview-link">{children}</span>
         }}
       >
         {truncated}
@@ -389,6 +389,6 @@ function ArticleCard({ article, onClick, onTagAdded, onTagRemoved, onDelete }: A
       </div>
     </div>
   )
-}
+})
 
 export default ArticleCard

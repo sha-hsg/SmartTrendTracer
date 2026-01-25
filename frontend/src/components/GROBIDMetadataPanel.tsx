@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
 import MetadataImportDialog from './MetadataImportDialog'
 import { 
@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 
 interface GROBIDMetadataPanelProps {
-  paperId: number
+  paperId: string | number
   onMetadataUpdated?: () => void
   grobidProcessed?: boolean
   grobidProcessedAt?: string
@@ -66,8 +66,8 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
   const [result, setResult] = useState<ProcessingResult | null>(null)
   const [metadata, setMetadata] = useState<GROBIDMetadata | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [applyingMetadata, setApplyingMetadata] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
+  const [_applyingMetadata, setApplyingMetadata] = useState(false)
 
   const processWithGROBID = async () => {
     setProcessing(true)
@@ -377,7 +377,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        navigator.clipboard.writeText(metadata.bibtex_raw)
+                        navigator.clipboard.writeText(metadata.bibtex_raw || '')
                           .then(() => alert('BibTeX copied to clipboard!'))
                           .catch(err => console.error('Failed to copy:', err))
                       }}
@@ -389,7 +389,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        const blob = new Blob([metadata.bibtex_raw], { type: 'text/plain' })
+                        const blob = new Blob([metadata.bibtex_raw || ''], { type: 'text/plain' })
                         const url = URL.createObjectURL(blob)
                         const a = document.createElement('a')
                         a.href = url
@@ -451,7 +451,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
       <MetadataImportDialog
         open={showImportDialog}
         onClose={() => setShowImportDialog(false)}
-        paperId={paperId}
+        paperId={String(paperId)}
         grobidMetadata={metadata}
         onImport={handleMetadataImport}
       />

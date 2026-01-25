@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -57,7 +57,7 @@ export default function ConceptOrganizer() {
   const [stats, setStats] = useState<any>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [showDetails, setShowDetails] = useState(false)
+  const [_showDetails, setShowDetails] = useState(false)
   const [allConcepts, setAllConcepts] = useState<ConceptDetails[]>([])
 
   useEffect(() => {

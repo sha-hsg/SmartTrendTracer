@@ -481,23 +481,40 @@ def get_collection_state(key: str) -> Optional[Dict]:
     """Get collection state from MongoDB"""
     return db.collection_state.find_one({"key": key})
 
-def update_collection_state(key: str, last_run: datetime, last_tweet_id: Optional[str] = None, 
+def update_collection_state(key: str, last_run: datetime, last_tweet_id: Optional[str] = None,
                           tweets_collected: int = 0):
-    """Update collection state in MongoDB"""
+    """
+    Update collection state in MongoDB using atomic operations.
+
+    Uses $max for last_tweet_id to prevent race conditions - if two collectors
+    run concurrently, only the highest tweet ID is retained.
+    Tweet IDs are Twitter snowflake IDs where higher = newer.
+    """
+    update_ops = {
+        "$set": {
+            "last_run": last_run,
+            "updated_at": datetime.now(timezone.utc)
+        },
+        "$inc": {
+            "tweets_collected_total": tweets_collected  # Cumulative counter
+        },
+        "$setOnInsert": {
+            "key": key,
+            "created_at": datetime.now(timezone.utc)
+        }
+    }
+
+    # Use $max for last_tweet_id to atomically keep only the highest value
+    # This prevents race conditions where a stale collector overwrites a newer ID
+    if last_tweet_id:
+        update_ops["$max"] = {"last_tweet_id": last_tweet_id}
+
+    # Also track tweets collected in this cycle (overwritten each cycle)
+    update_ops["$set"]["tweets_collected_this_cycle"] = tweets_collected
+
     db.collection_state.update_one(
         {"key": key},
-        {
-            "$set": {
-                "last_run": last_run,
-                "last_tweet_id": last_tweet_id,
-                "tweets_collected": tweets_collected,
-                "updated_at": datetime.now(timezone.utc)
-            },
-            "$setOnInsert": {
-                "key": key,
-                "created_at": datetime.now(timezone.utc)
-            }
-        },
+        update_ops,
         upsert=True
     )
 
@@ -821,13 +838,12 @@ def collect_account_tweets_with_retry(client: tweepy.Client, account_id: str,
                         break
                     time.sleep(5)  # Brief pause before retry
         
-        # Update collection state in MongoDB - ALWAYS update last_run to track when account was checked
-        # Preserve existing last_tweet_id if no new tweets were found
-        existing_tweet_id = state.get("last_tweet_id") if state else None
+        # Update collection state in MongoDB atomically
+        # Uses $max for last_tweet_id to prevent race conditions
         update_collection_state(
             key=state_key,
             last_run=datetime.now(timezone.utc),
-            last_tweet_id=newest_tweet_id or existing_tweet_id,
+            last_tweet_id=newest_tweet_id,  # $max operator keeps highest value
             tweets_collected=total_saved
         )
         

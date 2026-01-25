@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -64,6 +64,9 @@ interface ReorganizationResult {
     merge_groups: number
     hierarchy_levels: number
   }
+  concepts?: Array<{ slug: string; display_name: string }>
+  aliases?: Array<{ alias: string; concept_slug: string }>
+  merge_proposals?: Array<{ tags: string[]; suggested: string }>
 }
 
 export default function TagReorganizerAsync() {
@@ -76,7 +79,7 @@ export default function TagReorganizerAsync() {
   const [showResult, setShowResult] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const scrollAreaRef = useRef<HTMLDivElement | null>(null)
   const [autoScroll, setAutoScroll] = useState(true)

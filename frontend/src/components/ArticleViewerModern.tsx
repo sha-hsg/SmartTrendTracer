@@ -58,7 +58,7 @@ interface FullArticle {
   id: number
   title: string
   subtitle: string | null
-  author: {
+  author?: {
     id?: number
     name: string
     subdomain: string
@@ -113,7 +113,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
   const [isEditingContent, setIsEditingContent] = useState(false)
   const [editedContent, setEditedContent] = useState('')
   const [savingEdits, setSavingEdits] = useState(false)
-  const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null)
+  const [_selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null)
   const [summaryModel, setSummaryModel] = useState<string>('')
   const [isEditingUrl, setIsEditingUrl] = useState(false)
   const [editedUrl, setEditedUrl] = useState('')
@@ -747,43 +747,6 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
     }
   }
 
-  const startTagCreation = () => {
-    try {
-      console.log('=== START TAG CREATION ===')
-      console.log('selectedTextRef.current:', selectedTextRef.current)
-      console.log('selectedText state:', selectedText)
-      console.log('tagEditText:', tagEditText)
-      console.log('selectionCoords:', selectionCoords)
-      console.log('showTagCreation before:', showTagCreation)
-      
-      // Use the preserved text
-      if (!selectedTextRef.current) {
-        console.error('No text available for tag creation!')
-        return
-      }
-      
-      console.log('Starting tag creation with text:', selectedTextRef.current)
-      
-      // Show tag creation form FIRST, then hide context menu
-      setShowTagCreation(true)
-      console.log('Tag creation form set to show')
-      
-      // Hide context menu after a short delay
-      setTimeout(() => {
-        setShowContextMenu(false)
-        console.log('Context menu hidden')
-      }, 100)
-      
-      console.log('==========================')
-    } catch (error) {
-      console.error('Error in startTagCreation:', error)
-      console.error('Stack:', (error as Error).stack)
-      // Reset states to safe values
-      setShowContextMenu(false)
-      setShowTagCreation(false)
-    }
-  }
-
   const saveTagFromSelection = async () => {
     console.log('=== CONCEPT CREATION DEBUG ===')
     console.log('Concept text:', tagEditText)
@@ -950,7 +913,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
     
     // Filter and sort snippets by length (longest first) to avoid nested replacements
     const highlightableSnippets = article.snippets
-      .filter(s => ['yellow', 'green', 'blue', 'pink'].includes(s.category))
+      .filter(s => s.category && ['yellow', 'green', 'blue', 'pink'].includes(s.category))
       .sort((a, b) => b.text.length - a.text.length)
     
     highlightableSnippets.forEach(snippet => {
@@ -1171,8 +1134,8 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                       <button
                         onClick={() => {
                           setIsEditingAuthor(true)
-                          setAuthorInput(article.author.name || '')
-                          setSelectedAuthorId(article.author.id || null)
+                          setAuthorInput(article.author?.name || '')
+                          setSelectedAuthorId(article.author?.id || null)
                         }}
                         className="flex items-center gap-1 hover:text-foreground transition-colors"
                       >
@@ -1629,7 +1592,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                               {children}
                             </blockquote>
                           ),
-                          code: ({children, className, ...props}) => {
+                          code: ({children, className}) => {
                             const isInline = !className?.includes('language-')
                             if (isInline) {
                               return <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">{children}</code>;
@@ -1862,9 +1825,9 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                         
                         const content = String(children)
                         // Check if there are any snippets that might be highlights
-                        const hasHighlights = article.snippets && article.snippets.length > 0 && 
-                          article.snippets.some(s => 
-                            ['yellow', 'green', 'blue', 'pink'].includes(s.category) &&
+                        const hasHighlights = article.snippets && article.snippets.length > 0 &&
+                          article.snippets.some(s =>
+                            s.category && ['yellow', 'green', 'blue', 'pink'].includes(s.category) &&
                             content.toLowerCase().includes(s.text.toLowerCase())
                           )
                         

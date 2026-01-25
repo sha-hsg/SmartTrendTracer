@@ -55,7 +55,7 @@ export const DBLPMetadataDisplay: React.FC<DBLPMetadataDisplayProps> = ({
   const [copiedBibtex, setCopiedBibtex] = useState(false)
   const [showFullBibtex, setShowFullBibtex] = useState(false)
   const [bibtex, setBibtex] = useState<string>('')
-  const [loadingBibtex, setLoadingBibtex] = useState(false)
+  const [_loadingBibtex, setLoadingBibtex] = useState(false)
 
   // Initialize with paper's existing metadata ONLY if it has DBLP data
   useEffect(() => {
@@ -190,7 +190,7 @@ export const DBLPMetadataDisplay: React.FC<DBLPMetadataDisplayProps> = ({
                         ) : (
                           author.name
                         )}
-                        {idx < metadata.authors.length - 1 && ', '}
+                        {idx < (metadata.authors?.length ?? 0) - 1 && ', '}
                       </span>
                     ))}
                   </div>
