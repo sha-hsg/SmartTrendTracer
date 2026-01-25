@@ -1,64 +1,57 @@
 #!/usr/bin/env python3
 """
 Monitor collection status and statistics
+
+Uses MongoDB for data storage (migrated from SQLite January 2026)
 """
 import sys
 import os
 from datetime import datetime, timezone, timedelta
-from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app.models import get_db, Tweet, CollectionState
-from app.rate_limiter import get_rate_limiter
+from app.database.mongodb import get_database
 from app.config import ACCOUNTS_TO_FOLLOW
-from sqlalchemy import func
 
 def monitor_collection():
-    print("📊 COLLECTION MONITOR")
+    print("COLLECTION MONITOR")
     print("=" * 60)
-    
-    db = next(get_db())
-    
+
+    db = get_database()
+
     try:
         # Get collection state
-        last_run = CollectionState.get_last_run(db)
+        state = db.collection_state.find_one({"key": "main"})
+        last_run = state.get('last_run') if state else None
+
         if last_run:
-            if last_run.tzinfo is None:
+            if hasattr(last_run, 'tzinfo') and last_run.tzinfo is None:
                 last_run = last_run.replace(tzinfo=timezone.utc)
             time_since = datetime.now(timezone.utc) - last_run
-            print(f"\n🕒 Last Collection:")
+            print(f"\nLast Collection:")
             print(f"   Time: {last_run.strftime('%Y-%m-%d %H:%M:%S UTC')}")
             print(f"   {time_since.total_seconds() / 3600:.1f} hours ago")
         else:
-            print("\n🕒 No collection history found")
-        
-        # Get rate limit status
-        rate_limiter = get_rate_limiter()
-        print(f"\n🚀 Rate Limit Status:")
-        print(f"   Requests used: {len(rate_limiter.requests_made)}/{rate_limiter.max_requests}")
-        if rate_limiter.backoff_until and rate_limiter.backoff_until > datetime.now(timezone.utc):
-            remaining = (rate_limiter.backoff_until - datetime.now(timezone.utc)).total_seconds()
-            print(f"   ⚠️  BACKOFF: {remaining:.0f} seconds remaining")
-        elif not rate_limiter.can_make_request():
-            print(f"   ⚠️  RATE LIMITED")
-        else:
-            print(f"   ✅ Ready to collect")
-        
+            print("\nNo collection history found")
+
         # Get database statistics
-        total_tweets = db.query(func.count(Tweet.id)).scalar()
-        
+        total_tweets = db.tweets.count_documents({})
+
         # Most recent tweet
-        recent_tweet = db.query(Tweet).order_by(Tweet.created_at.desc()).first()
+        recent_tweet = db.tweets.find_one(sort=[('created_at', -1)])
         if recent_tweet:
-            tweet_age = datetime.now(timezone.utc) - recent_tweet.created_at
-            print(f"\n📝 Most Recent Tweet:")
-            print(f"   From: @{recent_tweet.author_username}")
-            print(f"   Time: {recent_tweet.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-            print(f"   {tweet_age.total_seconds() / 3600:.1f} hours ago")
-        
+            created_at = recent_tweet.get('created_at')
+            if created_at:
+                if hasattr(created_at, 'tzinfo') and created_at.tzinfo is None:
+                    created_at = created_at.replace(tzinfo=timezone.utc)
+                tweet_age = datetime.now(timezone.utc) - created_at
+                print(f"\nMost Recent Tweet:")
+                print(f"   From: @{recent_tweet.get('author_username', 'unknown')}")
+                print(f"   Time: {created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+                print(f"   {tweet_age.total_seconds() / 3600:.1f} hours ago")
+
         # Tweets by time period
-        print(f"\n📈 Tweet Distribution:")
+        print(f"\nTweet Distribution:")
         periods = [
             (1, "Last hour"),
             (6, "Last 6 hours"),
@@ -66,92 +59,91 @@ def monitor_collection():
             (72, "Last 3 days"),
             (168, "Last week")
         ]
-        
+
         for hours, label in periods:
             since = datetime.now(timezone.utc) - timedelta(hours=hours)
-            count = db.query(func.count(Tweet.id)).filter(
-                Tweet.created_at >= since
-            ).scalar()
+            count = db.tweets.count_documents({'created_at': {'$gte': since}})
             if count > 0:
                 print(f"   {label}: {count} tweets")
-        
+
         print(f"   Total: {total_tweets} tweets")
-        
+
         # Tweets by account
-        print(f"\n👥 Tweets by Account:")
-        account_stats = db.query(
-            Tweet.author_username,
-            func.count(Tweet.id).label('count'),
-            func.max(Tweet.created_at).label('latest')
-        ).group_by(Tweet.author_username).all()
-        
-        # Sort with timezone-aware comparison
-        def make_aware(dt):
-            if dt.tzinfo is None:
-                return dt.replace(tzinfo=timezone.utc)
-            return dt
-        
-        for username, count, latest in sorted(account_stats, key=lambda x: make_aware(x[2]), reverse=True):
-            # Ensure latest is timezone-aware
-            latest = make_aware(latest)
-            age = datetime.now(timezone.utc) - latest
-            age_str = f"{age.total_seconds() / 3600:.1f}h ago"
-            print(f"   @{username}: {count} tweets (latest: {age_str})")
-        
-        # Check for gaps
-        print(f"\n🕳️ Gap Analysis:")
+        print(f"\nTweets by Account:")
+        pipeline = [
+            {
+                '$group': {
+                    '_id': '$author_username',
+                    'count': {'$sum': 1},
+                    'latest': {'$max': '$created_at'}
+                }
+            },
+            {'$sort': {'latest': -1}}
+        ]
+
+        account_stats = list(db.tweets.aggregate(pipeline))
+
         now = datetime.now(timezone.utc)
-        
+        for stat in account_stats:
+            username = stat['_id']
+            count = stat['count']
+            latest = stat['latest']
+
+            if latest:
+                if hasattr(latest, 'tzinfo') and latest.tzinfo is None:
+                    latest = latest.replace(tzinfo=timezone.utc)
+                age = now - latest
+                age_str = f"{age.total_seconds() / 3600:.1f}h ago"
+            else:
+                age_str = "unknown"
+
+            print(f"   @{username}: {count} tweets (latest: {age_str})")
+
+        # Check for gaps
+        print(f"\nGap Analysis:")
+
         # Check each account for gaps
         gaps_found = False
         for account in ACCOUNTS_TO_FOLLOW:
-            account_tweets = db.query(Tweet).filter(
-                Tweet.author_id == account['id']
-            ).order_by(Tweet.created_at.desc()).limit(10).all()
-            
-            if account_tweets:
-                latest = account_tweets[0].created_at
-                if latest.tzinfo is None:
-                    latest = latest.replace(tzinfo=timezone.utc)
-                gap = (now - latest).total_seconds() / 3600
-                
-                if gap > 24:  # More than 24 hours since last tweet
-                    print(f"   ⚠️  @{account['username']}: No tweets for {gap:.1f} hours")
-                    gaps_found = True
-        
+            account_tweet = db.tweets.find_one(
+                {'author_id': str(account['id'])},
+                sort=[('created_at', -1)]
+            )
+
+            if account_tweet:
+                latest = account_tweet.get('created_at')
+                if latest:
+                    if hasattr(latest, 'tzinfo') and latest.tzinfo is None:
+                        latest = latest.replace(tzinfo=timezone.utc)
+                    gap = (now - latest).total_seconds() / 3600
+
+                    if gap > 24:  # More than 24 hours since last tweet
+                        print(f"   @{account['username']}: No tweets for {gap:.1f} hours")
+                        gaps_found = True
+
         if not gaps_found:
-            print("   ✅ No significant gaps detected")
-        
+            print("   No significant gaps detected")
+
         # Recommendations
-        print(f"\n💡 Recommendations:")
-        
+        print(f"\nRecommendations:")
+
         if last_run:
             hours_since = time_since.total_seconds() / 3600
             if hours_since > 6:
-                print(f"   • Consider running collection (last run {hours_since:.1f}h ago)")
-                print(f"     Run: python wait_and_collect.py")
+                print(f"   Consider running collection (last run {hours_since:.1f}h ago)")
             elif hours_since > 1:
-                print(f"   • Collection is recent but you can run if needed")
+                print(f"   Collection is recent but you can run if needed")
             else:
-                print(f"   • Collection very recent, no action needed")
+                print(f"   Collection very recent, no action needed")
         else:
-            print(f"   • Run initial collection: python wait_and_collect.py")
-        
-        if not rate_limiter.can_make_request():
-            if rate_limiter.backoff_until:
-                wait = (rate_limiter.backoff_until - datetime.now(timezone.utc)).total_seconds()
-                print(f"   • Wait {wait/60:.1f} minutes for rate limit to clear")
-            else:
-                print(f"   • Rate limited - wait for window reset")
-        
+            print(f"   Run initial collection with tweet_collector_service.py")
+
         print("\n" + "=" * 60)
-        
+
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
-    finally:
-        db.close()
 
 if __name__ == "__main__":
     monitor_collection()
