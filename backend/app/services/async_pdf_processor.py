@@ -4,6 +4,7 @@ Handles PDF processing without blocking the main thread
 """
 
 import asyncio
+import atexit
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Optional
@@ -14,6 +15,10 @@ from app.utils.content_cleaner import clean_markdown_content
 
 logger = logging.getLogger(__name__)
 
+# Global reference for atexit cleanup (PERF: Quick Win #4)
+_processor_instances = []
+
+
 class AsyncPDFProcessor:
     """Async wrapper for PDF processing to prevent blocking"""
 
@@ -22,6 +27,24 @@ class AsyncPDFProcessor:
         self.executor = ThreadPoolExecutor(max_workers=3)
         self.marker_service_url = "http://localhost:8002"
         self.mineru_service_url = "http://localhost:8003"
+        self._shutdown = False
+        # Register for cleanup on process exit (PERF: Quick Win #4)
+        _processor_instances.append(self)
+
+    def shutdown(self):
+        """Explicitly shut down the thread pool executor."""
+        if not self._shutdown:
+            self._shutdown = True
+            self.executor.shutdown(wait=True)
+            logger.info("AsyncPDFProcessor executor shut down")
+
+    def __del__(self):
+        """Ensure executor is shut down when object is garbage collected."""
+        try:
+            if not self._shutdown:
+                self.executor.shutdown(wait=False)
+        except Exception:
+            pass  # Ignore errors during cleanup
 
     async def process_pdf_async(
         self,
@@ -338,3 +361,25 @@ def get_async_pdf_processor() -> AsyncPDFProcessor:
     if _async_processor is None:
         _async_processor = AsyncPDFProcessor()
     return _async_processor
+
+
+def _cleanup_all_processors():
+    """Cleanup all AsyncPDFProcessor instances on process exit (PERF: Quick Win #4)."""
+    for processor in _processor_instances:
+        try:
+            processor.shutdown()
+        except Exception:
+            pass
+    _processor_instances.clear()
+    # Also cleanup singleton
+    global _async_processor
+    if _async_processor is not None:
+        try:
+            _async_processor.shutdown()
+        except Exception:
+            pass
+        _async_processor = None
+
+
+# Register cleanup function on process exit (PERF: Quick Win #4 - prevent ThreadPoolExecutor leak)
+atexit.register(_cleanup_all_processors)

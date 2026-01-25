@@ -19,6 +19,30 @@ class SubstackAuthService:
         })
         self.email = None
         self.subdomain = None
+        self._closed = False
+
+    def close(self):
+        """Explicitly close the session."""
+        if not self._closed:
+            self._closed = True
+            self.session.close()
+
+    def __del__(self):
+        """Ensure session is closed when object is garbage collected."""
+        try:
+            if not self._closed:
+                self.session.close()
+        except Exception:
+            pass  # Ignore errors during cleanup
+
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures cleanup."""
+        self.close()
+        return False
         
     def request_magic_link(self, email: str, subdomain: str = None) -> Dict:
         """

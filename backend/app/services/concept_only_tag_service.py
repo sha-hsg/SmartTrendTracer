@@ -266,7 +266,38 @@ class ConceptOnlyTagService:
                 return self.tag_concepts.find_one({"id": concept_id})
         except:
             return None
-    
+
+    def get_concepts_by_ids(self, concept_ids: List) -> Dict[str, Dict]:
+        """
+        Batch fetch multiple concepts by their IDs.
+        Returns a dict mapping concept_id (as string) to concept document.
+        This avoids N+1 query patterns.
+        """
+        if not concept_ids:
+            return {}
+
+        # Convert to ObjectIds where applicable
+        object_ids = []
+        for cid in concept_ids:
+            if cid is None or cid == '' or cid == 'None':
+                continue
+            try:
+                if isinstance(cid, ObjectId):
+                    object_ids.append(cid)
+                elif isinstance(cid, str) and len(cid) == 24:
+                    object_ids.append(ObjectId(cid))
+            except:
+                pass
+
+        if not object_ids:
+            return {}
+
+        # Single batch query
+        concepts = list(self.tag_concepts.find({"_id": {"$in": object_ids}}))
+
+        # Build lookup dict
+        return {str(c['_id']): c for c in concepts}
+
     def get_tags_for_content(self, content_type: str, content_id: str) -> List[Dict]:
         """
         Get all tags (as concepts) for a specific content item.

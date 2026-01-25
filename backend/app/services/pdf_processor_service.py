@@ -458,7 +458,7 @@ class PDFProcessorService:
                     f"{self.mineru_service_url}/convert",
                     files=files,
                     data=data,
-                    timeout=180
+                    timeout=18000  # 5 hours - MinerU can take hours for complex PDFs
                 )
 
                 if response.status_code == 200:
