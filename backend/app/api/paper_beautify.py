@@ -1,10 +1,13 @@
 """API endpoints for paper markdown beautification"""
 
+import logging
 from fastapi import APIRouter, HTTPException
 from app.database.mongodb import get_database
 from bson import ObjectId
 import mdformat
 from typing import Dict
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -30,7 +33,7 @@ def beautify_markdown(markdown: str) -> str:
         return beautified
     except Exception as e:
         # If mdformat fails, return original
-        print(f"mdformat error: {e}")
+        logger.warning(f"mdformat error: {e}")
         return markdown
 
 

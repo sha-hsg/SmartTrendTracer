@@ -134,23 +134,25 @@ def get_articles(
         
         # Deduplicate concept_ids to avoid React key warnings
         concept_ids = list(set(ti['concept_id'] for ti in tag_instances))
-        
-        # Get concept details
+
+        # Get concept details in batch (PERF: Quick Win - avoids N+1 queries)
         concepts = []
         tags = []  # Frontend-compatible format
-        for cid in concept_ids:
-            concept = concept_service.get_concept_by_id(cid)
-            if concept:
-                concepts.append({
-                    'concept_id': str(cid),
-                    'display_name': concept.get('display_name'),
-                    'slug': concept.get('slug')
-                })
-                tags.append({
-                    'id': str(cid),
-                    'tag': concept.get('display_name'),
-                    'type': 'concept'
-                })
+        if concept_ids:
+            concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
+            for cid in concept_ids:
+                concept = concepts_lookup.get(str(cid))
+                if concept:
+                    concepts.append({
+                        'concept_id': str(cid),
+                        'display_name': concept.get('display_name'),
+                        'slug': concept.get('slug')
+                    })
+                    tags.append({
+                        'id': str(cid),
+                        'tag': concept.get('display_name'),
+                        'type': 'concept'
+                    })
 
         result.append({
             'id': str(article['_id']),
@@ -446,23 +448,25 @@ def faceted_search(
         
         # Deduplicate concept_ids to avoid React key warnings
         concept_ids = list(set(ti['concept_id'] for ti in tag_instances))
-        
-        # Get concept details
+
+        # Get concept details in batch (PERF: Quick Win - avoids N+1 queries)
         concepts = []
         tags = []  # Frontend-compatible format
-        for cid in concept_ids:
-            concept = concept_service.get_concept_by_id(cid)
-            if concept:
-                concepts.append({
-                    'concept_id': str(cid),
-                    'display_name': concept.get('display_name'),
-                    'slug': concept.get('slug')
-                })
-                tags.append({
-                    'id': str(cid),
-                    'tag': concept.get('display_name'),
-                    'type': 'concept'
-                })
+        if concept_ids:
+            concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
+            for cid in concept_ids:
+                concept = concepts_lookup.get(str(cid))
+                if concept:
+                    concepts.append({
+                        'concept_id': str(cid),
+                        'display_name': concept.get('display_name'),
+                        'slug': concept.get('slug')
+                    })
+                    tags.append({
+                        'id': str(cid),
+                        'tag': concept.get('display_name'),
+                        'type': 'concept'
+                    })
 
         # Get content safely (use standardized content_markdown field)
         content = article.get('content_markdown', '')
@@ -640,24 +644,26 @@ def get_article(article_id: str):
     # Deduplicate concept_ids to avoid React key warnings
     concept_ids = list(set(ti['concept_id'] for ti in tag_instances))
 
-    # Get concept details
+    # Get concept details in batch (PERF: Quick Win - avoids N+1 queries)
     concepts = []
     tags = []  # Frontend-compatible format
-    for cid in concept_ids:
-        concept = concept_service.get_concept_by_id(cid)
-        if concept:
-            concepts.append({
-                'concept_id': str(cid),  # Convert ObjectId to string
-                'display_name': concept.get('display_name'),
-                'slug': concept.get('slug')
-            })
-            # Also add to tags array for frontend compatibility
-            tags.append({
-                'id': str(cid),
-                'tag': concept.get('display_name'),
-                'type': 'concept'
-            })
-    
+    if concept_ids:
+        concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
+        for cid in concept_ids:
+            concept = concepts_lookup.get(str(cid))
+            if concept:
+                concepts.append({
+                    'concept_id': str(cid),  # Convert ObjectId to string
+                    'display_name': concept.get('display_name'),
+                    'slug': concept.get('slug')
+                })
+                # Also add to tags array for frontend compatibility
+                tags.append({
+                    'id': str(cid),
+                    'tag': concept.get('display_name'),
+                    'type': 'concept'
+                })
+
     # Format response
     return {
         'id': str(article['_id']),
@@ -936,12 +942,14 @@ async def suggest_tags_for_article(article_id: str, request: dict = Body({})):
 
     existing_concept_ids = [ti['concept_id'] for ti in existing_tags if ti.get('concept_id')]
 
-    # Get concept display names for already tagged
+    # Get concept display names for already tagged (PERF: batch query)
     already_tagged = []
-    for cid in existing_concept_ids:
-        concept = concept_service.get_concept_by_id(cid)
-        if concept:
-            already_tagged.append(concept.get('display_name', ''))
+    if existing_concept_ids:
+        concepts_lookup = concept_service.get_concepts_by_ids(existing_concept_ids)
+        for cid in existing_concept_ids:
+            concept = concepts_lookup.get(str(cid))
+            if concept:
+                already_tagged.append(concept.get('display_name', ''))
 
     # Find similar existing concepts based on title/content
     existing_suggestions = []

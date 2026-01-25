@@ -49,7 +49,7 @@ def parse_date(date_str: Optional[str]) -> Optional[datetime]:
 
 def get_date_from_content(content: dict, content_type: str) -> Optional[datetime]:
     """Extract date from content based on content type"""
-    date_field = content.get('created_at') or content.get('published_date') or content.get('date')
+    date_field = content.get('created_at') or content.get('publication_date') or content.get('published_date') or content.get('date')
     if not date_field:
         return None
 

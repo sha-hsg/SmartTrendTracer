@@ -47,10 +47,21 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# MongoDB connection
+# MongoDB connection with validation
 mongo_client = get_client()
 db = get_database()
-logger.info("Connected to MongoDB")
+
+# Validate MongoDB connection at startup (CFG-005)
+try:
+    # Simple ping to verify connection is working
+    mongo_client.admin.command('ping')
+    # Count collections to verify database is accessible
+    collection_count = len(db.list_collection_names())
+    logger.info(f"Connected to MongoDB (database has {collection_count} collections)")
+except Exception as e:
+    logger.error(f"MongoDB connection validation failed: {e}")
+    logger.error("Please ensure MongoDB is running and MONGODB_URI is correct")
+    raise RuntimeError(f"Cannot start application: MongoDB unavailable - {e}")
 
 # Import MongoDB-based API modules
 from app.api import tweets_mongodb as tweets  # Full MongoDB tweets API
@@ -108,10 +119,19 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Configure CORS
+# Configure CORS - origins from environment variable or defaults (CFG-004)
+cors_origins_env = os.getenv("CORS_ORIGINS", "")
+if cors_origins_env:
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+else:
+    # Default development origins
+    cors_origins = ["http://localhost:3470", "http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
+
+logger.info(f"CORS configured for origins: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3470", "http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -230,7 +250,8 @@ async def startup_event():
         db.papers.create_index([("title", "text")])
         db.articles.create_index([("title", "text")])
         # Don't create slug index since it already exists with unique constraint
-        db.tag_instances.create_index([("content_type", 1), ("content_id", 1)])
+        # Compound index for queries filtering by content_type + content_id + concept_id
+        db.tag_instances.create_index([("content_type", 1), ("content_id", 1), ("concept_id", 1)])
         db.book_processing_jobs.create_index([("status", ASCENDING), ("created_at", ASCENDING)])
     except Exception as e:
         logger.warning(f"Some indexes may already exist: {e}")

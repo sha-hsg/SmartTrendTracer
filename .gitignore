@@ -81,9 +81,17 @@ Thumbs.db
 backend/data/paper_images/
 !backend/data/paper_images/.gitkeep
 
-# --- MongoDB Sync ---
-# Sync backups are machine-specific, not synced between machines
+# --- MongoDB Sync (NEW - scripts/) ---
+# Backups are machine-specific, not synced
+db-sync/backups/
+# Temp files during import
+db-sync/dumps/.import_temp/
+# Dumps and status ARE synced via Syncthing
+!db-sync/dumps/
+!db-sync/dumps/.sync-status.json
+!db-sync/dumps/dump_*.tar.gz
+
+# --- MongoDB Sync (OLD - backend/, deprecated) ---
 backend/mongodb_sync/backups/
-# Sync latest directory and metadata ARE synced via Syncthing
 !backend/mongodb_sync/latest/
 !backend/mongodb_sync/last_export.json

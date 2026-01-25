@@ -5,10 +5,43 @@ Provides analytical trend visualization data
 
 from fastapi import APIRouter, Query, HTTPException
 from app.database.mongodb import get_database
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Union
 from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 import logging
+
+
+def normalize_datetime(dt_value: Any) -> Optional[datetime]:
+    """
+    Normalize various datetime representations to a datetime object.
+    Handles: datetime objects, ISO strings, timestamps (int/float).
+    Returns None if conversion fails.
+    """
+    if dt_value is None:
+        return None
+    if isinstance(dt_value, datetime):
+        return dt_value
+    if isinstance(dt_value, str):
+        try:
+            # Try ISO format first
+            return datetime.fromisoformat(dt_value.replace('Z', '+00:00'))
+        except ValueError:
+            try:
+                # Try common formats
+                for fmt in ['%Y-%m-%d %H:%M:%S', '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S']:
+                    try:
+                        return datetime.strptime(dt_value, fmt)
+                    except ValueError:
+                        continue
+            except Exception:
+                pass
+        return None
+    if isinstance(dt_value, (int, float)):
+        try:
+            return datetime.fromtimestamp(dt_value)
+        except (ValueError, OSError):
+            return None
+    return None
 
 # Import helper functions
 from app.services.analytics_helpers import (
@@ -232,24 +265,30 @@ def get_trends_timeline(
     # Fill hourly data from recent content
     recent_tweets = fetch_tweets_in_range(db, hourly_start, end_date)
     for tweet in recent_tweets:
-        hour_key = tweet['created_at'].strftime('%Y-%m-%d %H:00')
-        if hour_key in hourly_dict:
-            hourly_dict[hour_key]["tweets"] += 1
-            hourly_dict[hour_key]["count"] += 1
+        dt = normalize_datetime(tweet.get('created_at'))
+        if dt:
+            hour_key = dt.strftime('%Y-%m-%d %H:00')
+            if hour_key in hourly_dict:
+                hourly_dict[hour_key]["tweets"] += 1
+                hourly_dict[hour_key]["count"] += 1
 
     recent_articles = fetch_articles_in_range(db, hourly_start, end_date)
     for article in recent_articles:
-        hour_key = article['published_at'].strftime('%Y-%m-%d %H:00')
-        if hour_key in hourly_dict:
-            hourly_dict[hour_key]["articles"] += 1
-            hourly_dict[hour_key]["count"] += 1
+        dt = normalize_datetime(article.get('published_at'))
+        if dt:
+            hour_key = dt.strftime('%Y-%m-%d %H:00')
+            if hour_key in hourly_dict:
+                hourly_dict[hour_key]["articles"] += 1
+                hourly_dict[hour_key]["count"] += 1
 
     recent_papers = fetch_papers_in_range(db, hourly_start, end_date)
     for paper in recent_papers:
-        hour_key = paper['created_at'].strftime('%Y-%m-%d %H:00')
-        if hour_key in hourly_dict:
-            hourly_dict[hour_key]["papers"] += 1
-            hourly_dict[hour_key]["count"] += 1
+        dt = normalize_datetime(paper.get('created_at'))
+        if dt:
+            hour_key = dt.strftime('%Y-%m-%d %H:00')
+            if hour_key in hourly_dict:
+                hourly_dict[hour_key]["papers"] += 1
+                hourly_dict[hour_key]["count"] += 1
 
     result["hourly"] = [hourly_dict[key] for key in sorted(hourly_dict.keys())]
 
@@ -821,20 +860,11 @@ def generate_summary(
 
     # Paper filter based on date type selection
     if paper_date_type == "published":
-        # Use published_date or publication_date with year fallback
-        # (ArXiv uses published_date, older imports use publication_date)
+        # Use publication_date (canonical field) with published_date and year fallbacks
+        # publication_date is the standard field; published_date kept for backwards compatibility
         paper_filter = {
             '$or': [
-                # Has published_date as ISO string
-                {
-                    'published_date': {
-                        '$exists': True,
-                        '$ne': None,
-                        '$gte': start_date.isoformat(),
-                        '$lte': end_date.isoformat()
-                    }
-                },
-                # Has publication_date in range (legacy field)
+                # Has publication_date in range (canonical field)
                 {
                     'publication_date': {
                         '$exists': True,
@@ -844,17 +874,26 @@ def generate_summary(
                         '$lte': end_date.isoformat()
                     }
                 },
-                # No published_date/publication_date but has year in range
+                # Has published_date as ISO string (legacy/backwards compatibility)
+                {
+                    'published_date': {
+                        '$exists': True,
+                        '$ne': None,
+                        '$gte': start_date.isoformat(),
+                        '$lte': end_date.isoformat()
+                    }
+                },
+                # No publication_date/published_date but has year in range
                 {
                     '$and': [
-                        {'$or': [
-                            {'published_date': {'$exists': False}},
-                            {'published_date': None}
-                        ]},
                         {'$or': [
                             {'publication_date': {'$exists': False}},
                             {'publication_date': None},
                             {'publication_date': ''}
+                        ]},
+                        {'$or': [
+                            {'published_date': {'$exists': False}},
+                            {'published_date': None}
                         ]},
                         {'year': {'$gte': start_date.year, '$lte': end_date.year}}
                     ]

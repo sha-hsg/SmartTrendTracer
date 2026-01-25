@@ -168,7 +168,7 @@ async def import_arxiv_paper(
                         'abstract': result['metadata']['abstract'],
                         'arxiv_id': result['arxiv_id'],
                         'pdf_url': result['metadata']['pdf_url'],
-                        'published_date': result['metadata'].get('published'),
+                        'publication_date': result['metadata'].get('published'),
                         'categories': result['metadata'].get('categories', []),
                         'content': '',  # Will be filled after processing
                         'pdf_path': result['pdf_path'],  # PDF is immediately available

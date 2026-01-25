@@ -7,9 +7,12 @@ import re
 import base64
 import pickle
 import json
+import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -180,7 +183,7 @@ class GmailSubstackCollector:
             return [msg['id'] for msg in messages]
             
         except HttpError as error:
-            print(f"An error occurred: {error}")
+            logger.error(f"Gmail API error searching messages: {error}")
             return []
     
     def get_email_content(self, msg_id: str) -> Dict:
@@ -235,7 +238,7 @@ class GmailSubstackCollector:
             }
             
         except HttpError as error:
-            print(f"Error fetching message {msg_id}: {error}")
+            logger.error(f"Error fetching message {msg_id}: {error}")
             return None
     
     def _extract_html_body(self, payload) -> str:
@@ -639,7 +642,7 @@ class GmailSubstackCollector:
             if is_forwarded and markdown:
                 markdown = email_cleaner.clean_markdown(markdown)
         except Exception as e:
-            print(f"Error converting HTML to markdown: {e}")
+            logger.warning(f"Error converting HTML to markdown: {e}")
             # Fallback to basic extraction
             markdown = soup.get_text(separator='\n', strip=True)
         

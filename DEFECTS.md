@@ -1,13 +1,13 @@
 # SmartTrendTracer - Defects & Known Issues
 
-*Zuletzt aktualisiert: 2026-01-20*
+*Zuletzt aktualisiert: 2026-01-21*
 
 ---
 
 ## Critical / In Progress
 
 ### DEF-001: Article Viewer - Optimistic UI Updates funktionieren nicht
-**Status:** In Progress (Paused)
+**Status:** In Progress
 **Priorität:** High
 **Bereich:** Frontend - Articles
 
@@ -23,6 +23,10 @@ Nach Aktionen im Article Viewer (Annotations, Summary hinzufügen) wird die Arti
 - `frontend/src/components/ArticleViewerModern.tsx`
 - `frontend/src/components/FacetedSubstackDashboardModern.tsx`
 - `frontend/src/components/ArticleViewerErrorBoundary.tsx`
+
+**Bisherige Fix-Versuche:**
+1. useCallback für stable handler reference → funktioniert nicht
+2. useEffect mit [handleViewerClosed] dependency → funktioniert nicht
 
 **Workaround:** Manuell "Refresh" Button klicken
 
@@ -88,20 +92,21 @@ React Strict Mode Development Checks - False Positive
 ---
 
 ### DEF-006: Forwarded Substack Articles - HTML in Previews
-**Status:** Needs MongoDB Migration
+**Status:** Has Fix
 **Priorität:** Low
 **Bereich:** Backend - Substack
 
 **Problem:**
 Weitergeleitete Substack Artikel haben HTML-Artefakte in den Previews.
 
-**Aktueller Status:**
-`clean_substack_footers.py` nutzt noch alte SQLite-Imports (`app.models`, `sqlalchemy`).
-Script muss auf MongoDB migriert werden.
+**Lösung:**
+`clean_substack_footers.py` wurde auf MongoDB migriert (Januar 2026).
 
-**TODO:**
-- Script auf PyMongo umstellen
-- `from app.models import get_db` → `from pymongo import MongoClient`
+**Fix anwenden:**
+```bash
+cd backend
+python clean_substack_footers.py --clean
+```
 
 ---
 
@@ -135,23 +140,6 @@ Zu viele Requests in 15-Minuten Window führen zu Rate Limit Errors.
 
 ## Architecture / Technical Debt
 
-### DEBT-001: Legacy SQLite Scripts
-**Status:** Technical Debt
-**Bereich:** Database Architecture
-
-**Problem:**
-Einige Utility-Scripts nutzen noch alte SQLite-Imports obwohl das System vollständig auf MongoDB migriert ist.
-
-**Betroffene Scripts:**
-- `clean_substack_footers.py` - SQLite imports
-- Weitere möglicherweise in `backend/*.py`
-
-**Lösung:** Scripts auf PyMongo umstellen oder entfernen wenn nicht mehr benötigt.
-
-**Referenz:** Siehe `TAG_SYSTEM_ANALYSIS.md`
-
----
-
 ### DEBT-002: Debug Logs im Production Code
 **Status:** Technical Debt
 **Bereich:** Frontend
@@ -168,6 +156,27 @@ Debug console.logs (🔵, 🟠, 🔴) sind noch im Code für Debugging von DEF-0
 ---
 
 ## Resolved (Reference)
+
+### [RESOLVED] DEBT-001: Legacy SQLite Scripts
+**Gelöst:** 2026-01-21
+
+**Problem:** Utility-Scripts nutzten alte SQLite-Imports obwohl das System vollständig auf MongoDB migriert war.
+
+**Lösung:**
+- 459 Backend-Scripts auf 11 essentielle Scripts reduziert
+- Alle verbleibenden Scripts auf MongoDB/PyMongo migriert:
+  - `clean_substack_footers.py` - Artikel Footer Bereinigung
+  - `summarize_articles.py` - Artikel Zusammenfassungen
+  - `check_collection_state.py` - Tweet Collection Status
+  - `check_tag_consistency.py` - Tag System Konsistenz
+  - `fix_previews.py` - Artikel Preview Fixes
+  - `monitor_collection.py` - Collection Monitoring
+- ~60+ One-Time Scripts nach `migrations/completed/` archiviert
+- ~168 Test-Scripts und ~18 Debug-Scripts gelöscht
+
+**Verifikation:** `grep -l "from app.models import" backend/*.py` gibt keine Ergebnisse mehr
+
+---
 
 ### [RESOLVED] DEF-002: Topic Explorer - Keyboard Navigation
 **Gelöst:** 2025-12-31

@@ -99,8 +99,22 @@ class ArXivImportService:
             }
             
             logger.info(f"Fetching metadata for ArXiv ID: {arxiv_id}")
-            response = self.session.get(self.ARXIV_API_BASE, params=params, timeout=30)
-            response.raise_for_status()
+
+            # Retry logic with increasing timeouts (ArXiv can be slow)
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    timeout = 45 + (attempt * 15)  # 45s, 60s, 75s
+                    response = self.session.get(self.ARXIV_API_BASE, params=params, timeout=timeout)
+                    response.raise_for_status()
+                    break
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        logger.warning(f"ArXiv API attempt {attempt + 1} failed, retrying: {e}")
+                        import time
+                        time.sleep(2)  # Brief pause before retry
+                    else:
+                        raise
             
             # Parse XML response
             root = ET.fromstring(response.content)
@@ -285,7 +299,7 @@ class ArXivImportService:
             }
             
             logger.info(f"Searching ArXiv for: {query}")
-            response = self.session.get(self.ARXIV_API_BASE, params=params, timeout=30)
+            response = self.session.get(self.ARXIV_API_BASE, params=params, timeout=60)
             response.raise_for_status()
             
             # Parse XML response

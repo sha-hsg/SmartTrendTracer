@@ -102,27 +102,52 @@ fi
 
 #### 3. MongoDB Cross-Machine Synchronization (REQUIRED)
 
-Each machine runs its own local MongoDB instance. Use sync scripts to synchronize databases when switching machines:
+Each machine runs its own local MongoDB instance. Use sync scripts to synchronize databases when switching machines.
+
+**Scripts Location:** `scripts/` (project root, same as Samanta)
+
+| Script | Description |
+|--------|-------------|
+| `./scripts/sync-out.sh` | Export MongoDB to `db-sync/dumps/` |
+| `./scripts/sync-in.sh` | Import from other system |
+| `./scripts/sync-status.sh` | Show status of all systems |
 
 **Workflow:**
 ```bash
 # END of work session on Machine A:
-cd backend
-./sync-out.sh  # Export MongoDB to mongodb_sync/latest/
+./scripts/sync-out.sh           # Export MongoDB
 
 # Wait for Syncthing to sync...
 
 # START of work session on Machine B:
-cd backend
-./sync-in.sh   # Import MongoDB from mongodb_sync/latest/
+./scripts/sync-status.sh        # Check what's available
+./scripts/sync-in.sh            # Import from other system
 ```
 
 **Key Points:**
 - Each machine has independent MongoDB instance on `localhost:27017`
-- `sync-out.sh` creates mongodump in `mongodb_sync/latest/`
-- `sync-in.sh` imports with `--drop` flag (overwrites local database)
+- `sync-out.sh` creates compressed dump with SHA-256 checksum in `db-sync/dumps/`
+- `sync-in.sh` verifies checksum, creates backup, then imports with `--drop`
+- `sync-status.sh` shows all registered systems and recommendations
+- Configuration in `.db-sync-config` (project root)
 - Only sync when switching machines, not during daily work
 - MongoDB indexes are recreated on import (causes 30-60s startup delay on first run)
+
+**Directory Structure:**
+```
+SmartTrendTracer/
+├── .db-sync-config              # Sync configuration
+├── scripts/
+│   ├── sync-out.sh
+│   ├── sync-in.sh
+│   ├── sync-status.sh
+│   └── sync_manual.md           # Detailed documentation
+└── db-sync/
+    ├── dumps/                   # Syncthing syncs this
+    │   ├── .sync-status.json
+    │   └── dump_*.tar.gz
+    └── backups/                 # Local only (not synced)
+```
 
 #### 4. Environment Variables (REQUIRED)
 
@@ -234,6 +259,287 @@ sudo systemctl stop mongod
 6. ✅ **Log everything** with timestamps, PIDs, and timing information
 7. ✅ **Test on both macOS and Linux** before considering code complete
 
+## Recent Enhancements (January 24, 2026)
+
+### Batch Marker Processing for Papers - COMPLETE
+
+#### Overview
+Added batch processing capability to process all unprocessed papers through Marker service with a single click.
+
+#### Features Implemented
+| Feature | Description |
+|---------|-------------|
+| **"Process All (N)" Button** | Shows count of unprocessed papers, starts batch |
+| **Progress Banner** | Real-time progress with completed/failed/skipped counts |
+| **localStorage Persistence** | Progress survives page navigation |
+| **Auto-Resume** | Batch continues from where it left off when returning |
+| **Smart Skip Logic** | Checks backend status before processing each paper |
+| **Duplicate Prevention** | Ref guard prevents React StrictMode double-execution |
+
+#### Technical Implementation
+- **Location**: `frontend/src/components/FacetedPapersDashboard.tsx`
+- **State**: `batchProgress` with localStorage initialization
+- **Guard**: `batchProcessingActiveRef` prevents concurrent executions
+- **Processing**: Sequential (Marker semaphore limits to 1 concurrent)
+
+#### UI Components
+```
+┌─────────────────────────────────────────────────────┐
+│ [Upload PDF] [Import Paper] [Refresh] [Process All (5)] │
+├─────────────────────────────────────────────────────┤
+│ ⚙️ Processing Papers with Marker...                 │
+│ ████████████░░░░░░░░░░░░░░░░░░ 3/5 completed       │
+│ 🔄 Currently processing: Attention Is All You Need │
+└─────────────────────────────────────────────────────┘
+```
+
+#### Parallel Processing Capabilities
+| Scenario | Behavior |
+|----------|----------|
+| **Marker + MinerU** | ✅ Can run in parallel (different services, ports 8002/8003) |
+| **Multiple Marker** | ❌ Serialized (semaphore limits to 1) |
+| **Multiple MinerU** | ✅ Can run concurrently (no semaphore) |
+
+#### React StrictMode Fix
+Added `batchProcessingActiveRef` to prevent duplicate batch execution when React StrictMode double-invokes effects in development mode.
+
+**To clear stuck batch state:**
+```javascript
+// In browser DevTools Console:
+localStorage.removeItem('batchProcessingProgress')
+```
+
+### MinerU Progress Feedback UI - COMPLETE
+
+#### Overview
+Added real-time progress tracking for MinerU PDF processing, matching the existing Marker progress infrastructure.
+
+#### Problem Solved
+MinerU processing previously had no real-time feedback:
+- Only showed "Processing with MinerU..." with no progress updates
+- No CPU/RAM monitoring during processing
+- No stage information (layout, OCR, etc.)
+- Processing could take 5-30+ minutes with zero feedback
+
+#### Solution Implemented
+Ported Marker's progress infrastructure to MinerU:
+
+| Feature | Description |
+|---------|-------------|
+| **PTY-based Output Capture** | Real-time CLI output streaming (captures TQDM progress) |
+| **Progress Parsing** | Detects MinerU stages (Layout, MFD, MFR, OCR-det, OCR-rec) |
+| **Process Health Monitoring** | CPU%, RAM usage via psutil |
+| **Heartbeat Mechanism** | 15-second fallback when no progress detected |
+| **Callback Throttling** | 2-second minimum between callbacks to prevent spam |
+
+#### MinerU Progress Stages
+| Stage | Description | Progress Range |
+|-------|-------------|----------------|
+| `initializing` | Starting MinerU | 0-5% |
+| `layout_detection` | Layout Predict | 5-20% |
+| `formula_detection` | MFD Predict | 20-30% |
+| `formula_recognition` | MFR Predict | 30-40% |
+| `table_extraction` | Table-ocr | 40-50% |
+| `text_detection` | OCR-det | 50-65% |
+| `text_recognition` | OCR-rec | 65-80% |
+| `page_processing` | Processing pages | 80-95% |
+| `finalizing` | Writing output | 95-100% |
+
+#### Expected UI Result
+```
+┌────────────────────────────────────────────────┐
+│ ⟳ Processing with MinerU...                   │
+│                                                │
+│ Elapsed: 3.5 minutes                          │
+│                                                │
+│ OCR-det: Detecting text regions               │
+│ ████████████████░░░░░░░░░░░░░░░░░░ 55%       │
+│                                                │
+│ 📊 Process Health:                            │
+│ ┌──────────────────────────────────┐         │
+│ │ PID: 46966                        │         │
+│ │ CPU: 97.3%                        │         │
+│ │ RAM: 3.4 GB                       │         │
+│ │ Output: Processing...             │         │
+│ └──────────────────────────────────┘         │
+│                                                │
+│ Expected: 5-15 minutes  [Cancel]              │
+└────────────────────────────────────────────────┘
+```
+
+#### Technical Implementation
+- **File Modified**: `backend/mineru_service/mineru_server.py`
+- **Functions Added**:
+  - `_strip_ansi()` - Remove terminal escape codes
+  - `_get_process_health()` - CPU/RAM monitoring via psutil
+  - `_parse_mineru_progress()` - Parse MinerU CLI output
+  - `_cli_run_streaming()` - PTY-based CLI execution with callbacks
+- **No Backend/Frontend Changes Required**: Uses existing callback infrastructure
+
+#### Data Flow
+```
+MinerU CLI (stages/TQDM output)
+        ↓
+PTY captures output line-by-line (mineru_server.py)
+        ↓
+_parse_mineru_progress() extracts: stage, progress, message
+        ↓
+Progress callback sent to Backend API (every 2 seconds, throttled)
+POST /api/papers/{id}/progress-callback
+        ↓
+Backend stores in MongoDB (papers_mongodb.py)
+papers.processing_progress = {stage, message, progress, health}
+        ↓
+Frontend polls (every 10 seconds)
+GET /api/papers/{id}/processing-status
+GET /api/papers/{id}/process-health
+        ↓
+ProcessingStatusIndicator.tsx displays live metrics
+```
+
+---
+
+## Recent Enhancements (January 23, 2026)
+
+### Scripts Reorganization - COMPLETE
+
+#### Overview
+Centralized all cross-platform scripts in `scripts/` directory (same structure as Samanta project).
+
+#### New Location
+```
+scripts/
+├── setup.sh           # Cross-platform environment setup (NEW)
+├── sync-out.sh        # Export MongoDB to db-sync/dumps/
+├── sync-in.sh         # Import from other system (with checksum verification)
+├── sync-status.sh     # Show status of all registered systems
+└── sync_manual.md     # Detailed sync documentation
+```
+
+#### setup.sh - Cross-Platform Environment Setup (NEW)
+
+Detects macOS or Linux and sets up the complete development environment.
+
+**Usage:**
+```bash
+./scripts/setup.sh              # Full setup
+./scripts/setup.sh check        # Check status only
+./scripts/setup.sh mongodb      # MongoDB only
+./scripts/setup.sh python       # Python venvs only
+./scripts/setup.sh frontend     # Frontend only
+./scripts/setup.sh sync         # Check sync status
+```
+
+**Features:**
+| Feature | Description |
+|---------|-------------|
+| **Platform Detection** | macOS vs Linux (Arch/Debian/Fedora) |
+| **MongoDB Setup** | Install and start MongoDB |
+| **Python Environments** | Delegates to setup_python.sh |
+| **Frontend Setup** | Node.js + npm install with platform check |
+| **API Key Check** | Validates ~/.env |
+| **Syncthing Check** | Optional sync service status |
+
+**Output Example:**
+```
+════════════════════════════════════════════════════════════
+  SmartTrendTracer - Environment Status
+════════════════════════════════════════════════════════════
+
+  🐧 Platform: Linux
+  📦 Distribution: arch
+
+▶ Python
+  ✓ Python: Python 3.12.12
+  ✓ mise: installed
+
+▶ Virtual Environments
+  ✓ Backend: Valid
+  ✓ Marker: Valid
+  ✓ MinerU: Valid
+
+▶ MongoDB
+  ✓ MongoDB: Running
+
+▶ API Keys
+  ✓ OPENAI_API_KEY: Set
+  ✓ ANTHROPIC_API_KEY: Set
+```
+
+#### New Features
+| Feature | Description |
+|---------|-------------|
+| **sync-status.sh** | New script showing all systems and recommendations |
+| **SHA-256 Checksum** | Verifies dump integrity before import |
+| **Automatic Backup** | Creates backup before import |
+| **Configurable** | Settings in `.db-sync-config` |
+| **Cleanup** | Auto-removes dumps older than 7 days or > 5 per system |
+
+#### Configuration File (`.db-sync-config`)
+```bash
+MONGO_URL="mongodb://localhost:27017"
+DATABASE_NAME="smarttrendtracer"
+SYNC_DIR="db-sync/dumps"
+BACKUP_DIR="db-sync/backups"
+MAX_DUMPS_PER_SYSTEM=5
+MAX_DUMP_AGE_DAYS=7
+REQUIRE_BACKUP_BEFORE_IMPORT=true
+```
+
+#### Backwards Compatibility
+Old scripts in `backend/` now forward to new location with deprecation warning.
+
+#### Usage
+```bash
+./scripts/sync-status.sh    # Check status
+./scripts/sync-out.sh       # Export before switching machines
+./scripts/sync-in.sh        # Import on new machine
+```
+
+---
+
+## Recent Enhancements (January 21, 2026)
+
+### Dashboard Refresh Buttons - COMPLETE
+
+#### Overview
+All faceted dashboards now have consistent Refresh buttons for manual list refresh without browser reload.
+
+#### Dashboards with Refresh Buttons
+| Dashboard | File | Status |
+|-----------|------|--------|
+| Articles (Substack) | `FacetedSubstackDashboardModern.tsx` | Already had |
+| Tweets | `FacetedTweetsDashboardModern.tsx` | Already had |
+| Reddit | `FacetedRedditDashboardModern.tsx` | Already had |
+| Articles (Modern) | `FacetedArticlesDashboardModern.tsx` | Already had |
+| **Papers** | `FacetedPapersDashboard.tsx` | **Added** |
+| **Books** | `FacetedBooksDashboard.tsx` | **Added** |
+
+#### Features
+- Refresh button in header area next to Upload/Import buttons
+- Spin animation while loading (`animate-spin` class)
+- Disabled state during loading to prevent double-clicks
+- Consistent styling across all dashboards
+
+#### Files Modified
+- `frontend/src/components/FacetedPapersDashboard.tsx` - Added RefreshCw import, cn import, Refresh button
+- `frontend/src/components/FacetedBooksDashboard.tsx` - Added RefreshCw import, cn import, Refresh button
+
+#### Usage
+Click the "Refresh" button in any dashboard header to reload the list data without navigating away or reloading the browser.
+
+---
+
+### DEF-001: Article Viewer Optimistic UI - Still Open
+
+**Status:** In Progress (multiple fix attempts failed)
+
+The `articleViewerClosed` custom event is not being received by the parent component despite being dispatched. Fix attempts including `useCallback` for stable handler reference did not resolve the issue.
+
+**Workaround:** Use the Refresh button to manually update lists after viewer actions.
+
+---
+
 ## Recent Enhancements (January 20, 2026)
 
 ### RAG Search Content Type Filtering Fix - COMPLETE
@@ -322,8 +628,9 @@ Complete rewrite of startup/shutdown scripts for seamless macOS ↔ Linux operat
 #### Workflow beim Plattformwechsel
 ```bash
 # Auf neuem System:
-cd backend && ./sync-in.sh     # MongoDB importieren
-cd .. && ./setup_python.sh     # Erkennt & fixt alles automatisch
+./scripts/sync-status.sh       # Status prüfen
+./scripts/sync-in.sh           # MongoDB importieren
+./setup_python.sh              # Erkennt & fixt alles automatisch
 ./start_stt.sh                 # Starten
 ```
 
@@ -765,12 +1072,14 @@ detect_platform() {
 #### Cross-Platform Workflow
 ```bash
 # On macOS (end of session):
-cd backend && ./sync-out.sh
+./scripts/sync-out.sh          # Export MongoDB
 
 # On Linux (start of session):
-cd backend && ./sync-in.sh
-cd .. && ./start_stt.sh  # Auto-detects broken venvs, recreates them
-cd frontend && npm install  # Reinstall native modules
+./scripts/sync-status.sh       # Check sync status
+./scripts/sync-in.sh           # Import MongoDB
+./setup_python.sh              # Auto-detects broken venvs, recreates them
+./start_stt.sh                 # Start services
+cd frontend && npm install     # Reinstall native modules (if needed)
 ```
 
 ---
@@ -2442,6 +2751,27 @@ python -c "from pymongo import MongoClient; client = MongoClient(); db = client.
 - Performance optimization for large datasets
 
 ## Quick Start Commands
+
+### Machine Sync (when switching between macOS/Linux)
+```bash
+# Before leaving current machine:
+./scripts/sync-out.sh
+
+# On new machine:
+./scripts/sync-status.sh       # Check sync status
+./scripts/sync-in.sh           # Import database
+./scripts/setup.sh             # Setup environment (auto-detects OS)
+./start_stt.sh                 # Start all services
+```
+
+### Environment Setup
+```bash
+./scripts/setup.sh check       # Check environment status
+./scripts/setup.sh             # Full setup (MongoDB, Python, Frontend)
+./scripts/setup.sh mongodb     # MongoDB only
+./scripts/setup.sh python      # Python venvs only
+./scripts/setup.sh frontend    # Frontend only
+```
 
 ### Daily Operations
 ```bash

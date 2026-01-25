@@ -37,6 +37,16 @@ BOOKS_REPOSITORY = Path("data/book_repository")
 BOOKS_REPOSITORY.parent.mkdir(parents=True, exist_ok=True)
 BOOKS_REPOSITORY.mkdir(exist_ok=True)
 
+
+# Processing status constants (STYLE-004)
+class ProcessingStatus:
+    """Status constants for book processing state."""
+    PENDING = 'pending'
+    PROCESSING = 'processing'
+    QUEUED = 'queued'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
+
 # Queue collection for background processing
 BOOK_PROCESSING_QUEUE = db.book_processing_jobs
 

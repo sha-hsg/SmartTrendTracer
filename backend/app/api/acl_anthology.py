@@ -133,7 +133,7 @@ async def import_acl_anthology_paper(
             'doi': paper_data.get('doi'),
             'conference': paper_data.get('conference'),
             'journal': paper_data.get('proceedings'),  # Some ACL papers may be in journals
-            'published_date': paper_data.get('publication_date'),  # Standardized field name (matches ArXiv)
+            'publication_date': paper_data.get('publication_date'),  # Canonical field name for papers
             'created_at': datetime.utcnow(),
             'processed': False,
             'source': 'acl_anthology',

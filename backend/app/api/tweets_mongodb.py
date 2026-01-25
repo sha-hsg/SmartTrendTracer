@@ -13,6 +13,7 @@ import logging
 import uuid
 import json
 from bson import ObjectId
+from bson.errors import InvalidId
 
 from app.services.concept_only_tag_service import ConceptOnlyTagService
 from app.services.llm_manager import get_llm_manager
@@ -30,22 +31,31 @@ llm_manager = get_llm_manager()
 # In-memory batch annotation task tracking
 batch_annotation_tasks: Dict[str, Dict] = {}
 
-# Cache for profile images to avoid repeated DB lookups
-_profile_image_cache: Dict[str, Optional[str]] = {}
+# Cache for profile images to avoid repeated DB lookups (OBS-006: with TTL)
+_profile_image_cache: Dict[str, tuple[Optional[str], float]] = {}  # {username: (url, timestamp)}
+_PROFILE_IMAGE_CACHE_TTL = 3600  # 1 hour TTL
 
 def get_profile_images_for_usernames(usernames: List[str]) -> Dict[str, Optional[str]]:
     """
     Batch lookup profile images from twitter_accounts collection.
     Returns a dict mapping username -> profile_image_url (or None if not found).
-    Uses caching to avoid repeated lookups.
+    Uses caching with 1 hour TTL to avoid repeated lookups.
     """
+    import time
+    current_time = time.time()
     result = {}
     usernames_to_lookup = []
 
-    # Check cache first
+    # Check cache first (with TTL validation)
     for username in usernames:
         if username in _profile_image_cache:
-            result[username] = _profile_image_cache[username]
+            cached_url, cached_time = _profile_image_cache[username]
+            if current_time - cached_time < _PROFILE_IMAGE_CACHE_TTL:
+                result[username] = cached_url
+            else:
+                # Cache expired
+                del _profile_image_cache[username]
+                usernames_to_lookup.append(username)
         else:
             usernames_to_lookup.append(username)
 
@@ -60,13 +70,13 @@ def get_profile_images_for_usernames(usernames: List[str]) -> Dict[str, Optional
             username = account.get('username')
             profile_url = account.get('profile_image_url')
             result[username] = profile_url
-            _profile_image_cache[username] = profile_url
+            _profile_image_cache[username] = (profile_url, current_time)
 
         # Cache None for usernames not found
         for username in usernames_to_lookup:
             if username not in result:
                 result[username] = None
-                _profile_image_cache[username] = None
+                _profile_image_cache[username] = (None, current_time)
 
     return result
 
@@ -100,7 +110,8 @@ def get_tweets(
                 concept_filter = ObjectId(concept_id)
             else:
                 concept_filter = concept_id
-        except:
+        except (InvalidId, TypeError) as e:
+            logger.debug(f"concept_id '{concept_id}' is not a valid ObjectId: {e}")
             concept_filter = concept_id
         
         # Find all tweet IDs that have this concept in tag_instances
@@ -145,11 +156,12 @@ def get_tweets(
         
         concept_ids = [ti['concept_id'] for ti in tag_instances]
         
-        # Get full concept details if requested
+        # Get full concept details if requested (batch query to avoid N+1)
         if include_concepts and concept_ids:
+            concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
             concepts = []
             for cid in concept_ids:
-                concept = concept_service.get_concept_by_id(cid)
+                concept = concepts_lookup.get(str(cid))
                 if concept:
                     concepts.append({
                         'concept_id': str(cid),
@@ -358,32 +370,70 @@ def faceted_search(
         query.setdefault('$and', [])
         query['$and'].extend(text_conditions)
     
-    # Apply annotation status filter
+    # Apply annotation status filter (PERF-003: optimized to avoid loading all IDs into memory)
     if annotation_status:
+        # Get annotated tweet IDs using aggregation with limit for efficiency
+        # Only fetch IDs if we actually need them for the filter
+        annotated_tweet_ids = None
+
         if annotation_status == 'annotated':
-            # Find tweets that have at least one annotation
-            annotated_tweet_ids = db.tag_instances.distinct('content_id', {'content_type': 'tweet'})
+            # For 'annotated', we need IDs to filter IN
+            # Use aggregation to get unique content_ids efficiently
+            annotated_pipeline = [
+                {'$match': {'content_type': 'tweet'}},
+                {'$group': {'_id': '$content_id'}},
+                {'$project': {'content_id': '$_id', '_id': 0}}
+            ]
+            annotated_results = list(db.tag_instances.aggregate(annotated_pipeline))
+            annotated_tweet_ids = [r['content_id'] for r in annotated_results]
+
             if annotated_tweet_ids:
+                # Convert string IDs to ObjectIds where valid
+                object_ids = []
+                for tid in annotated_tweet_ids:
+                    try:
+                        if isinstance(tid, str) and len(tid) == 24:
+                            object_ids.append(ObjectId(tid))
+                        else:
+                            object_ids.append(tid)
+                    except (InvalidId, TypeError):
+                        object_ids.append(tid)
+
                 if query.get('_id'):
-                    # Intersect with existing _id filter
-                    existing_ids = query['_id'].get('$in', [])
-                    query['_id'] = {'$in': list(set(existing_ids) & set(annotated_tweet_ids))}
+                    existing_ids = set(query['_id'].get('$in', []))
+                    query['_id'] = {'$in': list(existing_ids & set(object_ids))}
                 else:
-                    query['_id'] = {'$in': annotated_tweet_ids}
+                    query['_id'] = {'$in': object_ids}
             else:
-                # No annotated tweets
-                query['_id'] = {'$in': []}  # Will return no results
+                query['_id'] = {'$in': []}
+
         elif annotation_status == 'not_annotated':
-            # Find tweets that have NO annotations
-            annotated_tweet_ids = db.tag_instances.distinct('content_id', {'content_type': 'tweet'})
+            # For 'not_annotated', we need IDs to filter OUT
+            annotated_pipeline = [
+                {'$match': {'content_type': 'tweet'}},
+                {'$group': {'_id': '$content_id'}},
+                {'$project': {'content_id': '$_id', '_id': 0}}
+            ]
+            annotated_results = list(db.tag_instances.aggregate(annotated_pipeline))
+            annotated_tweet_ids = [r['content_id'] for r in annotated_results]
+
             if annotated_tweet_ids:
+                # Convert string IDs to ObjectIds where valid
+                object_ids = []
+                for tid in annotated_tweet_ids:
+                    try:
+                        if isinstance(tid, str) and len(tid) == 24:
+                            object_ids.append(ObjectId(tid))
+                        else:
+                            object_ids.append(tid)
+                    except (InvalidId, TypeError):
+                        object_ids.append(tid)
+
                 if query.get('_id'):
-                    # Exclude annotated tweets from existing filter
-                    existing_ids = query['_id'].get('$in', [])
-                    query['_id'] = {'$in': list(set(existing_ids) - set(annotated_tweet_ids))}
+                    existing_ids = set(query['_id'].get('$in', []))
+                    query['_id'] = {'$in': list(existing_ids - set(object_ids))}
                 else:
-                    query['_id'] = {'$nin': annotated_tweet_ids}
-            # If no annotated tweets exist, all tweets are not annotated (no filter needed)
+                    query['_id'] = {'$nin': object_ids}
     
     # Get total count before pagination
     total = db.tweets.count_documents(query)
@@ -438,10 +488,12 @@ def faceted_search(
             concept_counts = list(db.tag_instances.aggregate(concept_pipeline))
         else:
             concept_counts = []
-        
-        # Get concept details
+
+        # Get concept details in batch (avoids N+1)
+        concept_ids_for_facets = [cc['_id'] for cc in concept_counts]
+        concepts_lookup = concept_service.get_concepts_by_ids(concept_ids_for_facets)
         for cc in concept_counts:
-            concept = concept_service.get_concept_by_id(cc['_id'])
+            concept = concepts_lookup.get(str(cc['_id']))
             if concept:
                 concept_facets.append({
                     'concept_id': str(cc['_id']),
@@ -474,11 +526,12 @@ def faceted_search(
         }))
         
         concept_ids = [ti['concept_id'] for ti in tag_instances]
-        
-        # Get concept details
+
+        # Get concept details in batch (avoids N+1)
+        concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
         concepts = []
         for cid in concept_ids:
-            concept = concept_service.get_concept_by_id(cid)
+            concept = concepts_lookup.get(str(cid))
             if concept:
                 concepts.append({
                     'concept_id': str(cid),
@@ -627,12 +680,13 @@ def get_tweet(tweet_id: str, include_concepts: bool = True):
     }))
     
     concept_ids = [ti['concept_id'] for ti in tag_instances]
-    
-    # Get concept details
+
+    # Get concept details in batch (avoids N+1)
     concepts = []
     if include_concepts and concept_ids:
+        concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
         for cid in concept_ids:
-            concept = concept_service.get_concept_by_id(cid)
+            concept = concepts_lookup.get(str(cid))
             if concept:
                 concepts.append({
                     'concept_id': str(cid),

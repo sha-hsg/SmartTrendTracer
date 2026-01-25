@@ -7,9 +7,10 @@ from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Body, Bac
 from fastapi.responses import FileResponse, Response
 from pymongo import ASCENDING, DESCENDING
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from bson import ObjectId
+from bson.errors import InvalidId
 import json
 import os
 import hashlib
@@ -37,7 +38,113 @@ analysis_tasks = {}  # task_id -> {status, progress, results, error}
 import asyncio
 marker_semaphore = asyncio.Semaphore(1)
 
-def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List[str]):
+
+def safe_object_id(value: Any) -> Optional[ObjectId]:
+    """Safely convert a value to ObjectId, returning None if invalid.
+
+    Handles various input formats:
+    - None -> None
+    - Already an ObjectId -> returns as-is
+    - 24-character hex string -> converts to ObjectId
+    - Any other value -> None
+    """
+    if value is None:
+        return None
+    if isinstance(value, ObjectId):
+        return value
+    try:
+        str_val = str(value)
+        if len(str_val) == 24:
+            return ObjectId(str_val)
+    except (InvalidId, TypeError, ValueError):
+        pass
+    return None
+
+
+def find_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
+    """Find a paper by ObjectId or legacy SQLite ID.
+
+    This helper consolidates the common pattern of:
+    1. Try to find by ObjectId (if 24 chars)
+    2. Fall back to old_sqlite_id (if numeric)
+
+    Returns None if paper not found or ID is invalid.
+    """
+    if not paper_id:
+        return None
+
+    # Try ObjectId first if it looks like one
+    oid = safe_object_id(paper_id)
+    if oid:
+        paper = db.papers.find_one({'_id': oid})
+        if paper:
+            return paper
+
+    # Fall back to old SQLite ID
+    try:
+        sqlite_id = int(paper_id)
+        return db.papers.find_one({'old_sqlite_id': sqlite_id})
+    except (ValueError, TypeError):
+        pass
+
+    return None
+
+
+def parse_marker_error(error_text: str) -> str:
+    """Parse Marker service error and return a user-friendly message."""
+    try:
+        # Try to parse as JSON
+        error_data = json.loads(error_text)
+        if isinstance(error_data, dict):
+            # Extract the main error message
+            error_msg = error_data.get('error', '')
+
+            # Check for common error patterns in cli_logs
+            cli_logs = error_data.get('cli_logs', '')
+
+            # Surya/PyTorch memory error
+            if 'AcceleratorError' in cli_logs or 'out of bounds' in cli_logs:
+                return "PDF processing failed: Document too large or complex for available memory. Try using MinerU instead."
+
+            # CUDA/MPS memory error
+            if 'OutOfMemoryError' in cli_logs or 'out of memory' in cli_logs.lower():
+                return "PDF processing failed: Out of memory. Try using MinerU instead or process on a machine with more RAM."
+
+            # Invalid PDF
+            if 'Invalid PDF' in cli_logs or 'PDFSyntaxError' in cli_logs:
+                return "PDF processing failed: Invalid or corrupted PDF file."
+
+            # Password protected
+            if 'password' in cli_logs.lower() and 'protect' in cli_logs.lower():
+                return "PDF processing failed: PDF is password protected."
+
+            # Generic marker_single failed
+            if 'marker_single failed' in error_msg:
+                return "PDF processing failed: Marker could not extract content. Try using MinerU instead."
+
+            # Return cleaned error message
+            if error_msg:
+                return f"PDF processing failed: {error_msg}"
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    # Check for common patterns in raw text
+    if 'AcceleratorError' in error_text or 'out of bounds' in error_text:
+        return "PDF processing failed: Document too large or complex for available memory. Try using MinerU instead."
+
+    if 'timeout' in error_text.lower():
+        return "PDF processing failed: Processing timed out. The document may be too large."
+
+    if 'connection' in error_text.lower() and ('refused' in error_text.lower() or 'error' in error_text.lower()):
+        return "PDF processing failed: Could not connect to Marker service. Please ensure the service is running."
+
+    # Truncate very long error messages
+    if len(error_text) > 200:
+        return f"PDF processing failed: {error_text[:150]}..."
+
+    return f"PDF processing failed: {error_text}"
+
+def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List[str]) -> None:
     """Background task to run LLM analysis without blocking the server"""
     import uuid
     import asyncio
@@ -49,7 +156,7 @@ def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List
             "progress": 0,
             "results": {},
             "error": None,
-            "started_at": datetime.utcnow().isoformat()
+            "started_at": datetime.now(timezone.utc).isoformat()
         }
 
         # Get paper
@@ -58,7 +165,8 @@ def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List
                 paper = db.papers.find_one({'_id': ObjectId(paper_id)})
             else:
                 paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-        except:
+        except (InvalidId, ValueError, TypeError) as e:
+            logger.warning(f"Failed to parse paper_id '{paper_id}': {e}")
             paper = None
 
         if not paper:
@@ -136,7 +244,7 @@ def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List
                     "type": analysis_type,
                     "analysis_type": analysis_type,
                     "content": result,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(timezone.utc).isoformat(),
                     "model": model_config.get('model'),
                     "model_used": model_config.get('model')
                 }
@@ -158,21 +266,26 @@ def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List
 
         # Update paper with new analyses
         if len(paper_id) == 24:
-            db.papers.update_one(
+            update_result = db.papers.update_one(
                 {'_id': ObjectId(paper_id)},
                 {'$set': {'analyses': existing_analyses}}
             )
         else:
-            db.papers.update_one(
+            update_result = db.papers.update_one(
                 {'old_sqlite_id': int(paper_id)},
                 {'$set': {'analyses': existing_analyses}}
             )
+
+        if update_result.matched_count == 0:
+            logger.warning(f"Paper {paper_id} not found when saving analyses")
+        elif update_result.modified_count == 0:
+            logger.debug(f"Paper {paper_id} analyses unchanged")
 
         # Mark task as completed
         analysis_tasks[task_id]["status"] = "completed"
         analysis_tasks[task_id]["progress"] = 100
         analysis_tasks[task_id]["results"] = results
-        analysis_tasks[task_id]["completed_at"] = datetime.utcnow().isoformat()
+        analysis_tasks[task_id]["completed_at"] = datetime.now(timezone.utc).isoformat()
 
     except Exception as e:
         logger.error(f"Background analysis task {task_id} failed: {e}")
@@ -180,7 +293,7 @@ def run_analysis_in_background(task_id: str, paper_id: str, analysis_types: List
         analysis_tasks[task_id]["error"] = str(e)
 
 @router.get("/{paper_id}/analyses/task/{task_id}")
-async def get_analysis_task_status(paper_id: str, task_id: str):
+async def get_analysis_task_status(paper_id: str, task_id: str) -> Dict[str, Any]:
     """Get the status of a background analysis task"""
     if task_id not in analysis_tasks:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -189,7 +302,7 @@ async def get_analysis_task_status(paper_id: str, task_id: str):
 # Initialize readability service
 readability_service = ReadabilityService()
 
-def get_paper_by_id(paper_id: str):
+def get_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
     """Get paper by MongoDB ObjectId only - pure MongoDB standard - returns ObjectId converted to string"""
     try:
         if len(paper_id) == 24:
@@ -203,7 +316,8 @@ def get_paper_by_id(paper_id: str):
         else:
             # Invalid ID format
             return None
-    except:
+    except (InvalidId, TypeError, ValueError) as e:
+        logger.debug(f"Failed to get paper by ID '{paper_id}': {e}")
         return None
 
 @router.get("/")
@@ -230,6 +344,7 @@ def get_papers(
     no_conference: Optional[bool] = None,
     no_affiliation: Optional[bool] = None,
     no_annotations: Optional[bool] = None,
+    no_mollick_summary: Optional[bool] = None,
     # Rating filters
     min_rating: Optional[int] = Query(None, ge=1, le=5, description="Minimum rating (1-5)"),
     rating: Optional[int] = Query(None, ge=1, le=5, description="Exact rating (1-5)"),
@@ -237,7 +352,7 @@ def get_papers(
     # Sort options
     sort_by: str = Query("created_at", description="Sort field: created_at, publication_date, title, rating"),
     sort_order: str = Query("desc", description="Sort order: asc or desc")
-):
+) -> Dict[str, Any]:
     """Get papers with filtering and pagination from MongoDB"""
     
     # Build query
@@ -253,20 +368,21 @@ def get_papers(
         for cid in concept_ids:
             try:
                 concept_object_ids.append(ObjectId(cid))
-            except:
+            except (InvalidId, TypeError):
                 # If invalid ObjectId format, skip
+                logger.debug(f"Skipping invalid concept_id format: {cid}")
                 pass
         
         if concept_object_ids:
             # Paper must have ALL selected concepts (AND logic)
             query['concept_ids'] = {'$all': concept_object_ids}
     elif concept_id:
-        # Backward compatibility - single concept_id
+        # Backward compatibility - single concept_id (use $all for consistency with multi-concept logic)
         try:
-            query['concept_ids'] = ObjectId(concept_id)
-        except:
+            query['concept_ids'] = {'$all': [ObjectId(concept_id)]}
+        except (InvalidId, TypeError):
             # If invalid ObjectId format, try as string
-            query['concept_ids'] = concept_id
+            query['concept_ids'] = {'$all': [concept_id]}
     
     if author:
         # Search in authors_detailed array
@@ -442,18 +558,18 @@ def get_papers(
         for pid in papers_with_tags:
             pid_str = str(pid)
             string_list.append(pid_str)
-            
+
             # Try to convert to ObjectId if it's a valid 24-char hex string
             try:
                 if len(pid_str) == 24:
                     objectid_list.append(ObjectId(pid_str))
-            except:
+            except (InvalidId, TypeError):
                 pass
-            
+
             # Try to convert to int for old_sqlite_id
             try:
                 int_list.append(int(pid_str))
-            except:
+            except (ValueError, TypeError):
                 pass
         
         # Papers must NOT be in any of these lists
@@ -484,6 +600,14 @@ def get_papers(
                 {'user_rating': {'$exists': False}},
                 {'user_rating': None}
             ]}
+        ]
+
+    # Filter for papers missing mollick_summary analysis
+    if no_mollick_summary:
+        # Use $not with $elemMatch to find papers where NO analysis has type 'mollick_summary'
+        # This also correctly handles papers with no analyses array or empty array
+        query['$and'] = query.get('$and', []) + [
+            {'analyses': {'$not': {'$elemMatch': {'analysis_type': 'mollick_summary'}}}}
         ]
 
     # Log the final query for debugging
@@ -661,10 +785,14 @@ def get_facets(
     concept_ids: Optional[List[str]] = Query(None),
     author: Optional[str] = None,
     conference: Optional[str] = None,
+    conferences: Optional[List[str]] = Query(None),
     year: Optional[int] = None,
+    years: Optional[List[int]] = Query(None),
     affiliation: Optional[str] = None,
-    processor: Optional[str] = None
-):
+    affiliations: Optional[List[str]] = Query(None),
+    processor: Optional[str] = None,
+    processors: Optional[List[str]] = Query(None)
+) -> Dict[str, Any]:
     """Get facets for filtering papers - facets update based on current filters"""
     
     print("DEBUG: Starting facets generation with filters")
@@ -681,44 +809,69 @@ def get_facets(
         for cid in concept_ids:
             try:
                 concept_object_ids.append(ObjectId(cid))
-            except:
+            except (InvalidId, TypeError):
                 pass
         if concept_object_ids:
             base_query['concept_ids'] = {'$all': concept_object_ids}
     
     if author:
         base_query['authors_detailed.name'] = {'$regex': author, '$options': 'i'}
-    
-    if conference:
+
+    # Handle conferences (plural has priority over singular)
+    if conferences and len(conferences) > 0:
+        if len(conferences) == 1:
+            base_query['conference'] = {'$regex': conferences[0], '$options': 'i'}
+        else:
+            conference_conditions = [{'conference': {'$regex': conf, '$options': 'i'}} for conf in conferences]
+            if '$and' not in base_query:
+                base_query['$and'] = []
+            base_query['$and'].append({'$or': conference_conditions})
+    elif conference:
         base_query['conference'] = {'$regex': conference, '$options': 'i'}
-    
-    if year:
-        base_query['$expr'] = {
-            '$eq': [
-                {
-                    '$cond': {
-                        'if': {
-                            '$and': [
-                                {'$ne': ['$publication_date', None]},
-                                {'$ne': ['$publication_date', '']},
-                                {'$eq': [{'$type': '$publication_date'}, 'string']},
-                                {'$gt': [{'$strLenCP': '$publication_date'}, 4]}
-                            ]
-                        },
-                        'then': {'$year': {'$dateFromString': {'dateString': '$publication_date', 'onError': None}}},
-                        'else': {'$year': '$created_at'}
-                    }
+
+    # Handle years (plural has priority over singular)
+    year_list = years if years and len(years) > 0 else ([year] if year else None)
+    if year_list:
+        year_expr = {
+            '$cond': {
+                'if': {
+                    '$and': [
+                        {'$ne': ['$publication_date', None]},
+                        {'$ne': ['$publication_date', '']},
+                        {'$eq': [{'$type': '$publication_date'}, 'string']},
+                        {'$gt': [{'$strLenCP': '$publication_date'}, 4]}
+                    ]
                 },
-                year
-            ]
+                'then': {'$year': {'$dateFromString': {'dateString': '$publication_date', 'onError': None}}},
+                'else': {'$year': '$created_at'}
+            }
         }
-    
-    if affiliation:
+        if len(year_list) == 1:
+            base_query['$expr'] = {'$eq': [year_expr, year_list[0]]}
+        else:
+            base_query['$expr'] = {'$in': [year_expr, year_list]}
+
+    # Handle affiliations (plural has priority over singular)
+    if affiliations and len(affiliations) > 0:
+        if len(affiliations) == 1:
+            base_query['authors_detailed.affiliation'] = {'$regex': affiliations[0], '$options': 'i'}
+        else:
+            affiliation_conditions = [{'authors_detailed.affiliation': {'$regex': aff, '$options': 'i'}} for aff in affiliations]
+            if '$and' not in base_query:
+                base_query['$and'] = []
+            base_query['$and'].append({'$or': affiliation_conditions})
+    elif affiliation:
         base_query['authors_detailed.affiliation'] = {'$regex': affiliation, '$options': 'i'}
-    
-    if processor:
+
+    # Handle processors (plural has priority over singular)
+    if processors and len(processors) > 0:
+        if len(processors) == 1:
+            base_query['processor_used'] = processors[0]
+        else:
+            base_query['processor_used'] = {'$in': processors}
+    elif processor:
         base_query['processor_used'] = processor
-    
+
     # Create base match stage for pipelines
     base_match = {'$match': base_query} if base_query else None
     
@@ -888,22 +1041,52 @@ def get_facets(
     }
     print(f"DEBUG: Rating facet: {rating_facet}")
 
-    # Get special filters facets
+    # Get special filters facets using single $facet aggregation (DB-007/PERF-004 optimization)
+    # This replaces 11 separate count_documents() calls with one aggregation
     special_filters = []
-    
-    # Count papers with different statuses - apply base_query if filters are active
-    processed_query = {**base_query, 'processed': True} if base_query else {'processed': True}
-    flagged_query = {**base_query, 'is_flagged': True} if base_query else {'is_flagged': True}
-    arxiv_query = {**base_query, 'arxiv_id': {'$ne': None, '$ne': ''}} if base_query else {'arxiv_id': {'$ne': None, '$ne': ''}}
-    doi_query = {**base_query, 'doi': {'$ne': None, '$ne': ''}} if base_query else {'doi': {'$ne': None, '$ne': ''}}
-    repository_query = {**base_query, 'repository': {'$ne': None, '$ne': ''}} if base_query else {'repository': {'$ne': None, '$ne': ''}}
-    
-    processed_count = db.papers.count_documents(processed_query)
-    flagged_count = db.papers.count_documents(flagged_query)
-    arxiv_count = db.papers.count_documents(arxiv_query)
-    doi_count = db.papers.count_documents(doi_query)
-    repository_count = db.papers.count_documents(repository_query)
-    
+    paper_status = {}
+    missing_data_counts = {}
+
+    # Build $facet pipeline for all counts in one database round-trip
+    facet_pipeline = []
+    if base_match:
+        facet_pipeline.append(base_match)
+
+    facet_pipeline.append({
+        '$facet': {
+            'processed': [{'$match': {'processed': True}}, {'$count': 'n'}],
+            'flagged': [{'$match': {'is_flagged': True}}, {'$count': 'n'}],
+            'unflagged': [{'$match': {'$or': [{'is_flagged': False}, {'is_flagged': {'$exists': False}}]}}, {'$count': 'n'}],
+            'arxiv': [{'$match': {'arxiv_id': {'$exists': True, '$ne': None, '$ne': ''}}}, {'$count': 'n'}],
+            'has_doi': [{'$match': {'doi': {'$exists': True, '$ne': None, '$ne': ''}}}, {'$count': 'n'}],
+            'has_repository': [{'$match': {'repository': {'$exists': True, '$ne': None, '$ne': ''}}}, {'$count': 'n'}],
+            'no_processor': [{'$match': {'$or': [{'processor_used': None}, {'processor_used': ''}, {'processor_used': {'$exists': False}}]}}, {'$count': 'n'}],
+            'no_year': [{'$match': {'$and': [
+                {'$or': [{'publication_date': None}, {'publication_date': ''}, {'publication_date': {'$exists': False}}]},
+                {'$or': [{'year': None}, {'year': ''}, {'year': {'$exists': False}}]}
+            ]}}, {'$count': 'n'}],
+            'no_conference': [{'$match': {'$and': [
+                {'$or': [{'conference': None}, {'conference': ''}, {'conference': {'$exists': False}}]},
+                {'$or': [{'venue': None}, {'venue': ''}, {'venue': {'$exists': False}}]}
+            ]}}, {'$count': 'n'}]
+        }
+    })
+
+    # Execute single aggregation for all counts
+    facet_result = list(db.papers.aggregate(facet_pipeline))
+    counts = facet_result[0] if facet_result else {}
+
+    # Helper to extract count from facet result
+    def get_count(key):
+        return counts.get(key, [{}])[0].get('n', 0) if counts.get(key) else 0
+
+    # Build special filters from facet results
+    processed_count = get_count('processed')
+    flagged_count = get_count('flagged')
+    arxiv_count = get_count('arxiv')
+    doi_count = get_count('has_doi')
+    repository_count = get_count('has_repository')
+
     if processed_count > 0:
         special_filters.append({'name': 'processed', 'label': 'Processed Papers', 'count': processed_count})
     if flagged_count > 0:
@@ -914,40 +1097,15 @@ def get_facets(
         special_filters.append({'name': 'has_doi', 'label': 'Has DOI', 'count': doi_count})
     if repository_count > 0:
         special_filters.append({'name': 'has_repository', 'label': 'Has Repository', 'count': repository_count})
-    
-    # Get paper status counts - for flagged/unflagged
-    paper_status = {}
-    flagged_query = {**base_query, 'is_flagged': True} if base_query else {'is_flagged': True}
-    unflagged_query = {**base_query, '$or': [{'is_flagged': False}, {'is_flagged': {'$exists': False}}]} if base_query else {'$or': [{'is_flagged': False}, {'is_flagged': {'$exists': False}}]}
-    paper_status['flagged'] = db.papers.count_documents(flagged_query)
-    paper_status['unflagged'] = db.papers.count_documents(unflagged_query)
-    
-    # Get missing data counts - these are for papers MISSING data
-    missing_data_counts = {}
-    
-    # Count papers with no processor - apply base_query if filters are active
-    no_processor_query = {**base_query, '$or': [{'processor_used': None}, {'processor_used': ''}]} if base_query else {'$or': [{'processor_used': None}, {'processor_used': ''}]}
-    missing_data_counts['no_processor'] = db.papers.count_documents(no_processor_query)
-    
-    # Count papers with no year
-    no_year_query = {**base_query, '$and': [
-        {'$or': [{'publication_date': None}, {'publication_date': ''}]},
-        {'$or': [{'year': None}, {'year': ''}]}
-    ]} if base_query else {'$and': [
-        {'$or': [{'publication_date': None}, {'publication_date': ''}]},
-        {'$or': [{'year': None}, {'year': ''}]}
-    ]}
-    missing_data_counts['no_year'] = db.papers.count_documents(no_year_query)
-    
-    # Count papers with no conference
-    no_conference_query = {**base_query, '$and': [
-        {'$or': [{'conference': None}, {'conference': ''}]},
-        {'$or': [{'venue': None}, {'venue': ''}]}
-    ]} if base_query else {'$and': [
-        {'$or': [{'conference': None}, {'conference': ''}]},
-        {'$or': [{'venue': None}, {'venue': ''}]}
-    ]}
-    missing_data_counts['no_conference'] = db.papers.count_documents(no_conference_query)
+
+    # Paper status from facet results
+    paper_status['flagged'] = get_count('flagged')
+    paper_status['unflagged'] = get_count('unflagged')
+
+    # Missing data counts from facet results
+    missing_data_counts['no_processor'] = get_count('no_processor')
+    missing_data_counts['no_year'] = get_count('no_year')
+    missing_data_counts['no_conference'] = get_count('no_conference')
     
     # Count papers with no affiliations - this is the critical one for your issue
     # A paper has no affiliation if:
@@ -991,9 +1149,33 @@ def get_facets(
     # Count papers with no annotations (no tag instances)
     # First get all paper IDs that have tag instances
     papers_with_tags = db.tag_instances.distinct('content_id', {'content_type': 'paper'})
-    no_annotations_query = {**base_query, '_id': {'$nin': [ObjectId(pid) if len(pid) == 24 else pid for pid in papers_with_tags]}} if base_query else {'_id': {'$nin': [ObjectId(pid) if len(pid) == 24 else pid for pid in papers_with_tags]}}
+    # Convert content_ids to ObjectIds safely - content_id may be ObjectId, string, or int
+    # Convert to string first to handle all types, then check if it's a valid 24-char ObjectId hex
+    papers_with_tags_oids = []
+    for pid in papers_with_tags:
+        pid_str = str(pid)
+        if len(pid_str) == 24:
+            try:
+                papers_with_tags_oids.append(ObjectId(pid_str))
+            except Exception:
+                papers_with_tags_oids.append(pid)
+        else:
+            papers_with_tags_oids.append(pid)
+    no_annotations_query = {**base_query, '_id': {'$nin': papers_with_tags_oids}} if base_query else {'_id': {'$nin': papers_with_tags_oids}}
     missing_data_counts['no_annotations'] = db.papers.count_documents(no_annotations_query)
-    
+
+    # Count papers missing mollick_summary analysis
+    # Use $not with $elemMatch to find papers where NO analysis has type 'mollick_summary'
+    # This also matches papers with no analyses array or empty array
+    no_mollick_condition = {
+        'analyses': {'$not': {'$elemMatch': {'analysis_type': 'mollick_summary'}}}
+    }
+    if base_query:
+        no_mollick_query = {'$and': [base_query, no_mollick_condition]}
+    else:
+        no_mollick_query = no_mollick_condition
+    missing_data_counts['no_mollick_summary'] = db.papers.count_documents(no_mollick_query)
+
     # Get concept facets - only from filtered papers
     concept_facets = []
     
@@ -1060,7 +1242,7 @@ def get_facets(
     return result
 
 @router.get("/{paper_id}")
-def get_paper(paper_id: str):
+def get_paper(paper_id: str) -> Dict[str, Any]:
     """Get a specific paper by ID from MongoDB"""
     
     paper = get_paper_by_id(paper_id)
@@ -1083,14 +1265,15 @@ def get_paper(paper_id: str):
     
     # Deduplicate concept_ids to avoid React key warnings
     concept_ids = list(set(ti['concept_id'] for ti in tag_instances))
-    
-    # Get concept details
+
+    # Get concept details in a single batch query (avoids N+1)
+    concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
     concepts = []
     for cid in concept_ids:
-        concept = concept_service.get_concept_by_id(cid)
+        concept = concepts_lookup.get(str(cid))
         if concept:
             concepts.append({
-                'concept_id': str(cid),  # Convert ObjectId to string for JSON serialization
+                'concept_id': str(cid),
                 'display_name': concept.get('display_name'),
                 'slug': concept.get('slug')
             })
@@ -1142,20 +1325,12 @@ def get_paper(paper_id: str):
 def add_concept_to_paper(
     paper_id: str,
     text: str = Query(..., description="Text to create/find concept from")
-):
+) -> Dict[str, Any]:
     """Add a concept to a paper"""
-    
-    try:
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
     # Add concept using the service
     success, concept_id = concept_service.add_tag('paper', str(paper['_id']), text)
     
@@ -1181,20 +1356,12 @@ def add_concept_to_paper(
     }
 
 @router.delete("/{paper_id}/concepts/{concept_id}")
-def remove_concept_from_paper(paper_id: str, concept_id: str):
+def remove_concept_from_paper(paper_id: str, concept_id: str) -> Dict[str, str]:
     """Remove a concept from a paper"""
-    
-    try:
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
     # Remove from concept service
     success = concept_service.remove_tag('paper', str(paper['_id']), concept_id)
     
@@ -1210,32 +1377,22 @@ def remove_concept_from_paper(paper_id: str, concept_id: str):
     return {"message": "Concept removed successfully"}
 
 @router.put("/{paper_id}/content")
-async def update_paper_content(paper_id: str, data: dict = Body(...)):
+async def update_paper_content(paper_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Update paper content/markdown content"""
-    
+
     content = data.get('content', '')
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-            filter_query = {'_id': ObjectId(paper_id)}
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-            filter_query = {'old_sqlite_id': int(paper_id)}
-    except:
-        paper = None
-        filter_query = None
-    
-    if not paper or not filter_query:
+
+    paper = find_paper_by_id(paper_id)
+    if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
+    filter_query = {'_id': paper['_id']}
+
     # Update both content and markdown_content fields
     update_data = {
         'content': content,
         'markdown_content': content,
-        'updated_at': datetime.utcnow().isoformat()
+        'updated_at': datetime.now(timezone.utc).isoformat()
     }
     
     # Perform the update
@@ -1254,22 +1411,12 @@ async def update_paper_content(paper_id: str, data: dict = Body(...)):
     }
 
 @router.put("/{paper_id}/metadata")
-def update_paper_metadata(paper_id: str, metadata: dict):
+def update_paper_metadata(paper_id: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     """Update paper metadata"""
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
     # Prepare update data
     update_data = {}
     
@@ -1281,7 +1428,9 @@ def update_paper_metadata(paper_id: str, metadata: dict):
     if 'publication_date' in metadata:
         update_data['publication_date'] = metadata['publication_date']
     if 'published_date' in metadata:
-        # Also store as published_date (ArXiv format) for consistency
+        # Map published_date input to publication_date (canonical field)
+        # Also keep published_date for backwards compatibility with existing queries
+        update_data['publication_date'] = metadata['published_date']
         update_data['published_date'] = metadata['published_date']
     if 'conference' in metadata:
         update_data['conference'] = metadata['conference']
@@ -1338,7 +1487,7 @@ def update_paper_metadata(paper_id: str, metadata: dict):
             update_data['authors'] = metadata['authors']
     
     # Add updated timestamp
-    update_data['updated_at'] = datetime.utcnow()
+    update_data['updated_at'] = datetime.now(timezone.utc)
     
     # Update the paper
     db.papers.update_one(
@@ -1366,22 +1515,12 @@ def update_paper_metadata(paper_id: str, metadata: dict):
     }
 
 @router.post("/{paper_id}/flag")
-def toggle_paper_flag(paper_id: str, flag_data: dict):
+def toggle_paper_flag(paper_id: str, flag_data: Dict[str, Any]) -> Dict[str, Any]:
     """Toggle the flag status of a paper"""
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
     # Get the flag status from request
     is_flagged = flag_data.get('is_flagged', False)
     flag_notes = flag_data.get('flag_notes', '')
@@ -1390,7 +1529,7 @@ def toggle_paper_flag(paper_id: str, flag_data: dict):
     update_data = {
         'is_flagged': is_flagged,
         'flag_notes': flag_notes if is_flagged else '',
-        'updated_at': datetime.utcnow()
+        'updated_at': datetime.now(timezone.utc)
     }
     
     db.papers.update_one(
@@ -1410,19 +1549,9 @@ def toggle_paper_flag(paper_id: str, flag_data: dict):
 def set_paper_rating(
     paper_id: str,
     rating: int = Query(..., ge=0, le=5, description="Rating 1-5, or 0 to clear")
-):
+) -> Dict[str, Any]:
     """Set user rating for a paper (1-5 stars, 0 to clear rating)"""
-
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
 
@@ -1430,7 +1559,7 @@ def set_paper_rating(
         # Clear rating
         db.papers.update_one(
             {'_id': paper['_id']},
-            {'$unset': {'user_rating': ''}, '$set': {'updated_at': datetime.utcnow()}}
+            {'$unset': {'user_rating': ''}, '$set': {'updated_at': datetime.now(timezone.utc)}}
         )
         return {
             'id': str(paper['_id']),
@@ -1441,7 +1570,7 @@ def set_paper_rating(
         # Set rating
         db.papers.update_one(
             {'_id': paper['_id']},
-            {'$set': {'user_rating': rating, 'updated_at': datetime.utcnow()}}
+            {'$set': {'user_rating': rating, 'updated_at': datetime.now(timezone.utc)}}
         )
         return {
             'id': str(paper['_id']),
@@ -1451,22 +1580,12 @@ def set_paper_rating(
 
 
 @router.get("/{paper_id}/content")
-def get_paper_content(paper_id: str):
+def get_paper_content(paper_id: str) -> Dict[str, Any]:
     """Get paper content (sections, references, etc.) from MongoDB"""
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
-    
+
     # Return content-specific fields
     return {
         'id': str(paper['_id']),
@@ -1479,7 +1598,7 @@ def get_paper_content(paper_id: str):
     }
 
 
-async def process_with_marker_background(paper_id: str, pdf_path: str):
+async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
     """Background task to process PDF with Marker service"""
     import httpx
     from pathlib import Path
@@ -1494,7 +1613,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str):
         {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
         {'$set': {
             'processing_status': 'processing_with_marker',
-            'processing_started_at': datetime.utcnow()
+            'processing_started_at': datetime.now(timezone.utc)
         }}
     )
     logger.info(f"Updated paper status to 'processing_with_marker'")
@@ -1614,7 +1733,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str):
                         'content': content,  # Fixed: Marker returns 'content', not 'markdown'
                         'processed': True,
                         'processor_used': 'marker_service',
-                        'processed_at': datetime.utcnow(),
+                        'processed_at': datetime.now(timezone.utc),
                         'processing_status': 'completed',
                         'readability': readability_metrics,  # Store readability scores
                         'marker_metadata': {
@@ -1633,16 +1752,19 @@ async def process_with_marker_background(paper_id: str, pdf_path: str):
                     )
                     logger.info(f"=== SUCCESSFULLY UPDATED PAPER {paper_id} ===")
                 else:
-                    error_text = response.text[:500]  # First 500 chars of error
+                    error_text = response.text
                     logger.error(f"=== MARKER ERROR RESPONSE ===")
                     logger.error(f"Status code: {response.status_code}")
-                    logger.error(f"Error text: {error_text}")
-                    
+                    logger.error(f"Error text (first 500 chars): {error_text[:500]}")
+
+                    # Parse error to get user-friendly message
+                    user_error = parse_marker_error(error_text)
+
                     db.papers.update_one(
                         {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
                         {'$set': {
                             'processing_status': 'failed',
-                            'processing_error': f"Marker service error {response.status_code}: {error_text}"
+                            'processing_error': user_error
                         }}
                     )
     except httpx.TimeoutException as e:
@@ -1681,7 +1803,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str):
         )
 
 @router.post("/{paper_id}/process-with-marker")
-async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundTasks):
+async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Start async processing of paper's PDF using Marker service"""
     
     logger.info(f"=== PROCESS WITH MARKER ENDPOINT CALLED ===")
@@ -1757,19 +1879,9 @@ async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundT
     }
 
 @router.post("/{paper_id}/cancel-processing")
-async def cancel_processing(paper_id: str):
+async def cancel_processing(paper_id: str) -> Dict[str, Any]:
     """Cancel ongoing Marker processing"""
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     
@@ -1785,7 +1897,7 @@ async def cancel_processing(paper_id: str):
         {'_id': paper['_id']},
         {'$set': {
             'processing_status': 'cancelled',
-            'processing_cancelled_at': datetime.utcnow()
+            'processing_cancelled_at': datetime.now(timezone.utc)
         }}
     )
     
@@ -1796,19 +1908,9 @@ async def cancel_processing(paper_id: str):
     }
 
 @router.get("/{paper_id}/processing-status")
-async def get_processing_status(paper_id: str):
+async def get_processing_status(paper_id: str) -> Dict[str, Any]:
     """Check the processing status of a paper"""
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     
@@ -1824,7 +1926,7 @@ async def get_processing_status(paper_id: str):
     if status == 'processing_with_marker':
         started_at = paper.get('processing_started_at')
         if started_at:
-            elapsed = (datetime.utcnow() - started_at).total_seconds()
+            elapsed = (datetime.now(timezone.utc) - started_at).total_seconds()
             response['elapsed_seconds'] = elapsed
             response['elapsed_minutes'] = round(elapsed / 60, 1)
         
@@ -1846,19 +1948,9 @@ async def get_processing_status(paper_id: str):
     return response
 
 @router.get("/{paper_id}/process-health")
-async def get_process_health(paper_id: str):
+async def get_process_health(paper_id: str) -> Dict[str, Any]:
     """Get detailed process health information for currently running Marker process"""
-
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
 
@@ -1897,26 +1989,16 @@ async def get_process_health(paper_id: str):
     # Add elapsed time
     started_at = paper.get('processing_started_at')
     if started_at:
-        elapsed = (datetime.utcnow() - started_at).total_seconds()
+        elapsed = (datetime.now(timezone.utc) - started_at).total_seconds()
         response['elapsed_seconds'] = elapsed
         response['elapsed_minutes'] = round(elapsed / 60, 1)
 
     return response
 
 @router.post("/{paper_id}/process")
-async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks):
+async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Process a paper's PDF to extract content"""
-    
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except:
-        paper = None
-    
+    paper = find_paper_by_id(paper_id)
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
     
@@ -1949,7 +2031,7 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks):
             'markdown_content': content,  # Store in both fields for compatibility
             'processed': True,
             'processor_used': result.get('method_used', 'unknown'),
-            'processed_at': datetime.utcnow()
+            'processed_at': datetime.now(timezone.utc)
         }
         
         # Add metadata if available
@@ -1975,7 +2057,7 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks):
         raise HTTPException(status_code=500, detail=result.get('error', 'Failed to process PDF'))
 
 @router.post("/{paper_id}/process-with-entities")
-async def process_paper_with_entities(paper_id: str, background_tasks: BackgroundTasks):
+async def process_paper_with_entities(paper_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Process a paper's PDF and extract entities"""
     
     try:
@@ -2020,7 +2102,7 @@ async def process_paper_with_entities(paper_id: str, background_tasks: Backgroun
             'markdown_content': content,  # Store in both fields for compatibility
             'processed': True,
             'processor_used': result.get('method_used', 'unknown'),
-            'processed_at': datetime.utcnow()
+            'processed_at': datetime.now(timezone.utc)
         }
         
         # Add metadata if available
@@ -2097,12 +2179,15 @@ async def process_paper_with_entities(paper_id: str, background_tasks: Backgroun
                 'content_length': len(result['content']),  # Fixed: use 'content' field
                 'entity_extraction_error': str(e)
             }
+    else:
+        # PDF processing failed
+        raise HTTPException(status_code=500, detail=result.get('error', 'Failed to process PDF'))
 
 @router.post("/{paper_id}/progress-callback")
 async def receive_marker_progress(
     paper_id: str,
     request: Request
-):
+) -> Dict[str, Any]:
     """Receive progress updates from Marker service during processing"""
     try:
         progress_data = await request.json()
@@ -2117,13 +2202,13 @@ async def receive_marker_progress(
         # Store progress in database
         progress_update = {
             'processing_progress': progress_data,
-            'last_progress_update': datetime.utcnow()
+            'last_progress_update': datetime.now(timezone.utc)
         }
 
         # If health data is included in the progress update, store it separately
         if 'health' in progress_data:
             health_data = progress_data['health']
-            health_data['last_updated'] = datetime.utcnow()
+            health_data['last_updated'] = datetime.now(timezone.utc)
             progress_update['marker_process_health'] = health_data
             logger.info(f"Stored process health data: PID={health_data.get('pid')}, CPU={health_data.get('cpu_percent')}%, RAM={health_data.get('memory_mb')}MB")
 
@@ -2139,7 +2224,7 @@ async def receive_marker_progress(
         raise HTTPException(status_code=500, detail="Failed to update progress")
 
 @router.post("/{paper_id}/process-with-mineru")
-async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundTasks):
+async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Start async processing of paper's PDF using MinerU service"""
     
     try:
@@ -2185,7 +2270,7 @@ async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundT
         {'_id': paper['_id']},
         {'$set': {
             'processing_status': 'processing_with_mineru',
-            'processing_started_at': datetime.utcnow()
+            'processing_started_at': datetime.now(timezone.utc)
         }}
     )
     
@@ -2200,7 +2285,7 @@ async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundT
         'expected_time': 'Processing may take 5-10 minutes depending on paper complexity'
     }
 
-async def process_with_mineru_background(paper_id: str, pdf_path: str):
+async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
     """Background task to process PDF with MinerU service"""
     logger.info(f"=== MINERU BACKGROUND TASK STARTED ===")
     logger.info(f"Paper ID: {paper_id}")
@@ -2212,7 +2297,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str):
             {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
             {'$set': {
                 'processing_status': 'processing_with_mineru',
-                'processing_started_at': datetime.utcnow()
+                'processing_started_at': datetime.now(timezone.utc)
             }}
         )
         logger.info("Updated paper status to 'processing_with_mineru'")
@@ -2265,7 +2350,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str):
                 'content': content,  # Fixed: use 'content' field
                 'processed': True,
                 'processor_used': 'mineru_service',
-                'processed_at': datetime.utcnow(),
+                'processed_at': datetime.now(timezone.utc),
                 'processing_status': 'completed',
                 'readability': readability_metrics  # Store readability scores
             }
@@ -2305,7 +2390,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str):
         )
 
 @router.post("/{paper_id}/extract-entities")
-async def extract_entities_from_paper(paper_id: str):
+async def extract_entities_from_paper(paper_id: str) -> Dict[str, Any]:
     """Extract entities from an already processed paper"""
     
     try:
@@ -2342,7 +2427,7 @@ async def extract_entities_from_paper(paper_id: str):
         # Validate entities if needed
         validated_entities = []
         for entity in entities[:20]:  # Validate top 20 entities
-            is_valid, suggested_type, reasoning = entity_service.validate_entity(entity)
+            is_valid, suggested_type, _reasoning = entity_service.validate_entity(entity)
             if is_valid:
                 validated_entities.append(entity)
                 if suggested_type and suggested_type != entity.entity_type:
@@ -2392,7 +2477,7 @@ async def extract_entities_from_paper(paper_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{paper_id}/tags/suggestions")
-async def get_tag_suggestions(paper_id: str, model: str = None):
+async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dict[str, Any]:
     """Get AI-powered concept suggestions for a paper"""
 
     logger.info(f"Getting tag suggestions for paper {paper_id} with model: {model}")
@@ -2423,11 +2508,12 @@ async def get_tag_suggestions(paper_id: str, model: str = None):
     }))
     
     existing_concept_ids = [ti['concept_id'] for ti in existing_tags if ti.get('concept_id')]
-    
-    # Get concept display names for already tagged (return strings for frontend compatibility)
+
+    # Get concept display names for already tagged in a single batch query (avoids N+1)
+    concepts_lookup = concept_service.get_concepts_by_ids(existing_concept_ids)
     already_tagged = []
     for cid in existing_concept_ids:
-        concept = concept_service.get_concept_by_id(cid)
+        concept = concepts_lookup.get(str(cid))
         if concept:
             already_tagged.append(concept.get('display_name', ''))
     
@@ -2604,7 +2690,7 @@ async def get_tag_suggestions(paper_id: str, model: str = None):
     }
 
 @router.post("/{paper_id}/tags/suggest")
-async def suggest_tags_for_paper(paper_id: str, request: dict = Body({})):
+async def suggest_tags_for_paper(paper_id: str, request: Dict[str, Any] = Body({})) -> Dict[str, Any]:
     """Get AI-powered concept suggestions for a paper (POST endpoint with model selection)"""
     # Extract model from request body
     model = request.get('model', None)
@@ -2612,7 +2698,7 @@ async def suggest_tags_for_paper(paper_id: str, request: dict = Body({})):
     return await get_tag_suggestions(paper_id, model=model)
 
 @router.post("/{paper_id}/entities/extract")
-def extract_paper_entities(paper_id: str, use_fast_model: bool = False, model_choice: str = None):
+def extract_paper_entities(paper_id: str, use_fast_model: bool = False, model_choice: Optional[str] = None) -> Dict[str, Any]:
     """Extract entities from paper content using AI"""
     try:
         # Try to convert to ObjectId if it's a valid format
@@ -2647,8 +2733,8 @@ def extract_paper_entities(paper_id: str, use_fast_model: bool = False, model_ch
     try:
         from app.services.entity_extraction_service import EntityExtractionService
         
-        # Initialize service with model choice
-        service = EntityExtractionService(use_fast_model=use_fast_model, model_choice=model_choice)
+        # Initialize service with model choice (default to 'auto' if not specified)
+        service = EntityExtractionService(use_fast_model=use_fast_model, model_choice=model_choice or 'auto')
         
         # Prepare full paper content for analysis
         paper_text = f"""
@@ -2720,8 +2806,8 @@ Full Paper Content:
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/entities/schema")  
-def get_entities_schema():
+@router.get("/entities/schema")
+def get_entities_schema() -> Dict[str, Any]:
     """Get entity extraction schema from the entity extraction service"""
     try:
         from app.services.entity_extraction_service import EntityExtractionService
@@ -2768,7 +2854,7 @@ def get_entities_schema():
         }
 
 @router.post("/{paper_id}/extract-affiliations")
-def extract_paper_affiliations(paper_id: str):
+def extract_paper_affiliations(paper_id: str) -> Dict[str, Any]:
     """Extract author affiliations from paper header using LLM"""
     try:
         # Try to convert to ObjectId if it's a valid format
@@ -2916,7 +3002,7 @@ def extract_paper_affiliations(paper_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{paper_id}/apply-affiliations")
-def apply_paper_affiliations(paper_id: str, affiliations_data: dict):
+def apply_paper_affiliations(paper_id: str, affiliations_data: Dict[str, Any]) -> Dict[str, Any]:
     """Apply selected affiliations to paper authors"""
     try:
         # Try to convert to ObjectId if it's a valid format
@@ -2987,7 +3073,7 @@ def apply_paper_affiliations(paper_id: str, affiliations_data: dict):
     }
 
 @router.post("/{paper_id}/entities/bulk-action")
-def bulk_action_entities(paper_id: str, action_data: dict):
+def bulk_action_entities(paper_id: str, action_data: Dict[str, Any]) -> Dict[str, Any]:
     """Perform bulk actions on entities (accept_all or reject_all)"""
     try:
         entity_ids = action_data.get('entity_ids', [])
@@ -3060,7 +3146,7 @@ def bulk_action_entities(paper_id: str, action_data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/entities/extract")
-async def extract_entities_from_text(data: Dict[str, Any] = Body(...)):
+async def extract_entities_from_text(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Extract entities from any text using LLM with concept model"""
     import json
     from pathlib import Path
@@ -3072,7 +3158,7 @@ async def extract_entities_from_text(data: Dict[str, Any] = Body(...)):
         logger.info(f"Data type: {type(data)}")
         
         text = data.get('text', '')
-        content_type = data.get('content_type', 'general')
+        _content_type = data.get('content_type', 'general')  # Reserved for future use
         
         if not text:
             raise HTTPException(status_code=400, detail="No text provided")
@@ -3201,7 +3287,7 @@ Return a JSON array with extracted entities. Each entity should have:
         raise HTTPException(status_code=500, detail=f"Entity extraction failed: {str(e)}")
 
 @router.post("/entities/review")
-def review_entity(entity_data: dict):
+def review_entity(entity_data: Dict[str, Any]) -> Dict[str, Any]:
     """Review and accept/reject entity suggestions"""
     try:
         entity_id = entity_data.get('entity_id')
@@ -3243,7 +3329,7 @@ def review_entity(entity_data: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.delete("/{paper_id}")
-def delete_paper(paper_id: str):
+def delete_paper(paper_id: str) -> Dict[str, Any]:
     """Delete a paper and all associated data"""
     
     try:
@@ -3281,7 +3367,7 @@ def delete_paper(paper_id: str):
         raise HTTPException(status_code=500, detail="Failed to delete paper")
 
 @router.get("/{paper_id}/snippets")
-def get_paper_snippets(paper_id: str):
+def get_paper_snippets(paper_id: str) -> List[Dict[str, Any]]:
     """Get paper snippets from MongoDB"""
     
     try:
@@ -3310,7 +3396,7 @@ def get_paper_snippets(paper_id: str):
     return snippets
 
 @router.get("/{paper_id}/sections")
-def get_paper_sections(paper_id: str):
+def get_paper_sections(paper_id: str) -> List[Dict[str, Any]]:
     """Get paper sections from MongoDB"""
     
     try:
@@ -3339,7 +3425,7 @@ def get_paper_sections(paper_id: str):
     return sections
 
 @router.put("/{paper_id}/sections/{section_id}")
-def update_paper_section(paper_id: str, section_id: int, request: dict):
+def update_paper_section(paper_id: str, section_id: int, request: Dict[str, Any]) -> Dict[str, Any]:
     """Update a paper section's title or content"""
     
     try:
@@ -3383,7 +3469,7 @@ def update_paper_section(paper_id: str, section_id: int, request: dict):
     return {"success": True, "message": "Section updated successfully"}
 
 @router.get("/{paper_id}/references")
-def get_paper_references(paper_id: str):
+def get_paper_references(paper_id: str) -> Dict[str, Any]:
     """Get extracted references for a paper from MongoDB"""
     
     try:
@@ -3416,7 +3502,7 @@ def get_paper_references(paper_id: str):
     }
 
 @router.get("/{paper_id}/tei")
-def get_paper_tei_xml(paper_id: str):
+def get_paper_tei_xml(paper_id: str) -> Response:
     """Get the TEI XML for a paper from GROBID processing"""
     
     try:
@@ -3528,7 +3614,7 @@ def get_paper_tei_xml(paper_id: str):
 def get_paper_image(
     paper_id: str,
     image_path: str
-):
+) -> FileResponse:
     """Serve an image for a specific paper"""
     from fastapi.responses import FileResponse
     import os
@@ -3729,7 +3815,6 @@ def get_paper_image(
     if not full_image_path.exists() and old_sqlite_id is not None:
         # Old papers might have images like figure_0_1c48ce93.jpeg
         # Try to match by pattern
-        import re
         # Extract the base name without extension
         base_name = Path(filename).stem
         # Try to find any matching file
@@ -3780,7 +3865,7 @@ def get_paper_image(
     )
 
 @router.post("/{paper_id}/tags")
-def add_tags_to_paper(paper_id: str, body: Dict[str, Any]):
+def add_tags_to_paper(paper_id: str, body: Dict[str, Any]) -> Dict[str, Any]:
     """Add tags to a paper (legacy endpoint, redirects to concepts)"""
     
     # Extract tag from body
@@ -3792,15 +3877,14 @@ def add_tags_to_paper(paper_id: str, body: Dict[str, Any]):
     return add_concept_to_paper(paper_id, text=tag)
 
 @router.delete("/{paper_id}/tags/{tag}")
-def remove_tag_from_paper(paper_id: str, tag: str):
+def remove_tag_from_paper(paper_id: str, tag: str) -> Dict[str, str]:  # noqa: ARG001
     """Remove a tag from a paper (legacy endpoint)"""
-    
-    # For now, just return success
+    # Note: paper_id and tag are part of the route but not used in this stub implementation
     # In a full implementation, this would map the tag to a concept_id
     return {"message": "Tag removed successfully"}
 
 @router.get("/{paper_id}/pdf")
-def get_paper_pdf(paper_id: str):
+def get_paper_pdf(paper_id: str) -> FileResponse:
     """Serve PDF file for a paper"""
     
     try:
@@ -3837,9 +3921,9 @@ def get_paper_pdf(paper_id: str):
     )
 
 @router.get("/{paper_id}/analyses/available")
-def get_available_analyses(paper_id: str):
+def get_available_analyses(paper_id: str) -> Dict[str, Any]:  # noqa: ARG001
     """Get available analysis types for a paper - dynamically loaded from prompts_config.json"""
-    
+    # Note: paper_id is part of the route but analysis types are global
     import json
     import os
     
@@ -3885,7 +3969,7 @@ def get_available_analyses(paper_id: str):
     return {"analyses": available_analyses, "by_category": by_category}
 
 @router.get("/{paper_id}/analyses/saved")
-def get_saved_analyses(paper_id: str):
+def get_saved_analyses(paper_id: str) -> Dict[str, Any]:
     """Get saved analyses for a paper from MongoDB"""
     
     try:
@@ -3928,7 +4012,7 @@ def get_saved_analyses(paper_id: str):
     return {"analyses": analyses_dict}
 
 @router.post("/{paper_id}/analyses")
-async def create_analysis(paper_id: str, analysis_type: str = Body(...), regenerate: bool = Body(False), model: str = None):
+async def create_analysis(paper_id: str, analysis_type: str = Body(...), regenerate: bool = Body(False), model: Optional[str] = None) -> Dict[str, Any]:
     """Create a new analysis for a paper using prompts_config.json and llm.json"""
     
     try:
@@ -4073,7 +4157,7 @@ async def create_analysis(paper_id: str, analysis_type: str = Body(...), regener
         "type": analysis_type,
         "analysis_type": analysis_type,  # Keep both for backwards compatibility
         "content": result,
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "model": model_name,
         "model_used": model_name,
         "prompt_config": analysis_type  # Use analysis_type as the config key
@@ -4095,11 +4179,13 @@ async def create_analysis(paper_id: str, analysis_type: str = Body(...), regener
     return analysis
 
 @router.post("/{paper_id}/analyses/generate")
-async def generate_analysis(paper_id: str, data: dict = Body(...)):
+async def generate_analysis(paper_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Generate a paper analysis (wrapper for frontend compatibility)"""
     # This is a wrapper endpoint for frontend compatibility
     # It calls the main create_analysis function
     analysis_type = data.get('analysis_type')
+    if not analysis_type:
+        raise HTTPException(status_code=400, detail="analysis_type is required")
     regenerate = data.get('regenerate', False)  # Support regenerate flag from frontend
     model = data.get('model')  # Get model from frontend (LiteLLM handles model routing)
 
@@ -4122,7 +4208,7 @@ async def generate_analysis(paper_id: str, data: dict = Body(...)):
         }
 
 @router.post("/{paper_id}/analyses/generate-multiple")
-async def generate_multiple_analyses(paper_id: str, data: dict = Body(...)):
+async def generate_multiple_analyses(paper_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Generate multiple analyses for a paper at once"""
     analysis_types = data.get('analysis_types', [])
     model = data.get('model')  # Get model from frontend (LiteLLM handles model routing)
@@ -4216,7 +4302,7 @@ async def generate_multiple_analyses(paper_id: str, data: dict = Body(...)):
                 "type": analysis_type,
                 "analysis_type": analysis_type,
                 "content": result,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "model": model_to_use,
                 "model_used": model_to_use
             }
@@ -4249,7 +4335,7 @@ async def generate_multiple_analyses_async(
     paper_id: str,
     analysis_types: List[str] = Body(..., embed=True),
     background_tasks: BackgroundTasks = BackgroundTasks()
-):
+) -> Dict[str, Any]:
     """Start multiple analyses for a paper in background to prevent server blocking"""
 
     # Generate unique task ID
@@ -4261,7 +4347,7 @@ async def generate_multiple_analyses_async(
         "progress": 0,
         "results": {},
         "error": None,
-        "started_at": datetime.utcnow().isoformat()
+        "started_at": datetime.now(timezone.utc).isoformat()
     }
 
     # Start background task
@@ -4276,8 +4362,8 @@ async def generate_multiple_analyses_async(
 @router.post("/{paper_id}/analyses/free")
 async def create_free_analysis(
     paper_id: str,
-    data: dict = Body(...)
-):
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
     """Create a free-form analysis with custom user prompt"""
     prompt = data.get('prompt')
     regenerate = data.get('regenerate', False)
@@ -4380,7 +4466,7 @@ async def create_free_analysis(
             "id": analysis_id,
             "prompt": prompt,
             "content": response,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "model": model_to_use
         }
         
@@ -4407,7 +4493,7 @@ async def create_free_analysis(
         raise HTTPException(status_code=500, detail=f"Failed to generate analysis: {str(e)}")
 
 @router.get("/{paper_id}/analyses/free")
-async def get_free_analyses(paper_id: str):
+async def get_free_analyses(paper_id: str) -> Dict[str, Any]:
     """Get all free-form analyses for a paper"""
     
     try:
@@ -4439,8 +4525,8 @@ async def get_free_analyses(paper_id: str):
 async def update_generated_analysis(
     paper_id: str,
     analysis_type: str,
-    data: dict = Body(...)
-):
+    data: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
     """Update the content of a generated analysis (like mollick_summary)"""
     
     content = data.get('content', '')
@@ -4469,7 +4555,7 @@ async def update_generated_analysis(
         
         # Update the content while preserving other fields
         analyses[analysis_type]['content'] = content
-        analyses[analysis_type]['updated_at'] = datetime.utcnow().isoformat()
+        analyses[analysis_type]['updated_at'] = datetime.now(timezone.utc).isoformat()
         updated = True
         
     elif isinstance(analyses, list):
@@ -4479,7 +4565,7 @@ async def update_generated_analysis(
             if (analysis.get('type') == analysis_type or 
                 analysis.get('analysis_type') == analysis_type):
                 analysis['content'] = content
-                analysis['updated_at'] = datetime.utcnow().isoformat()
+                analysis['updated_at'] = datetime.now(timezone.utc).isoformat()
                 updated = True
                 break
         
@@ -4501,7 +4587,7 @@ async def update_free_analysis(
     paper_id: str,
     analysis_id: str,
     content: str = Body(..., embed=True)
-):
+) -> Dict[str, Any]:
     """Update the content of a free-form analysis"""
     
     try:
@@ -4524,7 +4610,7 @@ async def update_free_analysis(
     for analysis in free_analyses:
         if analysis.get('id') == analysis_id:
             analysis['content'] = content
-            analysis['updated_at'] = datetime.utcnow().isoformat()
+            analysis['updated_at'] = datetime.now(timezone.utc).isoformat()
             updated = True
             break
     
@@ -4540,7 +4626,7 @@ async def update_free_analysis(
     return {"success": True, "message": "Analysis updated"}
 
 @router.delete("/{paper_id}/analyses/free/{analysis_id}")
-async def delete_free_analysis(paper_id: str, analysis_id: str):
+async def delete_free_analysis(paper_id: str, analysis_id: str) -> Dict[str, Any]:
     """Delete a free-form analysis"""
     
     try:
@@ -4575,7 +4661,7 @@ async def delete_free_analysis(paper_id: str, analysis_id: str):
 async def search_dblp(
     title: str = Query(..., description="Paper title to search for"),
     max_results: int = Query(20, ge=1, le=50, description="Maximum number of results")
-):
+) -> Dict[str, Any]:
     """Search DBLP for papers by title"""
     from app.services.dblp_service import dblp_service
     
@@ -4613,7 +4699,7 @@ async def search_dblp(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{paper_id}/grobid/process")
-async def process_with_grobid(paper_id: str):
+async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
     """Process paper with GROBID service"""
     try:
         # Get paper from MongoDB
@@ -4649,7 +4735,7 @@ async def process_with_grobid(paper_id: str):
         update_data = {
             'grobid_metadata': result,
             'grobid_processed': True,
-            'grobid_processed_at': datetime.utcnow()
+            'grobid_processed_at': datetime.now(timezone.utc)
         }
         
         # Store TEI XML if available
@@ -4709,7 +4795,7 @@ async def process_with_grobid(paper_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{paper_id}/grobid/metadata")
-def get_grobid_metadata(paper_id: str):
+def get_grobid_metadata(paper_id: str) -> Dict[str, Any]:
     """Get GROBID metadata for a paper"""
     try:
         # Get paper from MongoDB
@@ -4739,9 +4825,9 @@ def get_grobid_metadata(paper_id: str):
     }
 
 @router.put("/{paper_id}/metadata")
-def update_paper_metadata(paper_id: str, metadata: dict):
+def update_paper_metadata_grobid(paper_id: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     """Update paper metadata with selected fields"""
-    
+
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
@@ -4817,7 +4903,7 @@ def update_paper_metadata(paper_id: str, metadata: dict):
     return {"success": True, "updated_fields": list(update_data.keys())}
 
 @router.patch("/{paper_id}")
-def patch_paper_fields(paper_id: str, updates: dict):
+def patch_paper_fields(paper_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     """
     Patch specific paper fields including import_url and import_source
     """
@@ -4845,7 +4931,7 @@ def patch_paper_fields(paper_id: str, updates: dict):
         update_data['import_source'] = updates['import_source']
     
     # Add timestamp for tracking
-    update_data['updated_at'] = datetime.utcnow()
+    update_data['updated_at'] = datetime.now(timezone.utc)
     
     # Update the paper
     if update_data:
@@ -4866,7 +4952,7 @@ def patch_paper_fields(paper_id: str, updates: dict):
     }
 
 @router.delete("/{paper_id}/analyses/{analysis_type}")
-def delete_analysis(paper_id: str, analysis_type: str):
+def delete_analysis(paper_id: str, analysis_type: str) -> Dict[str, str]:
     """Delete a saved analysis"""
     
     try:
@@ -4894,7 +4980,7 @@ def delete_analysis(paper_id: str, analysis_type: str):
     return {"message": "Analysis deleted successfully"}
 
 @router.get("/stats/overview")
-def get_statistics():
+def get_statistics() -> Dict[str, Any]:
     """Get paper statistics from MongoDB"""
     
     # Count papers
@@ -4985,11 +5071,11 @@ from pathlib import Path
 
 @router.post("/upload")
 async def upload_paper(
-    background_tasks: BackgroundTasks,
+    background_tasks: BackgroundTasks,  # noqa: ARG001 - Reserved for future background processing
     file: UploadFile = File(...)
-):
+) -> Dict[str, Any]:
     """Upload and process a PDF research paper (MongoDB version)"""
-    
+
     # Validate file type
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
@@ -5001,7 +5087,7 @@ async def upload_paper(
     
     try:
         # Create unique filename to avoid conflicts
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         file_hash = hashlib.md5(contents).hexdigest()[:8]
         safe_filename = file.filename.replace(' ', '_').replace('.pdf', '')
         new_filename = f"{timestamp}_{file_hash}_{safe_filename}.pdf"
@@ -5030,7 +5116,7 @@ async def upload_paper(
             "processing_status": "not_started",
             "processor_used": None,
             "processed_at": None,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
             "publication_date": None,
             "conference": "",
             "journal": "",
@@ -5057,7 +5143,7 @@ async def upload_paper(
 
 
 @router.post("/{paper_id}/extract-sections")
-def extract_paper_sections(paper_id: str):
+def extract_paper_sections(paper_id: str) -> Dict[str, Any]:
     """
     Extract Abstract, Introduction, and Conclusion sections from a paper using LLM.
     Uses Gemini 2.5 Pro with its 2M token context window to handle full papers.
@@ -5135,7 +5221,7 @@ def extract_paper_sections(paper_id: str):
                 '$set': {
                     'sections': sections_to_save,
                     'sections_extracted': True,
-                    'sections_extracted_at': datetime.utcnow(),
+                    'sections_extracted_at': datetime.now(timezone.utc),
                     'abstract': sections_data.get('abstract', paper.get('abstract', ''))
                 }
             }
