@@ -64,10 +64,10 @@ except Exception as e:
     raise RuntimeError(f"Cannot start application: MongoDB unavailable - {e}")
 
 # Import MongoDB-based API modules
-from app.api import tweets_mongodb as tweets  # Full MongoDB tweets API
-from app.api import papers_mongodb as papers  # Full MongoDB papers API
-from app.api import books_mongodb as books  # Full MongoDB books API
-from app.api import articles_mongodb as articles  # Full MongoDB articles API
+from app.api import tweets  # Full MongoDB tweets API (package)
+from app.api import papers  # Papers API (modular package)
+from app.api import books  # Books API (modular package)
+from app.api import articles  # Articles API (modular package)
 from app.api import substack_mongodb as substack  # Full MongoDB substack API
 from app.api import reddit_mongodb as reddit  # Full MongoDB reddit API
 from app.api import statistics_mongodb as statistics  # MongoDB statistics
@@ -75,14 +75,12 @@ from app.api import tags_mongodb as tags  # MongoDB tags API
 from app.api import trends_mongodb as trends  # MongoDB trends API
 from app.api import user_trends_mongodb as user_trends  # MongoDB user trends
 from app.api import unified_trends_mongodb as unified_trends  # MongoDB unified trends
-from app.api import analytics_trends_mongodb as analytics_trends  # MongoDB analytics trends
+from app.api import analytics_trends  # MongoDB analytics trends (package)
 from app.api import trend_analysis_mongodb as trend_analysis  # Comprehensive trend analysis
 from app.api import topic_explorer  # Topic Explorer for frequency and correlation analysis
 from app.api import rag_concepts  # Concept-based RAG
-from app.api import tag_ontology_v2_mongodb as ontology  # MongoDB ontology
-# from app.api import orphan_tags  # Orphan tag management - DISABLED: needs MongoDB update
+from app.api import tag_ontology as ontology  # MongoDB ontology (package)
 from app.api import ontology_graph  # Ontology visualization
-# from app.api import tag_import_export  # Tag import/export - DISABLED: needs MongoDB update
 from app.api import concepts_suggestions_mongodb as concepts_suggestions  # MongoDB concept suggestions
 
 # Additional APIs that might need updating
@@ -92,20 +90,14 @@ from app.api import acl_anthology  # ACL Anthology import
 from app.api import acm_import  # ACM Digital Library import
 from app.api import direct_url_import  # Direct URL import
 from app.api import openreview_import  # OpenReview paper import
-# from app.api import paper_repository  # Paper repository - DISABLED: SQLAlchemy
 from app.api import article_clustering_mongodb as article_clustering  # Article clustering (MongoDB)
 from app.api import concept_organization  # Concept organization for unorganized concepts
 from app.api import article_import_mongodb as article_import  # MongoDB Article URL import
 from app.api import article_preview  # Article preview regeneration
 from app.api import pdf_export  # PDF export for articles - MongoDB migrated
-# from app.api import paper_beautify  # Paper markdown beautification - DISABLED: SQLAlchemy
-from app.api import tag_reorganization_async  # Tag reorganization with async SSE
-from app.api import tag_reorganization_comprehensive  # Comprehensive tag reorganization
-from app.api import tag_reorganization_apply  # Apply reorganization changes
-# from app.api import paper_images  # Paper image serving - now handled in papers_mongodb
+from app.api import tag_reorganization  # Tag reorganization package (async SSE + apply + comprehensive)
 from app.api import dblp_mongodb  # DBLP API - MongoDB version without SQLite dependencies
-# from app.api import concepts_management  # Concept management and organization - DISABLED: File not found
-from app.api import system_statistics  # Comprehensive system statistics
+from app.api import system_stats as system_statistics  # Comprehensive system statistics (package)
 from app.api import references  # Normalized references collection API
 from app.api import entity_extraction  # Entity extraction and annotation management - MongoDB version
 from app.api import llm_preferences  # LLM model preferences and management
@@ -158,12 +150,9 @@ app.include_router(trend_analysis.router, prefix="/api/trends/analysis", tags=["
 app.include_router(topic_explorer.router, prefix="/api/topics", tags=["topic_explorer"])
 app.include_router(rag_concepts.router, prefix="/api/rag", tags=["rag"])
 app.include_router(ontology.router, prefix="/api/ontology", tags=["ontology"])
-# app.include_router(orphan_tags.router, prefix="/api/tags/orphans", tags=["orphan_tags"])  # DISABLED: needs MongoDB update
 app.include_router(ontology_graph.router, prefix="/api/ontology-graph", tags=["ontology_graph"])
-# app.include_router(tag_import_export.router, prefix="/api/tags/import-export", tags=["import_export"])  # DISABLED: needs MongoDB update
 app.include_router(concepts_suggestions.router, prefix="/api/concepts/suggestions", tags=["suggestions"])
 app.include_router(concept_organization.router, prefix="/api/concepts/organization", tags=["concept_organization"])
-# app.include_router(concepts_management.router, prefix="/api/concepts", tags=["concepts_management"])  # DISABLED: Module not found
 app.include_router(system_statistics.router)  # System statistics endpoints
 app.include_router(references.router)  # References API with normalized collection (has own prefix)
 app.include_router(media_gallery.router, prefix="/api/media-gallery", tags=["media"])  # MongoDB Media gallery
@@ -172,16 +161,11 @@ app.include_router(acl_anthology.router, prefix="/api/acl-anthology", tags=["acl
 app.include_router(acm_import.router, tags=["acm"])  # ACM Digital Library import
 app.include_router(direct_url_import.router, prefix="/api/papers", tags=["direct-url"])  # Direct URL import
 app.include_router(openreview_import.router, tags=["openreview"])  # OpenReview paper import
-# app.include_router(paper_repository.router, prefix="/api/paper-repository", tags=["repository"])  # DISABLED
 app.include_router(article_clustering.router, prefix="/api/article-clustering", tags=["clustering"])
 app.include_router(article_import.router, prefix="/api/v2/articles", tags=["article-import"])
 app.include_router(article_preview.router, prefix="/api/article-preview", tags=["article-preview"])
 app.include_router(pdf_export.router, prefix="/api/pdf", tags=["pdf-export"])  # MongoDB migrated
-# app.include_router(paper_beautify.router, prefix="/api/paper-beautify", tags=["paper-beautify"])  # DISABLED
-app.include_router(tag_reorganization_async.router, prefix="/api/tags/reorganize", tags=["tag-reorganization"])
-app.include_router(tag_reorganization_comprehensive.router, prefix="/api/tags/reorganize/comprehensive", tags=["tag-reorganization"])
-app.include_router(tag_reorganization_apply.router, prefix="/api/tags/reorganize/apply", tags=["tag-reorganization"])
-# app.include_router(paper_images.router, tags=["paper-images"])  # Now handled in papers_mongodb
+app.include_router(tag_reorganization.router, prefix="/api/tags/reorganize", tags=["tag-reorganization"])
 app.include_router(dblp_mongodb.router, tags=["dblp"])  # MongoDB-compatible DBLP API at /api/dblp
 app.include_router(dblp_mongodb.papers_router, tags=["dblp"])  # Also available at /api/papers/dblp
 
