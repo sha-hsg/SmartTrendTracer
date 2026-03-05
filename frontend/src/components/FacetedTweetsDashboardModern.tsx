@@ -148,6 +148,25 @@ export default function FacetedTweetsDashboardModern() {
   }>({ status: 'idle' })
   const batchPollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // "Annotate All Unannotated" state with localStorage persistence
+  const [annotateAllRunning, setAnnotateAllRunning] = useState(false)
+  const [annotateAllTaskId, setAnnotateAllTaskId] = useState<string | null>(null)
+  const [annotateAllProgress, setAnnotateAllProgress] = useState<{
+    processed: number
+    total: number
+    newTagsCount: number
+    progress: number
+  }>({ processed: 0, total: 0, newTagsCount: 0, progress: 0 })
+  const [annotateAllResult, setAnnotateAllResult] = useState<{
+    status: 'idle' | 'running' | 'completed' | 'cancelled' | 'error'
+    message?: string
+    newTagsCount?: number
+    skippedCount?: number
+    errorCount?: number
+  }>({ status: 'idle' })
+  const annotateAllPollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const annotateAllActiveRef = useRef(false)
+
   const pageSize = 50
   const totalPages = Math.ceil(totalTweets / pageSize)
 
@@ -401,9 +420,22 @@ export default function FacetedTweetsDashboardModern() {
             setBatchResult({ status: 'idle' })
           }, 10000)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error polling batch status:', error)
-        // Continue polling unless there's a consistent error
+        if (error.response?.status === 404) {
+          if (batchPollingRef.current) {
+            clearInterval(batchPollingRef.current)
+            batchPollingRef.current = null
+          }
+          setBatchAnnotating(false)
+          setBatchTaskId(null)
+          setBatchResult({
+            status: 'completed',
+            message: 'Annotation task finished (backend was restarted)',
+          })
+          fetchTweets()
+          setTimeout(() => setBatchResult({ status: 'idle' }), 10000)
+        }
       }
     }, 2000) // Poll every 2 seconds
   }
@@ -414,8 +446,165 @@ export default function FacetedTweetsDashboardModern() {
       if (batchPollingRef.current) {
         clearInterval(batchPollingRef.current)
       }
+      if (annotateAllPollingRef.current) {
+        clearInterval(annotateAllPollingRef.current)
+      }
     }
   }, [])
+
+  // Resume "Annotate All" from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('annotateAllProgress')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed.taskId && parsed.isRunning) {
+          setAnnotateAllTaskId(parsed.taskId)
+          setAnnotateAllRunning(true)
+          setAnnotateAllProgress({
+            processed: parsed.processed || 0,
+            total: parsed.total || 0,
+            newTagsCount: parsed.newTagsCount || 0,
+            progress: parsed.progress || 0,
+          })
+          setAnnotateAllResult({ status: 'running' })
+          pollAnnotateAllStatus(parsed.taskId)
+        }
+      } catch {
+        localStorage.removeItem('annotateAllProgress')
+      }
+    }
+  }, [])
+
+  // "Annotate All Unannotated" handler
+  const handleAnnotateAll = async () => {
+    if (!batchModel) {
+      setAnnotateAllResult({ status: 'error', message: 'Please select a model first' })
+      return
+    }
+    if (annotateAllActiveRef.current) return
+    annotateAllActiveRef.current = true
+
+    setAnnotateAllRunning(true)
+    setAnnotateAllProgress({ processed: 0, total: 0, newTagsCount: 0, progress: 0 })
+    setAnnotateAllResult({ status: 'running' })
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/tweets/batch-annotate-all', {
+        model: batchModel
+      })
+
+      if (!response.data.task_id) {
+        // All already annotated
+        setAnnotateAllRunning(false)
+        annotateAllActiveRef.current = false
+        setAnnotateAllResult({ status: 'completed', message: response.data.message, newTagsCount: 0 })
+        setTimeout(() => setAnnotateAllResult({ status: 'idle' }), 10000)
+        return
+      }
+
+      const taskId = response.data.task_id
+      setAnnotateAllTaskId(taskId)
+      setAnnotateAllProgress(prev => ({ ...prev, total: response.data.total }))
+
+      // Persist to localStorage
+      localStorage.setItem('annotateAllProgress', JSON.stringify({
+        taskId,
+        total: response.data.total,
+        isRunning: true,
+        processed: 0,
+        newTagsCount: 0,
+        progress: 0,
+      }))
+
+      pollAnnotateAllStatus(taskId)
+    } catch (error: any) {
+      console.error('Error starting annotate-all:', error)
+      setAnnotateAllRunning(false)
+      annotateAllActiveRef.current = false
+      setAnnotateAllResult({
+        status: 'error',
+        message: error.response?.data?.detail || 'Failed to start annotation'
+      })
+    }
+  }
+
+  const resetAnnotateAllState = () => {
+    if (annotateAllPollingRef.current) {
+      clearInterval(annotateAllPollingRef.current)
+      annotateAllPollingRef.current = null
+    }
+    setAnnotateAllRunning(false)
+    setAnnotateAllTaskId(null)
+    annotateAllActiveRef.current = false
+    localStorage.removeItem('annotateAllProgress')
+  }
+
+  const pollAnnotateAllStatus = (taskId: string) => {
+    if (annotateAllPollingRef.current) {
+      clearInterval(annotateAllPollingRef.current)
+    }
+
+    annotateAllPollingRef.current = setInterval(async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/tweets/batch-annotate/${taskId}/status`)
+        const status = response.data
+
+        setAnnotateAllProgress({
+          processed: status.processed,
+          total: status.total,
+          newTagsCount: status.new_tags_count,
+          progress: status.progress,
+        })
+
+        // Update localStorage
+        localStorage.setItem('annotateAllProgress', JSON.stringify({
+          taskId,
+          total: status.total,
+          isRunning: status.status === 'running',
+          processed: status.processed,
+          newTagsCount: status.new_tags_count,
+          progress: status.progress,
+        }))
+
+        if (status.status === 'completed' || status.status === 'cancelled') {
+          resetAnnotateAllState()
+
+          setAnnotateAllResult({
+            status: status.status === 'cancelled' ? 'cancelled' : 'completed',
+            newTagsCount: status.new_tags_count,
+            skippedCount: status.skipped_count,
+            errorCount: status.error_count,
+            message: status.status === 'cancelled' ? 'Annotation cancelled' : undefined,
+          })
+
+          fetchTweets()
+          setTimeout(() => setAnnotateAllResult({ status: 'idle' }), 10000)
+        }
+      } catch (error: any) {
+        console.error('Error polling annotate-all status:', error)
+        // If task not found (404) — backend was restarted, task is gone
+        if (error.response?.status === 404) {
+          resetAnnotateAllState()
+          setAnnotateAllResult({
+            status: 'completed',
+            message: 'Annotation task finished (backend was restarted)',
+          })
+          fetchTweets()
+          setTimeout(() => setAnnotateAllResult({ status: 'idle' }), 10000)
+        }
+      }
+    }, 3000) // Poll every 3 seconds
+  }
+
+  const handleCancelAnnotateAll = async () => {
+    if (!annotateAllTaskId) return
+    try {
+      await axios.post(`http://localhost:8000/api/tweets/batch-annotate/${annotateAllTaskId}/cancel`)
+    } catch (error) {
+      console.error('Error cancelling annotation:', error)
+    }
+  }
 
   const clearFilters = () => {
     setSelectedAuthors([])
@@ -435,8 +624,8 @@ export default function FacetedTweetsDashboardModern() {
       <div className="w-full">
         <div 
           className={cn(
-            "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-            isSelected && "bg-blue-50",
+            "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors",
+            isSelected && "bg-blue-50 dark:bg-blue-950",
             level > 0 && "ml-4"
           )}
           onClick={() => toggleConcept(concept.concept_id)}
@@ -447,7 +636,7 @@ export default function FacetedTweetsDashboardModern() {
                 e.stopPropagation()
                 toggleConceptExpansion(concept.concept_id)
               }}
-              className="p-0.5 hover:bg-gray-200 rounded"
+              className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"
             >
               {isExpanded ? (
                 <ChevronDown className="h-3 w-3" />
@@ -497,8 +686,8 @@ export default function FacetedTweetsDashboardModern() {
     <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Twitter/X Feed</h1>
-        <p className="text-gray-600">Browse and analyze collected tweets with advanced filtering</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Twitter/X Feed</h1>
+        <p className="text-gray-600 dark:text-gray-400">Browse and analyze collected tweets with advanced filtering</p>
       </div>
 
       {/* Search Bar */}
@@ -506,7 +695,7 @@ export default function FacetedTweetsDashboardModern() {
         <CardContent className="p-4">
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search tweets..."
@@ -546,7 +735,7 @@ export default function FacetedTweetsDashboardModern() {
 
       {/* Batch Annotation Controls */}
       <Card className="mb-6">
-        <CardContent className="p-4">
+        <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-purple-500" />
@@ -559,13 +748,13 @@ export default function FacetedTweetsDashboardModern() {
                 value={batchModel}
                 onValueChange={setBatchModel}
                 compact={true}
-                disabled={batchAnnotating}
+                disabled={batchAnnotating || annotateAllRunning}
               />
             </div>
 
             <Button
               onClick={handleBatchAnnotate}
-              disabled={batchAnnotating || tweets.length === 0 || !batchModel}
+              disabled={batchAnnotating || annotateAllRunning || tweets.length === 0 || !batchModel}
               className="bg-purple-600 hover:bg-purple-700"
             >
               {batchAnnotating ? (
@@ -581,7 +770,32 @@ export default function FacetedTweetsDashboardModern() {
               )}
             </Button>
 
-            {/* Progress bar when running */}
+            {/* Annotate All Unannotated button */}
+            {(() => {
+              const notAnnotatedFacet = facets.annotation_status.find(s => s.status === 'not_annotated')
+              const notAnnotatedCount = notAnnotatedFacet?.count || 0
+              return (
+                <Button
+                  onClick={handleAnnotateAll}
+                  disabled={batchAnnotating || annotateAllRunning || notAnnotatedCount === 0 || !batchModel}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {annotateAllRunning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Annotating All...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Annotate All Unannotated ({notAnnotatedCount})
+                    </>
+                  )}
+                </Button>
+              )
+            })()}
+
+            {/* Progress bar for page batch */}
             {batchAnnotating && (
               <div className="flex-1 min-w-[200px]">
                 <Progress value={batchProgress} className="h-2" />
@@ -607,6 +821,56 @@ export default function FacetedTweetsDashboardModern() {
               </div>
             )}
           </div>
+
+          {/* Annotate All progress banner */}
+          {annotateAllRunning && (
+            <div className="flex items-center gap-4 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+              <Loader2 className="h-5 w-5 text-orange-600 animate-spin flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                    Annotating tweets... {annotateAllProgress.processed}/{annotateAllProgress.total} ({annotateAllProgress.progress}%)
+                    {annotateAllProgress.newTagsCount > 0 && ` — ${annotateAllProgress.newTagsCount} new tags`}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelAnnotateAll}
+                    className="h-7 px-3 text-xs border-orange-300 text-orange-700 hover:bg-orange-100"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+                <Progress value={annotateAllProgress.progress} className="h-2" />
+              </div>
+            </div>
+          )}
+
+          {/* Annotate All result message */}
+          {annotateAllResult.status === 'completed' && (
+            <div className="flex items-center gap-2 text-sm p-2 bg-green-50 dark:bg-green-950 rounded">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span className="text-green-700 dark:text-green-300">
+                {annotateAllResult.message || `All done! ${annotateAllResult.newTagsCount} new tags added`}
+                {annotateAllResult.skippedCount ? `, ${annotateAllResult.skippedCount} skipped` : ''}
+                {annotateAllResult.errorCount ? `, ${annotateAllResult.errorCount} errors` : ''}
+              </span>
+            </div>
+          )}
+          {annotateAllResult.status === 'cancelled' && (
+            <div className="flex items-center gap-2 text-sm p-2 bg-yellow-50 dark:bg-yellow-950 rounded">
+              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <span className="text-yellow-700 dark:text-yellow-300">
+                Annotation cancelled. {annotateAllResult.newTagsCount || 0} new tags added before cancellation.
+              </span>
+            </div>
+          )}
+          {annotateAllResult.status === 'error' && (
+            <div className="flex items-center gap-2 text-sm p-2 bg-red-50 dark:bg-red-950 rounded">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <span className="text-red-700 dark:text-red-300">{annotateAllResult.message}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -639,8 +903,8 @@ export default function FacetedTweetsDashboardModern() {
                   <div
                     key={author.username}
                     className={cn(
-                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-                      selectedAuthors.includes(author.username) && "bg-blue-50"
+                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors",
+                      selectedAuthors.includes(author.username) && "bg-blue-50 dark:bg-blue-950"
                     )}
                     onClick={() => toggleAuthor(author.username)}
                   >
@@ -687,8 +951,8 @@ export default function FacetedTweetsDashboardModern() {
                   <div
                     key={year.year}
                     className={cn(
-                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-                      selectedYears.includes(year.year) && "bg-blue-50"
+                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors",
+                      selectedYears.includes(year.year) && "bg-blue-50 dark:bg-blue-950"
                     )}
                     onClick={() => toggleYear(year.year)}
                   >
@@ -735,8 +999,8 @@ export default function FacetedTweetsDashboardModern() {
                   <div
                     key={status.status}
                     className={cn(
-                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-                      selectedAnnotationStatus.includes(status.status) && "bg-blue-50"
+                      "flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors",
+                      selectedAnnotationStatus.includes(status.status) && "bg-blue-50 dark:bg-blue-950"
                     )}
                     onClick={() => {
                       // Toggle annotation status (only allow one at a time)
@@ -839,8 +1103,8 @@ export default function FacetedTweetsDashboardModern() {
                       <div
                         key={`${concept.concept_id}-${index}`}
                         className={cn(
-                          "flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
-                          selectedConcepts.includes(concept.concept_id) && "bg-blue-50"
+                          "flex items-center justify-between py-1 px-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors",
+                          selectedConcepts.includes(concept.concept_id) && "bg-blue-50 dark:bg-blue-950"
                         )}
                         onClick={() => toggleConcept(concept.concept_id)}
                       >
@@ -925,7 +1189,7 @@ export default function FacetedTweetsDashboardModern() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 Page {currentPage} of {totalPages}
               </span>
             </div>
@@ -934,13 +1198,13 @@ export default function FacetedTweetsDashboardModern() {
           {/* Tweets List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-gray-400 dark:text-gray-500" />
             </div>
           ) : tweets.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <Twitter className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No tweets found matching your filters</p>
+                <Twitter className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No tweets found matching your filters</p>
               </CardContent>
             </Card>
           ) : (
