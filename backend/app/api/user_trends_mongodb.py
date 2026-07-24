@@ -5,18 +5,9 @@ Provides per-user trend analysis for tweets
 
 from fastapi import APIRouter, Query
 from app.database.mongodb import get_database
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 import logging
-
-# Import full implementations
-from .user_trends_mongodb_impl import (
-    compare_user_trends_impl,
-    get_influencer_analysis_impl,
-    get_user_activity_heatmap_impl,
-    get_engagement_metrics_impl
-)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -34,19 +25,34 @@ def get_per_user_trends(
     """
     
     # Calculate date range
-    end_date = datetime.now()
+    end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(hours=hours)
     
     # Get tweets in the time period
-    tweets = list(db.tweets.find({'created_at': {'$gte': start_date, '$lte': end_date}}))
-    
+    tweets = list(db.tweets.find({'created_at': {'$gte': start_date, '$lte': end_date}}).limit(5000))
+
+    # Batch-fetch all tag_instances for these tweets (fixes N+1)
+    all_tweet_ids = [tweet['_id'] for tweet in tweets]
+    all_tag_instances = list(db.tag_instances.find({
+        'content_type': 'tweet',
+        'content_id': {'$in': all_tweet_ids}
+    }).limit(50000))
+
+    # Group tag instances by content_id
+    tag_instances_by_tweet = {}
+    for ti in all_tag_instances:
+        cid = ti['content_id']
+        if cid not in tag_instances_by_tweet:
+            tag_instances_by_tweet[cid] = []
+        tag_instances_by_tweet[cid].append(ti)
+
     # Group by author
     user_data = {}
     for tweet in tweets:
         username = tweet.get('author_username')
         if not username:
             continue
-            
+
         if username not in user_data:
             user_data[username] = {
                 'tweets': [],
@@ -55,44 +61,35 @@ def get_per_user_trends(
                 'total_retweets': 0,
                 'timeline': {}
             }
-        
+
         user_data[username]['tweets'].append(tweet)
-        
+
         # Add engagement metrics
         metrics = tweet.get('metrics', {})
         user_data[username]['total_likes'] += metrics.get('like_count', 0)
         user_data[username]['total_retweets'] += metrics.get('retweet_count', 0)
-        
+
         # Track timeline
         hour_key = tweet['created_at'].strftime('%Y-%m-%d %H:00')
         if hour_key not in user_data[username]['timeline']:
             user_data[username]['timeline'][hour_key] = 0
         user_data[username]['timeline'][hour_key] += 1
-        
-        # Get concepts for this tweet
-        # Tweet _id is the Twitter ID as a string
-        instances = db.tag_instances.find({
-            'content_type': 'tweet',
-            'content_id': tweet['_id']
-        })
-        for instance in instances:
+
+        # Get concepts for this tweet from pre-fetched data
+        for instance in tag_instances_by_tweet.get(tweet['_id'], []):
             if instance.get('concept_id'):
                 user_data[username]['concepts'].add(str(instance['concept_id']))
-    
+
     # Build user list with statistics
     users = []
     top_concepts_by_user = {}
     activity_by_user = {}
-    
+
     for username, data in user_data.items():
-        # Get concept names and counts
+        # Get concept names and counts from pre-fetched data
         concept_counts = {}
         for tweet in data['tweets']:
-            instances = db.tag_instances.find({
-                'content_type': 'tweet',
-                'content_id': tweet['_id']
-            })
-            for instance in instances:
+            for instance in tag_instances_by_tweet.get(tweet['_id'], []):
                 concept_id = instance.get('concept_id')
                 if concept_id:
                     concept_id_str = str(concept_id)
@@ -112,7 +109,7 @@ def get_per_user_trends(
                         'name': concept.get('display_name', concept.get('name', '')),
                         'count': count
                     })
-            except:
+            except Exception:
                 pass
         
         top_concepts_by_user[username] = top_concepts
@@ -157,7 +154,7 @@ def get_per_user_trends(
                         'user_count': len(usernames),
                         'users': list(usernames)[:5]
                     })
-            except:
+            except Exception:
                 pass
     
     cross_user_concepts.sort(key=lambda x: x['user_count'], reverse=True)
@@ -218,24 +215,35 @@ def get_user_trends(
     """
     
     # Calculate date range
-    end_date = datetime.now()
+    end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=days)
     
     # Get user's tweets in the period
     tweets = list(db.tweets.find({
         'author_username': username,
         'created_at': {'$gte': start_date, '$lte': end_date}
-    }).sort('created_at', -1))
-    
+    }).sort('created_at', -1).limit(5000))
+
+    # Batch-fetch all tag_instances for these tweets (fixes N+1)
+    user_tweet_ids = [tweet['_id'] for tweet in tweets]
+    user_tag_instances = list(db.tag_instances.find({
+        'content_type': 'tweet',
+        'content_id': {'$in': user_tweet_ids}
+    }).limit(50000))
+
+    # Group tag instances by content_id
+    user_ti_by_tweet = {}
+    for ti in user_tag_instances:
+        cid = ti['content_id']
+        if cid not in user_ti_by_tweet:
+            user_ti_by_tweet[cid] = []
+        user_ti_by_tweet[cid].append(ti)
+
     # Get concepts used
     concept_counts = {}
     concepts_used = []
     for tweet in tweets:
-        instances = db.tag_instances.find({
-            'content_type': 'tweet',
-            'content_id': tweet['_id']
-        })
-        for instance in instances:
+        for instance in user_ti_by_tweet.get(tweet['_id'], []):
             concept_id = instance.get('concept_id')
             if concept_id:
                 concept_id_str = str(concept_id)
@@ -256,7 +264,7 @@ def get_user_trends(
                     'concept': concept.get('display_name', concept.get('name', '')),
                     'count': count
                 })
-        except:
+        except Exception:
             pass
     
     # Calculate posting patterns
@@ -301,28 +309,39 @@ def get_user_trends(
             weeks[week].append(tweet)
         
         # Get top concepts per week
+        # First pass: collect all concept IDs from all weeks
+        all_week_concept_ids = set()
+        weeks_data = {}
         for week in sorted(weeks.keys())[-4:]:  # Last 4 weeks
             week_concepts = {}
             for tweet in weeks[week]:
-                instances = db.tag_instances.find({
-                    'content_type': 'tweet',
-                    'content_id': str(tweet['_id'])
-                })
-                for instance in instances:
+                for instance in user_ti_by_tweet.get(tweet['_id'], []):
                     concept_id = instance.get('concept_id')
                     if concept_id:
                         concept_id_str = str(concept_id)
                         if concept_id_str not in week_concepts:
                             week_concepts[concept_id_str] = 0
                         week_concepts[concept_id_str] += 1
-            
-            # Get top 3 concepts for this week
+                        all_week_concept_ids.add(concept_id_str)
+            weeks_data[week] = week_concepts
+
+        # Batch-fetch all concept names (fixes ObjectId mismatch + N+1)
+        week_concept_obj_ids = []
+        for cid in all_week_concept_ids:
+            try:
+                week_concept_obj_ids.append(ObjectId(cid))
+            except Exception:
+                pass
+        week_concept_map = {str(c['_id']): c for c in db.tag_concepts_v2.find({'_id': {'$in': week_concept_obj_ids}})}
+
+        for week in sorted(weeks_data.keys()):
+            week_concepts = weeks_data[week]
             top_week_concepts = []
             for cid, count in sorted(week_concepts.items(), key=lambda x: x[1], reverse=True)[:3]:
-                concept = db.tag_concepts_v2.find_one({'_id': cid})
+                concept = week_concept_map.get(cid)
                 if concept:
                     top_week_concepts.append(concept.get('display_name'))
-            
+
             if top_week_concepts:
                 concept_evolution.append({
                     'week': week,
@@ -332,23 +351,49 @@ def get_user_trends(
     # Find similar users (users who use similar concepts)
     similar_users = []
     if concepts_used:
-        # Find other users who use the same concepts
+        # Batch-fetch tag_instances for top 10 concepts (fixes N+1)
+        top_concept_ids_for_sim = concepts_used[:10]
+        # Convert to ObjectId for query since concept_id is stored as ObjectId
+        sim_concept_obj_ids = []
+        for cid in top_concept_ids_for_sim:
+            try:
+                sim_concept_obj_ids.append(ObjectId(cid))
+            except Exception:
+                pass
+
+        sim_instances = list(db.tag_instances.find({
+            'content_type': 'tweet',
+            'concept_id': {'$in': sim_concept_obj_ids}
+        }).limit(1000))
+
+        # Batch-fetch all referenced tweets
+        sim_content_ids = list(set(inst['content_id'] for inst in sim_instances))
+        sim_tweets_map = {}
+        if sim_content_ids:
+            # Try both ObjectId and string content_ids
+            oid_ids = []
+            for cid in sim_content_ids:
+                if isinstance(cid, ObjectId):
+                    oid_ids.append(cid)
+                elif isinstance(cid, str):
+                    try:
+                        oid_ids.append(ObjectId(cid))
+                    except Exception:
+                        pass
+
+            for tweet in db.tweets.find({'_id': {'$in': oid_ids}}).limit(1000):
+                sim_tweets_map[tweet['_id']] = tweet
+                sim_tweets_map[str(tweet['_id'])] = tweet
+
         user_similarity = {}
-        for concept_id in concepts_used[:10]:  # Use top 10 concepts
-            # Find tweets with this concept
-            instances = db.tag_instances.find({
-                'content_type': 'tweet',
-                'concept_id': concept_id
-            }).limit(100)
-            
-            for instance in instances:
-                tweet = db.tweets.find_one({'_id': instance['content_id']})
-                if tweet and tweet.get('author_username') != username:
-                    other_user = tweet['author_username']
-                    if other_user not in user_similarity:
-                        user_similarity[other_user] = 0
-                    user_similarity[other_user] += 1
-        
+        for instance in sim_instances:
+            tweet = sim_tweets_map.get(instance['content_id']) or sim_tweets_map.get(str(instance['content_id']))
+            if tweet and tweet.get('author_username') != username:
+                other_user = tweet['author_username']
+                if other_user not in user_similarity:
+                    user_similarity[other_user] = 0
+                user_similarity[other_user] += 1
+
         # Get top 5 similar users
         for user, score in sorted(user_similarity.items(), key=lambda x: x[1], reverse=True)[:5]:
             similar_users.append({
@@ -377,41 +422,3 @@ def get_user_trends(
         "concept_evolution": concept_evolution,
         "similar_users": similar_users
     }
-
-@router.get("/compare-users")
-def compare_user_trends(
-    users: List[str] = Query(..., description="List of usernames to compare"),
-    days: int = Query(7, ge=1, le=30, description="Number of days to analyze")
-):
-    """
-    Compare trends between multiple users
-    """
-    return compare_user_trends_impl(users, days)
-
-@router.get("/influencers")
-def get_influencer_analysis(
-    days: int = Query(7, ge=1, le=30, description="Number of days to analyze"),
-    min_tweets: int = Query(5, ge=1, le=100, description="Minimum tweets to be considered")
-):
-    """
-    Identify influential users based on concept introduction and spread
-    """
-    return get_influencer_analysis_impl(days, min_tweets)
-
-@router.get("/activity-heatmap")
-def get_user_activity_heatmap(
-    days: int = Query(7, ge=1, le=30, description="Number of days to analyze")
-):
-    """
-    Get a heatmap of user activity over time
-    """
-    return get_user_activity_heatmap_impl(days)
-
-@router.get("/engagement-metrics")
-def get_engagement_metrics(
-    days: int = Query(7, ge=1, le=30, description="Number of days to analyze")
-):
-    """
-    Get engagement metrics across all users
-    """
-    return get_engagement_metrics_impl(days)

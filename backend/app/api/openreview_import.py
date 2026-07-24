@@ -2,10 +2,10 @@
 OpenReview paper import API endpoints
 """
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel, HttpUrl
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
+from typing import Optional, List
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from bson import ObjectId
 from app.database.mongodb import get_database
@@ -117,14 +117,15 @@ async def import_openreview_paper(
             "openreview_url": metadata["openreview_url"],
             "keywords": metadata.get("keywords", []),
             "tldr": metadata.get("tldr", ""),
-            "created_at": datetime.now(),
-            "updated_at": datetime.now(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "source": "openreview",
             "import_source": "openreview",  # Track import source type
             "import_url": request.url,  # Store original import URL
+            "paper_type": "research",
             "metadata": {
                 "supplementary": metadata.get("supplementary", []),
-                "import_date": datetime.now().isoformat()
+                "import_date": datetime.now(timezone.utc).isoformat()
             }
         }
         
@@ -134,7 +135,7 @@ async def import_openreview_paper(
                 # Parse the ISO format date string
                 pub_date = datetime.fromisoformat(metadata["publication_date"].replace('Z', '+00:00'))
                 paper_doc["publication_date"] = pub_date
-            except:
+            except Exception:
                 # If parsing fails, store as string
                 paper_doc["publication_date"] = metadata["publication_date"]
         
@@ -143,7 +144,7 @@ async def import_openreview_paper(
             try:
                 # Generate filename
                 safe_title = ''.join(c for c in metadata["title"][:50] if c.isalnum() or c in ' -_')
-                pdf_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{forum_id[:8]}_{safe_title}.pdf"
+                pdf_filename = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{forum_id[:8]}_{safe_title}.pdf"
                 pdf_path = Path("data/papers") / pdf_filename
                 
                 # Download PDF
@@ -175,7 +176,7 @@ async def import_openreview_paper(
                     "tag": tag,
                     "content_type": "paper",
                     "content_id": paper_id,
-                    "created_at": datetime.now()
+                    "created_at": datetime.now(timezone.utc)
                 })
         
         # Process PDF in background if requested and PDF exists
@@ -222,62 +223,38 @@ async def get_openreview_metadata(forum_id: str):
         logger.error(f"Error fetching OpenReview metadata: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/bibtex/{forum_id}")
-async def get_openreview_bibtex(forum_id: str):
-    """
-    Get BibTeX citation for an OpenReview paper
-    """
-    try:
-        metadata = openreview_service.fetch_paper_metadata(forum_id)
-        
-        if not metadata:
-            raise HTTPException(status_code=404, detail="Paper not found")
-        
-        bibtex = openreview_service.generate_bibtex(metadata)
-        
-        return {
-            "forum_id": forum_id,
-            "bibtex": bibtex,
-            "title": metadata["title"],
-            "authors": metadata.get("authors", [])
-        }
-        
-    except Exception as e:
-        logger.error(f"Error generating BibTeX: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def process_pdf_background(paper_id: str, pdf_path: str):
+def process_pdf_background(paper_id: str, pdf_path: str):
     """
     Background task to process PDF with Marker
     """
     try:
         logger.info(f"Processing PDF for paper {paper_id} in background")
-        
-        # Process with Marker (default processor)
-        result = await pdf_processor.process_pdf_async(
-            pdf_path=pdf_path,
-            paper_id=paper_id,
-            processor="marker_service"
+
+        # Process with Marker preferred (falls back per PDFProcessorService order)
+        result = pdf_processor.process_pdf(
+            pdf_path,
+            prefer_method="marker",
+            mongo_paper_id=paper_id
         )
-        
+
         if result and result.get("success"):
             # Update paper with processed content
             update_data = {
-                "markdown_content": result.get("markdown", ""),
-                "sections": result.get("sections", []),
-                "processed_by": "marker_service",
-                "processing_date": datetime.now(),
-                "updated_at": datetime.now()
+                "content": result.get("markdown", ""),
+                "processed": True,
+                "processor_used": result.get("method_used", "unknown"),
+                "processed_at": datetime.now(timezone.utc),
+                "updated_at": datetime.now(timezone.utc)
             }
-            
+
             db.papers.update_one(
                 {"_id": ObjectId(paper_id)},
                 {"$set": update_data}
             )
-            
+
             logger.info(f"PDF processing completed for paper {paper_id}")
         else:
-            logger.error(f"PDF processing failed for paper {paper_id}")
-            
+            logger.error(f"PDF processing failed for paper {paper_id}: {result.get('error') if result else 'no result'}")
+
     except Exception as e:
         logger.error(f"Error in background PDF processing: {e}")

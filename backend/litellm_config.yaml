@@ -310,20 +310,13 @@ model_list:
       temperature: 0.3
       max_tokens: 5000
 
-  # Legacy GPT Models
-  - model_name: gpt-4o
-    litellm_params:
-      model: openai/gpt-4o
-      temperature: 0.3
-      max_tokens: 8000
-
-  - model_name: gpt-4o-mini
-    litellm_params:
-      model: openai/gpt-4o-mini
-      temperature: 0.3
-      max_tokens: 5000
-
   # Claude Models (TESTED)
+  - model_name: claude-opus-4-5-20251101
+    litellm_params:
+      model: claude-opus-4-5-20251101
+      temperature: 0.3
+      max_tokens: 32000
+
   - model_name: claude-opus-4-1-20250805
     litellm_params:
       model: claude-opus-4-1-20250805
@@ -356,15 +349,21 @@ model_list:
 
   # Gemini Models (TESTED)
   # NOTE: Gemini 3 models require temperature=1.0 to avoid infinite loops
-  - model_name: gemini-3-pro-preview
+  - model_name: gemini-3.1-pro-preview
     litellm_params:
-      model: gemini/gemini-3-pro-preview
+      model: gemini/gemini-3.1-pro-preview
       temperature: 1.0
       max_tokens: 100000
 
-  - model_name: gemini-3-flash-preview
+  - model_name: gemini-3.5-flash
     litellm_params:
-      model: gemini/gemini-3-flash-preview
+      model: gemini/gemini-3.5-flash
+      temperature: 1.0
+      max_tokens: 100000
+
+  - model_name: gemini-3.1-flash-lite
+    litellm_params:
+      model: gemini/gemini-3.1-flash-lite
       temperature: 1.0
       max_tokens: 100000
 
@@ -396,12 +395,6 @@ model_list:
   - model_name: grok-4-1-fast
     litellm_params:
       model: xai/grok-4-1-fast
-      temperature: 0.5
-      max_tokens: 8000
-
-  - model_name: grok-2-latest
-    litellm_params:
-      model: xai/grok-2-latest
       temperature: 0.5
       max_tokens: 8000
 

@@ -3,10 +3,8 @@ Ontology Graph API - Provides graph data for visualization
 MongoDB version
 """
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Dict, Any, Optional
 import logging
 from app.database.mongodb import get_database
-from bson import ObjectId
 
 logger = logging.getLogger(__name__)
 
@@ -30,22 +28,32 @@ def get_graph_data(
     """
     try:
         # Get all concepts from MongoDB
-        concepts = list(db.tag_concepts_v2.find())
-        
+        concepts = list(db.tag_concepts_v2.find().limit(5000))
+
+        # Usage counts in ONE aggregation (tag_instances stores concept_id as
+        # ObjectId with a small legacy remainder as strings - merge by str key)
+        usage_by_concept = {}
+        for row in db.tag_instances.aggregate([
+            {"$group": {"_id": "$concept_id", "count": {"$sum": 1}}}
+        ]):
+            key = str(row["_id"])
+            usage_by_concept[key] = usage_by_concept.get(key, 0) + row["count"]
+
         # Build nodes
         nodes = []
         concept_map = {}
         links = []
-        
+
         # First pass: create nodes
         for concept in concepts:
             concept_id = str(concept["_id"])
-            
-            # Get usage count from tag_instances
-            usage_count = db.tag_instances.count_documents({
-                "concept_id": concept_id
-            })
-            
+
+            # Look up usage under both id representations
+            usage_count = usage_by_concept.get(concept_id, 0)
+            custom_id = concept.get("id")
+            if custom_id and custom_id != concept_id:
+                usage_count += usage_by_concept.get(custom_id, 0)
+
             # Skip if below minimum usage
             if usage_count < min_usage:
                 continue
@@ -138,7 +146,7 @@ def get_graph_data(
                     })
         
         # Add alias/synonym links
-        aliases = list(db.tag_aliases_v2.find())
+        aliases = list(db.tag_aliases_v2.find().limit(5000))
         for alias in aliases:
             concept_id = str(alias.get("concept_id"))
             if concept_id in concept_map:
@@ -188,102 +196,4 @@ def get_graph_data(
         
     except Exception as e:
         logger.error(f"Error fetching graph data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/search")
-def search_concepts(
-    query: str = Query(..., description="Search query"),
-    limit: int = Query(10, description="Maximum results")
-):
-    """Search for concepts in the graph"""
-    try:
-        # Search in MongoDB using text search or regex
-        search_results = list(db.tag_concepts_v2.find(
-            {"$or": [
-                {"display_name": {"$regex": query, "$options": "i"}},
-                {"slug": {"$regex": query, "$options": "i"}},
-                {"description": {"$regex": query, "$options": "i"}}
-            ]}
-        ).limit(limit))
-        
-        results = []
-        for concept in search_results:
-            usage_count = db.tag_instances.count_documents({
-                "concept_id": str(concept["_id"])
-            })
-            
-            results.append({
-                "id": str(concept["_id"]),
-                "name": concept.get("display_name", ""),
-                "slug": concept.get("slug", ""),
-                "description": concept.get("description", ""),
-                "usage": usage_count,
-                "entity_type": concept.get("entity_type", "other")
-            })
-        
-        return results
-        
-    except Exception as e:
-        logger.error(f"Error searching concepts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/neighbors/{concept_id}")
-def get_concept_neighbors(concept_id: str):
-    """Get immediate neighbors of a concept (parents and children)"""
-    try:
-        # Convert to ObjectId if needed
-        try:
-            obj_id = ObjectId(concept_id)
-            concept = db.tag_concepts_v2.find_one({"_id": obj_id})
-        except:
-            concept = db.tag_concepts_v2.find_one({"_id": concept_id})
-        
-        if not concept:
-            raise HTTPException(status_code=404, detail="Concept not found")
-        
-        neighbors = {
-            "concept": {
-                "id": str(concept["_id"]),
-                "name": concept.get("display_name", ""),
-                "description": concept.get("description", "")
-            },
-            "parents": [],
-            "children": [],
-            "aliases": []
-        }
-        
-        # Get parents
-        for parent_id in concept.get("parents", []):
-            parent = db.tag_concepts_v2.find_one({"_id": parent_id})
-            if parent:
-                neighbors["parents"].append({
-                    "id": str(parent["_id"]),
-                    "name": parent.get("display_name", "")
-                })
-        
-        # Get children
-        for child_id in concept.get("children", []):
-            child = db.tag_concepts_v2.find_one({"_id": child_id})
-            if child:
-                neighbors["children"].append({
-                    "id": str(child["_id"]),
-                    "name": child.get("display_name", "")
-                })
-        
-        # Get aliases
-        aliases = list(db.tag_aliases_v2.find({"concept_id": str(concept["_id"])}))
-        for alias in aliases:
-            neighbors["aliases"].append({
-                "id": str(alias["_id"]),
-                "name": alias.get("alias", alias.get("alias_text", ""))
-            })
-        
-        return neighbors
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting neighbors: {e}")
         raise HTTPException(status_code=500, detail=str(e))

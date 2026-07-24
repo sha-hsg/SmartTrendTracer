@@ -109,7 +109,9 @@ Return as JSON array with format:
             "claude-3.5-sonnet": "claude-sonnet-4-20250514",
 
             # Working Gemini models
-            "gemini-3-pro": "gemini-3.0-pro",  # Preview model
+            "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
+            "gemini-3.5-flash": "gemini-3.5-flash",
+            "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
             "gemini-2.5-pro": "gemini-2.5-pro",  # Uses gemini-pro-latest
             "gemini-2.5-flash": "gemini-2.5-flash",  # Uses gemini-flash-latest
             "gemini-2.5-flash-lite": "gemini-2.5-flash-lite"
@@ -219,35 +221,35 @@ async def apply_concepts_to_tweet(tweet_id: str, concepts: List[Dict[str, str]])
         "message": f"Applied {success_count} concepts to tweet"
     }
 
-@router.post("/papers/{paper_id}/suggest")
-async def suggest_concepts_for_paper(paper_id: str):
+@router.post("/reddit/{post_id}/suggest")
+async def suggest_concepts_for_reddit(post_id: str, request: ConceptSuggestionRequest = ConceptSuggestionRequest()):
     """
-    Get AI-suggested concepts for a specific paper.
+    Get AI-suggested concepts for a specific Reddit post.
+    Returns proper concept structures with display_name and slug.
     """
-    # Get the paper from MongoDB
+    # Get the Reddit post from MongoDB
     try:
-        paper = db.papers.find_one({"_id": ObjectId(paper_id)})
-    except:
-        paper = db.papers.find_one({"id": int(paper_id) if paper_id.isdigit() else paper_id})
-    
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-    
-    # Get existing concepts on this paper
-    existing_concepts = concept_service.get_tags_for_content('paper', str(paper.get('_id', paper.get('id'))))
+        post = db.reddit_posts.find_one({"_id": ObjectId(post_id)})
+    except Exception:
+        post = db.reddit_posts.find_one({"_id": post_id})
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Reddit post not found")
+
+    # Get existing concepts on this post
+    existing_concepts = concept_service.get_tags_for_content('reddit', str(post['_id']))
     existing_concept_ids = [c['concept_id'] for c in existing_concepts]
     existing_slugs = [c['slug'] for c in existing_concepts]
-    
-    # Similar logic as tweets but using paper title and abstract
-    paper_text = f"{paper.get('title', '')} {paper.get('abstract', '')}".lower()
-    
+
+    # 1. Find similar existing concepts from the database
     similar_concepts = []
-    all_concepts = concept_service.get_all_concepts_with_counts(content_type='paper')
-    
+    all_concepts = concept_service.get_all_concepts_with_counts(content_type='reddit')
+
+    post_text = f"{post.get('title', '')} {post.get('selftext', '')}".lower()
     for concept in all_concepts[:50]:
         if concept['concept_id'] not in existing_concept_ids:
-            if concept['slug'].replace('_', ' ') in paper_text or \
-               concept['display_name'].lower() in paper_text:
+            if concept['slug'].replace('_', ' ') in post_text or \
+               concept['display_name'].lower() in post_text:
                 similar_concepts.append({
                     "concept_id": concept['concept_id'],
                     "display_name": concept['display_name'],
@@ -256,14 +258,144 @@ async def suggest_concepts_for_paper(paper_id: str):
                     "usage_count": concept.get('count', 0),
                     "type": "existing"
                 })
-    
+
+    # 2. Generate new concept suggestions using LLM
+    new_concepts = []
+    actual_model = "unknown"
+    try:
+        content_text = post.get('title', '')
+        if post.get('selftext'):
+            content_text += f"\n\n{post['selftext']}"
+
+        prompt = f"""Analyze this Reddit post and suggest relevant concept tags.
+
+Reddit Post (r/{post.get('subreddit', 'unknown')}): {content_text}
+
+Instructions:
+1. Suggest 3-5 relevant concepts for this post
+2. Focus on main topics, technologies, people, organizations mentioned
+3. Use snake_case for slugs (e.g., machine_learning, sam_altman)
+4. Use proper capitalization for display names (e.g., "Machine Learning", "Sam Altman")
+5. Avoid concepts already tagged: {', '.join(existing_slugs)}
+
+Return as JSON array with format:
+[
+  {{
+    "display_name": "Proper Name",
+    "slug": "snake_case_slug",
+    "entity_type": "topic|person|organisation|location|event|product"
+  }}
+]
+"""
+        selected_model = request.model if request.model else "claude-3.5-sonnet"
+        model_mapping = {
+            "gpt-5": "gpt-5-2025-08-07",
+            "gpt-5.1": "gpt-5.1",
+            "gpt-5-mini": "gpt-5-mini",
+            "gpt-5-nano": "gpt-5-nano",
+            "gpt-4o": "gpt-4o",
+            "gpt-4o-mini": "gpt-4o-mini",
+            "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
+            "claude-opus-4.1": "claude-opus-4-1-20250805",
+            "claude-haiku-4.5": "claude-haiku-4-5-20251001",
+            "claude-3.5-sonnet": "claude-sonnet-4-20250514",
+            "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
+            "gemini-3.5-flash": "gemini-3.5-flash",
+            "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
+            "gemini-2.5-pro": "gemini-2.5-pro",
+            "gemini-2.5-flash": "gemini-2.5-flash",
+            "gemini-2.5-flash-lite": "gemini-2.5-flash-lite"
+        }
+        actual_model = model_mapping.get(selected_model, selected_model)
+
+        logger.info(f"Reddit concept suggestion using LLMManager with model: {actual_model}")
+
+        messages = [{"role": "user", "content": prompt}]
+        llm_response = await llm_manager.completion(
+            task_type='tag_suggestion',
+            messages=messages,
+            user_id='default',
+            model=actual_model
+        )
+
+        response = llm_response.choices[0].message.content
+        actual_model = llm_response.model
+
+        if response:
+            try:
+                json_text = response.strip()
+                if json_text.startswith("```json"):
+                    json_text = json_text[7:]
+                if json_text.startswith("```"):
+                    json_text = json_text[3:]
+                if json_text.endswith("```"):
+                    json_text = json_text[:-3]
+
+                suggested = json.loads(json_text.strip())
+                for concept in suggested:
+                    if concept['slug'] not in existing_slugs:
+                        new_concepts.append({
+                            "display_name": concept['display_name'],
+                            "slug": concept['slug'],
+                            "entity_type": concept.get('entity_type', 'topic'),
+                            "type": "new"
+                        })
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.error(f"Error parsing LLM response for Reddit: {e}")
+    except Exception as e:
+        logger.error(f"Error generating Reddit concept suggestions: {e}")
+        actual_model = "error"
+
     return {
-        "paper_id": paper_id,
-        "existing_suggestions": similar_concepts[:10],
-        "new_suggestions": [],  # Could add LLM suggestions for papers too
+        "tweet_id": str(post['_id']),  # Keep field name for frontend compatibility
+        "existing_suggestions": similar_concepts[:5],
+        "new_suggestions": new_concepts[:5],
         "already_tagged": existing_concepts,
-        "total_suggestions": len(similar_concepts)
+        "total_suggestions": len(similar_concepts) + len(new_concepts),
+        "model_used": actual_model
     }
+
+
+@router.post("/reddit/{post_id}/apply-concepts")
+async def apply_concepts_to_reddit(post_id: str, concepts: List[Dict[str, str]]):
+    """
+    Apply selected concepts to a Reddit post.
+    Expects array of objects with display_name and slug.
+    """
+    try:
+        post = db.reddit_posts.find_one({"_id": ObjectId(post_id)})
+    except Exception:
+        post = db.reddit_posts.find_one({"_id": post_id})
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Reddit post not found")
+
+    success_count = 0
+    fail_count = 0
+
+    for concept_data in concepts:
+        try:
+            success, concept_id = concept_service.add_tag(
+                content_type='reddit',
+                content_id=str(post['_id']),
+                text=concept_data['display_name'],
+                preserve_display_name=True
+            )
+            if success:
+                success_count += 1
+            else:
+                fail_count += 1
+        except Exception as e:
+            logger.error(f"Error applying concept {concept_data} to Reddit post: {e}")
+            fail_count += 1
+
+    return {
+        "success_count": success_count,
+        "fail_count": fail_count,
+        "total_applied": success_count,
+        "message": f"Applied {success_count} concepts to Reddit post"
+    }
+
 
 @router.get("/search-concepts")
 async def search_concepts_semantic(
@@ -272,8 +404,9 @@ async def search_concepts_semantic(
     limit: int = 20
 ):
     """
-    Universal semantic concept search that can filter by content types.
-    Returns concepts similar to the search query.
+    Universal concept text search that can filter by content types.
+    Matches the query against concept display names, slugs and descriptions
+    (simple string/word matching, no embeddings).
     Can be used across different browsing contexts (tweets, articles, papers).
     """
     try:

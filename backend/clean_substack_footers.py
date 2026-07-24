@@ -5,97 +5,13 @@ Removes copyright information and promotional content from the end of articles
 
 Uses MongoDB for data storage (migrated from SQLite January 2026)
 """
-import re
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from pymongo import UpdateOne
 from app.database.mongodb import get_database
-
-def remove_substack_footer(content: str) -> str:
-    """
-    Remove Substack footer content including copyright and promotional buttons
-
-    Patterns to remove:
-    - Copyright notice (© 2025 Author/Company)
-    - Address information
-    - Unsubscribe/disable email links
-    - "Start writing" promotional buttons
-    - "Get the app" promotional buttons
-    - Associated images and links
-    """
-    if not content:
-        return content
-
-    # Define patterns for footer detection
-    footer_patterns = [
-        # Copyright patterns - match © year followed by author/company name
-        r'©\s*\d{4}\s*<span[^>]*>.*?</span>',
-        r'©\s*\d{4}\s*[^<\n]+(?:<br\s*/?>|\n)',
-
-        # Address patterns (e.g., "548 Market Street PMB 72296, San Francisco, CA 94104")
-        r'\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr)(?:\s+PMB\s+\d+)?[,\s]+[A-Za-z\s]+,?\s+[A-Z]{2}\s+\d{5}(?:-\d{4})?',
-
-        # Substack specific unsubscribe/disable email links
-        r'<a[^>]*href=["\']https://substack\.com/redirect/[^"\']*disable_email[^"\']*["\'][^>]*>.*?</a>',
-        r'<a[^>]*href=["\']https://[^"\']*\.substack\.com/action/disable_email[^"\']*["\'][^>]*>.*?</a>',
-
-        # "Start writing" button images and links
-        r'<a[^>]*>\s*<img[^>]*(?:Start writing|publish-button)[^>]*>\s*</a>',
-        r'!\[Start writing\]\([^)]+\)',
-
-        # "Get the app" button images and links
-        r'<a[^>]*>\s*<img[^>]*(?:Get the app|generic-app-button)[^>]*>\s*</a>',
-        r'!\[Get the app\]\([^)]+\)',
-
-        # Standalone promotional images
-        r'<img[^>]*(?:publish-button|generic-app-button)[^>]*>',
-        r'!\[(?:Start writing|Get the app)\]\([^)]+\)',
-
-        # Substack redirect links
-        r'<a[^>]*href=["\']https://substack\.com/redirect/[^"\']*signup[^"\']*["\'][^>]*>.*?</a>',
-    ]
-
-    # First, try to find where the footer starts
-    # Look for copyright symbol as the main indicator
-    copyright_match = re.search(r'©\s*\d{4}', content)
-
-    if copyright_match:
-        # Found copyright, remove everything from this point onwards
-        footer_start = copyright_match.start()
-
-        # Check if there's substantial content before the copyright
-        # (to avoid removing the entire article if © appears early)
-        if footer_start > 500:  # Only remove if copyright appears after 500 chars
-            content = content[:footer_start].rstrip()
-        else:
-            # Copyright appears too early, try pattern-based removal instead
-            for pattern in footer_patterns:
-                content = re.sub(pattern, '', content, flags=re.IGNORECASE | re.DOTALL)
-
-    # Also check for address patterns as footer indicators (even without copyright)
-    address_match = re.search(r'\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr)(?:\s+PMB\s+\d+)?[,\s]+[A-Za-z\s]+,?\s+[A-Z]{2}\s+\d{5}', content)
-    if address_match and address_match.start() > 500:
-        # Found an address that looks like a footer, remove from there
-        content = content[:address_match.start()].rstrip()
-
-    # Always try to remove promotional content patterns
-    for pattern in footer_patterns:
-        content = re.sub(pattern, '', content, flags=re.IGNORECASE | re.DOTALL)
-
-    # Clean up any trailing whitespace, empty links, or broken markdown
-    content = re.sub(r'\n{3,}', '\n\n', content)  # Remove excessive newlines
-    content = re.sub(r'<a[^>]*>\s*</a>', '', content)  # Remove empty links
-    content = re.sub(r'<span[^>]*>\s*</span>', '', content)  # Remove empty spans
-    content = re.sub(r'(?:<br\s*/?>[\s\n]*)+$', '', content)  # Remove trailing <br> tags and whitespace
-    content = re.sub(r'[\s\n]*<br\s*/?>\s*$', '', content)  # Remove final br tags
-
-    # Final cleanup of trailing HTML artifacts
-    content = re.sub(r'<a href="[^"]*">\s*$', '', content)  # Remove empty trailing links
-    content = re.sub(r'\s*</?(?:span|div|p)>\s*$', '', content)  # Remove empty trailing tags
-
-    return content.strip()
+from app.collectors.substack_content_cleaners import remove_substack_footer
 
 def clean_existing_articles():
     """Clean footers from all existing Substack articles in MongoDB"""

@@ -261,7 +261,7 @@ class ArticleClusteringService:
             'min_samples': min_samples
         }
     
-    def find_similar_articles(self, article_id: int, top_k: int = 5) -> List[Dict[str, Any]]:
+    def find_similar_articles(self, article_id: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """
         Find most similar articles to a given article based on tags
         
@@ -388,7 +388,7 @@ class ArticleClusteringService:
             from sklearn.metrics import silhouette_score
             if len(np.unique(labels)) > 1:
                 return float(silhouette_score(self.tag_vectors, labels))
-        except:
+        except Exception:
             pass
         return None
     

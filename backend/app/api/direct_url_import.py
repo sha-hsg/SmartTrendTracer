@@ -8,9 +8,8 @@ from pydantic import BaseModel, HttpUrl
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database.mongodb import get_database
-from bson import ObjectId
 import hashlib
 import os
 import requests
@@ -43,7 +42,7 @@ def sanitize_filename(filename: str) -> str:
 def generate_filename(url: str, title: str) -> str:
     """Generate a unique filename for the PDF"""
     # Get timestamp
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     
     # Generate hash from URL for uniqueness
     url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
@@ -133,11 +132,12 @@ async def import_paper_from_url(
             'authors': request.authors or '',
             'pdf_path': str(pdf_path),
             'pdf_url': url,
-            'created_at': datetime.utcnow(),
+            'created_at': datetime.now(timezone.utc),
             'processed': False,
             'source': 'direct_url',
             'import_source': 'direct',  # Track import source type
-            'import_url': url  # Store original import URL
+            'import_url': url,  # Store original import URL
+            'paper_type': 'research',
         }
         
         # Parse authors into structured format if provided
@@ -154,20 +154,33 @@ async def import_paper_from_url(
         
         logger.info(f"Paper saved with ID: {paper_id}")
         
-        # Add tags if provided
+        # Add tags if provided — via concept service so concept_id is set
+        # (raw inserts into tag_instances create invisible orphans)
         if request.add_tags:
-            # Add tags to tag_instances collection
-            tag_instances = []
+            from app.services.concept_only_tag_service import ConceptOnlyTagService
+            concept_service = ConceptOnlyTagService()
+
+            added_count = 0
             for tag_name in request.add_tags:
-                tag_instances.append({
-                    'content_type': 'paper',
-                    'content_id': paper_id,
-                    'tag': tag_name,
-                    'created_at': datetime.utcnow()
-                })
-            if tag_instances:
-                db.tag_instances.insert_many(tag_instances)
-                logger.info(f"Added {len(tag_instances)} tags to paper {paper_id}")
+                if not tag_name or not tag_name.strip():
+                    continue
+                try:
+                    success, concept_id = concept_service.add_tag(
+                        content_type='paper',
+                        content_id=paper_id,
+                        text=tag_name.strip(),
+                        preserve_display_name=True
+                    )
+                    if success:
+                        added_count += 1
+                        db.papers.update_one(
+                            {'_id': result.inserted_id},
+                            {'$addToSet': {'concept_ids': concept_id}}
+                        )
+                except Exception as tag_err:
+                    logger.warning(f"Failed to add tag '{tag_name}' to paper {paper_id}: {tag_err}")
+
+            logger.info(f"Added {added_count} concept tags to paper {paper_id}")
         
         return {
             "success": True,
@@ -191,7 +204,7 @@ async def import_paper_from_url(
         if 'pdf_path' in locals() and pdf_path.exists():
             try:
                 os.remove(pdf_path)
-            except:
+            except Exception:
                 pass
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -235,7 +248,7 @@ async def validate_pdf_url(url: str) -> Dict[str, Any]:
                     "message": f"URL does not appear to be a PDF (Content-Type: {content_type})",
                     "content_type": content_type
                 }
-        except:
+        except Exception:
             # Can't determine from HEAD, but URL might still be valid
             return {
                 "valid": True,

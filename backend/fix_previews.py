@@ -7,6 +7,8 @@ Uses MongoDB for data storage (migrated from SQLite January 2026)
 import sys
 import os
 import re
+import json
+from pathlib import Path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from pymongo import UpdateOne
@@ -74,12 +76,23 @@ def extract_clean_text_from_markdown(markdown_content):
 
     return text
 
+def load_forwarded_authors():
+    """Load forwarded author names from forwarded_authors.json (next to this script)"""
+    config_path = Path(__file__).resolve().parent / 'forwarded_authors.json'
+    try:
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+        return [author['name'] for author in config.get('forwarded_authors', [])]
+    except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+        print(f"Warning: could not load {config_path} ({e}); no forwarded authors configured")
+        return []
+
 def main():
     """Fix previews for forwarded articles"""
     db = get_database()
 
-    # Get forwarded authors
-    forwarded_authors = ['Gary Marcus', 'Nathan Lambert', 'Sebastian Raschka']
+    # Get forwarded authors from config
+    forwarded_authors = load_forwarded_authors()
 
     print("FIXING PREVIEWS FOR FORWARDED SUBSTACK ARTICLES")
     print("=" * 60)

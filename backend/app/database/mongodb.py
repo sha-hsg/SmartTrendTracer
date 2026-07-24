@@ -16,11 +16,31 @@ from dataclasses import dataclass
 from functools import lru_cache, wraps
 from typing import Any, Callable, Dict, Generator, Optional, TypeVar
 
+from bson import ObjectId
 from pymongo import MongoClient, ASCENDING, DESCENDING, TEXT
 from pymongo.database import Database
 
 
 logger = logging.getLogger(__name__)
+
+
+def safe_object_id(value) -> Optional[ObjectId]:
+    """Convert a value to ObjectId if possible, otherwise return None.
+
+    Handles strings, existing ObjectIds, and invalid values gracefully.
+    This centralises the inconsistent ObjectId conversion patterns
+    scattered across services (try/except, length checks, etc.).
+    """
+    if value is None or value == "" or value == "None":
+        return None
+    if isinstance(value, ObjectId):
+        return value
+    if isinstance(value, str):
+        try:
+            return ObjectId(value)
+        except Exception:
+            return None
+    return None
 
 # Slow query threshold in seconds (configurable via environment)
 SLOW_QUERY_THRESHOLD = float(os.getenv("MONGODB_SLOW_QUERY_MS", "100")) / 1000  # Default 100ms

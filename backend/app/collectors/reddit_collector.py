@@ -7,6 +7,7 @@ import os
 import json
 import logging
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from app.database.mongodb import get_client, get_database
@@ -48,8 +49,10 @@ class RedditCollector:
         self.posts_collection = self.db.reddit_posts
         self.collection_state = self.db.collection_state
         
-        # Load Reddit configuration
-        with open('reddit_config.json', 'r') as f:
+        # Load Reddit configuration (absolute path: backend/reddit_config.json,
+        # resolved relative to this file so it works regardless of CWD)
+        config_path = Path(__file__).resolve().parents[2] / 'reddit_config.json'
+        with open(config_path, 'r') as f:
             self.config = json.load(f)
         
         self.subreddits = self.config['subreddits']

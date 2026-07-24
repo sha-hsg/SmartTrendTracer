@@ -1,20 +1,17 @@
 """
 ACL Anthology import API endpoints
 """
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, Dict, Any
 from pathlib import Path
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database.mongodb import get_database
 from bson import ObjectId
-import hashlib
-import os
 
 from app.services.acl_anthology_service import acl_anthology_service
-from app.services.pdf_processor_service import PDFProcessorService
-from app.services.paper_analysis_service import PaperAnalysisService
+from app.services.pdf_processor_service import get_pdf_processor_service
 
 # MongoDB connection
 db = get_database()
@@ -95,14 +92,22 @@ async def import_acl_anthology_paper(
                 detail="URL must be from aclanthology.org"
             )
         
-        # Check if paper already exists by URL
-        existing = db.papers.find_one({
-            '$or': [
-                {'pdf_url': url},
-                {'pdf_url': url.replace('http://', 'https://')}
-            ]
-        })
-        
+        # Check if paper already exists (by import/source/pdf URL or ACL ID)
+        url_https = url.replace('http://', 'https://')
+        dup_conditions = [
+            {'pdf_url': {'$in': [url, url_https]}},
+            {'import_url': {'$in': [url, url_https]}},
+            {'source_url': {'$in': [url, url_https]}},
+        ]
+        # Derive the ACL Anthology ID from the URL path (e.g. "2024.acl-long.1")
+        acl_id_candidate = url_https.rstrip('/').rsplit('/', 1)[-1]
+        if acl_id_candidate.endswith('.pdf'):
+            acl_id_candidate = acl_id_candidate[:-4]
+        if acl_id_candidate:
+            dup_conditions.append({'acl_anthology_id': f"acl:{acl_id_candidate}"})
+
+        existing = db.papers.find_one({'$or': dup_conditions})
+
         if existing:
             return {
                 "success": False,
@@ -134,11 +139,12 @@ async def import_acl_anthology_paper(
             'conference': paper_data.get('conference'),
             'journal': paper_data.get('proceedings'),  # Some ACL papers may be in journals
             'publication_date': paper_data.get('publication_date'),  # Canonical field name for papers
-            'created_at': datetime.utcnow(),
+            'created_at': datetime.now(timezone.utc),
             'processed': False,
             'source': 'acl_anthology',
             'import_source': 'acl',  # Track import source type
-            'import_url': paper_data['pdf_url']  # Store original import URL
+            'import_url': url,  # Store original import URL (submitted page URL)
+            'paper_type': 'research',
         }
         
         # Store additional metadata in appropriate fields
@@ -149,7 +155,7 @@ async def import_acl_anthology_paper(
                 try:
                     start, end = pages.split('-')
                     paper_doc['page_count'] = int(end) - int(start) + 1
-                except:
+                except Exception:
                     pass
         
         # Store anthology ID in a searchable field
@@ -161,8 +167,13 @@ async def import_acl_anthology_paper(
         if paper_doc['authors'] and isinstance(paper_doc['authors'], str):
             author_names = [name.strip() for name in paper_doc['authors'].split(',')]
             paper_doc['authors_list'] = [
-                {'name': name, 'position': i} 
+                {'name': name, 'position': i}
                 for i, name in enumerate(author_names) if name
+            ]
+            # Canonical structured author field (same schema as arxiv.py import)
+            paper_doc['authors_detailed'] = [
+                {'name': name, 'affiliation': '', 'email': ''}
+                for name in author_names if name
             ]
             logger.info(f"Created {len(author_names)} author entries for paper")
         
@@ -185,7 +196,7 @@ async def import_acl_anthology_paper(
                     'content_type': 'paper',
                     'content_id': paper_id,
                     'tag': tag_name,
-                    'created_at': datetime.utcnow()
+                    'created_at': datetime.now(timezone.utc)
                 })
             if tag_instances:
                 db.tag_instances.insert_many(tag_instances)
@@ -222,147 +233,39 @@ async def import_acl_anthology_paper(
         logger.error(f"Error importing ACL Anthology paper: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/batch-import")
-async def batch_import_acl_papers(
-    urls: list[str],
-    process_pdfs: bool = True,
-    background_tasks: BackgroundTasks = None,
-) -> Dict[str, Any]:
-    """
-    Import multiple ACL Anthology papers in batch
-    """
-    results = []
-    successful = 0
-    failed = 0
-    skipped = 0
-    
-    for url in urls:
-        try:
-            # Check if already exists in MongoDB
-            existing = db.papers.find_one({
-                '$or': [
-                    {'pdf_url': url},
-                    {'pdf_url': url.replace('http://', 'https://')}
-                ]
-            })
-            
-            if existing:
-                results.append({
-                    "url": url,
-                    "status": "skipped",
-                    "message": "Already exists",
-                    "paper_id": str(existing['_id'])
-                })
-                skipped += 1
-                continue
-            
-            # Import the paper
-            request = ACLAnthologyImportRequest(
-                url=url,
-                process_pdf=process_pdfs
-            )
-            
-            result = await import_acl_anthology_paper(
-                request,
-                background_tasks
-            )
-            
-            results.append({
-                "url": url,
-                "status": "success",
-                "paper_id": result.get("paper_id")
-            })
-            successful += 1
-            
-        except Exception as e:
-            logger.error(f"Failed to import {url}: {e}")
-            results.append({
-                "url": url,
-                "status": "failed",
-                "error": str(e)
-            })
-            failed += 1
-    
-    return {
-        "total": len(urls),
-        "successful": successful,
-        "failed": failed,
-        "skipped": skipped,
-        "results": results
-    }
-
 def process_pdf_background(paper_id: str, pdf_path: str):
     """
     Background task to process PDF and extract content
     """
     try:
         # Get MongoDB connection for background task
-        from bson import ObjectId
         db_bg = get_database()
-        
+
         # Get the paper from MongoDB
         paper = db_bg.papers.find_one({'_id': ObjectId(paper_id)})
         if not paper:
             logger.error(f"Paper {paper_id} not found for processing")
             return
-        
+
         # Process the PDF
-        processor = PDFProcessorService()
-        success = processor.process_paper(paper_id)
-        
-        if success:
+        processor = get_pdf_processor_service()
+        result = processor.process_pdf(pdf_path, mongo_paper_id=paper_id)
+
+        if result.get('success'):
             logger.info(f"Successfully processed PDF for paper {paper_id}")
-            
-            # Update paper as processed
+
+            # Update paper with processed content
             db_bg.papers.update_one(
                 {'_id': ObjectId(paper_id)},
-                {'$set': {'processed': True}}
+                {'$set': {
+                    'content': result.get('markdown', ''),
+                    'processed': True,
+                    'processor_used': result.get('method_used', 'unknown'),
+                    'processed_at': datetime.now(timezone.utc)
+                }}
             )
-            
-            # Run analysis if available
-            try:
-                analysis_service = PaperAnalysisService()
-                # Pass MongoDB connection to analysis service
-                analysis_service.analyze_paper(paper_id, db=db_bg)
-                logger.info(f"Successfully analyzed paper {paper_id}")
-            except Exception as e:
-                logger.warning(f"Could not analyze paper {paper_id}: {e}")
         else:
-            logger.error(f"Failed to process PDF for paper {paper_id}")
-        
+            logger.error(f"Failed to process PDF for paper {paper_id}: {result.get('error')}")
+
     except Exception as e:
         logger.error(f"Error in background PDF processing for paper {paper_id}: {e}")
-
-@router.get("/validate-url")
-async def validate_acl_url(url: str) -> Dict[str, Any]:
-    """
-    Validate if a URL is a valid ACL Anthology paper URL
-    """
-    try:
-        # Check if it's an ACL Anthology URL
-        if 'aclanthology.org' not in url:
-            return {
-                "valid": False,
-                "message": "Not an ACL Anthology URL"
-            }
-        
-        # Try to parse it
-        try:
-            metadata = acl_anthology_service.parse_acl_url(url)
-            return {
-                "valid": True,
-                "message": "Valid ACL Anthology paper URL",
-                "title": metadata.get('title', 'Unknown'),
-                "authors": metadata.get('authors', [])
-            }
-        except:
-            return {
-                "valid": False,
-                "message": "Could not parse ACL Anthology page"
-            }
-            
-    except Exception as e:
-        return {
-            "valid": False,
-            "message": str(e)
-        }

@@ -9,7 +9,7 @@ import re
 from typing import List, Tuple, Optional, Dict
 from difflib import SequenceMatcher
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class AuthorService:
@@ -212,8 +212,8 @@ class AuthorService:
             'subdomain': subdomain or self._generate_subdomain(normalized_name),
             'article_count': 0,
             'last_article_date': None,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'created_at': datetime.now(timezone.utc),
+            'updated_at': datetime.now(timezone.utc)
         }
 
         result = self.authors_collection.insert_one(author_doc)
@@ -308,7 +308,7 @@ class AuthorService:
                     '$set': {
                         'article_count': total_count,
                         'last_article_date': last_date,
-                        'updated_at': datetime.utcnow()
+                        'updated_at': datetime.now(timezone.utc)
                     }
                 }
             )

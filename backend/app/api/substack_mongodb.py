@@ -3,10 +3,9 @@ MongoDB-based Substack API - compatible with full MongoDB system
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from pymongo import DESCENDING
 from app.database.mongodb import get_database
-from typing import Dict, Any, List
-from datetime import datetime, timedelta
+from typing import Dict, Any
+from datetime import datetime, timezone, timedelta
 import logging
 from collections import Counter, defaultdict
 import re
@@ -15,8 +14,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # MongoDB connection
-# MongoDB connection
 db = get_database()
+
+# Common English words filtered out during simple topic extraction
+STOP_WORDS = {'that', 'with', 'have', 'this', 'will', 'from', 'they', 'been', 'said', 'each', 'which', 'their', 'time', 'about', 'would', 'there', 'could', 'other', 'after', 'first', 'well', 'also', 'into', 'over', 'think', 'just', 'only', 'more', 'than', 'some', 'what', 'know', 'year', 'much', 'take', 'make', 'way', 'come', 'when', 'work', 'life', 'world', 'people', 'state', 'part', 'right', 'system', 'never'}
+
+
+def _as_utc(dt) -> datetime:
+    """Return a tz-aware UTC datetime; naive values are assumed to be UTC."""
+    if dt is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 @router.get("/trends")
 async def get_substack_trends(
@@ -27,7 +37,7 @@ async def get_substack_trends(
     """
     try:
         # Calculate date range
-        end_date = datetime.now()
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
         # Get articles from MongoDB within the date range
@@ -73,8 +83,7 @@ async def get_substack_trends(
             # Extract meaningful words (basic NLP)
             words = re.findall(r'\b[a-zA-Z]{4,}\b', text)
             # Filter out common words
-            stop_words = {'that', 'with', 'have', 'this', 'will', 'from', 'they', 'been', 'said', 'each', 'which', 'their', 'time', 'about', 'would', 'there', 'could', 'other', 'after', 'first', 'well', 'also', 'into', 'over', 'think', 'just', 'only', 'more', 'than', 'some', 'what', 'know', 'year', 'much', 'take', 'make', 'way', 'come', 'when', 'work', 'life', 'world', 'people', 'state', 'part', 'right', 'system', 'never'}
-            meaningful_words = [word for word in words if word not in stop_words and len(word) > 3]
+            meaningful_words = [word for word in words if word not in STOP_WORDS and len(word) > 3]
             topic_counter.update(meaningful_words)
         
         top_topics = [{"term": term, "score": count, "articles": count} for term, count in topic_counter.most_common(10)]
@@ -93,7 +102,7 @@ async def get_substack_trends(
             # Add topics for this author
             if article.get('title'):
                 words = re.findall(r'\b[a-zA-Z]{4,}\b', article['title'].lower())
-                author_stats[author]["topics"].update([w for w in words if w not in stop_words])
+                author_stats[author]["topics"].update([w for w in words if w not in STOP_WORDS])
         
         most_active_authors = []
         for author, stats in sorted(author_stats.items(), key=lambda x: x[1]["articles"], reverse=True)[:10]:
@@ -133,7 +142,7 @@ async def get_substack_trends(
             day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
             day_end = day_start + timedelta(days=1)
             
-            day_articles = [a for a in articles if day_start <= a.get('published_at', datetime.min) < day_end]
+            day_articles = [a for a in articles if day_start <= _as_utc(a.get('published_at')) < day_end]
             
             velocity_trends.append({
                 "date": day.strftime("%Y-%m-%d"),
@@ -159,11 +168,15 @@ async def get_substack_trends(
             },
             "tag_trends": {
                 "top_tags": top_tags,
-                "tag_relationships": [],  # Would need complex analysis
+                # PARTIAL STUB: co-occurrence analysis not implemented; kept empty
+                # because the frontend (substack-trends/TabPanels.tsx) reads this field.
+                "tag_relationships": [],
                 "unique_tags": len(set(all_tags))
             },
+            # PARTIAL STUB: snippet analysis not implemented; kept empty because
+            # the frontend (SubstackTrendsModern.tsx) reads snippet_insights.
             "snippet_insights": {
-                "categories": {},  # Would need snippet analysis
+                "categories": {},
                 "important_highlights": [],
                 "total_snippets": 0
             },

@@ -509,33 +509,6 @@ async def convert_pdf(
             except Exception as cleanup_error:
                 logger.warning(f"Failed to clean up output directory {output_dir}: {cleanup_error}")
 
-@app.post("/convert_advanced")
-async def convert_pdf_advanced(
-    file: UploadFile = File(...),
-    enable_ocr: bool = Form(False),
-    parse_tables: bool = Form(False),
-    parse_formulas: bool = Form(True)
-):
-    """
-    Advanced PDF conversion with more options
-    
-    Args:
-        file: PDF file to convert
-        enable_ocr: Enable OCR for scanned documents
-        parse_tables: Enable table parsing (may be unstable)
-        parse_formulas: Enable formula parsing
-    """
-    
-    if not check_mineru():
-        raise HTTPException(status_code=503, detail="MinerU is not available")
-    
-    # For now, redirect to basic convert with table option
-    return await convert_pdf(
-        file=file,
-        output_format="markdown",
-        parse_tables="true" if parse_tables else "false"
-    )
-
 if __name__ == "__main__":
     logger.info("="*60)
     logger.info("🚀 Starting MinerU PDF Processing Service")

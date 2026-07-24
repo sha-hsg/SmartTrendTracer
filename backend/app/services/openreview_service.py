@@ -7,7 +7,7 @@ import re
 import json
 from typing import Dict, Any, Optional, List
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import hashlib
 
@@ -121,7 +121,7 @@ class OpenReviewService:
                         try:
                             created_date = datetime.fromtimestamp(note['cdate'] / 1000)
                             year = created_date.year
-                        except:
+                        except Exception:
                             pass
                     
                     # Extract PDF link
@@ -161,12 +161,12 @@ class OpenReviewService:
                     if 'pdate' in note:
                         try:
                             publication_date = datetime.fromtimestamp(note['pdate'] / 1000)
-                        except:
+                        except Exception:
                             pass
                     elif 'cdate' in note:
                         try:
                             publication_date = datetime.fromtimestamp(note['cdate'] / 1000)
-                        except:
+                        except Exception:
                             pass
                     
                     # Build metadata dictionary
@@ -335,7 +335,7 @@ class OpenReviewService:
         
         # Otherwise, generate citation key
         first_author = metadata['authors'][0].split()[-1] if metadata['authors'] else 'Unknown'
-        year = metadata.get('year', datetime.now().year)
+        year = metadata.get('year', datetime.now(timezone.utc).year)
         title_words = metadata['title'].split()[:2]
         citation_key = f"{first_author}{year}{''.join(title_words)}"
         citation_key = re.sub(r'[^a-zA-Z0-9]', '', citation_key)
@@ -399,7 +399,7 @@ class OpenReviewService:
             
             # Generate filename for PDF
             safe_title = re.sub(r'[^a-zA-Z0-9_\- ]', '', metadata['title'])[:50]
-            pdf_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{forum_id}_{safe_title}.pdf"
+            pdf_filename = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{forum_id}_{safe_title}.pdf"
             pdf_path = Path('data/papers') / pdf_filename
             
             # Download PDF if URL is available

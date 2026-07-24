@@ -214,7 +214,49 @@
       "max_tokens": 4000,
       "is_reasoning": false,
       "note": "TESTED - Gemini 2.5 Pro for RAG answers"
-    }
+    },
+    "rag_embedding": {
+      "description": "Embedding models for the concept-based RAG index (data/rag_index_concepts)",
+      "is_embedding": true,
+      "primary": {
+        "model": "models/text-embedding-004",
+        "provider": "google",
+        "dimension": 768
+      },
+      "fallback": {
+        "model": "text-embedding-ada-002",
+        "provider": "openai",
+        "dimension": 1536
+      },
+      "note": "DO NOT change models/dimensions without rebuilding the FAISS index - the existing index was built with these embeddings"
+    },
+        "paper_section_extraction": {
+            "model": "claude-sonnet-4-20250514",
+            "provider": "anthropic",
+            "description": "Extract Abstract/Introduction/Conclusion from full paper",
+            "temperature": 0.1,
+            "max_tokens": 16000,
+            "is_reasoning": false,
+            "note": "Claude Sonnet 4 (200k context) for paper section extraction"
+        },
+        "paper_analysis": {
+            "model": "claude-sonnet-4-20250514",
+            "provider": "anthropic",
+            "description": "Standard paper analysis (summaries, key findings, methodology, etc.)",
+            "temperature": 0.3,
+            "max_tokens": 8000,
+            "is_reasoning": false,
+            "note": "Claude Sonnet 4 for standard paper analyses"
+        },
+        "paper_analysis_deep": {
+            "model": "claude-sonnet-4-20250514",
+            "provider": "anthropic",
+            "description": "Deep paper analysis (academic review, SAS review, SWITT)",
+            "temperature": 0.3,
+            "max_tokens": 16000,
+            "is_reasoning": false,
+            "note": "Claude Sonnet 4 with larger context for deep analyses"
+        }
   },
   "api_settings": {
     "api_key_env": "OPENAI_API_KEY",

@@ -1,11 +1,11 @@
 """
 API endpoints for managing references in the normalized references collection
 """
-from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Optional, List, Dict, Any
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
 from bson import ObjectId
 from app.database.mongodb import get_database
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import re
 
@@ -45,7 +45,12 @@ async def get_all_references(
         if has_doi:
             query['doi'] = {'$ne': '', '$exists': True}
         else:
-            query['$or'] = [{'doi': ''}, {'doi': {'$exists': False}}]
+            no_doi_clause = {'$or': [{'doi': ''}, {'doi': {'$exists': False}}]}
+            if '$or' in query:
+                # Combine with the search $or via $and instead of overwriting it
+                query['$and'] = [{'$or': query.pop('$or')}, no_doi_clause]
+            else:
+                query.update(no_doi_clause)
     
     if in_system is not None:
         query['is_in_system'] = in_system
@@ -192,59 +197,13 @@ async def get_reference_statistics():
     
     return stats
 
-@router.get("/{reference_id}")
-async def get_reference_details(reference_id: str):
-    """Get detailed information about a specific reference"""
-    
-    try:
-        ref = db.references.find_one({'_id': ObjectId(reference_id)})
-    except:
-        raise HTTPException(status_code=400, detail="Invalid reference ID")
-    
-    if not ref:
-        raise HTTPException(status_code=404, detail="Reference not found")
-    
-    # Get all papers that cite this reference
-    citing_papers = list(db.papers.find(
-        {'_id': {'$in': ref.get('cited_by', [])}},
-        {'title': 1, 'year': 1, 'authors': 1}
-    ))
-    
-    # Convert to response format
-    ref['_id'] = str(ref['_id'])
-    if ref.get('paper_id'):
-        ref['paper_id'] = str(ref['paper_id'])
-        
-        # Get the actual paper if it exists
-        paper = db.papers.find_one({'_id': ref['paper_id']})
-        if paper:
-            ref['paper_details'] = {
-                'id': str(paper['_id']),
-                'title': paper.get('title'),
-                'year': paper.get('year'),
-                'pdf_path': paper.get('pdf_path')
-            }
-    
-    ref['cited_by'] = [str(pid) for pid in ref.get('cited_by', [])]
-    ref['citing_papers'] = [
-        {
-            'id': str(p['_id']),
-            'title': p.get('title'),
-            'year': p.get('year'),
-            'authors': p.get('authors')
-        }
-        for p in citing_papers
-    ]
-    
-    return ref
-
 @router.post("/{reference_id}/import")
 async def import_reference_as_paper(reference_id: str):
     """Import a reference as a new paper using its DOI or ArXiv ID"""
     
     try:
         ref = db.references.find_one({'_id': ObjectId(reference_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid reference ID")
     
     if not ref:
@@ -270,7 +229,7 @@ async def import_reference_as_paper(reference_id: str):
                         '$set': {
                             'is_in_system': True,
                             'paper_id': ObjectId(result['paper_id']),
-                            'imported_at': datetime.utcnow()
+                            'imported_at': datetime.now(timezone.utc)
                         }
                     }
                 )
@@ -281,7 +240,7 @@ async def import_reference_as_paper(reference_id: str):
                         'citing_paper': citing_paper_id,
                         'cited_paper': ObjectId(result['paper_id']),
                         'reference_id': ref['_id'],
-                        'created_at': datetime.utcnow()
+                        'created_at': datetime.now(timezone.utc)
                     })
                 
                 return {
@@ -305,7 +264,7 @@ async def generate_bibtex(reference_id: str):
     
     try:
         ref = db.references.find_one({'_id': ObjectId(reference_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid reference ID")
     
     if not ref:
@@ -316,8 +275,7 @@ async def generate_bibtex(reference_id: str):
         return {'bibtex': ref['bibtex']}
     
     # Generate BibTeX
-    import re
-    
+
     # Create citation key
     first_author = ""
     if ref.get('authors'):
@@ -370,98 +328,3 @@ async def generate_bibtex(reference_id: str):
     )
     
     return {'bibtex': bibtex}
-
-@router.get("/paper/{paper_id}/citations")
-async def get_paper_citations(paper_id: str):
-    """Get all papers that this paper cites and all papers that cite this paper"""
-    
-    try:
-        paper_oid = ObjectId(paper_id)
-    except:
-        raise HTTPException(status_code=400, detail="Invalid paper ID")
-    
-    # Get papers this paper cites
-    paper = db.papers.find_one({'_id': paper_oid})
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-    
-    # Get reference IDs for this paper
-    reference_ids = paper.get('reference_ids', [])
-    
-    # Get the actual references
-    references = list(db.references.find({'_id': {'$in': reference_ids}}))
-    
-    # Get papers that cite this paper
-    citations = list(db.paper_citations.find({'cited_paper': paper_oid}))
-    citing_paper_ids = [c['citing_paper'] for c in citations]
-    citing_papers = list(db.papers.find(
-        {'_id': {'$in': citing_paper_ids}},
-        {'title': 1, 'year': 1, 'authors': 1}
-    ))
-    
-    return {
-        'paper': {
-            'id': str(paper['_id']),
-            'title': paper.get('title')
-        },
-        'cites': [
-            {
-                'id': str(ref['_id']),
-                'title': ref.get('title'),
-                'authors': ref.get('authors'),
-                'year': ref.get('year'),
-                'is_in_system': ref.get('is_in_system', False),
-                'paper_id': str(ref['paper_id']) if ref.get('paper_id') else None
-            }
-            for ref in references
-        ],
-        'cited_by': [
-            {
-                'id': str(p['_id']),
-                'title': p.get('title'),
-                'authors': p.get('authors'),
-                'year': p.get('year')
-            }
-            for p in citing_papers
-        ],
-        'cites_count': len(references),
-        'cited_by_count': len(citing_papers)
-    }
-
-@router.post("/batch-import")
-async def batch_import_references(reference_ids: List[str] = Body(...)):
-    """Import multiple references as papers in batch"""
-    
-    results = {
-        'success': [],
-        'failed': [],
-        'already_in_system': []
-    }
-    
-    for ref_id in reference_ids:
-        try:
-            ref = db.references.find_one({'_id': ObjectId(ref_id)})
-            if not ref:
-                results['failed'].append({'id': ref_id, 'error': 'Reference not found'})
-                continue
-            
-            if ref.get('is_in_system'):
-                results['already_in_system'].append({
-                    'id': ref_id,
-                    'title': ref.get('title'),
-                    'paper_id': str(ref.get('paper_id'))
-                })
-                continue
-            
-            # Try to import (implement actual import logic)
-            # For now, just mark as would-import
-            results['success'].append({
-                'id': ref_id,
-                'title': ref.get('title'),
-                'import_method': 'arxiv' if ref.get('arxiv_id') else 'doi'
-            })
-            
-        except Exception as e:
-            results['failed'].append({'id': ref_id, 'error': str(e)})
-    
-    return results

@@ -92,11 +92,6 @@ class UserPreference(BaseModel):
     model_name: str
 
 
-class PreferencesUpdate(BaseModel):
-    """Batch update of user preferences"""
-    preferences: List[UserPreference]
-
-
 @router.get("/models", response_model=Dict[str, List[ModelInfo]])
 async def get_available_models():
     """
@@ -130,32 +125,6 @@ async def get_available_models():
         return models
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get available models: {str(e)}")
-
-
-@router.get("/tasks", response_model=List[str])
-async def get_all_tasks():
-    """
-    Get list of all available task types
-
-    Returns:
-        List of task type names
-
-    Example:
-        [
-            "tag_suggestion",
-            "article_summarizer",
-            "entity_extraction",
-            "ontology_suggestion",
-            "paper_analysis",
-            ...
-        ]
-    """
-    try:
-        llm_manager = get_llm_manager()
-        tasks = llm_manager.get_all_tasks()
-        return list(tasks)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get task types: {str(e)}")
 
 
 @router.get("/tasks/{task_type}", response_model=TaskInfo)
@@ -266,10 +235,30 @@ async def set_user_preference(
                 detail=f"No models available for task type '{preference.task_type}'"
             )
 
-        # Set preference
+        # Validate model_name against currently routable models.
+        # Deprecated aliases from MODEL_MIGRATION_MAP are accepted and
+        # transparently resolved to their replacement model.
+        model_name = preference.model_name
+        model_name = llm_manager.MODEL_MIGRATION_MAP.get(model_name, model_name)
+
+        valid_names = llm_manager.get_valid_model_names()
+        is_valid = (
+            model_name in valid_names
+            or ('/' in model_name and model_name.split('/', 1)[1] in valid_names)
+        )
+        if not is_valid:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f"Model '{preference.model_name}' is not a valid model. "
+                    f"It does not exist in litellm_config.yaml and has no migration alias."
+                )
+            )
+
+        # Set preference (resolved model name, so no deprecated IDs are stored)
         llm_manager.set_user_preference(
             task_type=preference.task_type,
-            model_name=preference.model_name,
+            model_name=model_name,
             user_id=user_id
         )
 
@@ -278,97 +267,13 @@ async def set_user_preference(
             "message": "Preference updated",
             "user_id": user_id,
             "task_type": preference.task_type,
-            "model_name": preference.model_name
+            "model_name": model_name
         }
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to set preference: {str(e)}")
-
-
-@router.put("/preferences/batch")
-async def update_preferences_batch(
-    update: PreferencesUpdate,
-    user_id: str = Query(default="default")
-):
-    """
-    Batch update multiple user preferences at once
-
-    Args:
-        update: Batch of preferences to update
-        user_id: User identifier (default: "default")
-
-    Returns:
-        Summary of updates with success/failure counts
-
-    Example Request Body:
-        {
-            "preferences": [
-                {
-                    "task_type": "tag_suggestion",
-                    "model_name": "summarization_comprehensive"
-                },
-                {
-                    "task_type": "entity_extraction",
-                    "model_name": "entity_extraction_gpt5"
-                }
-            ]
-        }
-
-    Example Response:
-        {
-            "success": true,
-            "updated": 2,
-            "failed": 0,
-            "user_id": "default",
-            "preferences": {
-                "tag_suggestion": "summarization_comprehensive",
-                "entity_extraction": "entity_extraction_gpt5"
-            }
-        }
-    """
-    try:
-        llm_manager = get_llm_manager()
-        updated = 0
-        failed = 0
-        errors = []
-
-        for pref in update.preferences:
-            try:
-                # Validate task type
-                task_info = llm_manager.get_task_info(pref.task_type)
-                if not task_info:
-                    errors.append(f"Task type '{pref.task_type}' not found")
-                    failed += 1
-                    continue
-
-                # Set preference
-                llm_manager.set_user_preference(
-                    task_type=pref.task_type,
-                    model_name=pref.model_name,
-                    user_id=user_id
-                )
-                updated += 1
-
-            except Exception as e:
-                errors.append(f"{pref.task_type}: {str(e)}")
-                failed += 1
-
-        # Get final state of preferences
-        final_preferences = llm_manager.get_all_user_preferences(user_id)
-
-        return {
-            "success": failed == 0,
-            "updated": updated,
-            "failed": failed,
-            "user_id": user_id,
-            "preferences": final_preferences,
-            "errors": errors if errors else None
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Batch update failed: {str(e)}")
 
 
 @router.delete("/preferences/{task_type}")
@@ -413,6 +318,67 @@ async def delete_user_preference(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete preference: {str(e)}")
+
+
+@router.get("/preferences/health")
+async def get_preferences_health(user_id: str = Query(default="default")):
+    """
+    Report whether any saved preferences point to deprecated/removed models.
+
+    Returns:
+        {
+            "deprecated_count": int,
+            "deprecated": [
+                {
+                    "task_type": "...",
+                    "current_model": "gemini/gemini-3-flash-preview",
+                    "suggested_model": "gemini-3.5-flash",
+                    "suggestion_source": "migration_map" | "task_default" | "none"
+                },
+                ...
+            ]
+        }
+    """
+    try:
+        manager = get_llm_manager()
+        deprecated = manager.find_deprecated_preferences(user_id=user_id)
+        return {
+            "user_id": user_id,
+            "deprecated_count": len(deprecated),
+            "deprecated": [
+                {
+                    "task_type": d["task_type"],
+                    "current_model": d["current_model"],
+                    "suggested_model": d["suggested_model"],
+                    "suggestion_source": d["suggestion_source"],
+                }
+                for d in deprecated
+            ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to check preferences health: {str(e)}")
+
+
+@router.post("/preferences/migrate")
+async def migrate_deprecated_preferences(user_id: str = Query(default="default")):
+    """
+    Auto-migrate all deprecated preferences to their suggested replacements.
+    Preferences whose deprecated model has no suggestion (suggestion_source='none')
+    are skipped and returned in the response so the user can handle them manually.
+    """
+    try:
+        manager = get_llm_manager()
+        result = manager.migrate_deprecated_preferences(user_id=user_id)
+        return {
+            "success": True,
+            "user_id": user_id,
+            "migrated_count": len(result["migrated"]),
+            "skipped_count": len(result["skipped"]),
+            "migrated": result["migrated"],
+            "skipped": result["skipped"],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Migration failed: {str(e)}")
 
 
 @router.delete("/preferences")

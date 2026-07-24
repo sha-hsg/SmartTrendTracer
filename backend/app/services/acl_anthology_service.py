@@ -4,7 +4,7 @@ ACL Anthology import service for parsing papers from aclanthology.org
 import re
 import logging
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import requests
@@ -261,7 +261,7 @@ class ACLAnthologyService:
             elif 'year' in label_text:
                 try:
                     metadata['year'] = int(value_text)
-                except:
+                except Exception:
                     pass
             elif 'month' in label_text:
                 metadata['month'] = value_text
@@ -349,7 +349,7 @@ class ACLAnthologyService:
                 filename += '.pdf'
             
             # Add timestamp and hash to avoid conflicts
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
             url_hash = hashlib.md5(pdf_url.encode()).hexdigest()[:8]
             filename = f"{timestamp}_{url_hash}_{filename}"
             
@@ -438,7 +438,7 @@ class ACLAnthologyService:
         
         try:
             return datetime(year, month_num, 1)
-        except:
+        except Exception:
             return None
 
 

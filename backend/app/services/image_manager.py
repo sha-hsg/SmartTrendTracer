@@ -13,7 +13,7 @@ from PIL import Image
 import io
 import base64
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class ImageManager:
         if not image_name:
             # Use content hash for deduplication
             content_hash = hashlib.md5(image_data).hexdigest()[:8]
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             image_name = f"{image_type}_{page_num or 0}_{content_hash}.png"
         
         # Get paper directory
@@ -128,7 +128,7 @@ class ImageManager:
         if not image_name:
             ext = Path(source_path).suffix or '.png'
             content_hash = hashlib.md5(image_data).hexdigest()[:8]
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             image_name = f"{image_type}_{page_num or 0}_{content_hash}{ext}"
         
         result = self.save_image(paper_id, image_data, image_name, page_num, image_type)

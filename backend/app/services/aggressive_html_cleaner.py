@@ -102,7 +102,7 @@ class AggressiveHTMLCleaner:
                 if w <= 20 and h <= 20 and 'substack-post-media' not in src:
                     # Small images that aren't content
                     return True
-            except:
+            except Exception:
                 pass
         
         return False

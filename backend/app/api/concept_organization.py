@@ -6,6 +6,7 @@ Organizes unorganized concepts into the hierarchy or identifies them as aliases
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import Dict, List, Optional
 from pydantic import BaseModel
+from bson import ObjectId
 import logging
 
 from app.services.concept_organization_service import ConceptOrganizationService
@@ -55,12 +56,27 @@ async def get_unorganized_concepts(limit: int = 50) -> Dict:
         service = ConceptOrganizationService()
         concepts = service.get_unorganized_concepts(limit)
         
-        # Add usage count for each concept
-        for concept in concepts:
-            usage_count = service.db.tag_instances.count_documents(
-                {"concept_id": concept["_id"]}
-            )
-            concept["usage_count"] = usage_count
+        # Add usage counts via ONE aggregation. The service serializes _id to
+        # string, while tag_instances stores concept_id as ObjectId (plus a
+        # small legacy remainder as strings) - match both representations.
+        if concepts:
+            id_variants = []
+            for concept in concepts:
+                cid = concept["_id"]
+                id_variants.append(cid)
+                if ObjectId.is_valid(cid):
+                    id_variants.append(ObjectId(cid))
+
+            counts = {}
+            for row in service.db.tag_instances.aggregate([
+                {"$match": {"concept_id": {"$in": id_variants}}},
+                {"$group": {"_id": "$concept_id", "count": {"$sum": 1}}}
+            ]):
+                key = str(row["_id"])
+                counts[key] = counts.get(key, 0) + row["count"]
+
+            for concept in concepts:
+                concept["usage_count"] = counts.get(concept["_id"], 0)
         
         return {
             "success": True,

@@ -1,53 +1,48 @@
 #!/usr/bin/env python
 """
 Rebuild the RAG index for AI-powered search (MongoDB version)
+
+Runs the full index build synchronously and only exits once the index
+has been written to disk (data/rag_index_concepts/).
 """
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(SCRIPT_DIR)
+# The RAG service uses a relative index path (data/rag_index_concepts),
+# so make sure we run from the backend directory regardless of CWD.
+os.chdir(SCRIPT_DIR)
 
 from app.services.rag_service_concepts import ConceptBasedRAGService
 
+
 def rebuild_index():
-    """Rebuild the RAG index from scratch"""
+    """Rebuild the RAG index from scratch (synchronous, blocks until done)"""
     print("🔄 Starting RAG index rebuild (MongoDB)...")
-    
+
     # Get RAG service
     rag_service = ConceptBasedRAGService()
-    
-    # Clear existing index
-    print("🗑️  Clearing existing index...")
-    rag_service.index = None
-    rag_service.doc_map = {}
-    rag_service.metadata = {}
-    rag_service._update_status(is_ready=False)
-    
-    # Build new index
-    print("🏗️  Building new index...")
-    result = rag_service.build_index_async()
-    
-    if result.get('status') in ['building', 'started']:
-        print("✅ Index rebuild started successfully!")
-        
-        # Get document count from the status
-        status = rag_service.get_status()
-        total_docs = status.get('total_documents', 0)
-        
-        print(f"📊 Processing {total_docs} documents")
-        print("\n⏳ The index is being built in the background.")
-        print("   This may take a few minutes depending on the number of documents.")
-        print("\n💡 You can use the search interface while the index is building,")
-        print("   but results may be incomplete until it finishes.")
-    elif result.get('status') == 'already_building':
-        print("⚠️  Index rebuild is already in progress")
-        print(f"   Progress: {result.get('progress', 0)}%")
-    else:
-        print("❌ Failed to start index rebuild")
-        print(f"   Status: {result.get('status', 'Unknown')}")
-        print(f"   Error: {result.get('error', result.get('message', 'Unknown error'))}")
-    
-    # Close database session
-    db.close()
+
+    # Build new index synchronously — this blocks until the index
+    # is fully built and persisted to disk.
+    print("🏗️  Building new index (this may take a few minutes)...")
+    index_info = rag_service.rebuild_index()
+
+    total_docs = index_info.get('total_documents', 0)
+    if index_info.get('status') == 'ready' and total_docs > 0:
+        print("✅ Index rebuilt successfully!")
+        print(f"📊 Total documents: {total_docs}")
+        print(f"   Tweets:   {index_info.get('tweets', 0)}")
+        print(f"   Articles: {index_info.get('articles', 0)}")
+        print(f"   Papers:   {index_info.get('papers', 0)}")
+        print(f"   Embedding model: {index_info.get('embedding_model', 'unknown')}")
+        return 0
+
+    print("❌ Index rebuild produced no usable index")
+    print(f"   Result: {index_info}")
+    return 1
+
 
 if __name__ == "__main__":
-    rebuild_index()
+    sys.exit(rebuild_index())

@@ -2,16 +2,28 @@
 """
 Monitor collection status and statistics
 
+Refreshes every 5 seconds (Ctrl+C to exit); use --once for a single snapshot.
+
 Uses MongoDB for data storage (migrated from SQLite January 2026)
 """
+import argparse
 import sys
 import os
+import time
 from datetime import datetime, timezone, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.database.mongodb import get_database
 from app.config import ACCOUNTS_TO_FOLLOW
+
+REFRESH_INTERVAL_SECONDS = 5
+
+
+def clear_screen():
+    """Clear the terminal (cross-platform)"""
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def monitor_collection():
     print("COLLECTION MONITOR")
@@ -145,5 +157,26 @@ def monitor_collection():
         import traceback
         traceback.print_exc()
 
+
+def main():
+    parser = argparse.ArgumentParser(description="Monitor collection status and statistics")
+    parser.add_argument('--once', action='store_true',
+                        help='Print a single snapshot and exit (no refresh loop)')
+    args = parser.parse_args()
+
+    if args.once:
+        monitor_collection()
+        return
+
+    try:
+        while True:
+            clear_screen()
+            monitor_collection()
+            print(f"Refreshing every {REFRESH_INTERVAL_SECONDS} seconds — press Ctrl+C to exit")
+            time.sleep(REFRESH_INTERVAL_SECONDS)
+    except KeyboardInterrupt:
+        print("\nMonitor stopped.")
+
+
 if __name__ == "__main__":
-    monitor_collection()
+    main()

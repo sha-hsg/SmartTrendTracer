@@ -4,9 +4,9 @@ Provides DBLP bibliography search and metadata extraction without SQLite depende
 """
 
 from fastapi import APIRouter, Query, HTTPException, Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database.mongodb import get_database
 from bson import ObjectId
 from app.services.dblp_service import DBLPService
@@ -22,25 +22,6 @@ papers_router = APIRouter(prefix="/api/papers/dblp", tags=["dblp"])
 
 # Initialize DBLP service
 dblp_service = DBLPService()
-
-@router.get("/search")
-async def search_dblp(
-    q: str = Query(..., description="Search query"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of results")
-) -> Dict[str, Any]:
-    """
-    Search DBLP bibliography database
-    """
-    try:
-        results = dblp_service.search(q, limit=limit)
-        return {
-            "query": q,
-            "count": len(results),
-            "results": results
-        }
-    except Exception as e:
-        logger.error(f"Error searching DBLP: {e}")
-        raise HTTPException(status_code=500, detail=f"Error searching DBLP: {str(e)}")
 
 @router.get("/bibtex")
 async def get_bibtex(
@@ -145,7 +126,7 @@ async def attach_dblp_metadata(
                 paper = db.papers.find_one({'_id': ObjectId(paper_id)})
             else:
                 paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-        except:
+        except Exception:
             pass
             
         if not paper:
@@ -172,15 +153,19 @@ async def attach_dblp_metadata(
         if metadata.get('authors'):
             current_authors = paper.get('authors', [])
             if not current_authors or overwrite:
-                # Format authors for MongoDB
-                authors_list = []
+                # Canonical schema: 'authors' = comma-separated string,
+                # 'authors_detailed' = array of author objects
+                author_names = []
                 for author in metadata['authors']:
-                    if isinstance(author, dict):
-                        authors_list.append(author.get('name', ''))
-                    else:
-                        authors_list.append(str(author))
-                update_data['authors'] = authors_list
-                updated_fields.append('authors')
+                    name = author.get('name', '') if isinstance(author, dict) else str(author)
+                    if name:
+                        author_names.append(name)
+                update_data['authors'] = ', '.join(author_names)
+                update_data['authors_detailed'] = [
+                    {'name': name, 'affiliation': '', 'email': ''}
+                    for name in author_names
+                ]
+                updated_fields.extend(['authors', 'authors_detailed'])
         
         # Update venue (conference/journal)
         if metadata.get('venue'):
@@ -200,7 +185,7 @@ async def attach_dblp_metadata(
                 try:
                     update_data['year'] = int(metadata['year'])
                     updated_fields.append('year')
-                except:
+                except Exception:
                     pass
         
         # Update DOI
@@ -213,7 +198,7 @@ async def attach_dblp_metadata(
         update_data['dblp_key'] = dblp_key
         update_data['dblp_url'] = metadata.get('dblp_url', f"https://dblp.org/rec/{dblp_key}")
         update_data['dblp_metadata'] = metadata
-        update_data['dblp_attached_at'] = datetime.utcnow()
+        update_data['dblp_attached_at'] = datetime.now(timezone.utc)
         
         # Update the paper in MongoDB
         if update_data:

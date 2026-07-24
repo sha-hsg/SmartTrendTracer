@@ -7,7 +7,7 @@ Uses configuration from llm.json and prompts_config.json
 import json
 import logging
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 from pathlib import Path
 
@@ -235,7 +235,7 @@ class ConceptOrganizationService:
                     self.db.tag_aliases_v2.insert_one({
                         "alias": self.db.tag_concepts_v2.find_one({"_id": concept_obj_id})["display_name"],
                         "concept_id": alias_of,
-                        "created_at": datetime.now(),
+                        "created_at": datetime.now(timezone.utc),
                         "created_by": "concept_organizer"
                     })
                     
@@ -258,7 +258,7 @@ class ConceptOrganizationService:
                     "entity_type": organization.get("entity_type", "other"),
                     "is_organized": True,
                     "needs_review": False,
-                    "organization_updated_at": datetime.now(),
+                    "organization_updated_at": datetime.now(timezone.utc),
                     "organized_by": "concept_organizer"
                 }
                 
@@ -359,36 +359,3 @@ class ConceptOrganizationService:
             logger.error(f"Error extracting JSON from response: {e}")
             return None
 
-
-# Utility function for testing
-async def test_organization():
-    """Test the concept organization service"""
-    service = ConceptOrganizationService()
-    
-    # Get unorganized concepts
-    unorganized = service.get_unorganized_concepts(5)
-    print(f"Found {len(unorganized)} unorganized concepts")
-    
-    if unorganized:
-        # Test organizing the first one
-        concept = unorganized[0]
-        print(f"\nTesting organization for: {concept['display_name']}")
-        
-        result = await service.organize_concept(concept["_id"])
-        print(f"Result: {json.dumps(result, indent=2)}")
-        
-        if result.get("success"):
-            print(f"\nOrganization suggestion:")
-            org = result["organization"]
-            if org.get("is_alias"):
-                print(f"  - This is an alias of: {org['alias_of']}")
-            else:
-                print(f"  - Parent concepts: {org.get('parent_concepts')}")
-                print(f"  - Entity type: {org.get('entity_type')}")
-                print(f"  - Description: {org.get('description')}")
-            print(f"  - Reasoning: {org.get('reasoning')}")
-
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(test_organization())

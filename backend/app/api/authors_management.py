@@ -14,7 +14,7 @@ Provides comprehensive author management functionality including:
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
 
 from app.database.mongodb import get_database
@@ -61,7 +61,7 @@ class FindSimilarRequest(BaseModel):
 
 @router.get("/", response_model=Dict[str, Any])
 def list_authors(
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=10000),
     page_size: int = Query(50, ge=1, le=200),
     search: Optional[str] = None,
     sort_by: str = Query("article_count", regex="^(name|article_count|last_article_date|created_at)$"),
@@ -179,6 +179,8 @@ def get_author(author_id: str):
             }
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -195,7 +197,7 @@ def update_author(author_id: str, update_data: AuthorUpdateRequest):
             raise HTTPException(status_code=404, detail="Author not found")
 
         # Build update document
-        update_doc = {'updated_at': datetime.utcnow()}
+        update_doc = {'updated_at': datetime.now(timezone.utc)}
 
         if update_data.name is not None:
             update_doc['name'] = update_data.name
@@ -227,6 +229,8 @@ def update_author(author_id: str, update_data: AuthorUpdateRequest):
             }
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -359,8 +363,8 @@ def get_author_analytics():
         ).sort('article_count', -1).limit(10))
 
         # Publishing frequency by month (last 12 months)
-        from datetime import datetime, timedelta
-        twelve_months_ago = datetime.utcnow() - timedelta(days=365)
+        from datetime import datetime, timezone, timedelta
+        twelve_months_ago = datetime.now(timezone.utc) - timedelta(days=365)
 
         # Aggregate articles by month
         pipeline = [

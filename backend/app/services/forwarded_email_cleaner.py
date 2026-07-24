@@ -168,9 +168,9 @@ class ForwardedEmailCleaner:
                         h = float(height)
                         if w <= 20 and h <= 20:
                             img.decompose()
-                    except:
+                    except Exception:
                         pass
-            except:
+            except Exception:
                 pass
     
     def _remove_empty_elements(self, soup: BeautifulSoup):
@@ -268,29 +268,3 @@ class ForwardedEmailCleaner:
             return None
         
         return line
-
-
-def clean_forwarded_email(html_content: str, to_markdown: bool = False) -> str:
-    """
-    Convenience function to clean forwarded email content
-    
-    Args:
-        html_content: HTML content to clean
-        to_markdown: If True, also clean markdown artifacts
-        
-    Returns:
-        Cleaned content
-    """
-    cleaner = ForwardedEmailCleaner()
-    cleaned_html = cleaner.clean_html(html_content)
-    
-    if to_markdown:
-        # Convert to markdown first (using existing converter)
-        from app.services.document_converter import DocumentConverter
-        converter = DocumentConverter()
-        markdown = converter.html_to_markdown(cleaned_html)
-        
-        # Then clean markdown artifacts
-        return cleaner.clean_markdown(markdown)
-    
-    return cleaned_html

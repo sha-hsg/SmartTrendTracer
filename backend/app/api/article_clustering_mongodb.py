@@ -42,6 +42,13 @@ def prepare_article_data(articles: List[Dict]) -> List[Dict[str, Any]]:
         })
     return article_data
 
+def _get_tagged_articles(limit: int = 2000) -> List[Dict]:
+    """Fetch articles that have tags, with a reasonable limit."""
+    return list(db.articles.find(
+        {'tags': {'$exists': True, '$ne': []}},
+        {'title': 1, 'author': 1, 'tags': 1, 'url': 1, 'published_at': 1, 'summary': 1}
+    ).limit(limit))
+
 @router.get("/cluster/kmeans")
 async def cluster_articles_kmeans(
     n_clusters: int = Query(5, ge=2, le=20, description="Number of clusters"),
@@ -52,11 +59,7 @@ async def cluster_articles_kmeans(
     """
     try:
         # Fetch articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         if len(articles) < n_clusters:
             raise HTTPException(
@@ -70,7 +73,15 @@ async def cluster_articles_kmeans(
         # Filter by minimum tags
         if min_tags > 1:
             article_data = [a for a in article_data if len(a['tags']) >= min_tags]
-        
+
+        # Re-check after min_tags filtering - the filter can shrink the
+        # dataset below n_clusters, which would crash KMeans.
+        if len(article_data) < n_clusters:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Not enough articles with at least {min_tags} tags. Found {len(article_data)}, need at least {n_clusters}"
+            )
+
         # Initialize clustering service
         service = ArticleClusteringService()
         service.prepare_articles_data(article_data)
@@ -103,11 +114,7 @@ async def cluster_articles_hierarchical(
             n_clusters = 5  # Default
             
         # Fetch articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         if len(articles) < 2:
             raise HTTPException(
@@ -150,11 +157,7 @@ async def cluster_articles_dbscan(
     """
     try:
         # Fetch articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         if len(articles) < min_samples:
             raise HTTPException(
@@ -198,7 +201,7 @@ async def find_similar_articles(
         # Convert string ID to ObjectId
         try:
             obj_id = ObjectId(article_id)
-        except:
+        except Exception:
             obj_id = article_id
             
         # Check if article exists
@@ -207,11 +210,7 @@ async def find_similar_articles(
             raise HTTPException(status_code=404, detail=f"Article {article_id} not found")
             
         # Fetch all articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         # Prepare data
         article_data = prepare_article_data(articles)
@@ -246,11 +245,7 @@ async def get_tag_cooccurrence() -> Dict[str, Any]:
     """
     try:
         # Fetch articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         # Prepare data
         article_data = prepare_article_data(articles)
@@ -279,11 +274,7 @@ async def get_clustering_summary() -> Dict[str, Any]:
     """
     try:
         # Fetch articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         # Prepare data
         article_data = prepare_article_data(articles)
@@ -314,11 +305,7 @@ async def get_visualization_data(
     """
     try:
         # Fetch articles with tags from MongoDB
-        all_articles = list(db.articles.find({}))
-        articles = [
-            article for article in all_articles 
-            if article.get('tags') and len(article.get('tags', [])) > 0
-        ]
+        articles = _get_tagged_articles()
         
         if len(articles) < 3:
             raise HTTPException(

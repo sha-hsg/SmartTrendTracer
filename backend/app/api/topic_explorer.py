@@ -4,14 +4,12 @@ Provides topic frequency over time and correlation analysis
 """
 
 from fastapi import APIRouter, Query, HTTPException
-from pymongo import ASCENDING, DESCENDING
 from app.database.mongodb import get_database
 from bson import ObjectId
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from typing import Optional
+from datetime import datetime, timezone, timedelta
 from collections import defaultdict, Counter
 import logging
-import math
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -34,15 +32,24 @@ TOPIC_COLORS = [
 ]
 
 
+def ensure_aware(dt: Optional[datetime]) -> Optional[datetime]:
+    """Normalize a datetime to timezone-aware UTC (DB values are naive UTC)."""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
 def parse_date(date_str: Optional[str]) -> Optional[datetime]:
-    """Parse date string to datetime object"""
+    """Parse date string to timezone-aware datetime object (UTC)"""
     if not date_str:
         return None
     try:
-        return datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        return ensure_aware(datetime.fromisoformat(date_str.replace('Z', '+00:00')))
     except ValueError:
         try:
-            return datetime.strptime(date_str, '%Y-%m-%d')
+            return ensure_aware(datetime.strptime(date_str, '%Y-%m-%d'))
         except ValueError:
             return None
 
@@ -114,8 +121,8 @@ async def get_topic_frequency(
         source_type_list = [s.strip() for s in source_types.split(',') if s.strip()]
 
         # Parse dates
-        start_dt = parse_date(start_date) if start_date else datetime.now() - timedelta(days=365)
-        end_dt = parse_date(end_date) if end_date else datetime.now()
+        start_dt = parse_date(start_date) if start_date else datetime.now(timezone.utc) - timedelta(days=365)
+        end_dt = parse_date(end_date) if end_date else datetime.now(timezone.utc)
 
         # Build query filter for tag_instances
         instance_filter = {
@@ -176,13 +183,13 @@ async def get_topic_frequency(
                             else:
                                 try:
                                     id_list.append(ObjectId(cid))
-                                except:
+                                except Exception:
                                     pass
 
                     contents = list(collection.find({'_id': {'$in': id_list}}))
 
                     for content in contents:
-                        content_date = get_date_from_content(content, content_type)
+                        content_date = ensure_aware(get_date_from_content(content, content_type))
                         if content_date and start_dt <= content_date <= end_dt:
                             date_key = group_by_granularity(content_date, granularity)
                             date_counts[date_key] += 1
@@ -239,13 +246,16 @@ async def get_topic_correlation(
         source_type_list = [s.strip() for s in source_types.split(',') if s.strip()]
 
         # Parse dates
-        start_dt = parse_date(start_date) if start_date else datetime.now() - timedelta(days=365)
-        end_dt = parse_date(end_date) if end_date else datetime.now()
+        start_dt = parse_date(start_date) if start_date else datetime.now(timezone.utc) - timedelta(days=365)
+        end_dt = parse_date(end_date) if end_date else datetime.now(timezone.utc)
 
         # Build query filter
         instance_filter = {}
         if source_type_list:
             instance_filter['content_type'] = {'$in': source_type_list}
+
+        # Apply date range filter (tag_instances.created_at is a native BSON datetime)
+        instance_filter['created_at'] = {'$gte': start_dt, '$lte': end_dt}
 
         # Get all tag instances
         instances = list(db.tag_instances.find(instance_filter))
@@ -364,12 +374,13 @@ async def get_popular_topics(
         source_type_list = [s.strip() for s in source_types.split(',') if s.strip()]
 
         # Calculate cutoff date
-        cutoff = datetime.now() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Build aggregation pipeline
         match_criteria = {}
         if source_type_list:
             match_criteria['content_type'] = {'$in': source_type_list}
+        match_criteria['created_at'] = {'$gte': cutoff}
 
         pipeline = [
             {'$match': match_criteria},

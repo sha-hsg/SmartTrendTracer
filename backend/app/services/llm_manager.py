@@ -542,6 +542,113 @@ class LLMManager:
             for model_config in self._config.get('model_list', [])
         ))
 
+    # ------------------------------------------------------------------
+    # Deprecated-preference detection
+    # ------------------------------------------------------------------
+
+    # When a model in litellm_config.yaml is renamed/retired, add an entry
+    # here so stale user_preferences get a sensible target. The key is the
+    # value as stored in user prefs (with provider prefix where applicable);
+    # the value is the new model_name as it appears in litellm_config.yaml.
+    # If a deprecated value has no entry here, the migration falls back to
+    # the task's default model.
+    MODEL_MIGRATION_MAP: Dict[str, str] = {
+        'gemini/gemini-3-flash-preview': 'gemini-3.5-flash',
+        'gemini-3-flash-preview': 'gemini-3.5-flash',
+        'gemini/gemini-3-pro-preview': 'gemini-3.1-pro-preview',
+        'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
+        'gemini-3.0-pro': 'gemini-3.1-pro-preview',
+        'gemini-3-pro': 'gemini-3.1-pro-preview',
+        # Legacy OpenAI/xAI models removed from litellm_config.yaml (July 2026)
+        'gpt-4o': 'gpt-5.1',
+        'openai/gpt-4o': 'gpt-5.1',
+        'gpt-4o-mini': 'gpt-5-nano',
+        'openai/gpt-4o-mini': 'gpt-5-nano',
+        'grok-2-latest': 'grok-4-1-fast',
+        'xai/grok-2-latest': 'grok-4-1-fast',
+    }
+
+    def get_valid_model_names(self) -> set:
+        """All model_name values currently routable via litellm_config.yaml."""
+        return {
+            mc.get('model_name')
+            for mc in self._config.get('model_list', [])
+            if mc.get('model_name')
+        }
+
+    def _resolve_pref_value(self, pref_value: str, valid_names: set) -> bool:
+        """A pref value is valid if it (or its stripped provider form) matches a known model_name."""
+        if pref_value in valid_names:
+            return True
+        # Strip provider prefix (e.g., "gemini/gemini-3.1-flash-lite" → "gemini-3.1-flash-lite")
+        if '/' in pref_value and pref_value.split('/', 1)[1] in valid_names:
+            return True
+        return False
+
+    def find_deprecated_preferences(self, user_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Return preferences whose model_name no longer exists in litellm_config.yaml.
+
+        Each entry: {user_id, task_type, current_model, suggested_model, suggestion_source}
+        suggestion_source is 'migration_map' or 'task_default'.
+        """
+        valid = self.get_valid_model_names()
+        deprecated: List[Dict[str, Any]] = []
+
+        # Iterate the in-memory cache (loaded from MongoDB at startup).
+        user_ids = [user_id] if user_id else list(self._user_preferences.keys())
+        for uid in user_ids:
+            prefs = self._user_preferences.get(uid, {})
+            for task_type, model_name in prefs.items():
+                if self._resolve_pref_value(model_name, valid):
+                    continue
+
+                # Find a replacement: migration map first, then task default.
+                suggested = self.MODEL_MIGRATION_MAP.get(model_name)
+                source = 'migration_map'
+                if not suggested:
+                    # Task default from litellm_config (where model_name == task_type).
+                    task_info = self.get_task_info(task_type)
+                    if task_info:
+                        suggested = task_type  # the route key itself is always valid
+                        source = 'task_default'
+                if not suggested:
+                    suggested = None  # truly orphan — nothing to suggest
+                    source = 'none'
+
+                deprecated.append({
+                    'user_id': uid,
+                    'task_type': task_type,
+                    'current_model': model_name,
+                    'suggested_model': suggested,
+                    'suggestion_source': source,
+                })
+        return deprecated
+
+    def migrate_deprecated_preferences(self, user_id: str = 'default') -> Dict[str, Any]:
+        """Apply suggested replacements for all deprecated preferences of `user_id`.
+
+        Returns a summary of what was migrated.
+        """
+        migrated = []
+        skipped = []
+        for entry in self.find_deprecated_preferences(user_id=user_id):
+            if entry['suggested_model']:
+                self.set_user_preference(
+                    task_type=entry['task_type'],
+                    model_name=entry['suggested_model'],
+                    user_id=user_id,
+                )
+                migrated.append({
+                    'task_type': entry['task_type'],
+                    'from': entry['current_model'],
+                    'to': entry['suggested_model'],
+                    'source': entry['suggestion_source'],
+                })
+            else:
+                skipped.append(entry)
+        return {'migrated': migrated, 'skipped': skipped}
+
     def reset(self):
         """Reset the singleton instance (useful for testing)"""
         LLMManager._instance = None

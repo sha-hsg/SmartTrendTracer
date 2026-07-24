@@ -5,10 +5,10 @@ Provides comprehensive trend analysis for tweets, articles, and papers
 
 from fastapi import APIRouter, Query
 from app.database.mongodb import get_database
-from pymongo import DESCENDING
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict, Counter
+from bson import ObjectId
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,139 +17,199 @@ router = APIRouter()
 # MongoDB connection
 db = get_database()
 
+
+def _batch_fetch_concept_counts(content_type: str, content_ids: List[str]) -> Counter:
+    """Batch-fetch tag_instances for a list of content IDs and return concept counts."""
+    if not content_ids:
+        return Counter()
+
+    instances = db.tag_instances.find({
+        'content_type': content_type,
+        'content_id': {'$in': content_ids}
+    })
+
+    counts = Counter()
+    for inst in instances:
+        cid = inst.get('concept_id')
+        if cid:
+            counts[cid] += 1  # Keep as ObjectId
+    return counts
+
+
+def _batch_fetch_concept_counts_by_date(content_type: str, content_ids: List[str],
+                                         id_to_date: Dict[str, str]) -> tuple:
+    """Batch-fetch tag_instances and return (concept_counts, timeline_concepts, type_counts).
+
+    type_counts: {concept_id: {content_type: count}} for content_breakdown
+    """
+    concept_counts = Counter()
+    timeline_concepts = defaultdict(set)  # date_key -> set of concept_ids
+    type_counts = defaultdict(lambda: Counter())  # concept_id -> Counter({type: count})
+
+    if not content_ids:
+        return concept_counts, timeline_concepts, type_counts
+
+    instances = db.tag_instances.find({
+        'content_type': content_type,
+        'content_id': {'$in': content_ids}
+    })
+
+    for inst in instances:
+        cid = inst.get('concept_id')
+        if cid:
+            concept_counts[cid] += 1
+            type_counts[cid][content_type] += 1
+            content_id = inst['content_id']
+            date_key = id_to_date.get(content_id)
+            if date_key:
+                timeline_concepts[date_key].add(cid)
+
+    return concept_counts, timeline_concepts, type_counts
+
+
+def _batch_lookup_concepts(concept_ids) -> Dict:
+    """Batch-lookup concept details from tag_concepts_v2. Returns {ObjectId: doc}."""
+    if not concept_ids:
+        return {}
+
+    # Ensure all IDs are ObjectId
+    oids = []
+    for cid in concept_ids:
+        if isinstance(cid, ObjectId):
+            oids.append(cid)
+        else:
+            try:
+                oids.append(ObjectId(cid))
+            except Exception:
+                pass
+
+    if not oids:
+        return {}
+
+    cursor = db.tag_concepts_v2.find({'_id': {'$in': oids}})
+    return {doc['_id']: doc for doc in cursor}
+
+
 @router.get("/analysis")
 def get_trend_analysis(
     days: int = Query(7, ge=1, le=90, description="Number of days to analyze"),
     content_type: Optional[str] = Query(None, description="Filter by content type (tweet/article/paper)")
 ):
     """
-    Get comprehensive trend analysis across all content types with real data
+    Get comprehensive trend analysis across all content types with real data.
+    Uses batch queries for performance.
     """
-    
+
     # Calculate date ranges
-    end_date = datetime.now()
+    end_date = datetime.now(timezone.utc)
     start_date = end_date - timedelta(days=days)
     previous_start = start_date - timedelta(days=days)
-    
-    # Initialize counters
+
+    # Initialize
     current_concepts = Counter()
     previous_concepts = Counter()
     content_counts = {"tweets": 0, "articles": 0, "papers": 0}
     timeline_data = defaultdict(lambda: {"tweets": 0, "articles": 0, "papers": 0, "concepts": set()})
-    
-    # Analyze tweets
+    concept_type_counts = defaultdict(lambda: Counter())  # concept_id -> {tweet: N, article: M, paper: P}
+
+    # --- Tweets ---
     if not content_type or content_type == "tweet":
-        # Current period tweets
         current_tweets = list(db.tweets.find({'created_at': {'$gte': start_date}}))
         content_counts["tweets"] = len(current_tweets)
-        
+
+        # Build ID-to-date mapping and timeline counts
+        id_to_date = {}
         for tweet in current_tweets:
-            # Add to timeline
             date_key = tweet['created_at'].strftime('%Y-%m-%d')
             timeline_data[date_key]["tweets"] += 1
-            
-            # Get concepts for this tweet
-            instances = db.tag_instances.find({
-                'content_type': 'tweet',
-                'content_id': str(tweet['_id'])
-            })
-            for instance in instances:
-                if instance.get('concept_id'):
-                    current_concepts[str(instance['concept_id'])] += 1
-                    timeline_data[date_key]["concepts"].add(str(instance['concept_id']))
-        
-        # Previous period tweets for comparison
+            id_to_date[str(tweet['_id'])] = date_key
+
+        # Batch fetch current period concepts
+        tweet_ids = list(id_to_date.keys())
+        tweet_concepts, tweet_timeline, tweet_type_counts = _batch_fetch_concept_counts_by_date(
+            'tweet', tweet_ids, id_to_date
+        )
+        current_concepts += tweet_concepts
+        for dk, cids in tweet_timeline.items():
+            timeline_data[dk]["concepts"].update(cids)
+        for cid, tc in tweet_type_counts.items():
+            concept_type_counts[cid] += tc
+
+        # Batch fetch previous period concepts
         previous_tweets = list(db.tweets.find({
             'created_at': {'$gte': previous_start, '$lt': start_date}
         }))
-        for tweet in previous_tweets:
-            instances = db.tag_instances.find({
-                'content_type': 'tweet',
-                'content_id': str(tweet['_id'])
-            })
-            for instance in instances:
-                if instance.get('concept_id'):
-                    previous_concepts[str(instance['concept_id'])] += 1
-    
-    # Analyze articles
+        prev_tweet_ids = [str(t['_id']) for t in previous_tweets]
+        previous_concepts += _batch_fetch_concept_counts('tweet', prev_tweet_ids)
+
+    # --- Articles ---
     if not content_type or content_type == "article":
-        # Current period articles
         current_articles = list(db.articles.find({'published_at': {'$gte': start_date}}))
         content_counts["articles"] = len(current_articles)
-        
+
+        id_to_date = {}
         for article in current_articles:
-            # Add to timeline
             date_key = article['published_at'].strftime('%Y-%m-%d')
             timeline_data[date_key]["articles"] += 1
-            
-            # Get concepts
-            instances = db.tag_instances.find({
-                'content_type': 'article',
-                'content_id': str(article['_id'])
-            })
-            for instance in instances:
-                if instance.get('concept_id'):
-                    current_concepts[str(instance['concept_id'])] += 1
-                    timeline_data[date_key]["concepts"].add(str(instance['concept_id']))
-        
-        # Previous period articles
+            id_to_date[str(article['_id'])] = date_key
+
+        article_ids = list(id_to_date.keys())
+        art_concepts, art_timeline, art_type_counts = _batch_fetch_concept_counts_by_date(
+            'article', article_ids, id_to_date
+        )
+        current_concepts += art_concepts
+        for dk, cids in art_timeline.items():
+            timeline_data[dk]["concepts"].update(cids)
+        for cid, tc in art_type_counts.items():
+            concept_type_counts[cid] += tc
+
         previous_articles = list(db.articles.find({
             'published_at': {'$gte': previous_start, '$lt': start_date}
         }))
-        for article in previous_articles:
-            instances = db.tag_instances.find({
-                'content_type': 'article',
-                'content_id': str(article['_id'])
-            })
-            for instance in instances:
-                if instance.get('concept_id'):
-                    previous_concepts[str(instance['concept_id'])] += 1
-    
-    # Analyze papers
+        prev_art_ids = [str(a['_id']) for a in previous_articles]
+        previous_concepts += _batch_fetch_concept_counts('article', prev_art_ids)
+
+    # --- Papers ---
     if not content_type or content_type == "paper":
-        # Current period papers
         current_papers = list(db.papers.find({'created_at': {'$gte': start_date}}))
         content_counts["papers"] = len(current_papers)
-        
+
+        id_to_date = {}
         for paper in current_papers:
-            # Add to timeline
             date_key = paper['created_at'].strftime('%Y-%m-%d')
             timeline_data[date_key]["papers"] += 1
-            
-            # Get concepts
-            instances = db.tag_instances.find({
-                'content_type': 'paper',
-                'content_id': str(paper['_id'])
-            })
-            for instance in instances:
-                if instance.get('concept_id'):
-                    current_concepts[str(instance['concept_id'])] += 1
-                    timeline_data[date_key]["concepts"].add(str(instance['concept_id']))
-        
-        # Previous period papers
+            id_to_date[str(paper['_id'])] = date_key
+
+        paper_ids = list(id_to_date.keys())
+        pap_concepts, pap_timeline, pap_type_counts = _batch_fetch_concept_counts_by_date(
+            'paper', paper_ids, id_to_date
+        )
+        current_concepts += pap_concepts
+        for dk, cids in pap_timeline.items():
+            timeline_data[dk]["concepts"].update(cids)
+        for cid, tc in pap_type_counts.items():
+            concept_type_counts[cid] += tc
+
         previous_papers = list(db.papers.find({
             'created_at': {'$gte': previous_start, '$lt': start_date}
         }))
-        for paper in previous_papers:
-            instances = db.tag_instances.find({
-                'content_type': 'paper',
-                'content_id': str(paper['_id'])
-            })
-            for instance in instances:
-                if instance.get('concept_id'):
-                    previous_concepts[str(instance['concept_id'])] += 1
-    
+        prev_pap_ids = [str(p['_id']) for p in previous_papers]
+        previous_concepts += _batch_fetch_concept_counts('paper', prev_pap_ids)
+
     # Calculate concept trends
     rising_concepts = []
     stable_concepts = []
     declining_concepts = []
-    
+
     all_concept_ids = set(current_concepts.keys()) | set(previous_concepts.keys())
-    
+
+    # Batch lookup all concept details at once
+    concept_map = _batch_lookup_concepts(all_concept_ids)
+
     for concept_id in all_concept_ids:
         current_count = current_concepts.get(concept_id, 0)
         previous_count = previous_concepts.get(concept_id, 0)
-        
+
         # Calculate velocity (change rate)
         if previous_count > 0:
             velocity = ((current_count - previous_count) / previous_count) * 100
@@ -157,42 +217,50 @@ def get_trend_analysis(
             velocity = 100  # New concept
         else:
             velocity = 0
-        
-        # Get concept details
-        concept = db.tag_concepts_v2.find_one({'_id': concept_id})
+
+        # Get concept details from batch lookup
+        concept = concept_map.get(concept_id)
         if concept:
+            # Build content breakdown
+            type_breakdown = concept_type_counts.get(concept_id, Counter())
+
             concept_data = {
-                'concept_id': concept_id,
+                'concept_id': str(concept_id),
                 'display_name': concept.get('display_name'),
                 'current_count': current_count,
                 'previous_count': previous_count,
-                'velocity': round(velocity, 1)
+                'velocity': round(velocity, 1),
+                'content_breakdown': {
+                    'tweets': type_breakdown.get('tweet', 0),
+                    'articles': type_breakdown.get('article', 0),
+                    'papers': type_breakdown.get('paper', 0)
+                }
             }
-            
+
             if velocity > 20:
                 rising_concepts.append(concept_data)
             elif velocity < -20:
                 declining_concepts.append(concept_data)
             elif current_count > 0:
                 stable_concepts.append(concept_data)
-    
+
     # Sort by velocity/count
     rising_concepts.sort(key=lambda x: x['velocity'], reverse=True)
     declining_concepts.sort(key=lambda x: x['velocity'])
     stable_concepts.sort(key=lambda x: x['current_count'], reverse=True)
-    
-    # Get top concepts
+
+    # Get top concepts (already have concept_map)
     top_concepts = []
     for concept_id, count in current_concepts.most_common(10):
-        concept = db.tag_concepts_v2.find_one({'_id': concept_id})
+        concept = concept_map.get(concept_id)
         if concept:
             top_concepts.append({
-                'concept_id': concept_id,
+                'concept_id': str(concept_id),
                 'display_name': concept.get('display_name'),
                 'count': count,
                 'entity_type': concept.get('entity_type')
             })
-    
+
     # Prepare timeline
     timeline = []
     for date in sorted(timeline_data.keys()):
@@ -204,10 +272,10 @@ def get_trend_analysis(
             'unique_concepts': len(timeline_data[date]['concepts']),
             'total': timeline_data[date]['tweets'] + timeline_data[date]['articles'] + timeline_data[date]['papers']
         })
-    
+
     # Find most active day
     most_active_day = max(timeline, key=lambda x: x['total'])['date'] if timeline else None
-    
+
     # Find most active concept
     most_active_concept = None
     if top_concepts:
@@ -216,11 +284,11 @@ def get_trend_analysis(
             'name': concept['display_name'],
             'count': concept['count']
         }
-    
+
     # Find fastest rising/declining
     fastest_rising = rising_concepts[0] if rising_concepts else None
     fastest_declining = declining_concepts[0] if declining_concepts else None
-    
+
     return {
         "period_days": days,
         "start_date": start_date.isoformat(),
@@ -244,354 +312,3 @@ def get_trend_analysis(
         }
     }
 
-@router.get("/summary")
-def get_trend_summary(
-    days: int = Query(7, ge=1, le=30, description="Number of days to analyze")
-):
-    """
-    Get a summary of recent trends
-    """
-    
-    # Calculate date range
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=days)
-    
-    return {
-        "period_days": days,
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "total_tweets": 0,
-        "total_articles": 0,
-        "total_papers": 0,
-        "unique_concepts": 0,
-        "most_mentioned_concepts": [],
-        "activity_by_day": [],
-        "key_insights": []
-    }
-
-@router.get("/concepts/{concept_id}")
-def get_concept_trend(
-    concept_id: str,
-    days: int = Query(30, ge=1, le=90, description="Number of days to analyze")
-):
-    """
-    Get trend data for a specific concept
-    """
-    
-    # Calculate date range
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=days)
-    
-    return {
-        "concept_id": concept_id,
-        "period_days": days,
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "usage_count": 0,
-        "usage_by_day": [],
-        "content_breakdown": {
-            "tweets": 0,
-            "articles": 0,
-            "papers": 0
-        },
-        "related_concepts": [],
-        "trend_direction": "stable",
-        "velocity": 0
-    }
-
-@router.get("/compare")
-def compare_periods(
-    current_days: int = Query(7, ge=1, le=30, description="Current period days"),
-    previous_days: int = Query(7, ge=1, le=30, description="Previous period days")
-):
-    """
-    Compare trends between two time periods
-    """
-    
-    # Calculate date ranges
-    end_date = datetime.now()
-    current_start = end_date - timedelta(days=current_days)
-    previous_end = current_start
-    previous_start = previous_end - timedelta(days=previous_days)
-    
-    return {
-        "current_period": {
-            "days": current_days,
-            "start_date": current_start.isoformat(),
-            "end_date": end_date.isoformat(),
-            "total_content": 0,
-            "unique_concepts": 0,
-            "top_concepts": []
-        },
-        "previous_period": {
-            "days": previous_days,
-            "start_date": previous_start.isoformat(),
-            "end_date": previous_end.isoformat(),
-            "total_content": 0,
-            "unique_concepts": 0,
-            "top_concepts": []
-        },
-        "changes": {
-            "new_concepts": [],
-            "disappeared_concepts": [],
-            "rising_concepts": [],
-            "declining_concepts": [],
-            "content_change_percentage": 0,
-            "concept_diversity_change": 0
-        }
-    }
-
-@router.get("/realtime")
-def get_realtime_trends(
-    hours: int = Query(24, ge=1, le=72, description="Number of hours to analyze")
-):
-    """
-    Get real-time trend data for the last N hours
-    """
-    
-    # Calculate date range
-    end_date = datetime.now()
-    start_date = end_date - timedelta(hours=hours)
-    
-    return {
-        "period_hours": hours,
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "recent_activity": [],
-        "trending_now": [],
-        "velocity_leaders": [],
-        "burst_detection": [],
-        "activity_heatmap": []
-    }
-
-@router.get("/predictions")
-def get_trend_predictions(
-    days_ahead: int = Query(7, ge=1, le=30, description="Days to predict ahead")
-):
-    """
-    Get trend predictions based on historical patterns using statistical analysis
-    """
-    import numpy as np
-    
-    # Calculate date ranges
-    prediction_start = datetime.now()
-    prediction_end = prediction_start + timedelta(days=days_ahead)
-    
-    # Look back 60 days for historical patterns
-    historical_end = prediction_start
-    historical_start = historical_end - timedelta(days=60)
-    
-    # Collect historical concept usage data
-    concept_history = defaultdict(list)
-    daily_concept_counts = defaultdict(lambda: defaultdict(int))
-    
-    # Process tweets
-    tweets = db.tweets.find({'created_at': {'$gte': historical_start, '$lte': historical_end}})
-    for tweet in tweets:
-        day_key = tweet['created_at'].strftime('%Y-%m-%d')
-        instances = db.tag_instances.find({
-            'content_type': 'tweet',
-            'content_id': str(tweet['_id'])
-        })
-        for instance in instances:
-            if instance.get('concept_id'):
-                concept_id = str(instance['concept_id'])
-                daily_concept_counts[day_key][concept_id] += 1
-    
-    # Process articles
-    articles = db.articles.find({'published_at': {'$gte': historical_start, '$lte': historical_end}})
-    for article in articles:
-        day_key = article['published_at'].strftime('%Y-%m-%d')
-        instances = db.tag_instances.find({
-            'content_type': 'article',
-            'content_id': str(article['_id'])
-        })
-        for instance in instances:
-            if instance.get('concept_id'):
-                concept_id = str(instance['concept_id'])
-                daily_concept_counts[day_key][concept_id] += 1
-    
-    # Process papers
-    papers = db.papers.find({'created_at': {'$gte': historical_start, '$lte': historical_end}})
-    for paper in papers:
-        day_key = paper['created_at'].strftime('%Y-%m-%d')
-        instances = db.tag_instances.find({
-            'content_type': 'paper',
-            'content_id': str(paper['_id'])
-        })
-        for instance in instances:
-            if instance.get('concept_id'):
-                concept_id = str(instance['concept_id'])
-                daily_concept_counts[day_key][concept_id] += 1
-    
-    # Build time series for each concept
-    all_concept_ids = set()
-    for day_counts in daily_concept_counts.values():
-        all_concept_ids.update(day_counts.keys())
-    
-    # Calculate trends for each concept
-    concept_predictions = []
-    emerging_concepts = []
-    declining_concepts = []
-    stable_concepts = []
-    
-    for concept_id in all_concept_ids:
-        # Build time series
-        time_series = []
-        for i in range(60):
-            date = historical_start + timedelta(days=i)
-            day_key = date.strftime('%Y-%m-%d')
-            count = daily_concept_counts.get(day_key, {}).get(concept_id, 0)
-            time_series.append(count)
-        
-        if not any(time_series):
-            continue
-        
-        # Calculate statistics
-        mean_usage = np.mean(time_series)
-        std_usage = np.std(time_series) if len(time_series) > 1 else 0
-        
-        # Calculate trend using linear regression
-        if len(time_series) >= 7:
-            x = np.arange(len(time_series))
-            y = np.array(time_series)
-            
-            # Remove zeros for better trend detection
-            non_zero_indices = np.where(y > 0)[0]
-            if len(non_zero_indices) >= 3:
-                x_filtered = x[non_zero_indices]
-                y_filtered = y[non_zero_indices]
-                coefficients = np.polyfit(x_filtered, y_filtered, 1)
-                trend_slope = coefficients[0]
-                
-                # Calculate recent acceleration (last 14 days vs previous 14 days)
-                recent = time_series[-14:] if len(time_series) >= 14 else time_series
-                older = time_series[-28:-14] if len(time_series) >= 28 else time_series[:14]
-                recent_avg = np.mean(recent) if recent else 0
-                older_avg = np.mean(older) if older else 0
-                
-                if older_avg > 0:
-                    acceleration = ((recent_avg - older_avg) / older_avg) * 100
-                else:
-                    acceleration = 100 if recent_avg > 0 else 0
-            else:
-                trend_slope = 0
-                acceleration = 0
-        else:
-            trend_slope = 0
-            acceleration = 0
-        
-        # Get concept details
-        concept = db.tag_concepts_v2.find_one({'_id': concept_id})
-        if not concept:
-            continue
-        
-        # Calculate prediction confidence (0-1 scale)
-        # Higher confidence for stable patterns, lower for volatile
-        if std_usage > 0 and mean_usage > 0:
-            volatility = std_usage / mean_usage
-            confidence = max(0.3, min(0.95, 1.0 - (volatility * 0.3)))
-        else:
-            confidence = 0.5
-        
-        # Predict future trend
-        if trend_slope > 0.5 and acceleration > 20:
-            trend_prediction = "rapidly_rising"
-            predicted_change = min(100, acceleration * 1.5)
-        elif trend_slope > 0.1:
-            trend_prediction = "rising"
-            predicted_change = min(50, acceleration * 1.2)
-        elif trend_slope < -0.5 and acceleration < -20:
-            trend_prediction = "rapidly_declining"
-            predicted_change = max(-80, acceleration * 1.5)
-        elif trend_slope < -0.1:
-            trend_prediction = "declining"
-            predicted_change = max(-50, acceleration * 1.2)
-        else:
-            trend_prediction = "stable"
-            predicted_change = 0
-        
-        prediction_data = {
-            'concept_id': concept_id,
-            'display_name': concept.get('display_name'),
-            'current_avg_usage': round(recent_avg, 1) if 'recent_avg' in locals() else round(mean_usage, 1),
-            'predicted_trend': trend_prediction,
-            'predicted_change_percentage': round(predicted_change, 1),
-            'confidence': round(confidence, 2),
-            'trend_slope': round(trend_slope, 3),
-            'acceleration': round(acceleration, 1)
-        }
-        
-        concept_predictions.append(prediction_data)
-        
-        # Categorize predictions
-        if trend_prediction in ["rapidly_rising", "rising"] and confidence > 0.6:
-            emerging_concepts.append(prediction_data)
-        elif trend_prediction in ["rapidly_declining", "declining"] and confidence > 0.6:
-            declining_concepts.append(prediction_data)
-        elif trend_prediction == "stable" and confidence > 0.7:
-            stable_concepts.append(prediction_data)
-    
-    # Sort predictions
-    emerging_concepts.sort(key=lambda x: x['predicted_change_percentage'], reverse=True)
-    declining_concepts.sort(key=lambda x: x['predicted_change_percentage'])
-    stable_concepts.sort(key=lambda x: x['current_avg_usage'], reverse=True)
-    
-    # Calculate overall market predictions
-    total_recent_activity = sum([sum(time_series[-7:]) for time_series in [
-        [daily_concept_counts.get((historical_end - timedelta(days=i)).strftime('%Y-%m-%d'), {}).get(cid, 0) 
-         for i in range(7)] 
-        for cid in all_concept_ids
-    ]])
-    
-    total_older_activity = sum([sum(time_series[-14:-7]) for time_series in [
-        [daily_concept_counts.get((historical_end - timedelta(days=i)).strftime('%Y-%m-%d'), {}).get(cid, 0) 
-         for i in range(7, 14)] 
-        for cid in all_concept_ids
-    ]])
-    
-    if total_older_activity > 0:
-        market_growth = ((total_recent_activity - total_older_activity) / total_older_activity) * 100
-    else:
-        market_growth = 0
-    
-    # Identify potential breakout concepts (low usage but rapid growth)
-    breakout_candidates = [
-        c for c in emerging_concepts 
-        if c['current_avg_usage'] < 5 and c['predicted_change_percentage'] > 50
-    ]
-    
-    return {
-        "prediction_period": days_ahead,
-        "start_date": prediction_start.isoformat(),
-        "end_date": prediction_end.isoformat(),
-        "predicted_trends": {
-            "emerging": emerging_concepts[:10],
-            "declining": declining_concepts[:10],
-            "stable": stable_concepts[:10],
-            "breakout_candidates": breakout_candidates[:5]
-        },
-        "market_prediction": {
-            "overall_trend": "growing" if market_growth > 5 else "declining" if market_growth < -5 else "stable",
-            "growth_rate": round(market_growth, 1),
-            "confidence": 0.75  # Conservative confidence for overall market
-        },
-        "confidence_scores": {
-            "high_confidence": len([c for c in concept_predictions if c['confidence'] > 0.8]),
-            "medium_confidence": len([c for c in concept_predictions if 0.5 < c['confidence'] <= 0.8]),
-            "low_confidence": len([c for c in concept_predictions if c['confidence'] <= 0.5])
-        },
-        "insights": {
-            "most_likely_to_grow": emerging_concepts[0] if emerging_concepts else None,
-            "most_likely_to_decline": declining_concepts[0] if declining_concepts else None,
-            "strongest_trend": max(concept_predictions, key=lambda x: abs(x['trend_slope'])) if concept_predictions else None,
-            "total_concepts_analyzed": len(concept_predictions)
-        },
-        "methodology": "Linear regression with acceleration analysis on 60-day historical data",
-        "accuracy_factors": [
-            "Based on 60 days of historical data",
-            "Confidence scores reflect pattern stability",
-            "Predictions more accurate for stable patterns",
-            "Short-term predictions (7 days) most reliable"
-        ]
-    }

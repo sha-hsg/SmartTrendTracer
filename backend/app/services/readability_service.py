@@ -16,7 +16,7 @@ for resource in ['punkt', 'punkt_tab']:
     except LookupError:
         try:
             nltk.download(resource, quiet=True)
-        except:
+        except Exception:
             pass
 
 

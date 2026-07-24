@@ -7,7 +7,7 @@ import re
 from typing import Dict, Any, Optional, List
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timezone
 import bibtexparser
 from bibtexparser.bparser import BibTexParser
 from pathlib import Path
@@ -467,7 +467,7 @@ class ACMService:
                 raise ValueError("Could not extract paper title")
             
             # Generate filename
-            timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
             safe_title = re.sub(r'[^\w\s-]', '', metadata['title'])[:50]
             safe_title = re.sub(r'[-\s]+', '_', safe_title)
             filename = f"{timestamp}_{safe_title}.pdf"

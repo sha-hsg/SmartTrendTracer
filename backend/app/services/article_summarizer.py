@@ -43,7 +43,8 @@ class ArticleSummarizer:
         self,
         content: str,
         title: str = "Untitled",
-        author: str = "Unknown"
+        author: str = "Unknown",
+        model: str | None = None,
     ) -> Dict:
         """
         Generate summary for article content directly (MongoDB-compatible).
@@ -91,7 +92,8 @@ class ArticleSummarizer:
             response = self.llm_manager.completion_sync(
                 task_type=self.task_type,
                 messages=messages,
-                user_id=self.user_id
+                user_id=self.user_id,
+                override_params={'model': model} if model else None,
             )
 
             summary_text = response.choices[0].message.content

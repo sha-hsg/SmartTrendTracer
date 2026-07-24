@@ -4,16 +4,14 @@ Provides CRUD operations for Reddit posts with faceted browsing and tagging.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body
-from pymongo import ASCENDING, DESCENDING
 from app.database.mongodb import get_database
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 import logging
+import re
 from bson import ObjectId
-import json
 
 from app.services.concept_only_tag_service import ConceptOnlyTagService
-from app.models.mongodb_models import RedditPost, RedditCollectionStats
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -25,10 +23,85 @@ posts_collection = db.reddit_posts
 # Initialize concept service
 concept_service = ConceptOnlyTagService()
 
+
+def _build_reddit_query(
+    subreddit: Optional[str] = None,
+    author: Optional[str] = None,
+    min_score: Optional[int] = None,
+    time_range: Optional[str] = None,
+    text_search: Optional[str] = None,
+    concept_id: Optional[str] = None
+) -> Optional[Dict]:
+    """
+    Build the MongoDB query dict for reddit_posts from the shared filter params.
+
+    Returns None if a concept_id filter is given but matches no posts
+    (i.e. the result set is guaranteed to be empty).
+    """
+    query: Dict = {}
+
+    if subreddit:
+        query["subreddit"] = {"$regex": f"^{re.escape(subreddit)}$", "$options": "i"}
+
+    if author:
+        query["author"] = {"$regex": f"^{re.escape(author)}$", "$options": "i"}
+
+    if min_score is not None:
+        query["score"] = {"$gte": min_score}
+
+    if time_range:
+        now = datetime.now(timezone.utc)
+        if time_range == "24h":
+            since = now - timedelta(hours=24)
+        elif time_range == "7d":
+            since = now - timedelta(days=7)
+        elif time_range == "30d":
+            since = now - timedelta(days=30)
+        else:
+            since = now - timedelta(days=7)  # Default to 7 days
+        query["created_utc"] = {"$gte": since}
+
+    if text_search:
+        escaped = re.escape(text_search)
+        query["$or"] = [
+            {"title": {"$regex": escaped, "$options": "i"}},
+            {"selftext": {"$regex": escaped, "$options": "i"}}
+        ]
+
+    if concept_id:
+        logger.info(f"Filtering Reddit posts by concept: '{concept_id}'")
+        try:
+            if len(concept_id) == 24:  # Valid ObjectId length
+                concept_filter = ObjectId(concept_id)
+            else:
+                concept_filter = concept_id
+        except Exception:
+            concept_filter = concept_id
+
+        # Find tag instances for this concept
+        tag_instances = list(db.tag_instances.find({"concept_id": concept_filter}))
+
+        # Extract Reddit post IDs
+        reddit_post_ids = []
+        for instance in tag_instances:
+            if instance.get("content_type") == "reddit_post" and instance.get("content_id"):
+                try:
+                    reddit_post_ids.append(ObjectId(instance["content_id"]))
+                except Exception:
+                    pass  # Skip invalid ObjectIds
+
+        if not reddit_post_ids:
+            return None  # No posts found for this concept
+
+        query["_id"] = {"$in": reddit_post_ids}
+
+    return query
+
+
 @router.get("/", response_model=List[Dict])
 def get_reddit_posts(
     limit: int = Query(50, ge=1, le=500),
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=100000),
     subreddit: Optional[str] = Query(None, description="Filter by subreddit"),
     concept_id: Optional[str] = Query(None, description="Filter by concept ID"),
     include_concepts: bool = Query(True, description="Include full concept details"),
@@ -40,73 +113,18 @@ def get_reddit_posts(
     author: Optional[str] = Query(None, description="Filter by author")
 ):
     """Get Reddit posts with filtering and concept-based tags from MongoDB"""
-    
-    # Build query
-    query = {}
-    
-    # Subreddit filter
-    if subreddit:
-        query["subreddit"] = {"$regex": f"^{subreddit}$", "$options": "i"}
-    
-    # Author filter
-    if author:
-        query["author"] = {"$regex": f"^{author}$", "$options": "i"}
-    
-    # Score filter
-    if min_score is not None:
-        query["score"] = {"$gte": min_score}
-    
-    # Time range filter
-    if time_range:
-        now = datetime.now(timezone.utc)
-        if time_range == "24h":
-            since = now - timedelta(hours=24)
-        elif time_range == "7d":
-            since = now - timedelta(days=7)
-        elif time_range == "30d":
-            since = now - timedelta(days=30)
-        else:
-            since = now - timedelta(days=7)  # Default to 7 days
-        
-        query["created_utc"] = {"$gte": since}
-    
-    # Text search
-    if text_search:
-        query["$or"] = [
-            {"title": {"$regex": text_search, "$options": "i"}},
-            {"selftext": {"$regex": text_search, "$options": "i"}}
-        ]
-    
-    # Filter by concept if provided
-    if concept_id:
-        logger.info(f"Filtering Reddit posts by concept: '{concept_id}'")
-        try:
-            if len(concept_id) == 24:  # Valid ObjectId length
-                concept_filter = ObjectId(concept_id)
-            else:
-                concept_filter = concept_id
-        except:
-            concept_filter = concept_id
-        
-        # Find tag instances for this concept
-        tag_instances = list(db.tag_instances.find({"concept_id": concept_filter}))
-        if not tag_instances:
-            return []  # No posts found for this concept
-        
-        # Extract Reddit post IDs
-        reddit_post_ids = []
-        for instance in tag_instances:
-            if instance.get("content_type") == "reddit_post" and instance.get("content_id"):
-                try:
-                    reddit_post_ids.append(ObjectId(instance["content_id"]))
-                except:
-                    pass  # Skip invalid ObjectIds
-        
-        if not reddit_post_ids:
-            return []
-        
-        query["_id"] = {"$in": reddit_post_ids}
-    
+
+    query = _build_reddit_query(
+        subreddit=subreddit,
+        author=author,
+        min_score=min_score,
+        time_range=time_range,
+        text_search=text_search,
+        concept_id=concept_id
+    )
+    if query is None:
+        return []  # No posts found for this concept
+
     logger.info(f"Reddit posts query: {query}")
     
     # Execute query
@@ -144,7 +162,7 @@ def get_reddit_posts(
 
 @router.get("/faceted-search")
 def get_reddit_faceted_search(
-    page: int = Query(1, ge=1, description="Page number"),
+    page: int = Query(1, ge=1, le=10000, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     subreddit: Optional[str] = Query(None, description="Filter by subreddit"),
     concept_id: Optional[str] = Query(None, description="Filter by concept ID"),
@@ -174,32 +192,18 @@ def get_reddit_faceted_search(
         sort_order=sort_order
     )
     
-    # Get total count for pagination
-    query = {}
-    if subreddit:
-        query["subreddit"] = {"$regex": f"^{subreddit}$", "$options": "i"}
-    if author:
-        query["author"] = {"$regex": f"^{author}$", "$options": "i"}
-    if min_score is not None:
-        query["score"] = {"$gte": min_score}
-    if time_range:
-        now = datetime.now(timezone.utc)
-        if time_range == "24h":
-            since = now - timedelta(hours=24)
-        elif time_range == "7d":
-            since = now - timedelta(days=7)
-        elif time_range == "30d":
-            since = now - timedelta(days=30)
-        else:
-            since = now - timedelta(days=7)
-        query["created_utc"] = {"$gte": since}
-    if text_search:
-        query["$or"] = [
-            {"title": {"$regex": text_search, "$options": "i"}},
-            {"selftext": {"$regex": text_search, "$options": "i"}}
-        ]
-    
-    total_posts = posts_collection.count_documents(query)
+    # Get total count for pagination - use the SAME query builder as the
+    # posts query above (including the concept_id filter) so total/pages
+    # stay consistent with the returned posts.
+    query = _build_reddit_query(
+        subreddit=subreddit,
+        author=author,
+        min_score=min_score,
+        time_range=time_range,
+        text_search=text_search,
+        concept_id=concept_id
+    )
+    total_posts = posts_collection.count_documents(query) if query is not None else 0
     total_pages = (total_posts + page_size - 1) // page_size
     
     return {
@@ -266,109 +270,6 @@ def get_reddit_facets():
         "total_posts": posts_collection.count_documents({})
     }
 
-@router.get("/{post_id}")
-def get_reddit_post(post_id: str):
-    """Get a specific Reddit post by ID"""
-    
-    try:
-        # Try ObjectId first
-        if len(post_id) == 24:
-            query = {"_id": ObjectId(post_id)}
-        else:
-            # Try reddit_id
-            query = {"reddit_id": post_id}
-    except:
-        query = {"reddit_id": post_id}
-    
-    post = posts_collection.find_one(query)
-    
-    if not post:
-        raise HTTPException(status_code=404, detail="Reddit post not found")
-    
-    # Convert ObjectId to string
-    post["_id"] = str(post["_id"])
-    
-    # Add concept information
-    post_concepts = concept_service.get_concepts_for_content(
-        content_id=post["_id"],
-        content_type="reddit_post"
-    )
-    post["concepts"] = post_concepts
-    
-    return post
-
-@router.post("/{post_id}/tags")
-def add_reddit_post_tag(post_id: str, tag_data: Dict[str, Any] = Body(...)):
-    """Add a tag to a Reddit post"""
-    
-    try:
-        if len(post_id) == 24:
-            query = {"_id": ObjectId(post_id)}
-        else:
-            query = {"reddit_id": post_id}
-    except:
-        query = {"reddit_id": post_id}
-    
-    post = posts_collection.find_one(query)
-    if not post:
-        raise HTTPException(status_code=404, detail="Reddit post not found")
-    
-    # Use concept service to add tag
-    tag_name = tag_data.get("tag_name", "").strip()
-    if not tag_name:
-        raise HTTPException(status_code=400, detail="Tag name is required")
-    
-    try:
-        success, concept_id = concept_service.add_concept_to_content(
-            content_id=str(post["_id"]),
-            content_type="reddit_post",
-            concept_name=tag_name,
-            context=f"Reddit post: {post.get('title', '')}"
-        )
-    except Exception as e:
-        logger.error(f"Error adding tag to Reddit post: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to add tag to Reddit post")
-
-    return {
-        "success": True,
-        "message": f"Tag '{tag_name}' added to post",
-        "concept_id": concept_id
-    }
-
-@router.delete("/{post_id}/tags/{concept_id}")
-def remove_reddit_post_tag(post_id: str, concept_id: str):
-    """Remove a tag from a Reddit post"""
-    
-    try:
-        if len(post_id) == 24:
-            query = {"_id": ObjectId(post_id)}
-        else:
-            query = {"reddit_id": post_id}
-    except:
-        query = {"reddit_id": post_id}
-    
-    post = posts_collection.find_one(query)
-    if not post:
-        raise HTTPException(status_code=404, detail="Reddit post not found")
-    
-    try:
-        removed = concept_service.remove_concept_from_content(
-            content_id=str(post["_id"]),
-            content_type="reddit_post",
-            concept_id=concept_id
-        )
-    except Exception as e:
-        logger.error(f"Error removing tag from Reddit post: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-    if not removed:
-        raise HTTPException(status_code=404, detail="Concept not found on this post")
-
-    return {"success": True, "message": "Tag removed from post"}
-
 @router.get("/stats/collection")
 def get_reddit_collection_stats():
     """Get Reddit collection statistics"""
@@ -402,41 +303,3 @@ def trigger_reddit_collection(max_posts_per_subreddit: Optional[int] = Body(25))
     except Exception as e:
         logger.error(f"Error triggering Reddit collection: {e}")
         raise HTTPException(status_code=500, detail=f"Collection failed: {str(e)}")
-
-@router.get("/subreddits/config")
-def get_subreddit_config():
-    """Get configured subreddits"""
-    
-    try:
-        with open('reddit_config.json', 'r') as f:
-            config = json.load(f)
-        return config['subreddits']
-    except Exception as e:
-        logger.error(f"Error loading subreddit config: {e}")
-        raise HTTPException(status_code=500, detail="Could not load subreddit configuration")
-
-@router.get("/search/suggest")
-def get_reddit_search_suggestions(q: str = Query(..., min_length=2)):
-    """Get search suggestions for Reddit posts"""
-    
-    # Search in titles
-    title_suggestions = posts_collection.distinct("title", {
-        "title": {"$regex": q, "$options": "i"}
-    })
-    
-    # Search in authors
-    author_suggestions = posts_collection.distinct("author", {
-        "author": {"$regex": q, "$options": "i"},
-        "author": {"$ne": "[deleted]"}
-    })
-    
-    # Search in subreddits
-    subreddit_suggestions = posts_collection.distinct("subreddit", {
-        "subreddit": {"$regex": q, "$options": "i"}
-    })
-    
-    return {
-        "titles": title_suggestions[:10],
-        "authors": author_suggestions[:10],
-        "subreddits": subreddit_suggestions[:10]
-    }

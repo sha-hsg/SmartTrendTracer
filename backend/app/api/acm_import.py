@@ -3,15 +3,16 @@ ACM Digital Library paper import API endpoints
 Handles paper imports from dl.acm.org
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from bson import ObjectId
 from app.database.mongodb import get_database
 from app.services.acm_service import acm_service
+from app.services.pdf_processor_service import get_pdf_processor_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/acm", tags=["acm"])
@@ -22,7 +23,7 @@ class ACMImportRequest(BaseModel):
     process_pdf: bool = False
 
 @router.post("/import")
-async def import_acm_paper(request: ACMImportRequest):
+async def import_acm_paper(request: ACMImportRequest, background_tasks: BackgroundTasks):
     """
     Import a paper from ACM Digital Library
     
@@ -48,8 +49,12 @@ async def import_acm_paper(request: ACMImportRequest):
         authors_detailed = []
         if authors_string:
             # Convert comma-separated authors string to detailed array
+            # (canonical schema: objects with name/affiliation/email, like arxiv.py)
             author_names = [name.strip() for name in authors_string.split(',') if name.strip()]
-            authors_detailed = author_names  # ACM authors are simple strings
+            authors_detailed = [
+                {'name': name, 'affiliation': '', 'email': ''}
+                for name in author_names
+            ]
         
         paper_doc = {
             'title': paper_data.get('title', 'Untitled'),
@@ -73,7 +78,8 @@ async def import_acm_paper(request: ACMImportRequest):
             'source_url': str(request.url),
             'import_source': 'acm',  # Track import source type
             'import_url': str(request.url),  # Store original import URL
-            'created_at': datetime.utcnow(),
+            'paper_type': 'research',
+            'created_at': datetime.now(timezone.utc),
             'processed': False,
             'processor': None,
             'markdown_content': None,
@@ -90,7 +96,15 @@ async def import_acm_paper(request: ACMImportRequest):
         paper_id = str(result.inserted_id)
         
         logger.info(f"Successfully imported ACM paper with ID: {paper_id}")
-        
+
+        # Process PDF in background if requested and PDF was downloaded
+        if request.process_pdf and paper_doc.get('pdf_path'):
+            background_tasks.add_task(
+                process_pdf_background,
+                paper_id,
+                paper_doc['pdf_path']
+            )
+
         return {
             'success': True,
             'paper_id': paper_id,
@@ -100,15 +114,49 @@ async def import_acm_paper(request: ACMImportRequest):
             'year': paper_doc.get('year'),
             'venue': paper_doc.get('venue'),
             'pdf_path': paper_doc.get('pdf_path'),
+            'processing': bool(request.process_pdf and paper_doc.get('pdf_path')),
             'message': f"Successfully imported paper from ACM"
         }
-        
+
     except ValueError as e:
         logger.error(f"Invalid ACM URL: {e}")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Error importing ACM paper: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to import paper: {str(e)}")
+
+def process_pdf_background(paper_id: str, pdf_path: str):
+    """
+    Background task to process an imported ACM PDF (Marker preferred).
+    """
+    try:
+        logger.info(f"Processing PDF for ACM paper {paper_id} in background")
+        db_bg = get_database()
+
+        processor = get_pdf_processor_service()
+        result = processor.process_pdf(
+            pdf_path,
+            prefer_method="marker",
+            mongo_paper_id=paper_id
+        )
+
+        if result and result.get('success'):
+            db_bg.papers.update_one(
+                {'_id': ObjectId(paper_id)},
+                {'$set': {
+                    'content': result.get('markdown', ''),
+                    'markdown_content': result.get('markdown', ''),
+                    'processed': True,
+                    'processor_used': result.get('method_used', 'unknown'),
+                    'processed_at': datetime.now(timezone.utc)
+                }}
+            )
+            logger.info(f"PDF processing completed for ACM paper {paper_id}")
+        else:
+            logger.error(f"PDF processing failed for ACM paper {paper_id}: {result.get('error') if result else 'no result'}")
+
+    except Exception as e:
+        logger.error(f"Error in background PDF processing for ACM paper {paper_id}: {e}")
 
 @router.get("/validate-url")
 async def validate_acm_url(url: str):

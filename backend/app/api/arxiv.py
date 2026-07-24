@@ -6,62 +6,12 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import logging
-import os
-import re
-from pathlib import Path
 
 from ..services.arxiv_import_service import get_arxiv_service
-
-# ArXiv ID validation patterns
-ARXIV_ID_PATTERNS = [
-    r'^(\d{4}\.\d{4,5})(v\d+)?$',  # New format: 2301.12345 or 2301.12345v1
-    r'^([a-z\-]+/\d{7})(v\d+)?$',  # Old format: quant-ph/0301023
-    r'^([a-z\-]+\.\w+/\d{7})(v\d+)?$',  # Old format with subcategory: cond-mat.soft/0301023
-]
-
-def validate_arxiv_id(arxiv_id: str) -> tuple[bool, str]:
-    """
-    Validate ArXiv ID format and return (is_valid, cleaned_id or error_message).
-
-    Valid formats:
-    - 2301.12345 (new format, 5 digits)
-    - 2301.1234 (new format, 4 digits for older papers)
-    - 2301.12345v1 (with version)
-    - quant-ph/0301023 (old format)
-    - hep-th/9901001v2 (old format with version)
-    """
-    # Clean the ID
-    cleaned = arxiv_id.strip()
-
-    # Remove common URL prefixes
-    url_prefixes = [
-        'https://arxiv.org/abs/',
-        'http://arxiv.org/abs/',
-        'https://arxiv.org/pdf/',
-        'http://arxiv.org/pdf/',
-        'arxiv.org/abs/',
-        'arxiv.org/pdf/',
-        'arxiv:',
-    ]
-    for prefix in url_prefixes:
-        if cleaned.lower().startswith(prefix.lower()):
-            cleaned = cleaned[len(prefix):]
-            break
-
-    # Remove .pdf suffix if present
-    if cleaned.endswith('.pdf'):
-        cleaned = cleaned[:-4]
-
-    # Validate against patterns
-    for pattern in ARXIV_ID_PATTERNS:
-        if re.match(pattern, cleaned, re.IGNORECASE):
-            return True, cleaned
-
-    return False, f"Invalid ArXiv ID format: '{arxiv_id}'. Expected formats: '2301.12345', '2301.12345v1', or 'quant-ph/0301023'"
 from ..services.pdf_processor_service import get_pdf_processor_service
 from app.database.mongodb import get_database
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -174,11 +124,12 @@ async def import_arxiv_paper(
                         'pdf_path': result['pdf_path'],  # PDF is immediately available
                         'processed': False,  # Not processed yet
                         'processor_used': None,
-                        'created_at': datetime.utcnow(),
+                        'created_at': datetime.now(timezone.utc),
                         'source': 'arxiv',
                         'url': f"https://arxiv.org/abs/{result['arxiv_id']}",
                         'import_source': 'arxiv',  # Track import source type
-                        'import_url': f"https://arxiv.org/abs/{result['arxiv_id']}"  # Store original import URL
+                        'import_url': f"https://arxiv.org/abs/{result['arxiv_id']}",  # Store original import URL
+                        'paper_type': 'research',
                     }
                     
                     # Insert into MongoDB
@@ -213,7 +164,7 @@ async def import_arxiv_paper(
                                 'content': process_result['markdown'],
                                 'processed': True,
                                 'processor_used': process_result.get('method_used', 'unknown'),
-                                'processed_at': datetime.utcnow()
+                                'processed_at': datetime.now(timezone.utc)
                             }}
                         )
                         if update_result.modified_count > 0:
@@ -266,89 +217,3 @@ async def search_arxiv(request: ArXivSearchRequest):
     except Exception as e:
         logger.error(f"Failed to search ArXiv: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/validate/{arxiv_id}")
-async def validate_arxiv_id(arxiv_id: str):
-    """
-    Validate an ArXiv ID and fetch basic metadata
-    
-    Args:
-        arxiv_id: ArXiv paper ID (e.g., '2301.12345')
-    """
-    try:
-        arxiv_service = get_arxiv_service()
-        
-        # Validate ID format
-        extracted_id = arxiv_service.extract_arxiv_id(arxiv_id)
-        if not extracted_id:
-            return {
-                'valid': False,
-                'error': 'Invalid ArXiv ID format'
-            }
-        
-        # Fetch metadata to verify it exists
-        metadata = arxiv_service.fetch_metadata(extracted_id)
-        if not metadata:
-            return {
-                'valid': False,
-                'error': 'Paper not found on ArXiv'
-            }
-        
-        return {
-            'valid': True,
-            'arxiv_id': extracted_id,
-            'title': metadata['title'],
-            'authors': metadata['authors'],
-            'published': metadata['published']
-        }
-        
-    except Exception as e:
-        logger.error(f"Failed to validate ArXiv ID: {e}")
-        return {
-            'valid': False,
-            'error': str(e)
-        }
-
-@router.post("/batch-import")
-async def batch_import_arxiv(
-    arxiv_ids: List[str],
-    background_tasks: BackgroundTasks
-):
-    """
-    Import multiple papers from ArXiv
-    
-    Args:
-        arxiv_ids: List of ArXiv IDs or URLs
-    """
-    results = []
-    
-    for arxiv_id in arxiv_ids:
-        try:
-            # Import each paper (without auto-processing)
-            request = ArXivImportRequest(
-                url_or_id=arxiv_id,
-                process_pdf=False,  # Don't auto-process, user must click "Process PDF" button
-                add_to_database=True
-            )
-            
-            result = await import_arxiv_paper(request, background_tasks)
-            results.append(result.dict())
-            
-        except Exception as e:
-            logger.error(f"Failed to import {arxiv_id}: {e}")
-            results.append({
-                'success': False,
-                'arxiv_id': arxiv_id,
-                'error': str(e)
-            })
-    
-    # Summary
-    successful = [r for r in results if r['success']]
-    failed = [r for r in results if not r['success']]
-    
-    return {
-        'total': len(results),
-        'successful': len(successful),
-        'failed': len(failed),
-        'results': results
-    }

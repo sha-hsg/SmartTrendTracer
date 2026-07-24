@@ -5,7 +5,7 @@ NO SQLAlchemy - Pure MongoDB queries only!
 import os
 import io
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -234,7 +234,7 @@ class PDFExportService:
                 article = self.db.articles.find_one({'_id': ObjectId(article_id)})
             else:
                 article = self.db.articles.find_one({'old_sqlite_id': int(article_id)})
-        except:
+        except Exception:
             article = None
 
         if not article:
@@ -353,7 +353,7 @@ class PDFExportService:
                     article = self.db.articles.find_one({'old_sqlite_id': int(aid)})
                     if article:
                         article_object_ids.append(article['_id'])
-            except:
+            except Exception:
                 continue
 
         articles = list(self.db.articles.find({
@@ -386,7 +386,7 @@ class PDFExportService:
             self.styles['Subtitle']
         ))
         story.append(Paragraph(
-            f"Generated on {datetime.now().strftime('%B %d, %Y')}",
+            f"Generated on {datetime.now(timezone.utc).strftime('%B %d, %Y')}",
             self.styles['AuthorDate']
         ))
         story.append(PageBreak())
@@ -504,7 +504,7 @@ class PDFExportService:
                 author = self.db.substack_authors.find_one({'_id': ObjectId(author_id)})
             else:
                 author = self.db.substack_authors.find_one({'old_sqlite_id': int(author_id)})
-        except:
+        except Exception:
             author = None
 
         if not author:
@@ -528,7 +528,7 @@ class PDFExportService:
         """Export recent articles from the last N days"""
         from datetime import timedelta
 
-        cutoff_date = datetime.now() - timedelta(days=days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Get recent articles
         articles = list(self.db.articles.find({

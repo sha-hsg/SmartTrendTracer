@@ -3,7 +3,7 @@ AI-powered entity extraction service for automatic annotation
 Migrated to use LLM Manager with LiteLLM
 """
 import json
-import os
+from pathlib import Path
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timezone
 from dotenv import load_dotenv
@@ -65,14 +65,14 @@ class EntityExtractionService:
         # Initialize LLM Manager
         self.llm_manager = get_llm_manager()
 
-        # Load configurations
-        with open('llm.json', 'r') as f:
-            self.llm_config = json.load(f)
+        # Load configurations using absolute paths (CFG-006)
+        # Config files are in backend/ directory (parent of app/services/)
+        config_dir = Path(__file__).resolve().parent.parent.parent
 
-        with open('prompts_config.json', 'r') as f:
+        with open(config_dir / 'prompts_config.json', 'r') as f:
             self.prompts = json.load(f)
 
-        with open('top_level.json', 'r') as f:
+        with open(config_dir / 'top_level.json', 'r') as f:
             self.ontology_schema = json.load(f)
 
         # Determine task type based on model choice
@@ -498,8 +498,8 @@ class EntityExtractionService:
             "color": entity_info.get("color", "#6B7280"),
             "usage_count": 0,
             "status": "active",
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "metadata": {
                 "created_by": user,
                 "source": "entity_extraction",

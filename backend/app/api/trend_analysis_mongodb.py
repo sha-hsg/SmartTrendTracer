@@ -8,7 +8,7 @@ from pymongo import ASCENDING, DESCENDING
 from app.database.mongodb import get_database
 from bson import ObjectId
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from collections import defaultdict, Counter
 
@@ -25,20 +25,20 @@ async def get_top_concepts(
     content_type: Optional[str] = Query(None, description="Filter by content type: tweet, paper, article")
 ):
     """Get top concepts by usage count over a time period"""
-    
+
     # Calculate date filter
-    cutoff_date = datetime.now() - timedelta(days=days)
-    
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+
     # Build aggregation pipeline
-    match_criteria = {'created_at': {'$gte': cutoff_date.isoformat()}}
-    
+    match_criteria = {'created_at': {'$gte': cutoff_date}}
+
     if content_type:
         match_criteria['content_type'] = content_type
-    
+
     pipeline = [
         {'$match': match_criteria}
     ]
-    
+
     pipeline.extend([
         {'$group': {
             '_id': '$concept_id',
@@ -50,16 +50,27 @@ async def get_top_concepts(
         {'$sort': {'count': -1}},
         {'$limit': limit}
     ])
-    
+
     # Get counts
     concept_stats = list(db.tag_instances.aggregate(pipeline))
-    
-    # Get concept details
+
+    # Batch-fetch concept details (fixes N+1)
+    concept_ids = [s['_id'] for s in concept_stats if s['_id']]
+    concept_map = {c['_id']: c for c in db.tag_concepts_v2.find({'_id': {'$in': concept_ids}})}
+
     results = []
     for stat in concept_stats:
         if stat['_id']:
-            concept = db.tag_concepts_v2.find_one({'_id': stat['_id']})
+            concept = concept_map.get(stat['_id'])
             if concept:
+                # Parse first_seen/last_seen — now native datetime after migration
+                first_seen = stat['first_seen']
+                last_seen = stat['last_seen']
+                if isinstance(first_seen, str):
+                    first_seen = datetime.fromisoformat(first_seen)
+                if isinstance(last_seen, str):
+                    last_seen = datetime.fromisoformat(last_seen)
+
                 results.append({
                     'concept_id': str(stat['_id']),
                     'display_name': concept.get('display_name', concept.get('name', '')),
@@ -67,12 +78,11 @@ async def get_top_concepts(
                     'entity_type': concept.get('entity_type', 'concept'),
                     'count': stat['count'],
                     'content_types': stat['content_types'],
-                    'first_seen': stat['first_seen'],
-                    'last_seen': stat['last_seen'],
-                    'days_active': (datetime.fromisoformat(stat['last_seen']) - 
-                                  datetime.fromisoformat(stat['first_seen'])).days + 1
+                    'first_seen': first_seen.isoformat() if isinstance(first_seen, datetime) else str(first_seen),
+                    'last_seen': last_seen.isoformat() if isinstance(last_seen, datetime) else str(last_seen),
+                    'days_active': (last_seen - first_seen).days + 1
                 })
-    
+
     return {
         'period_days': days,
         'concepts': results,
@@ -85,18 +95,18 @@ async def get_velocity_leaders(
     limit: int = Query(20, ge=1, le=100)
 ):
     """Get concepts with highest velocity (growth rate) in recent period"""
-    
+
     # Define time periods
-    current_end = datetime.now()
+    current_end = datetime.now(timezone.utc)
     current_start = current_end - timedelta(days=days)
     previous_start = current_start - timedelta(days=days)
-    
+
     # Get current period counts
     current_pipeline = [
         {'$match': {
             'created_at': {
-                '$gte': current_start.isoformat(),
-                '$lt': current_end.isoformat()
+                '$gte': current_start,
+                '$lt': current_end
             }
         }},
         {'$group': {
@@ -104,13 +114,13 @@ async def get_velocity_leaders(
             'current_count': {'$sum': 1}
         }}
     ]
-    
+
     # Get previous period counts
     previous_pipeline = [
         {'$match': {
             'created_at': {
-                '$gte': previous_start.isoformat(),
-                '$lt': current_start.isoformat()
+                '$gte': previous_start,
+                '$lt': current_start
             }
         }},
         {'$group': {
@@ -118,26 +128,26 @@ async def get_velocity_leaders(
             'previous_count': {'$sum': 1}
         }}
     ]
-    
-    current_counts = {doc['_id']: doc['current_count'] 
+
+    current_counts = {doc['_id']: doc['current_count']
                      for doc in db.tag_instances.aggregate(current_pipeline)}
-    previous_counts = {doc['_id']: doc['previous_count'] 
+    previous_counts = {doc['_id']: doc['previous_count']
                       for doc in db.tag_instances.aggregate(previous_pipeline)}
-    
+
     # Calculate velocities
     velocities = []
     for concept_id, current_count in current_counts.items():
         previous_count = previous_counts.get(concept_id, 0)
-        
+
         # Calculate velocity (growth rate)
         if previous_count > 0:
             velocity = ((current_count - previous_count) / previous_count) * 100
         else:
             velocity = 100 if current_count > 0 else 0
-        
+
         # Calculate acceleration (change in growth rate)
         acceleration = current_count - previous_count
-        
+
         velocities.append({
             'concept_id': concept_id,
             'current_count': current_count,
@@ -145,15 +155,19 @@ async def get_velocity_leaders(
             'velocity': velocity,
             'acceleration': acceleration
         })
-    
+
     # Sort by velocity
     velocities.sort(key=lambda x: x['velocity'], reverse=True)
-    
-    # Get concept details for top velocity leaders
+
+    # Batch-fetch concept details for top velocity leaders (fixes N+1)
+    top_vel = velocities[:limit]
+    vel_concept_ids = [v['concept_id'] for v in top_vel if v['concept_id']]
+    vel_concept_map = {c['_id']: c for c in db.tag_concepts_v2.find({'_id': {'$in': vel_concept_ids}})}
+
     results = []
-    for vel in velocities[:limit]:
+    for vel in top_vel:
         if vel['concept_id']:
-            concept = db.tag_concepts_v2.find_one({'_id': vel['concept_id']})
+            concept = vel_concept_map.get(vel['concept_id'])
             if concept:
                 results.append({
                     'concept_id': str(vel['concept_id']),
@@ -164,11 +178,11 @@ async def get_velocity_leaders(
                     'previous_period_count': vel['previous_count'],
                     'velocity_percent': round(vel['velocity'], 1),
                     'acceleration': vel['acceleration'],
-                    'trend': 'accelerating' if vel['acceleration'] > 5 else 
-                            'growing' if vel['acceleration'] > 0 else 
+                    'trend': 'accelerating' if vel['acceleration'] > 5 else
+                            'growing' if vel['acceleration'] > 0 else
                             'stable' if vel['acceleration'] == 0 else 'slowing'
                 })
-    
+
     return {
         'period_days': days,
         'velocity_leaders': results,
@@ -182,20 +196,20 @@ async def get_rising_trends(
     limit: int = Query(20, ge=1, le=100)
 ):
     """Get concepts that are rising in popularity"""
-    
+
     # Use shorter comparison periods for rising trends
     comparison_days = min(days, 7)
-    
-    current_end = datetime.now()
+
+    current_end = datetime.now(timezone.utc)
     current_start = current_end - timedelta(days=comparison_days)
     previous_start = current_start - timedelta(days=comparison_days)
-    
+
     # Get current week counts
     current_pipeline = [
         {'$match': {
             'created_at': {
-                '$gte': current_start.isoformat(),
-                '$lt': current_end.isoformat()
+                '$gte': current_start,
+                '$lt': current_end
             }
         }},
         {'$group': {
@@ -204,13 +218,13 @@ async def get_rising_trends(
             'unique_authors': {'$addToSet': '$content_id'}
         }}
     ]
-    
+
     # Get previous week counts
     previous_pipeline = [
         {'$match': {
             'created_at': {
-                '$gte': previous_start.isoformat(),
-                '$lt': current_start.isoformat()
+                '$gte': previous_start,
+                '$lt': current_start
             }
         }},
         {'$group': {
@@ -218,24 +232,24 @@ async def get_rising_trends(
             'count': {'$sum': 1}
         }}
     ]
-    
+
     current_data = list(db.tag_instances.aggregate(current_pipeline))
-    previous_counts = {doc['_id']: doc['count'] 
+    previous_counts = {doc['_id']: doc['count']
                       for doc in db.tag_instances.aggregate(previous_pipeline)}
-    
+
     # Find rising concepts
     rising = []
     for doc in current_data:
         concept_id = doc['_id']
         current_count = doc['count']
         previous_count = previous_counts.get(concept_id, 0)
-        
+
         # Calculate growth
         if previous_count > 0:
             growth = ((current_count - previous_count) / previous_count) * 100
         else:
             growth = 100 if current_count >= 3 else 0  # New concept needs at least 3 mentions
-        
+
         if growth >= min_growth:
             rising.append({
                 'concept_id': concept_id,
@@ -244,15 +258,19 @@ async def get_rising_trends(
                 'growth_percent': growth,
                 'unique_sources': len(doc['unique_authors'])
             })
-    
+
     # Sort by growth
     rising.sort(key=lambda x: x['growth_percent'], reverse=True)
-    
-    # Get concept details
+
+    # Batch-fetch concept details (fixes N+1)
+    top_rising = rising[:limit]
+    rising_concept_ids = [item['concept_id'] for item in top_rising if item['concept_id']]
+    rising_concept_map = {c['_id']: c for c in db.tag_concepts_v2.find({'_id': {'$in': rising_concept_ids}})}
+
     results = []
-    for item in rising[:limit]:
+    for item in top_rising:
         if item['concept_id']:
-            concept = db.tag_concepts_v2.find_one({'_id': item['concept_id']})
+            concept = rising_concept_map.get(item['concept_id'])
             if concept:
                 results.append({
                     'concept_id': str(item['concept_id']),
@@ -267,7 +285,7 @@ async def get_rising_trends(
                                'strong' if item['growth_percent'] > 100 else
                                'moderate' if item['growth_percent'] > 50 else 'emerging'
                 })
-    
+
     return {
         'period_days': comparison_days,
         'min_growth_filter': min_growth,
@@ -282,19 +300,19 @@ async def get_declining_trends(
     limit: int = Query(20, ge=1, le=100)
 ):
     """Get concepts that are declining in popularity"""
-    
+
     comparison_days = min(days, 7)
-    
-    current_end = datetime.now()
+
+    current_end = datetime.now(timezone.utc)
     current_start = current_end - timedelta(days=comparison_days)
     previous_start = current_start - timedelta(days=comparison_days)
-    
+
     # Get counts for both periods
     current_pipeline = [
         {'$match': {
             'created_at': {
-                '$gte': current_start.isoformat(),
-                '$lt': current_end.isoformat()
+                '$gte': current_start,
+                '$lt': current_end
             }
         }},
         {'$group': {
@@ -302,12 +320,12 @@ async def get_declining_trends(
             'count': {'$sum': 1}
         }}
     ]
-    
+
     previous_pipeline = [
         {'$match': {
             'created_at': {
-                '$gte': previous_start.isoformat(),
-                '$lt': current_start.isoformat()
+                '$gte': previous_start,
+                '$lt': current_start
             }
         }},
         {'$group': {
@@ -316,24 +334,24 @@ async def get_declining_trends(
             'peak_day': {'$max': '$created_at'}
         }}
     ]
-    
-    current_counts = {doc['_id']: doc['count'] 
+
+    current_counts = {doc['_id']: doc['count']
                      for doc in db.tag_instances.aggregate(current_pipeline)}
     previous_data = list(db.tag_instances.aggregate(previous_pipeline))
-    
+
     # Find declining concepts
     declining = []
     for doc in previous_data:
         concept_id = doc['_id']
         previous_count = doc['count']
         current_count = current_counts.get(concept_id, 0)
-        
+
         # Calculate decline
         if previous_count > 0:
             decline = ((previous_count - current_count) / previous_count) * 100
         else:
             continue
-        
+
         if decline >= min_decline:
             declining.append({
                 'concept_id': concept_id,
@@ -342,16 +360,23 @@ async def get_declining_trends(
                 'decline_percent': decline,
                 'peak_day': doc.get('peak_day')
             })
-    
+
     # Sort by decline
     declining.sort(key=lambda x: x['decline_percent'], reverse=True)
-    
-    # Get concept details
+
+    # Batch-fetch concept details (fixes N+1)
+    top_declining = declining[:limit]
+    dec_concept_ids = [item['concept_id'] for item in top_declining if item['concept_id']]
+    dec_concept_map = {c['_id']: c for c in db.tag_concepts_v2.find({'_id': {'$in': dec_concept_ids}})}
+
     results = []
-    for item in declining[:limit]:
+    for item in top_declining:
         if item['concept_id']:
-            concept = db.tag_concepts_v2.find_one({'_id': item['concept_id']})
+            concept = dec_concept_map.get(item['concept_id'])
             if concept:
+                peak_day = item.get('peak_day')
+                if isinstance(peak_day, datetime):
+                    peak_day = peak_day.isoformat()
                 results.append({
                     'concept_id': str(item['concept_id']),
                     'display_name': concept.get('display_name', concept.get('name', '')),
@@ -360,12 +385,12 @@ async def get_declining_trends(
                     'current_mentions': item['current_count'],
                     'previous_mentions': item['previous_count'],
                     'decline_percent': round(item['decline_percent'], 1),
-                    'peak_day': item.get('peak_day'),
+                    'peak_day': peak_day,
                     'status': 'fading' if item['decline_percent'] > 75 else
                              'declining' if item['decline_percent'] > 50 else
                              'cooling' if item['decline_percent'] > 25 else 'stabilizing'
                 })
-    
+
     return {
         'period_days': comparison_days,
         'min_decline_filter': min_decline,
@@ -381,23 +406,21 @@ async def get_trend_timeline(
     max_concepts: int = Query(10, ge=1, le=50, description="Maximum concepts to return when none specified")
 ):
     """Get timeline data for specific concepts or overall activity"""
-    
-    cutoff_date = datetime.now() - timedelta(days=days)
-    
+
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+
     # Determine date format based on granularity
+    # After migration, created_at is native datetime — use $dateToString directly
     if granularity == "monthly":
-        date_format = "%Y-%m"
-        date_modifier = {'$dateToString': {'format': '%Y-%m', 'date': {'$dateFromString': {'dateString': '$created_at'}}}}
+        date_modifier = {'$dateToString': {'format': '%Y-%m', 'date': '$created_at'}}
     elif granularity == "weekly":
-        date_format = "%Y-W%V"
-        date_modifier = {'$dateToString': {'format': '%Y-W%V', 'date': {'$dateFromString': {'dateString': '$created_at'}}}}
+        date_modifier = {'$dateToString': {'format': '%Y-W%V', 'date': '$created_at'}}
     else:  # daily
-        date_format = "%Y-%m-%d"
-        date_modifier = {'$dateToString': {'format': '%Y-%m-%d', 'date': {'$dateFromString': {'dateString': '$created_at'}}}}
-    
+        date_modifier = {'$dateToString': {'format': '%Y-%m-%d', 'date': '$created_at'}}
+
     # Build match criteria
-    match_criteria = {'created_at': {'$gte': cutoff_date.isoformat()}}
-    
+    match_criteria = {'created_at': {'$gte': cutoff_date}}
+
     if concept_ids:
         # Convert string IDs to ObjectIds
         object_ids = []
@@ -405,11 +428,11 @@ async def get_trend_timeline(
             try:
                 if len(cid) == 24:
                     object_ids.append(ObjectId(cid))
-            except:
+            except Exception:
                 pass
         if object_ids:
             match_criteria['concept_id'] = {'$in': object_ids}
-    
+
     # Aggregation pipeline for timeline
     pipeline = [
         {'$match': match_criteria},
@@ -426,37 +449,38 @@ async def get_trend_timeline(
         }},
         {'$sort': {'_id.date': 1}}
     ]
-    
+
     timeline_data = list(db.tag_instances.aggregate(pipeline))
-    
+
     # Organize data by concept
     concepts_timeline = defaultdict(lambda: defaultdict(int))
     dates_set = set()
-    
+
     for item in timeline_data:
         date = item['_id']['date']
         concept_id = str(item['_id']['concept_id'])
         concepts_timeline[concept_id][date] = item['count']
         dates_set.add(date)
-    
-    # Get concept details
-    concept_details = {}
+
+    # Batch-fetch concept details (fixes N+1)
+    all_concept_obj_ids = []
     for concept_id in concepts_timeline.keys():
         try:
-            concept = db.tag_concepts_v2.find_one({'_id': ObjectId(concept_id)})
-            if concept:
-                concept_details[concept_id] = {
-                    'display_name': concept.get('display_name', concept.get('name', '')),
-                    'slug': concept.get('slug', ''),
-                    'entity_type': concept.get('entity_type', 'concept')
-                }
-        except:
+            all_concept_obj_ids.append(ObjectId(concept_id))
+        except Exception:
             pass
-    
+    concept_details = {}
+    for c in db.tag_concepts_v2.find({'_id': {'$in': all_concept_obj_ids}}):
+        concept_details[str(c['_id'])] = {
+            'display_name': c.get('display_name', c.get('name', '')),
+            'slug': c.get('slug', ''),
+            'entity_type': c.get('entity_type', 'concept')
+        }
+
     # Format timeline series
     sorted_dates = sorted(dates_set)
     series = []
-    
+
     for concept_id, date_counts in concepts_timeline.items():
         if concept_id in concept_details:
             data_points = []
@@ -465,7 +489,7 @@ async def get_trend_timeline(
                     'date': date,
                     'value': date_counts.get(date, 0)
                 })
-            
+
             series.append({
                 'concept_id': concept_id,
                 'name': concept_details[concept_id]['display_name'],
@@ -474,10 +498,10 @@ async def get_trend_timeline(
                 'peak_value': max(date_counts.values()) if date_counts else 0,
                 'peak_date': max(date_counts.items(), key=lambda x: x[1])[0] if date_counts else None
             })
-    
+
     # Sort series by total mentions
     series.sort(key=lambda x: x['total'], reverse=True)
-    
+
     # Limit results based on whether specific concepts were requested
     if concept_ids:
         # When specific concepts are requested, only return those concepts
@@ -487,7 +511,7 @@ async def get_trend_timeline(
     elif len(series) > max_concepts:
         # When no specific concepts requested, limit to top N concepts
         series = series[:max_concepts]
-    
+
     # Calculate overall statistics
     overall_stats = {
         'total_mentions': sum(s['total'] for s in series),
@@ -501,20 +525,20 @@ async def get_trend_timeline(
             'count': 0
         }
     }
-    
+
     # Find peak activity date
     date_totals = defaultdict(int)
     for s in series:
         for point in s['data']:
             date_totals[point['date']] += point['value']
-    
+
     if date_totals:
         peak_date = max(date_totals.items(), key=lambda x: x[1])
         overall_stats['peak_activity'] = {
             'date': peak_date[0],
             'count': peak_date[1]
         }
-    
+
     return {
         'period_days': days,
         'granularity': granularity,
@@ -528,38 +552,38 @@ async def get_trend_overview(
     days: int = Query(7, ge=1, le=365)
 ):
     """Get comprehensive trend overview combining all metrics"""
-    
+
     # Get top concepts
     top_concepts = await get_top_concepts(days=days, limit=10, content_type=None)
-    
+
     # Get velocity leaders
     velocity_leaders = await get_velocity_leaders(days=days, limit=10)
-    
+
     # Get rising trends
     rising = await get_rising_trends(days=days, limit=10, min_growth=20.0)
-    
+
     # Get declining trends
     declining = await get_declining_trends(days=days, limit=10, min_decline=20.0)
-    
+
     # Calculate activity summary
-    cutoff_date = datetime.now() - timedelta(days=days)
-    
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+
     # Content type distribution
     content_distribution = list(db.tag_instances.aggregate([
-        {'$match': {'created_at': {'$gte': cutoff_date.isoformat()}}},
+        {'$match': {'created_at': {'$gte': cutoff_date}}},
         {'$group': {
             '_id': '$content_type',
             'count': {'$sum': 1}
         }}
     ]))
-    
-    # Daily activity
+
+    # Daily activity — created_at is native datetime after migration
     daily_activity = list(db.tag_instances.aggregate([
-        {'$match': {'created_at': {'$gte': cutoff_date.isoformat()}}},
+        {'$match': {'created_at': {'$gte': cutoff_date}}},
         {'$addFields': {
             'date': {'$dateToString': {
                 'format': '%Y-%m-%d',
-                'date': {'$dateFromString': {'dateString': '$created_at'}}
+                'date': '$created_at'
             }}
         }},
         {'$group': {
@@ -568,12 +592,12 @@ async def get_trend_overview(
         }},
         {'$sort': {'_id': 1}}
     ]))
-    
-    # Get unique concepts - convert ObjectId to count
-    unique_concept_ids = db.tag_instances.distinct('concept_id', 
-        {'created_at': {'$gte': cutoff_date.isoformat()}})
+
+    # Get unique concepts
+    unique_concept_ids = db.tag_instances.distinct('concept_id',
+        {'created_at': {'$gte': cutoff_date}})
     unique_concepts_count = len(unique_concept_ids) if unique_concept_ids else 0
-    
+
     return {
         'period_days': days,
         'summary': {

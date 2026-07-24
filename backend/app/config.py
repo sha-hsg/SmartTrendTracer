@@ -39,7 +39,7 @@ TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN")
 
 # API settings
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
-API_PORT = int(os.getenv("API_PORT", 8000))
+API_PORT = int(os.getenv("BACKEND_PORT", os.getenv("API_PORT", "8088")))
 
 # Frontend URL for CORS
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
