@@ -193,7 +193,7 @@ Different services have different startup times. Configure timeouts appropriatel
 
 ```bash
 # Backend API - 60 seconds (MongoDB index creation takes 44s)
-wait_for_service 8000 "Backend API" 60
+wait_for_service $BACKEND_PORT "Backend API" 60   # BACKEND_PORT=8088
 
 # Marker Service - 30 seconds (default)
 wait_for_service 8002 "Marker Service"
@@ -221,7 +221,7 @@ log() {
 }
 
 # Log important events
-log "Starting Backend API Server (port 8000)..."
+log "Starting Backend API Server (port $BACKEND_PORT)..."
 log "Backend process started with PID: $BACKEND_PID"
 log "Using Python: $PYTHON_BIN"
 ```
@@ -258,6 +258,494 @@ sudo systemctl stop mongod
 5. ✅ **Set appropriate timeouts** (backend needs 60s, others 30s)
 6. ✅ **Log everything** with timestamps, PIDs, and timing information
 7. ✅ **Test on both macOS and Linux** before considering code complete
+
+## Recent Enhancements (July 24, 2026)
+
+### Funktionsinventur & großer Fix-Durchlauf - COMPLETE
+
+Vollständige Funktionsinventur durchgeführt (siehe `docs/funktionsinventur.md`, Abschnitt „Priorisierte Handlungsliste") und umgesetzt:
+
+- **Aufräumen**: ~60 tote Dateien und ~90 tote Endpunkte entfernt (~12.000 LOC) — darunter alle Alt-Tag-Services (u.a. `unified_tag_service.py`, `spacy_tagger.py`), tote Collector-Ketten (`twitter_collector.py`, `twscrape_collector.py` etc.) und der tote Frontend-Ordner `components/substack/`.
+- **P1-Bugfixes**: Router-Shadowing behoben (books-/articles-Package: statische Routen vor Parameter-Routen), Tag-Reorganizer-NameError gefixt, String-vs-ObjectId-Bug in den Ontologie-Usage-Counts korrigiert, Media-Gallery-Sortierung („Most liked"/„Most retweeted") und -Filter serverseitig repariert, Topic-Explorer-Datumsfilter gefixt, DEF-001 (Article Viewer Optimistic UI) gelöst.
+- **P2-Fixes**: PERF-002-Volltextindizes werden jetzt tatsächlich angelegt (konkurrierende Single-Field-Textindizes entfernt), `book_processing_worker.py` in `start_stt.sh` integriert (Book-Processing-Queue hat jetzt einen Konsumenten).
+- **Modellpflege**: Veraltete Modelle (gpt-4o, gpt-4o-mini, grok-2-latest) aus allen Auswahllisten entfernt (`litellm_config.yaml`, `models.ts`) inkl. Migration-Mapping auf aktuelle Modelle.
+
+---
+
+## Recent Enhancements (May 12, 2026)
+
+### Backend Port Migration: 8000 → 8088 - COMPLETE
+
+#### Problem
+Honcho (Docker container `honcho-api-1`) binds `127.0.0.1:8000`, blocking the STT backend. `start_stt.sh` only probed "is port busy?" → detected Docker → falsely reported `Backend API: ✓ Running (PID: 776)` and skipped starting the backend. Frontend then hit Docker on 8000 → CORS errors in browser.
+
+#### Solution
+Migrated STT backend from port 8000 to **8088** (verified free against Honcho, Samanta, StatCoach, Docendi, Marker/MinerU).
+
+#### Port Allocation (current)
+| Project | Ports |
+|---|---|
+| Honcho (Docker) | 8000, 5433, 6379 |
+| Samanta | 3270, 8100, 8800 |
+| StatCoach | 8888, 3001, 5432 |
+| Docendi | 3005, 8005 |
+| **STT Backend** | **8088** |
+| STT Marker / MinerU | 8002, 8003 |
+| STT Frontend | 3470 |
+
+#### Files Modified
+| File | Change |
+|------|--------|
+| `start_stt.sh` | `export BACKEND_PORT=8088` variable, 4 hardcoded refs replaced |
+| `stop_stt.sh` | `BACKEND_PORT=8088` variable, 2 hardcoded refs replaced |
+| `frontend/.env` | **NEW**: `VITE_API_URL=http://localhost:8088` |
+| `frontend/vite.config.ts` | Proxy target → 8088 |
+| `frontend/src/config/api.ts` | Fallback default → 8088 |
+| `backend/app/main.py` | `__main__` uvicorn port via `os.getenv("BACKEND_PORT", "8088")` |
+| `backend/app/api/papers/processing_helpers.py` | Marker callback URL via `BACKEND_PORT` env var |
+| `backend/app/services/pdf_extraction_helpers.py` | MinerU callback URL via `BACKEND_PORT` env var |
+
+#### CORS
+No changes required — `CORSMiddleware` config in `backend/app/main.py:124` already includes `http://localhost:3470` in default origins. Only the **frontend origin** matters for CORS, not the backend port.
+
+#### Known Bug in start_stt.sh (not yet fixed)
+The port-busy check only verifies "is something listening?" — it doesn't verify that the listener is actually the STT backend. With port 8088 the conflict is unlikely to recur, but a proper fix would health-probe `curl -s http://localhost:$BACKEND_PORT/api/llm/status` before assuming "already running".
+
+#### Restart Sequence
+```bash
+cd /Users/siehan/Documents/Development/Research/SmartTrendTracer
+./stop_stt.sh -n          # Stop everything except MongoDB
+./start_stt.sh            # Fresh start on 8088
+# Hard-reload browser (Cmd+Shift+R) so Vite picks up new .env
+```
+
+---
+
+## Recent Enhancements (March 8, 2026)
+
+### Paper Review Mode — Separate Data Area for Unpublished Papers - COMPLETE
+
+#### Overview
+Added a review mode for papers being reviewed before publication (e.g., conference submissions). Uses the same full functionality as the existing papers system (upload, process, analyze, tag, view), but with a **separate data area** so review papers don't mix with published research papers. Review papers are invisible in global statistics, trends, and RAG search.
+
+#### Approach
+Added a `paper_type` field (`'research'` | `'review'`) to the existing `papers` MongoDB collection. All existing queries default to `paper_type='research'`, keeping review papers invisible. A "Paper Reviews" navigation item reuses the existing dashboard with a `paperType` prop.
+
+#### Review-Specific Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `review_deadline` | string (date) | Submission/review deadline |
+| `review_decision` | enum | `pending` / `accept` / `reject` / `major_revision` / `minor_revision` |
+| `review_notes` | string | Free-form review notes |
+| `review_confidence` | int (1-5) | Reviewer confidence score |
+
+#### Backend Changes
+
+| File | Change |
+|------|--------|
+| `backend/app/api/papers/query_builder.py` | Added `build_paper_type_filter()` |
+| `backend/app/api/papers/crud.py` | `paper_type` param on list + upload + single-paper endpoints |
+| `backend/app/api/papers/facets.py` | `paper_type` param on facets + stats endpoints |
+| `backend/app/api/papers/metadata.py` | Review-specific field support (deadline, decision, notes, confidence) |
+| `backend/app/services/analytics/content_fetchers.py` | `fetch_papers_in_range()` excludes `paper_type='review'` |
+| `backend/app/services/rag/index_manager.py` | RAG index excludes review papers |
+| `start_stt.sh` | Migration: sets `paper_type='research'` on existing papers at startup |
+
+#### Frontend Changes
+
+| File | Change |
+|------|--------|
+| `frontend/src/components/papers-dashboard/types.ts` | Added `paper_type`, `review_deadline`, `review_decision`, `review_notes`, `review_confidence` to `Paper` |
+| `frontend/src/components/papers-dashboard/usePapersDashboard.ts` | Accepts `paperType` param, passes to all API calls |
+| `frontend/src/components/FacetedPapersDashboard.tsx` | Accepts `paperType` prop, dynamic header title |
+| `frontend/src/components/PaperUploadModern.tsx` | Passes `paper_type` in upload request |
+| `frontend/src/components/ModernNavigation.tsx` | Added `reviews-dashboard` view type under Research Papers |
+| `frontend/src/ModernApp.tsx` | Routes `reviews-dashboard` → `FacetedPapersDashboard` with `paperType="review"` |
+
+#### Navigation
+Located under: **Research Papers → Paper Reviews**
+
+#### Data Isolation
+- Default `paper_type='research'` — all existing behavior unchanged
+- Review papers excluded from: global stats, AI summarization, trend analysis, RAG search index
+- Each dashboard (Research / Reviews) shows only its own papers with independent facets and statistics
+
+#### Verification
+```bash
+# Check migration:
+mongosh smarttrendtracer --eval "db.papers.countDocuments({paper_type: 'research'})"
+mongosh smarttrendtracer --eval "db.papers.countDocuments({paper_type: {'\$exists': false}})"
+
+# API test:
+curl "http://localhost:8888/api/papers/?paper_type=review" | jq '.total'
+```
+
+---
+
+## Recent Enhancements (January 28, 2026)
+
+### Time Window Analysis: Separate Date Sliders - COMPLETE
+
+#### Overview
+Enhanced the TimeWindowAnalysis component to use two separate sliders for start and end dates instead of a single range slider. This provides more intuitive and precise date range selection.
+
+#### Changes Made
+
+**Handler Functions** (replaced `handleRangeChange`):
+- `handleStartChange`: Updates start date, enforces start ≤ end
+- `handleEndChange`: Updates end date, enforces end ≥ start
+
+**UI Layout**:
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ▽ Filter Time Range                                   Reset to full range  │
+│                                                                             │
+│ 📅 Start Date                                            Oct 30, 2025      │
+│ ○───────────────────────────────────────────────────────────────────────── │
+│                                                                             │
+│ 📅 End Date                                              Jan 28, 2026      │
+│ ─────────────────────────────────────────────────────────────────────────○ │
+│                                                                             │
+│                         ┌──────────────────┐                               │
+│                         │  91 days selected │                               │
+│                         └──────────────────┘                               │
+│                                                                             │
+│ ████████████████████████████████░░░░░░░░  32 / 100 concepts (32%)         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### File Modified
+
+| File | Change |
+|------|--------|
+| `frontend/src/components/trends/TimeWindowAnalysis.tsx` | Separate handlers + two-slider UI |
+
+#### Features
+- **Independent Control**: Each slider moves separately
+- **Validation**: Start cannot exceed End (auto-corrected)
+- **Date Display**: Current date shown right-aligned next to each slider label
+- **Days Badge**: Centered badge shows selected range duration
+- **Reset**: "Reset to full range" sets Start=0%, End=100%
+
+---
+
+### Sophisticated Topic & Trend Detection Dashboard - COMPLETE
+
+#### Overview
+New comprehensive Trend Detection Dashboard with 7 interactive visualizations for real-time trend analysis across all content sources (Tweets, Articles, Papers, Reddit).
+
+#### New Components Created
+
+| Component | Description | Location |
+|-----------|-------------|----------|
+| `TrendDashboardMain.tsx` | Orchestrating container with tabs | `frontend/src/components/trends/` |
+| `TrendAtAGlance.tsx` | 4-column grid: Hot/Declining/Stable/Anomalies | `frontend/src/components/trends/` |
+| `BubbleChart.tsx` | Scatter chart with X=Age, Y=Velocity, Size=Volume | `frontend/src/components/trends/` |
+| `TopicHeatmap.tsx` | Matrix: Concepts × Dates with activity intensity | `frontend/src/components/trends/` |
+| `CorrelationMatrix.tsx` | Co-occurrence patterns between concepts | `frontend/src/components/trends/` |
+| `TrendNetworkGraph.tsx` | Force-directed graph using react-force-graph-2d | `frontend/src/components/trends/` |
+| `AnimatedTimeline.tsx` | Bar chart race style animation with framer-motion | `frontend/src/components/trends/` |
+| `useTrendData.ts` | Custom hooks for fetching trend data | `frontend/src/components/trends/hooks/` |
+
+#### New Backend Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/analytics/trends/at-a-glance` | Hot topics, declining, stable, anomalies with sparklines |
+| `GET /api/analytics/trends/cooccurrence` | Concept co-occurrence matrix and top pairs |
+| `GET /api/analytics/trends/animated-timeline` | Daily frames for bar chart race animation |
+| `GET /api/analytics/trends/heatmap` | Implemented with real data (was stubbed) |
+| `GET /api/analytics/trends/bubble-chart` | Implemented with real data (was stubbed) |
+| `GET /api/analytics/trends/network` | Implemented with co-occurrence data (was stubbed) |
+
+> **Hinweis (24.07.2026):** Die Pfade liegen unter `/api/analytics/trends/...` (nicht `/api/trends/...`). Die ungenutzten Stub-Endpunkte `/sankey`, `/radar`, `/sparklines`, `/wordcloud`, `/treemap` und `/forecast` wurden am 24.07.2026 entfernt.
+
+#### New Backend Service
+
+**`backend/app/services/anomaly_detection.py`** - Statistical anomaly detection:
+- `AnomalyDetector` class with Z-score analysis
+- `get_baseline_stats()` - 30-day baseline calculation
+- `detect_spikes()` - Z-score threshold detection (default 2.5)
+- `get_all_anomalies()` - Find all concepts with anomalous activity
+- `get_concept_cooccurrence()` - Calculate co-occurrence matrix with Jaccard similarity
+- `get_concept_activity_by_day()` - Daily activity for sparklines
+
+#### TypeScript Types
+
+**`frontend/src/types/trends.ts`** - Complete type definitions:
+- `ConceptTrend` - Core trend data with sparklines
+- `AnomalyAlert` - Z-score spike detection results
+- `AtAGlanceData` - Overview data structure
+- `HeatmapData` - Matrix with concepts × dates
+- `BubbleChartData` - Scatter chart with X/Y/Z ranges
+- `CooccurrenceData` - Co-occurrence matrix and pairs
+- `NetworkGraphData` - Nodes, links, clusters
+- `AnimatedTimelineData` - Frames for animation
+
+#### Navigation Integration
+
+Added to `ModernNavigation.tsx` under "Analysis" dropdown:
+- View type: `trend-dashboard`
+- Icon: Flame
+- Description: "Real-time trend detection and analysis"
+
+#### Features
+
+1. **At-a-Glance View**:
+   - Hot Topics: >50% increase in 24-48h
+   - Declining: >30% decrease
+   - Stable: Consistent evergreens
+   - Anomalies: Z-score >2.5 spikes
+   - Mini sparklines for each concept
+
+2. **Heatmap**:
+   - Top 20 concepts × dates matrix
+   - Color intensity = activity level
+   - Hover shows content breakdown
+
+3. **Bubble Chart**:
+   - X: Days since first occurrence
+   - Y: Velocity (% change)
+   - Size: Volume (total mentions)
+   - Color: Entity type
+   - Zoom/pan controls
+
+4. **Correlation Matrix**:
+   - Pairwise co-occurrence counts
+   - Jaccard similarity strength
+   - Top pairs list with click-to-filter
+
+5. **Network Graph**:
+   - Force-directed layout with react-force-graph-2d
+   - Node size = activity level
+   - Edge thickness = co-occurrence strength
+   - Highlight on hover/click
+
+6. **Animated Timeline**:
+   - Bar chart race style animation
+   - Play/Pause, speed control (0.5x-3x)
+   - Frame scrubber
+   - Cumulative counts over time
+
+#### Files Modified
+
+| File | Change |
+|------|--------|
+| `backend/app/api/analytics_trends_mongodb.py` | New endpoints + implemented stubs |
+| `backend/app/services/anomaly_detection.py` | NEW - Anomaly detection service |
+| `frontend/src/types/trends.ts` | NEW - TypeScript types |
+| `frontend/src/components/trends/*` | NEW - All visualization components |
+| `frontend/src/components/ModernNavigation.tsx` | Added trend-dashboard view type |
+| `frontend/src/ModernApp.tsx` | Added TrendDashboardMain routing |
+
+#### Access
+Navigate to: Analysis → Trend Dashboard
+
+## Recent Enhancements (January 26, 2026)
+
+### Suggest Concept Tags: Content Requirement Enforcement - COMPLETE
+
+#### Problem
+"Suggest Concept Tags" worked without processed paper content — it silently fell back to title + abstract only. "Entity Extraction" already required content (button disabled without it). Both features should consistently require processed content.
+
+#### Solution
+Made "Suggest Concept Tags" behave identically to "Entity Extraction":
+
+**Frontend** (`PaperViewerOptimized.tsx`):
+- Button `disabled={!paper?.content}` with `disabled:opacity-60` styling
+- Tooltip: "Paper must be processed first" when disabled, "Suggest concept tags using AI" when active
+- Keyboard shortcut `t` gated on `paper?.content` (matching `e` for Entity Extraction)
+
+**Backend** (`papers_mongodb.py`):
+- Removed silent fallback to title+abstract
+- Returns HTTP 400: "Paper must be processed first — no content available"
+- Also checks `markdown_content` as alternative content source
+
+#### Files Modified
+| File | Change |
+|------|--------|
+| `frontend/src/components/PaperViewerOptimized.tsx` | `disabled` + tooltip on Suggest button, keyboard shortcut guard |
+| `backend/app/api/papers_mongodb.py` | HTTP 400 instead of silent fallback when no content |
+
+#### Code Pattern
+```python
+# BEFORE (silent fallback):
+if paper.get('content'):
+    paper_text_for_llm += f"Full Paper Content:\n{paper['content']}"
+else:
+    logger.warning(f"Paper {paper_id} has no content, using title and abstract only")
+
+# AFTER (explicit error):
+if not paper.get('content') and not paper.get('markdown_content'):
+    raise HTTPException(status_code=400, detail="Paper must be processed first — no content available")
+full_content = paper.get('content') or paper.get('markdown_content')
+paper_text_for_llm += f"Full Paper Content:\n{full_content}"
+```
+
+### Startup Cleanup for Stale Processing Statuses - COMPLETE
+
+#### Problem
+When STT is stopped (or crashes) while a paper/book is being processed, the `processing_status` remains stuck at `processing_with_marker` or `processing_with_mineru`. On next startup, the UI shows "Processing..." but no actual process is running.
+
+#### Solution
+Added automatic cleanup in `start_stt.sh` that runs after MongoDB is confirmed running:
+
+```bash
+# Reset papers stuck in processing state
+db.papers.updateMany(
+    {processing_status: {$regex: /^processing/}},
+    {$set: {processing_status: 'pending', processing_progress: null, marker_process_health: null}}
+)
+
+# Reset books stuck in processing state
+db.books.updateMany(
+    {processing_status: {$regex: /^processing/}},
+    {$set: {processing_status: 'pending', processing_progress: null, marker_process_health: null}}
+)
+```
+
+#### Result
+- Papers/books stuck in `processing_*` state are automatically reset to `pending` on startup
+- Users can immediately retry processing without manual database intervention
+- Startup log shows: `"✓ Reset N papers and M books from stale processing state"`
+
+#### File Modified
+| File | Change |
+|------|--------|
+| `start_stt.sh` | Added stale processing cleanup after MongoDB check (lines 228-253) |
+
+### Paper Content Tab: Fix "Processing" Display for Pending Papers - COMPLETE
+
+#### Problem
+Papers that were never processed (or had their status reset to `pending`) showed "Processing Content..." with a spinner, as if they were actively being processed. This was confusing because no processing was actually running.
+
+#### Root Cause
+The content tab checked `!paper.processed` to decide whether to show the processing spinner, but this doesn't distinguish between:
+1. **Pending** — never processed, should show "Process" buttons
+2. **Actively processing** — should show spinner + progress
+
+#### Solution
+Changed the condition to use `isAnyProcessing` (which checks `processing_status`):
+
+```tsx
+// BEFORE (wrong):
+{!paper.processed ? <Spinner /> : <Icon />}
+{!paper.processed ? "Processing Content..." : "No Content Available"}
+
+// AFTER (correct):
+{isAnyProcessing ? <Spinner /> : <Icon />}
+{isAnyProcessing ? "Processing Content..." : !paper.processed ? "Not Yet Processed" : "No Content Available"}
+```
+
+#### Three States Now Correctly Handled
+| State | Display |
+|-------|---------|
+| `isAnyProcessing` | Spinner + "Processing Content..." + ProcessingStatusIndicator |
+| `!isAnyProcessing && !paper.processed` | "Not Yet Processed" + Process buttons |
+| `!isAnyProcessing && paper.processed` | "No Content Available" + Retry buttons |
+
+#### File Modified
+| File | Change |
+|------|--------|
+| `frontend/src/components/PaperViewerOptimized.tsx` | Fixed content tab to use `isAnyProcessing` instead of `!paper.processed` |
+
+---
+
+## Recent Enhancements (January 25, 2026)
+
+### Paper Analysis Concurrent Save Fix - COMPLETE
+
+#### Problem
+"Generate All Analyses" created 12 analyses but only 1-4 were saved. The analyses were generated correctly (UI showed progress) but lost when saved to MongoDB due to race conditions.
+
+#### Root Cause
+The save operation used `$set` which overwrites the entire `analyses` array. When multiple analyses were generated concurrently (LLM takes 2-5 seconds each), each operation:
+1. Read the same initial array
+2. Appended its analysis locally
+3. Wrote back with `$set` - whichever wrote last overwrote the others
+
+#### Solution
+Replaced `$set` with atomic MongoDB operations:
+- **`$push`**: Atomically appends new analyses without reading the whole array
+- **`$pull`**: Atomically removes analyses when regenerating
+
+#### Files Modified
+**`backend/app/api/papers_mongodb.py`** - 4 locations fixed:
+
+| Function | Lines | Change |
+|----------|-------|--------|
+| `create_analysis()` | 4167-4183 | `$pull` + `$push` instead of `$set` |
+| `generate_multiple_analyses()` | 4316-4323 | `$push` after each analysis |
+| `run_analysis_in_background()` | 252-262 | `$push` after each analysis |
+| `delete_analysis()` | 4978-4984 | `$pull` instead of `$set` |
+
+#### Code Pattern
+```python
+# BEFORE (loses data in concurrent scenarios):
+existing_analyses.append(analysis)
+db.papers.update_one(
+    {'_id': paper['_id']},
+    {'$set': {'analyses': existing_analyses}}
+)
+
+# AFTER (atomic, no race conditions):
+if existing and regenerate:
+    db.papers.update_one(
+        {'_id': paper['_id']},
+        {'$pull': {'analyses': {'$or': [
+            {'type': analysis_type},
+            {'analysis_type': analysis_type}
+        ]}}}
+    )
+
+db.papers.update_one(
+    {'_id': paper['_id']},
+    {'$push': {'analyses': analysis}}
+)
+```
+
+#### Verification
+Tested with 4 concurrent analysis requests - all 4 saved correctly (started with 2, ended with 6).
+
+### Paper Facets Endpoint Crash Fix - COMPLETE
+
+#### Problem
+Searching in the Papers dashboard caused CORS errors in the browser. Every keystroke in the search field triggered `Failed to load facets: AxiosError` with `No 'Access-Control-Allow-Origin' header`.
+
+#### Root Cause
+The CORS errors were a **symptom**, not the cause. The `/api/papers/facets` endpoint was returning a **500 Internal Server Error**. FastAPI does not add CORS headers to unhandled 500 responses, so the browser reported it as a CORS issue.
+
+The actual bug was in the fallback author aggregation pipeline (line ~894):
+1. **`$split` on array field**: One paper (`Semanta`) stored `authors` as an array of strings instead of a comma-separated string. `$split` fails on arrays with: `$split requires an expression that evaluates to a string as a first argument, found: array`
+2. **Invalid `$match` filter**: `{'$ne': None, '$ne': ''}` — the second `$ne` key overwrote the first in the Python dict, so the `None` check was silently dropped
+
+#### Solution
+**`backend/app/api/papers_mongodb.py`** - Fallback author pipeline:
+
+```python
+# BEFORE (crashes on array authors):
+{'$match': {'authors': {'$ne': None, '$ne': ''}}},
+{'$project': {'authors_split': {'$split': ['$authors', ', ']}}},
+
+# AFTER (handles both string and array):
+{'$match': {'authors': {'$nin': [None, '']}}},
+{'$project': {
+    'authors_list': {
+        '$cond': {
+            'if': {'$eq': [{'$type': '$authors'}, 'array']},
+            'then': '$authors',
+            'else': {'$split': ['$authors', ', ']}
+        }
+    }
+}},
+```
+
+#### Verification
+- `GET /api/papers/facets` returns 200 with full author/year/conference facets
+- `GET /api/papers/facets?search=T` returns 200 (previously returned 500)
+- CORS errors in browser resolved
+
+---
 
 ## Recent Enhancements (January 24, 2026)
 
@@ -309,7 +797,9 @@ Added `batchProcessingActiveRef` to prevent duplicate batch execution when React
 localStorage.removeItem('batchProcessingProgress')
 ```
 
-### MinerU Progress Feedback UI - COMPLETE
+### MinerU Progress Feedback UI - TEILWEISE / NICHT IMPLEMENTIERT
+
+> **Korrektur (24.07.2026):** Die unten beschriebene Portierung wurde nie vollständig umgesetzt. `mineru_server.py` hat nur einfaches Stage-Keyword-Matching — KEINE PTY-basierte Output-Capture, kein `_parse_mineru_progress`, kein psutil-Health-Monitoring und keinen Heartbeat. Diese Features existieren nur im Marker-Service (`marker_server.py`).
 
 #### Overview
 Added real-time progress tracking for MinerU PDF processing, matching the existing Marker progress infrastructure.
@@ -562,7 +1052,7 @@ The RAG search used FAISS similarity ranking, which returns results sorted by em
 3. **Fill remaining slots** with highest-scoring items across all types
 4. **Sort final results** by similarity score
 
-**Code Location**: `backend/app/services/rag_service_concepts.py:312-402`
+**Code Location**: `backend/app/services/rag/search.py` (Funktion `_blend_results`) — der ursprüngliche Verweis `rag_service_concepts.py:312-402` ist veraltet
 
 #### Enhanced Logging Added
 ```
@@ -574,8 +1064,8 @@ FINAL results by type: tweets=38, articles=12, papers=0
 ```
 
 #### Files Modified
-- `backend/app/services/rag_service_concepts.py` - Proportional blending logic and debug logging
-- `backend/app/services/rag_helpers.py` - Added doc_id and inferred_type parameters
+- `backend/app/services/rag/search.py` - Proportional blending logic (`_blend_results`); ursprünglich in `rag_service_concepts.py`
+- `backend/app/services/rag_helpers.py` - *(Datei am 24.07.2026 entfernt; Logik im `app/services/rag/`-Package aufgegangen)*
 - `backend/app/api/rag_simple.py` - content_types parameter in RAGQuery model
 
 #### Result
@@ -819,7 +1309,7 @@ Article Viewer `onClose` callback und Custom Events funktionieren nicht korrekt.
 
 **Current Status**:
 - ✅ Mouse click selection works
-- ⚠️ Keyboard navigation temporarily disabled (TODO: restore later)
+- ✅ Keyboard navigation re-implemented (DEF-002 resolved 2025-12-31 — ↑↓/Enter/Escape via `highlightedIndex` State)
 
 #### LLM Model Selection Fix
 **Problem**: User selected "Gemini 3 Flash Preview" but system used "gemini-2.5-pro" instead
@@ -1198,8 +1688,8 @@ tail -f backend/marker_service/../../logs/marker.log
 mongosh smarttrendtracer --eval "db.papers.findOne({_id: ObjectId('...')}, {processing_progress: 1, marker_process_health: 1})"
 
 # Test API endpoints
-curl http://localhost:8000/api/papers/{id}/processing-status | jq
-curl http://localhost:8000/api/papers/{id}/process-health | jq
+curl http://localhost:8088/api/papers/{id}/processing-status | jq
+curl http://localhost:8088/api/papers/{id}/process-health | jq
 ```
 
 #### UI Display
@@ -1665,8 +2155,11 @@ The tag system had fundamental architectural issues preventing cross-compatibili
 
 #### Solution Implemented
 
-##### UnifiedTagService
-- **Location**: `app/services/unified_tag_service.py`
+##### UnifiedTagService (HISTORISCH)
+
+> **HISTORISCH (Stand 24.07.2026):** Der aktive Tag-Service ist heute `ConceptOnlyTagService` (`backend/app/services/concept_tag/`). `unified_tag_service.py` und die übrigen Alt-Tag-Services wurden am 24.07.2026 gelöscht. Die folgende Beschreibung dokumentiert nur den damaligen Stand.
+
+- **Location**: `app/services/unified_tag_service.py` *(gelöscht)*
 - **Features**:
   - Handles all tag variations (original, slugified, capitalized)
   - Proper hierarchy resolution with parent/child relationships
@@ -1926,18 +2419,21 @@ The system now provides intelligent tag suggestions using both existing tags and
 - **Usage Statistics**: Shows how many times each existing tag has been used
 - **Smart Ranking**: Popular tags (high usage count) are boosted in results
 
-#### Technical Implementation:
+#### Technical Implementation (HISTORISCH):
+
+> **HISTORISCH (Stand 24.07.2026):** Die unten genannten Dateien (`vector_store_openai.py`, `build_vector_store.py`, `spacy_tagger.py`) und der Endpunkt `POST /api/tags/suggest/{tweet_id}` existieren nicht mehr. Tag-Vorschläge laufen heute über `POST /api/concepts/suggestions/tweets/{id}/suggest`.
+
 ```python
 # Vector store for semantic similarity
-backend/app/services/vector_store_openai.py  # OpenAI embeddings + FAISS
-backend/build_vector_store.py                 # Build/rebuild vector store
+backend/app/services/vector_store_openai.py  # OpenAI embeddings + FAISS (gelöscht)
+backend/build_vector_store.py                 # Build/rebuild vector store (gelöscht)
 
 # Enhanced LLM service with fallback chain
-backend/app/services/llm_service.py          # GPT-4o-mini → spaCy → Keywords
-backend/app/services/spacy_tagger.py         # NLP-based fallback
+backend/app/services/llm_service.py          # GPT-4o-mini → spaCy → Keywords (spaCy-Stufe entfernt)
+backend/app/services/spacy_tagger.py         # NLP-based fallback (gelöscht)
 
 # API endpoint
-POST /api/tags/suggest/{tweet_id}            # Returns existing + new suggestions
+POST /api/tags/suggest/{tweet_id}            # (entfernt — heute /api/concepts/suggestions/tweets/{id}/suggest)
 ```
 
 ### 2. Server-Side Tag Filtering Fix
@@ -1953,19 +2449,11 @@ Fixed issue where tags with special characters weren't filtering correctly.
 - Properly handles URL encoding for special characters
 - Works with entire database, not just first 100 tweets
 
-### 3. Intelligent Fallback System
-Three-tier fallback for tag generation with debug logging:
+> **Hinweis (24.07.2026):** Der `tag`-Parameter existiert nicht mehr — Tweet-Filterung läuft heute über `concept_id` bzw. `GET /api/tweets/faceted-search`.
 
-1. **Primary**: OpenAI GPT-4o-mini API
-2. **Secondary**: spaCy NLP (if installed) - for truncated retweets
-3. **Tertiary**: Simple keyword extraction
+### 3. Intelligent Fallback System (aktualisiert 24.07.2026)
 
-Debug logs explain why fallback is used:
-```
-DEBUG: Using fallback - Truncated retweet detected (ellipsis: True, length: 121)
-DEBUG: Reason - Retweets with ellipsis cannot be properly analyzed by LLM
-DEBUG: spaCy fallback successful, extracted 5 tags
-```
+> **Korrektur:** Die frühere dreistufige Kette (GPT → spaCy → Keywords) existiert nicht mehr — `spacy_tagger.py` wurde gelöscht. Modell-Fallbacks laufen heute über die LiteLLM-Router-Fallback-Ketten in `backend/litellm_config.yaml`.
 
 ## Collecting New Tweets (Python)
 
@@ -2000,34 +2488,13 @@ export BASIC_ACCOUNT_MODE=false
 python tweet_collector_service.py
 ```
 
-#### 2. **Smart Collection with Rate Limiting**
-```bash
-python smart_collect.py
-```
-- Includes automatic delays between API calls
-- Shows progress with countdown timers
-- Handles rate limits gracefully
+> **Entfernt (Script-Bereinigung):** `smart_collect.py`, `force_collect.py`, `scheduled_collector.py`, `collect_tweets.py` und `wait_and_collect.py` existieren nicht mehr. Einziger Collector-Einstieg ist `tweet_collector_service.py` bzw. `./start_basic_collector.sh`.
 
-#### 3. **Force Collection (Reset and Collect)**
-```bash
-python force_collect.py
-```
-- Resets collection state
-- Forces collection even if recently run
-
-#### 4. **Scheduled Collection**
-```bash
-python scheduled_collector.py
-```
-- Runs collection on a schedule
-- Good for automated/cron setups
-
-#### 5. **Monitor Collection Progress**
+#### 4. **Monitor Collection Progress**
 ```bash
 python monitor_collection.py
 ```
-- Shows real-time collection statistics
-- Updates every 5 seconds
+- Shows collection statistics (einmalige Ausgabe — kein 5-Sekunden-Loop)
 
 ### Check Collection Status
 
@@ -2045,28 +2512,20 @@ mongosh smarttrendtracer --eval "db.tweets.find().sort({created_at: -1}).limit(1
 
 ### If Rate Limited
 
-If you encounter rate limit errors (429):
-```bash
-# Wait and collect with automatic retry
-python wait_and_collect.py
-
-# Or use smart collect with built-in delays
-python smart_collect.py
-```
+If you encounter rate limit errors (429): `tweet_collector_service.py` verwenden — hat eingebautes Rate Limiting und Retry-Logik (`wait_and_collect.py`/`smart_collect.py` wurden entfernt).
 
 ### Best Practice - Daily Workflow
 
 ```bash
 # 1. Collect new tweets
 cd backend
-python collect_tweets.py
+./start_basic_collector.sh   # (collect_tweets.py wurde entfernt)
 
 # 2. Process and tag them
 python app/main.py  # Start the API server
 # Then use the web interface to review and tag
 
-# 3. Generate trend analysis
-python app/analyzers/enhanced_trend_analyzer.py
+# 3. Trend-Analyse über das Trend Dashboard in der UI (die Analyzer-Skripte wurden entfernt)
 ```
 
 ## Book Management Commands
@@ -2114,7 +2573,7 @@ mongosh smarttrendtracer --eval "db.books.find({processing_status: 'failed'}).co
 # - "epub_native": EPUB-specific processing (EPUB files only)
 
 # Example: Process with specific processor
-curl -X POST "http://localhost:8000/api/books/{book_id}/process?preferred_processor=marker"
+curl -X POST "http://localhost:8088/api/books/{book_id}/process?preferred_processor=marker"
 ```
 
 ### Book Features Testing
@@ -2134,34 +2593,11 @@ pip install langchain-community
 
 ## API Endpoints
 
-### Tag Suggestions
+### Tag Suggestions (Concept Suggestions)
 ```http
-POST /api/tags/suggest/{tweet_id}
+POST /api/concepts/suggestions/tweets/{tweet_id}/suggest
 ```
-Response:
-```json
-{
-  "tweet_id": "123",
-  "existing_suggestions": [
-    {
-      "tag": "artificial-intelligence",
-      "score": 0.723,
-      "usage_count": 45,
-      "type": "existing"
-    }
-  ],
-  "new_suggestions": [
-    {
-      "tag": "gpt-5-capabilities",
-      "type": "new",
-      "model": "gpt-4o-mini"
-    }
-  ],
-  "already_tagged": ["ai", "openai"],
-  "model_used": "gpt-4o-mini",
-  "total_suggestions": 8
-}
-```
+> **Hinweis (24.07.2026):** Der frühere Endpunkt `POST /api/tags/suggest/{tweet_id}` wurde entfernt — Tag-Vorschläge laufen über die Concept-Suggestions-API (`backend/app/api/concepts_suggestions_mongodb.py`).
 
 ### RAG Search with Trend Analysis (NEW - November 2025)
 
@@ -2312,11 +2748,10 @@ This confirms that:
 
 ### Tweet Filtering
 ```http
-GET /api/tweets?tag={tag_name}&limit=100
+GET /api/tweets/faceted-search?concept_id={concept_id}&...
 ```
-- Properly encode tag names: `Research & Development` → `Research%20%26%20Development`
+- Filterung läuft über `concept_id` — der frühere `tag`-Parameter (`GET /api/tweets?tag=...`) wurde entfernt
 - Server-side filtering for performance
-- Returns only tweets with specified tag
 
 ## Configuration Files
 
@@ -2372,19 +2807,7 @@ OPENAI_API_KEY=your_key_here  # Required for embeddings and tag generation
 
 ## Testing Scripts
 
-```bash
-# Test tag suggestions
-python backend/test_enhanced_tags.py
-
-# Test vector store
-python backend/test_vector_search.py
-
-# Test tag filtering
-python backend/test_tag_filtering.py
-
-# Build/rebuild vector store
-python backend/build_vector_store.py
-```
+> **Entfernt:** `test_enhanced_tags.py`, `test_vector_search.py`, `test_tag_filtering.py` und `build_vector_store.py` existieren nicht mehr (Script-Bereinigung). RAG-Index-Rebuild: `python backend/rebuild_rag_index.py`.
 
 ## Common Issues & Solutions
 
@@ -2397,13 +2820,7 @@ python backend/build_vector_store.py
 **Solution**: Switched from o1-mini to gpt-4o-mini (o1-mini is reasoning model, not suitable for summarization)
 
 ### Fallback Not Working
-**Issue**: spaCy fallback fails
-**Solution**: Install spaCy in virtual environment:
-```bash
-source venv/bin/activate
-pip install spacy
-python -m spacy download en_core_web_sm
-```
+**Obsolet (24.07.2026):** Die spaCy-Fallback-Stufe wurde entfernt (`spacy_tagger.py` gelöscht). Modell-Fallbacks laufen über die LiteLLM-Router-Fallback-Ketten in `backend/litellm_config.yaml`.
 
 ### Rate Limiting
 **Issue**: OpenAI API rate limits
@@ -2562,16 +2979,7 @@ tail -f tweet_collector.log
 ```
 
 ### Manual Collection
-```bash
-# Collect recent tweets
-python collect_tweets.py
-
-# Smart collection with rate limiting
-python smart_collect.py
-
-# Force collection (reset state)
-python force_collect.py
-```
+> **Entfernt:** `collect_tweets.py`, `smart_collect.py` und `force_collect.py` existieren nicht mehr — manuelle Collection über `python tweet_collector_service.py` bzw. `./start_basic_collector.sh`.
 
 ## Database Maintenance
 
@@ -2610,8 +3018,8 @@ mongorestore --db smarttrendtracer backup_20250124/smarttrendtracer
 
 | ID | Issue | Status | Workaround |
 |----|-------|--------|------------|
-| DEF-001 | Article Viewer optimistic updates | In Progress | Manual Refresh |
-| DEF-002 | Topic Explorer keyboard nav | TODO | Use mouse |
+| DEF-001 | Article Viewer optimistic updates | Resolved (2026-07-24) | — |
+| DEF-002 | Topic Explorer keyboard nav | Resolved (2025-12-31) | — |
 | DEF-003 | Twitter media 404s | By Design | Re-collect tweets |
 | DEF-004 | @sama duplicate detection | Known | Timezone fix script |
 | DEF-005 | React key warning | Won't Fix | None needed |
@@ -2625,8 +3033,8 @@ mongorestore --db smarttrendtracer backup_20250124/smarttrendtracer
 # Fix Substack previews
 cd backend && python fix_previews.py
 
-# Re-collect tweets for fresh media URLs
-cd backend && python collect_tweets.py
+# Re-collect tweets for fresh media URLs (collect_tweets.py wurde entfernt)
+cd backend && python tweet_collector_service.py
 
 # Use rate-limited collector
 cd backend && python tweet_collector_service.py
@@ -2634,20 +3042,22 @@ cd backend && python tweet_collector_service.py
 
 ## API Endpoints (Extended)
 
-### Substack Endpoints
+### Article Endpoints (ehemals Substack)
+> **Korrektur (24.07.2026):** Die `/api/substack/articles/*`-Routen existieren nicht mehr — die Artikel-Funktionalität liegt unter `/api/articles/*`. `/api/substack` bietet nur noch `/trends` und `/health`.
 ```http
-GET /api/substack/articles
-GET /api/substack/articles/{article_id}
-POST /api/substack/articles/{article_id}/summarize
-POST /api/substack/articles/{article_id}/snippets
-GET /api/substack/authors
+GET /api/articles/
+GET /api/articles/{article_id}
+GET /api/articles/faceted-search
+GET /api/substack/trends
+GET /api/substack/health
 ```
 
 ### Twitter Endpoints
 ```http
 GET /api/tweets
 GET /api/tweets/{tweet_id}
-POST /api/tags/suggest/{tweet_id}
+GET /api/tweets/faceted-search
+POST /api/concepts/suggestions/tweets/{tweet_id}/suggest   # (ehemals POST /api/tags/suggest/{tweet_id})
 GET /api/trends
 ```
 
@@ -2775,16 +3185,16 @@ python -c "from pymongo import MongoClient; client = MongoClient(); db = client.
 
 ### Daily Operations
 ```bash
-# Collect tweets
+# Collect tweets (collect_tweets.py wurde entfernt)
 cd backend
-python collect_tweets.py
+./start_basic_collector.sh
 
 # Collect newsletters
 python -m app.collectors.gmail_substack_collector
 
 # Start services
-cd backend && python app/main.py  # API on :8000
-cd frontend && npm run dev         # UI on :3000
+cd backend && python app/main.py  # API on :8088
+cd frontend && npm run dev         # UI on :3470
 ```
 
 ### Maintenance

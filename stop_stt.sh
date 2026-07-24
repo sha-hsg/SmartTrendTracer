@@ -9,6 +9,9 @@
 #   --mongo-no, -n    Keep MongoDB running without asking
 #   (no parameter)    Interactive - ask about MongoDB
 
+# Service ports (must match start_stt.sh)
+BACKEND_PORT=8088
+
 # Parse command line arguments
 MONGO_ACTION=""
 while [[ $# -gt 0 ]]; do
@@ -167,6 +170,15 @@ else
     stop_service_by_name "tweet_collector_service.py" "Tweet Collector"
 fi
 
+# Stop Book Processing Worker
+echo ""
+echo "3b. Stopping Book Processing Worker..."
+if [ -f "pids/book_worker.pid" ]; then
+    stop_service_by_pid "pids/book_worker.pid" "Book Processing Worker"
+else
+    stop_service_by_name "book_processing_worker.py" "Book Processing Worker"
+fi
+
 # Stop Marker Service
 echo ""
 echo "4. Stopping Marker Service..."
@@ -191,7 +203,7 @@ echo "6. Stopping Backend API Server..."
 if [ -f "pids/backend.pid" ]; then
     stop_service_by_pid "pids/backend.pid" "Backend API"
 else
-    stop_service_by_port 8000 "Backend API"
+    stop_service_by_port $BACKEND_PORT "Backend API"
 fi
 
 # Handle MongoDB
@@ -327,7 +339,7 @@ check_status() {
 
 all_stopped=true
 
-check_status 8000 "Backend API      " || all_stopped=false
+check_status $BACKEND_PORT "Backend API      " || all_stopped=false
 check_status 8002 "Marker Service   " || all_stopped=false
 check_status 8003 "MinerU Service   " || all_stopped=false
 check_status 3470 "Frontend         " || all_stopped=false
@@ -345,6 +357,13 @@ if pgrep -f "reddit_collector.py" > /dev/null; then
     all_stopped=false
 else
     echo -e "Reddit Collector: ${GREEN}✓ Stopped${NC}"
+fi
+
+if pgrep -f "book_processing_worker.py" > /dev/null; then
+    echo -e "Book Worker:      ${RED}✗ Still running${NC}"
+    all_stopped=false
+else
+    echo -e "Book Worker:      ${GREEN}✓ Stopped${NC}"
 fi
 
 if pgrep -x "mongod" > /dev/null; then

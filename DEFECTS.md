@@ -1,36 +1,12 @@
 # SmartTrendTracer - Defects & Known Issues
 
-*Zuletzt aktualisiert: 2026-01-21*
+*Zuletzt aktualisiert: 2026-07-24*
 
 ---
 
 ## Critical / In Progress
 
-### DEF-001: Article Viewer - Optimistic UI Updates funktionieren nicht
-**Status:** In Progress
-**Priorität:** High
-**Bereich:** Frontend - Articles
-
-**Problem:**
-Nach Aktionen im Article Viewer (Annotations, Summary hinzufügen) wird die Artikel-Liste nicht aktualisiert. User muss manuell "Refresh" klicken.
-
-**Symptome:**
-- `onClose` Callback wird aufgerufen aber Parent-Handler läuft nicht
-- Custom Event `articleViewerClosed` wird dispatched aber nicht empfangen
-- Console zeigt `🔵 X-Button clicked` aber nicht `🟠 event received`
-
-**Betroffene Dateien:**
-- `frontend/src/components/ArticleViewerModern.tsx`
-- `frontend/src/components/FacetedSubstackDashboardModern.tsx`
-- `frontend/src/components/ArticleViewerErrorBoundary.tsx`
-
-**Bisherige Fix-Versuche:**
-1. useCallback für stable handler reference → funktioniert nicht
-2. useEffect mit [handleViewerClosed] dependency → funktioniert nicht
-
-**Workaround:** Manuell "Refresh" Button klicken
-
-**Details:** Siehe `DEFECTS_OPTIMISTIC_UI.md`
+*Keine offenen Einträge — DEF-001 wurde am 2026-07-24 gelöst (siehe Resolved).*
 
 ---
 
@@ -54,7 +30,7 @@ Twitter API liefert temporäre URLs die nach einer gewissen Zeit ablaufen.
 **Workaround:** Tweets neu collecten um frische Media URLs zu bekommen
 ```bash
 cd backend
-python collect_tweets.py
+python tweet_collector_service.py   # (collect_tweets.py wurde entfernt)
 ```
 
 ---
@@ -140,22 +116,31 @@ Zu viele Requests in 15-Minuten Window führen zu Rate Limit Errors.
 
 ## Architecture / Technical Debt
 
-### DEBT-002: Debug Logs im Production Code
-**Status:** Technical Debt
-**Bereich:** Frontend
-
-**Problem:**
-Debug console.logs (🔵, 🟠, 🔴) sind noch im Code für Debugging von DEF-001.
-
-**Betroffene Dateien:**
-- `frontend/src/components/ArticleViewerModern.tsx`
-- `frontend/src/components/FacetedSubstackDashboardModern.tsx`
-
-**Aktion:** Entfernen wenn DEF-001 gefixt ist
+*Keine offenen Einträge.*
 
 ---
 
 ## Resolved (Reference)
+
+### [RESOLVED] DEF-001: Article Viewer - Optimistic UI Updates funktionieren nicht
+**Gelöst:** 2026-07-24
+
+**Problem:** Nach Aktionen im Article Viewer (Annotations, Summary hinzufügen) wurde die Artikel-Liste nicht aktualisiert; das Custom Event `articleViewerClosed` wurde dispatched, aber vom Parent nie empfangen.
+
+**Ursache:** Der `articleViewerClosed`-Listener lag ausschließlich in der toten Datei `components/substack/FacetedSubstackDashboardModern.tsx` — das live gerenderte Articles-Dashboard hatte keinen Listener (Befund der Funktionsinventur, `docs/funktionsinventur.md`).
+
+**Fix:** `onClose`-Callback + Event-Listener im aktiven `frontend/src/components/articles/FacetedArticlesDashboardModern.tsx` implementiert; der tote `components/substack/`-Ordner wurde gelöscht.
+
+---
+
+### [RESOLVED] DEBT-002: Debug Logs im Production Code
+**Gelöst:** 2026-07-24
+
+**Problem:** Debug console.logs (🔵, 🟠, 🔴) für DEF-001-Debugging im Code.
+
+**Lösung:** Mit dem DEF-001-Fix erledigt — die betroffenen Dateien (alte `ArticleViewerModern.tsx` top-level, `components/substack/FacetedSubstackDashboardModern.tsx`) wurden in der Inventur-Bereinigung gelöscht. Verifikation: repo-weiter Grep nach 🔵/🟠/🔴 in `frontend/src/` ohne Treffer.
+
+---
 
 ### [RESOLVED] DEBT-001: Legacy SQLite Scripts
 **Gelöst:** 2026-01-21

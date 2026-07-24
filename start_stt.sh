@@ -7,6 +7,9 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
+# Service ports (8000 conflicts with Honcho Docker; 8088 is free)
+export BACKEND_PORT=8088
+
 # Activate mise if available (for managing Python versions)
 if command -v mise &> /dev/null; then
     eval "$(mise activate bash 2>/dev/null)"
@@ -224,11 +227,60 @@ else
     fi
 fi
 
+# Clean up stale processing statuses (papers/books stuck in "processing_*" state from previous run)
+log_plain ""
+log "   Cleaning up stale processing statuses..."
+if command -v mongosh &> /dev/null; then
+    # Reset papers stuck in processing state
+    STALE_PAPERS=$(mongosh smarttrendtracer --quiet --eval "
+        const result = db.papers.updateMany(
+            {processing_status: {\$regex: /^processing/}},
+            {\$set: {processing_status: 'pending', processing_progress: null, marker_process_health: null}}
+        );
+        print(result.modifiedCount);
+    " 2>/dev/null || echo "0")
+
+    # Reset books stuck in processing state
+    STALE_BOOKS=$(mongosh smarttrendtracer --quiet --eval "
+        const result = db.books.updateMany(
+            {processing_status: {\$regex: /^processing/}},
+            {\$set: {processing_status: 'pending', processing_progress: null, marker_process_health: null}}
+        );
+        print(result.modifiedCount);
+    " 2>/dev/null || echo "0")
+
+    if [ "$STALE_PAPERS" != "0" ] || [ "$STALE_BOOKS" != "0" ]; then
+        log "   ✓ Reset $STALE_PAPERS papers and $STALE_BOOKS books from stale processing state"
+    else
+        log "   ✓ No stale processing statuses found"
+    fi
+else
+    log "   ⚠️  mongosh not found, skipping cleanup"
+fi
+
+# Ensure all papers have paper_type field (migration for review mode)
+log "   Setting paper_type for existing papers..."
+if command -v mongosh &> /dev/null; then
+    MIGRATED_PAPERS=$(mongosh smarttrendtracer --quiet --eval "
+        const result = db.papers.updateMany(
+            {paper_type: {\$exists: false}},
+            {\$set: {paper_type: 'research'}}
+        );
+        print(result.modifiedCount);
+    " 2>/dev/null || echo "0")
+
+    if [ "$MIGRATED_PAPERS" != "0" ]; then
+        log "   ✓ Set paper_type='research' on $MIGRATED_PAPERS papers"
+    else
+        log "   ✓ All papers already have paper_type field"
+    fi
+fi
+
 # Start Backend API Server
 log_plain ""
-log "2. Starting Backend API Server (port 8000)..."
-if check_service 8000 "Backend API"; then
-    log "   Port 8000 available, starting backend..."
+log "2. Starting Backend API Server (port $BACKEND_PORT)..."
+if check_service $BACKEND_PORT "Backend API"; then
+    log "   Port $BACKEND_PORT available, starting backend..."
     BACKEND_DIR="$SCRIPT_DIR/backend"
     cd "$BACKEND_DIR"
 
@@ -258,14 +310,14 @@ if check_service 8000 "Backend API"; then
 
     # Start the backend server in the background with explicit venv path
     log "   Starting uvicorn server (reload mode)..."
-    nohup $PYTHON_BIN -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > "$SCRIPT_DIR/logs/backend.log" 2>&1 &
+    nohup $PYTHON_BIN -m uvicorn app.main:app --reload --host 0.0.0.0 --port $BACKEND_PORT > "$SCRIPT_DIR/logs/backend.log" 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > "$SCRIPT_DIR/pids/backend.pid"
     log "   Backend process started with PID: $BACKEND_PID"
     log "   Using Python: $PYTHON_BIN"
 
     # Backend needs longer timeout due to MongoDB index creation (44s typical)
-    wait_for_service 8000 "Backend API" 60
+    wait_for_service $BACKEND_PORT "Backend API" 60
     cd "$SCRIPT_DIR"
 else
     log "   Skipping backend start (already running)"
@@ -458,9 +510,52 @@ else
     log "   Set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in environment to enable"
 fi
 
+# Start Book Processing Worker
+log_plain ""
+log "7. Starting Book Processing Worker..."
+BACKEND_DIR="$SCRIPT_DIR/backend"
+cd "$BACKEND_DIR"
+
+# Check if book processing worker is already running
+log "   Checking for book_processing_worker.py process..."
+if pgrep -f "book_processing_worker.py" > /dev/null; then
+    BOOK_WORKER_PID=$(pgrep -f "book_processing_worker.py")
+    log_plain "   ⚠️  Book Processing Worker is already running (PID: $BOOK_WORKER_PID)"
+else
+    log "   Book Processing Worker not running, starting..."
+    # Use backend environment with explicit path (validate python binary exists)
+    log "   Checking for Python virtual environment..."
+    if check_venv_valid "venv"; then
+        BOOK_WORKER_PYTHON="$BACKEND_DIR/venv/bin/python"
+        log "   Using backend venv..."
+    elif check_venv_valid "$SCRIPT_DIR/venv"; then
+        BOOK_WORKER_PYTHON="$SCRIPT_DIR/venv/bin/python"
+        log "   Using parent venv..."
+    else
+        BOOK_WORKER_PYTHON="python3"
+        log "   No valid venv found, using system Python"
+    fi
+
+    # Start the book processing worker in the background with explicit venv path
+    log "   Starting book processing worker (background process)..."
+    nohup $BOOK_WORKER_PYTHON book_processing_worker.py > "$SCRIPT_DIR/logs/book_worker.log" 2>&1 &
+    BOOK_WORKER_PID=$!
+    echo $BOOK_WORKER_PID > "$SCRIPT_DIR/pids/book_worker.pid"
+    log "   Book Processing Worker process started with PID: $BOOK_WORKER_PID"
+    log "   Using Python: $BOOK_WORKER_PYTHON"
+
+    sleep 2
+    if pgrep -f "book_processing_worker.py" > /dev/null; then
+        log_plain "   ✓ Book Processing Worker started successfully"
+    else
+        log_plain "   ✗ Failed to start Book Processing Worker (check logs/book_worker.log)"
+    fi
+fi
+cd "$SCRIPT_DIR"
+
 # Start Frontend Development Server
 log_plain ""
-log "7. Starting Frontend Development Server (port 3470)..."
+log "8. Starting Frontend Development Server (port 3470)..."
 if check_service 3470 "Frontend"; then
     log "   Port 3470 available, starting frontend..."
     FRONTEND_DIR="$SCRIPT_DIR/frontend"
@@ -532,9 +627,9 @@ else
 fi
 
 # Backend API
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    BACKEND_PID=$(lsof -Pi :8000 -sTCP:LISTEN -t)
-    log_plain "Backend API:      ✓ http://localhost:8000 (PID: $BACKEND_PID)"
+if lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+    BACKEND_PID=$(lsof -Pi :$BACKEND_PORT -sTCP:LISTEN -t)
+    log_plain "Backend API:      ✓ http://localhost:$BACKEND_PORT (PID: $BACKEND_PID)"
 else
     log_plain "Backend API:      ✗ Not running"
 fi
@@ -573,6 +668,14 @@ else
     log_plain "Reddit Collector: - Skipped (no credentials)"
 fi
 
+# Book Processing Worker
+if pgrep -f "book_processing_worker.py" > /dev/null; then
+    BOOK_WORKER_PID=$(pgrep -f "book_processing_worker.py")
+    log_plain "Book Worker:      ✓ Running in background (PID: $BOOK_WORKER_PID)"
+else
+    log_plain "Book Worker:      ✗ Not running"
+fi
+
 # Frontend
 if lsof -Pi :3470 -sTCP:LISTEN -t >/dev/null 2>&1; then
     FRONTEND_PID=$(lsof -Pi :3470 -sTCP:LISTEN -t)
@@ -590,6 +693,7 @@ log "  Marker:          logs/marker.log"
 log "  MinerU:          logs/mineru.log"
 log "  Tweet Collector: logs/tweet_collector.log"
 log "  Reddit Collector: logs/reddit_collector.log"
+log "  Book Worker:     logs/book_worker.log"
 log "  Frontend:        logs/frontend.log"
 log_plain ""
 log "To stop all services, run: ./stop_stt.sh"
