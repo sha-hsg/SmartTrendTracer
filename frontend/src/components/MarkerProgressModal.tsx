@@ -70,7 +70,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
       const interval = setInterval(async () => {
         try {
           const response = await axios.get(
-            `http://localhost:8000/api/papers/${paperId}`
+            `/api/papers/${paperId}`
           );
           
           const paper = response.data;
@@ -141,7 +141,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
     try {
       // Start the Marker processing
       const response = await axios.post(
-        `http://localhost:8000/api/papers/${paperId}/process-with-marker`
+        `/api/papers/${paperId}/process-with-marker`
       );
 
       if (response.data.success) {

@@ -59,7 +59,7 @@ const OpenReviewImportModal: React.FC<OpenReviewImportModalProps> = ({
 
     try {
       // Validate URL format
-      const response = await axios.post('http://localhost:8000/api/openreview/validate-url', { url })
+      const response = await axios.post('/api/openreview/validate-url', { url })
       
       if (response.data.valid) {
         setValidatedUrl(response.data.normalized_url)
@@ -68,7 +68,7 @@ const OpenReviewImportModal: React.FC<OpenReviewImportModalProps> = ({
         setFetchingMetadata(true)
         try {
           const metadataResponse = await axios.get(
-            `http://localhost:8000/api/openreview/metadata/${response.data.forum_id}`
+            `/api/openreview/metadata/${response.data.forum_id}`
           )
           setMetadata(metadataResponse.data)
         } catch (err) {
@@ -99,7 +99,7 @@ const OpenReviewImportModal: React.FC<OpenReviewImportModalProps> = ({
     try {
       const tagList = tags.split(',').map(t => t.trim()).filter(t => t)
       
-      const response = await axios.post('http://localhost:8000/api/openreview/import', {
+      const response = await axios.post('/api/openreview/import', {
         url: validatedUrl || url,
         add_tags: tagList.length > 0 ? tagList : undefined,
         process_pdf: true

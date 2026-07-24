@@ -69,7 +69,7 @@ export default function ConceptEditModal({
     try {
       // First try to find concept by slug/name
       const response = await axios.get(
-        `http://localhost:8000/api/ontology/find-by-name/${encodeURIComponent(tagName)}`
+        `/api/ontology/find-by-name/${encodeURIComponent(tagName)}`
       )
       
       if (response.data) {
@@ -112,7 +112,7 @@ export default function ConceptEditModal({
       // Use the concept's ID for updating
       const conceptId = concept.id || concept._id
       await axios.put(
-        `http://localhost:8000/api/ontology/concepts/${conceptId}`,
+        `/api/ontology/concepts/${conceptId}`,
         updateData
       )
       

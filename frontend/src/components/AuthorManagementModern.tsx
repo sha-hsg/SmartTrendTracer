@@ -25,7 +25,6 @@ import {
   Eye
 } from 'lucide-react'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 interface Author {
   id: string
@@ -102,7 +101,7 @@ const AuthorManagementModern: React.FC = () => {
       }
 
       const response = await axios.get<AuthorListResponse>(
-        `${API_BASE_URL}/api/authors/?${params.toString()}`
+        `/api/authors/?${params.toString()}`
       )
 
       setAuthors(response.data.authors)
@@ -140,7 +139,7 @@ const AuthorManagementModern: React.FC = () => {
 
     try {
       const response = await axios.get<AuthorDetails>(
-        `${API_BASE_URL}/api/authors/${author.id}`
+        `/api/authors/${author.id}`
       )
       setAuthorDetails(response.data)
     } catch (error) {

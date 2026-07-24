@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,7 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler,
-  ChartOptions
+  Filler
 } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
 import {
@@ -33,6 +32,15 @@ import {
   Twitter,
   FileText
 } from 'lucide-react'
+import {
+  TrendData,
+  TagTrendData,
+  QuickInsight,
+  accountColors,
+  getTimelineLabels,
+  chartOptions,
+  barChartOptions
+} from './trendVisualizationHelpers'
 
 // Register ChartJS components
 ChartJS.register(
@@ -46,25 +54,6 @@ ChartJS.register(
   Legend,
   Filler
 )
-
-interface TrendData {
-  daily: { date: string; count: number }[]
-  hourly: { hour: string; count: number }[]
-  by_account: { [key: string]: { date: string; count: number }[] }
-}
-
-interface TagTrendData {
-  top_tags: { tag: string; count: number }[]
-  timeline: { [key: string]: { date: string; count: number }[] }
-}
-
-interface QuickInsight {
-  type: 'increase' | 'decrease' | 'stable' | 'peak' | 'low'
-  title: string
-  value: string
-  description: string
-  icon: React.ReactNode
-}
 
 interface Props {
   contentType?: 'tweets' | 'articles'
@@ -99,7 +88,7 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
       if (contentType === 'articles') {
         // For articles, use the substack trends endpoint
         const trendResponse = await axios.get(
-          `http://localhost:8000/api/substack/trends?days=${timeRange}`
+          `/api/substack/trends?days=${timeRange}`
         )
         // Transform the data to match the expected format
         if (trendResponse.data) {
@@ -127,13 +116,13 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
       } else {
         // For tweets, use the regular analytics endpoints
         const trendResponse = await axios.get(
-          `http://localhost:8000/api/analytics/trends/timeline?days=${timeRange}`
+          `/api/analytics/trends/timeline?days=${timeRange}`
         )
         trendsData = trendResponse.data
         if (trendsData) setTrendData(trendsData)
 
         const tagResponse = await axios.get(
-          `http://localhost:8000/api/analytics/trends/tags?days=${timeRange}`
+          `/api/analytics/trends/tags?days=${timeRange}`
         )
         tagsData = tagResponse.data
         if (tagsData) setTagData(tagsData)
@@ -220,32 +209,6 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
     fetchTrendData()
   }
 
-  // Prepare chart data for daily timeline with smart labeling based on time range
-  const getTimelineLabels = (data: any[], timeRangeNum: number) => {
-    if (!data || data.length === 0) return []
-    
-    if (timeRangeNum >= 180) {
-      // For half-year and yearly views, show month/year format
-      return data.map(d => new Date(d.date).toLocaleDateString('en-US', { 
-        month: 'short', 
-        year: timeRangeNum >= 365 ? '2-digit' : undefined 
-      }))
-    } else if (timeRangeNum >= 30) {
-      // For monthly views, show month/day
-      return data.map(d => new Date(d.date).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
-      }))
-    } else {
-      // For shorter periods, show day only or month/day
-      return data.map(d => new Date(d.date).toLocaleDateString('en-US', { 
-        month: timeRangeNum <= 7 ? undefined : 'short',
-        day: 'numeric',
-        weekday: timeRangeNum <= 3 ? 'short' : undefined
-      }))
-    }
-  }
-
   const dailyChartData = {
     labels: getTimelineLabels(trendData?.daily || [], parseInt(timeRange)),
     datasets: [
@@ -279,16 +242,6 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
   }
 
   // Prepare account comparison data
-  const accountColors = [
-    'rgb(29, 161, 242)',
-    'rgb(126, 34, 206)',
-    'rgb(16, 185, 129)',
-    'rgb(251, 146, 60)',
-    'rgb(244, 63, 94)',
-    'rgb(99, 102, 241)',
-    'rgb(236, 72, 153)'
-  ]
-
   const accountChartData = {
     labels: getTimelineLabels(trendData?.daily || [], parseInt(timeRange)),
     datasets: Object.entries(trendData?.by_account || {}).slice(0, 7).map(([ account, data ], index) => ({
@@ -316,57 +269,6 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
         borderWidth: 1
       }
     ]
-  }
-
-  const chartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-      },
-      tooltip: {
-        mode: 'index' as const,
-        intersect: false,
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        }
-      }
-    }
-  }
-
-  const barChartOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)'
-        }
-      },
-      x: {
-        grid: {
-          display: false
-        }
-      }
-    }
   }
 
   if (loading) {

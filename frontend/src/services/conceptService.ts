@@ -6,8 +6,6 @@
 import axios from 'axios';
 import { Concept, ConceptWithCount } from '@/types/concept';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 class ConceptService {
   private conceptCache: Map<string, Concept> = new Map();
   private conceptsBySlug: Map<string, Concept> = new Map();
@@ -22,7 +20,7 @@ class ConceptService {
     }
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/concepts/${conceptId}`);
+      const response = await axios.get(`/api/concepts/${conceptId}`);
       const concept = response.data;
       this.cacheContent(concept);
       return concept;
@@ -51,7 +49,7 @@ class ConceptService {
     // Fetch missing concepts
     if (missingIds.length > 0) {
       try {
-        const response = await axios.post(`${API_BASE_URL}/api/concepts/batch`, {
+        const response = await axios.post(`/api/concepts/batch`, {
           concept_ids: missingIds
         });
         
@@ -72,7 +70,7 @@ class ConceptService {
    */
   async searchConcepts(query: string, limit: number = 10): Promise<Concept[]> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/concepts/search`, {
+      const response = await axios.get(`/api/concepts/search`, {
         params: { q: query, limit }
       });
       
@@ -91,7 +89,7 @@ class ConceptService {
   async getConceptStats(contentType?: 'tweet' | 'paper' | 'article'): Promise<ConceptWithCount[]> {
     try {
       const params = contentType ? { content_type: contentType } : {};
-      const response = await axios.get(`${API_BASE_URL}/api/concepts/stats`, { params });
+      const response = await axios.get(`/api/concepts/stats`, { params });
       
       const concepts = response.data.top_concepts || [];
       concepts.forEach((c: ConceptWithCount) => this.cacheContent(c));
@@ -107,7 +105,7 @@ class ConceptService {
    */
   async createConceptFromText(text: string): Promise<Concept | null> {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/concepts`, {
+      const response = await axios.post(`/api/concepts`, {
         text: text
       });
       
@@ -131,7 +129,7 @@ class ConceptService {
     text: string
   ): Promise<Concept | null> {
     try {
-      const endpoint = `${API_BASE_URL}/api/${contentType}s/${contentId}/concepts`;
+      const endpoint = `/api/${contentType}s/${contentId}/concepts`;
       const response = await axios.post(endpoint, null, {
         params: { text }
       });
@@ -156,7 +154,7 @@ class ConceptService {
     conceptId: string
   ): Promise<boolean> {
     try {
-      const endpoint = `${API_BASE_URL}/api/${contentType}s/${contentId}/concepts/${conceptId}`;
+      const endpoint = `/api/${contentType}s/${contentId}/concepts/${conceptId}`;
       await axios.delete(endpoint);
       return true;
     } catch (error) {

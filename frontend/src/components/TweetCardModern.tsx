@@ -163,10 +163,10 @@ const TweetCardModern = React.memo(function TweetCardModern({
   }
 
   const getConceptBadgeStyle = (_concept: Concept) => {
-    // Default: light-blue background with dark-blue text
+    const isDark = document.documentElement.classList.contains('dark')
     return {
-      backgroundColor: '#DBEAFE', // light blue (blue-100)
-      color: '#1E40AF'            // dark blue (blue-800)
+      backgroundColor: isDark ? '#1e3a5f' : '#DBEAFE',
+      color: isDark ? '#93c5fd' : '#1E40AF'
     }
   }
 
@@ -190,7 +190,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
 
   return (
     <>
-      <Card className="mb-4 hover:shadow-lg transition-all duration-200 border-gray-200">
+      <Card className="mb-4 hover:shadow-lg transition-all duration-200 border-gray-200 dark:border-gray-700">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -207,8 +207,8 @@ const TweetCardModern = React.memo(function TweetCardModern({
                 </div>
               )}
               <div>
-                <div className="font-semibold text-gray-900">@{tweet.author_username}</div>
-                <div className="text-xs text-gray-500 flex items-center gap-1">
+                <div className="font-semibold text-gray-900 dark:text-gray-100">@{tweet.author_username}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {formatDate(tweet.created_at)}
                 </div>
@@ -229,7 +229,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
         <CardContent className="pb-3">
           <div 
             ref={tweetContentRef}
-            className="text-gray-800 whitespace-pre-wrap break-words select-text cursor-text"
+            className="text-gray-800 dark:text-gray-100 whitespace-pre-wrap break-words select-text cursor-text"
             onClick={() => onTweetClick?.(tweet)}
             onMouseUp={handleTextSelection}
             onContextMenu={handleContextMenu}
@@ -241,7 +241,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
             <div className="mt-3 grid grid-cols-2 gap-2">
               {tweet.media.map((media, index) => (
                 !brokenImages.has(index) && (
-                  <div key={`${media.media_key}-${index}`} className="relative rounded-lg overflow-hidden bg-gray-100">
+                  <div key={`${media.media_key}-${index}`} className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                     {media.type === 'photo' ? (
                       <img 
                         src={media.url} 
@@ -300,8 +300,8 @@ const TweetCardModern = React.memo(function TweetCardModern({
                               onClick={(e) => e.stopPropagation()}
                             />
                           ) : (
-                            <div className="flex items-center justify-center h-32 bg-gray-200">
-                              <Film className="w-8 h-8 text-gray-400" />
+                            <div className="flex items-center justify-center h-32 bg-gray-200 dark:bg-gray-700">
+                              <Film className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                             </div>
                           )}
                           <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
@@ -359,8 +359,8 @@ const TweetCardModern = React.memo(function TweetCardModern({
                               onClick={(e) => e.stopPropagation()}
                             />
                           ) : (
-                            <div className="flex items-center justify-center h-32 bg-gray-200">
-                              <ImageIcon className="w-8 h-8 text-gray-400" />
+                            <div className="flex items-center justify-center h-32 bg-gray-200 dark:bg-gray-700">
+                              <ImageIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                             </div>
                           )}
                           <div className="absolute inset-0 flex items-center justify-center bg-black/50 pointer-events-none">
@@ -376,9 +376,9 @@ const TweetCardModern = React.memo(function TweetCardModern({
                         </div>
                       )
                     ) : (
-                      <div className="flex items-center justify-center h-32 bg-gray-200">
-                        <ImageIcon className="w-8 h-8 text-gray-400" />
-                        <span className="ml-2 text-sm text-gray-500">Media</span>
+                      <div className="flex items-center justify-center h-32 bg-gray-200 dark:bg-gray-700">
+                        <ImageIcon className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Media</span>
                       </div>
                     )}
                   </div>
@@ -387,7 +387,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
             </div>
           )}
 
-          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+          <div className="flex items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <Heart className="w-4 h-4" />
               <span>{(tweet.metrics?.likes || 0).toLocaleString()}</span>
@@ -408,8 +408,8 @@ const TweetCardModern = React.memo(function TweetCardModern({
         <CardFooter className="pt-3 pb-3">
           <div className="w-full">
             <div className="flex items-center gap-2 mb-2">
-              <Tag className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Concepts</span>
+              <Tag className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Concepts</span>
               {onSuggestConcepts && (
                 <Button
                   size="sm"
@@ -498,7 +498,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
       {/* Context Menu Portal */}
       {contextMenu && ReactDOM.createPortal(
         <div
-          className="fixed bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-50"
+          className="fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50"
           style={{
             left: contextMenu.x,
             top: contextMenu.y,
@@ -507,7 +507,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
             onClick={handleCreateConcept}
           >
             <Tag className="w-4 h-4" />
@@ -520,7 +520,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
       {/* Concept Creation Form Portal */}
       {showConceptCreationForm && ReactDOM.createPortal(
         <div
-          className="fixed bg-white border border-gray-200 rounded-lg shadow-xl p-4 z-50"
+          className="fixed bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 z-50"
           style={{
             left: '50%',
             top: '50%',

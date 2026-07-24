@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { API_BASE_URL } from '@/config/api'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
@@ -91,7 +92,7 @@ export default function UnifiedModelSelector({
 
       try {
         // Fetch task info (default model)
-        const taskRes = await fetch(`http://localhost:8000/api/llm/tasks/${taskType}`)
+        const taskRes = await fetch(`${API_BASE_URL}/api/llm/tasks/${taskType}`)
         if (!taskRes.ok) {
           throw new Error(`Task type '${taskType}' not found`)
         }
@@ -99,7 +100,7 @@ export default function UnifiedModelSelector({
         setTaskInfo(taskData)
 
         // Fetch ALL available models from all tasks
-        const modelsRes = await fetch('http://localhost:8000/api/llm/models')
+        const modelsRes = await fetch(`${API_BASE_URL}/api/llm/models`)
         if (!modelsRes.ok) {
           throw new Error('Failed to fetch available models')
         }
@@ -125,7 +126,7 @@ export default function UnifiedModelSelector({
         setAvailableModels(allModels)
 
         // Fetch user preference
-        const prefsRes = await fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`)
+        const prefsRes = await fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`)
         if (prefsRes.ok) {
           const prefsData = await prefsRes.json()
           const pref = prefsData[taskType]
@@ -172,7 +173,7 @@ export default function UnifiedModelSelector({
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

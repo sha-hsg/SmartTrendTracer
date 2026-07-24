@@ -17,9 +17,10 @@ interface UploadedFile {
 
 interface PaperUploadModernProps {
   onUploadComplete?: (papers: any[]) => void
+  paperType?: string
 }
 
-const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete }) => {
+const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete, paperType = 'research' }) => {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -77,7 +78,7 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete 
       formData.append('file', file)
       
       try {
-        const response = await axios.post('http://localhost:8000/api/papers/upload', formData, {
+        const response = await axios.post(`/api/papers/upload?paper_type=${paperType}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           },

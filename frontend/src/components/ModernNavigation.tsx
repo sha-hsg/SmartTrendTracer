@@ -25,12 +25,14 @@ import {
   Brain,
   GitCompare,
   Layers,
-  Settings,
+  Columns,
   Activity,
   BookOpen,
   GitBranch,
-  MessageSquare
+  MessageSquare,
+  FileSearch
 } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 export type ViewType =
   | 'dashboard'
@@ -44,6 +46,7 @@ export type ViewType =
   | 'twitter-charts'
   | 'twitter-summary'
   | 'twitter-accounts'
+  | 'twitter-deck'
   // Article views
   | 'articles-faceted'
   | 'articles-trends'
@@ -59,6 +62,7 @@ export type ViewType =
   // Papers views
   | 'papers-dashboard'
   | 'papers-references'
+  | 'reviews-dashboard'
   // Books views
   | 'books-dashboard'
   | 'books-analysis'
@@ -67,6 +71,7 @@ export type ViewType =
   | 'analysis-compare'
   | 'analysis-clustering'
   | 'topic-explorer'
+  | 'trend-dashboard'
   // Concept management
   | 'concept-management'
   | 'concept-graph'
@@ -115,12 +120,18 @@ const navigationItems = [
     icon: Twitter,
     items: [
       { 
-        title: 'Browse Tweets', 
-        view: 'twitter-faceted' as ViewType, 
+        title: 'Browse Tweets',
+        view: 'twitter-faceted' as ViewType,
         icon: FileText,
         description: 'Filter and explore tweets'
       },
-      { 
+      {
+        title: 'TweetDeck',
+        view: 'twitter-deck' as ViewType,
+        icon: Columns,
+        description: 'Multi-column account view'
+      },
+      {
         title: 'Media Gallery', 
         view: 'twitter-media' as ViewType, 
         icon: Image,
@@ -235,6 +246,12 @@ const navigationItems = [
         description: 'Research papers analysis'
       },
       {
+        title: 'Paper Reviews',
+        view: 'reviews-dashboard' as ViewType,
+        icon: FileSearch,
+        description: 'Unpublished papers under review'
+      },
+      {
         title: 'References',
         view: 'papers-references' as ViewType,
         icon: Database,
@@ -287,6 +304,12 @@ const navigationItems = [
         view: 'topic-explorer' as ViewType,
         icon: TrendingUp,
         description: 'Analyze topic trends and correlations'
+      },
+      {
+        title: 'Trend Dashboard',
+        view: 'trend-dashboard' as ViewType,
+        icon: Flame,
+        description: 'Real-time trend detection and analysis'
       }
     ]
   },
@@ -357,7 +380,7 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                                     {subItem.title}
                                   </div>
                                 </div>
-                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                <p className="line-clamp-2 text-sm leading-snug text-muted-foreground break-words mt-1">
                                   {subItem.description}
                                 </p>
                               </button>
@@ -388,11 +411,8 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
           </NavigationMenuList>
         </NavigationMenu>
 
-        <div className="ml-auto flex items-center space-x-4">
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <Settings className="h-4 w-4" />
-            <span className="sr-only">Settings</span>
-          </Button>
+        <div className="ml-auto flex items-center space-x-2">
+          <ThemeToggle />
         </div>
       </div>
     </header>

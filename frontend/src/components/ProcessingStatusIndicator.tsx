@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,15 +30,23 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
   const [isPolling, setIsPolling] = useState(false);
   const [progressMessage, setProgressMessage] = useState<string>('');
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
-  const [completedNotified, setCompletedNotified] = useState<boolean>(false);
+  // Use ref instead of state — state resets on unmount/remount, which can
+  // re-trigger the onComplete callback and cause a flicker loop.
+  const completedNotifiedRef = useRef(false);
   const [processHealth, setProcessHealth] = useState<any>(null);
   const [_progressData, setProgressData] = useState<any>(null);
+
+  // Store callbacks in refs to avoid triggering effect re-runs on every render
+  const onCompleteRef = useRef(onComplete);
+  const onStatusChangeRef = useRef(onStatusChange);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+  useEffect(() => { onStatusChangeRef.current = onStatusChange; }, [onStatusChange]);
 
   useEffect(() => {
     // Start polling if processing
     if (status === 'processing_with_marker' || status === 'processing_with_mineru' || status === 'processing_pdf' || status === 'processing_analyses') {
       setIsPolling(true);
-      setCompletedNotified(false); // Reset completion notification when processing starts
+      completedNotifiedRef.current = false; // Reset completion notification when processing starts
     } else {
       setIsPolling(false);
     }
@@ -55,8 +63,8 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
           setError(data.error || null);
           
           // Reset completion flag if status changed away from completed
-          if (data.status !== 'completed' && completedNotified) {
-            setCompletedNotified(false);
+          if (data.status !== 'completed' && completedNotifiedRef.current) {
+            completedNotifiedRef.current = false;
           }
           
           // Update progress data
@@ -71,13 +79,13 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
             setProgressPercentage(0);
           }
           
-          if (onStatusChange && data.status !== status) {
-            onStatusChange(data.status);
+          if (onStatusChangeRef.current && data.status !== status) {
+            onStatusChangeRef.current(data.status);
           }
-          
-          if (data.status === 'completed' && onComplete && !completedNotified) {
-            setCompletedNotified(true);
-            onComplete();
+
+          if (data.status === 'completed' && onCompleteRef.current && !completedNotifiedRef.current) {
+            completedNotifiedRef.current = true;
+            onCompleteRef.current();
           }
 
           // Stop polling if completed or failed
@@ -100,8 +108,8 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
     const interval = setInterval(checkStatus, 10000);
 
     return () => clearInterval(interval);
-  // Note: status removed from dependencies to avoid stale closures - it's set internally by setStatus()
-  }, [paperId, onComplete, onStatusChange, isPolling, completedNotified]);
+  // Note: onComplete/onStatusChange removed from deps — stored in refs to prevent re-render loops
+  }, [paperId, isPolling]);
 
   // Separate polling for process health (every 30 seconds)
   useEffect(() => {

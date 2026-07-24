@@ -8,64 +8,29 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { 
-  ZoomIn, 
-  ZoomOut, 
+import {
+  ZoomIn,
+  ZoomOut,
   Maximize2,
   Minimize2,
-  Expand, 
+  Expand,
   Download,
   RefreshCw,
   Layers,
   GitBranch,
-  ChevronDown,
-  ChevronRight
 } from 'lucide-react';
 
-interface GraphNode {
-  id: string | number;
-  name: string;
-  tag: string;
-  level: number;
-  usage: number;
-  size: number;
-  color: string;
-  description?: string;
-  verified?: boolean;
-  quality_score?: number;
-  child_count?: number;
-  descendant_count?: number;
-  is_synonym?: boolean;
-  x?: number;
-  y?: number;
-}
-
-interface GraphLink {
-  source: string | number;
-  target: string | number;
-  strength: number;
-  type: 'parent-child' | 'synonym';
-}
-
-interface GraphData {
-  nodes: GraphNode[];
-  links: GraphLink[];
-  stats: {
-    total_nodes: number;
-    total_links: number;
-    root_nodes: number;
-    max_depth: number;
-    total_usage: number;
-    orphan_count: number;
-  };
-}
+import { GraphNode, GraphLink, GraphData } from './ontology-graph/types';
+import { renderNodeCanvas } from './ontology-graph/nodeCanvasRenderer';
+import NodeInfoPanel from './ontology-graph/NodeInfoPanel';
+import GraphLegend from './ontology-graph/GraphLegend';
 
 const OntologyGraph: React.FC = () => {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  
+
   // Graph controls
   const [showOrphans, setShowOrphans] = useState(true);
   const [showSynonyms, setShowSynonyms] = useState(true);
@@ -77,7 +42,7 @@ const OntologyGraph: React.FC = () => {
   const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
   const [maxDepth, setMaxDepth] = useState(4);
   const [showCrossRefs, setShowCrossRefs] = useState(false);
-  
+
   const graphRef = useRef<any>();
   const containerRef = useRef<HTMLDivElement>(null);
   const elk = new ELK();
@@ -103,9 +68,9 @@ const OntologyGraph: React.FC = () => {
     const childIds = new Set(data.links
       .filter(l => l.type === 'parent-child')
       .map(l => l.target));
-    
+
     const rootNodes = data.nodes.filter(n => !childIds.has(n.id));
-    
+
     // Add virtual root and links to root nodes
     const enhancedNodes = [...data.nodes, virtualRoot];
     const enhancedLinks = [
@@ -121,19 +86,19 @@ const OntologyGraph: React.FC = () => {
     // Filter by depth and collapsed nodes
     const visibleNodes = new Set<string | number>();
     const queue: Array<{id: string | number, depth: number}> = [{id: '__root__', depth: 0}];
-    
+
     while (queue.length > 0) {
       const {id, depth} = queue.shift()!;
-      
+
       if (depth > maxDepth) continue;
-      
+
       visibleNodes.add(id);
-      
+
       // Don't add children if this node is collapsed (except for the virtual root)
       if (collapsedNodes.has(String(id)) && id !== '__root__') {
         continue;
       }
-      
+
       // Add children to queue
       enhancedLinks
         .filter(l => l.source === id && l.type === 'parent-child')
@@ -142,8 +107,8 @@ const OntologyGraph: React.FC = () => {
 
     // Filter nodes and links based on visibility
     const filteredNodes = enhancedNodes.filter(n => visibleNodes.has(n.id));
-    const filteredLinks = enhancedLinks.filter(l => 
-      visibleNodes.has(l.source) && 
+    const filteredLinks = enhancedLinks.filter(l =>
+      visibleNodes.has(l.source) &&
       visibleNodes.has(l.target) &&
       (l.type === 'parent-child' || (showCrossRefs && l.type === 'synonym'))
     );
@@ -175,7 +140,7 @@ const OntologyGraph: React.FC = () => {
     try {
       // Calculate layout
       const layout = await elk.layout(elkGraph);
-      
+
       // Apply layout positions to nodes
       const positionedNodes = filteredNodes.map(node => {
         const elkNode = layout.children?.find(n => n.id === String(node.id));
@@ -203,15 +168,15 @@ const OntologyGraph: React.FC = () => {
   const fetchGraphData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await axios.get('http://localhost:8000/api/ontology-graph/data', {
+      const response = await axios.get(`/api/ontology-graph/data`, {
         params: {
           include_orphans: showOrphans,
           min_usage: minUsage
         }
       });
-      
+
       // Filter out synonyms if needed
       let data = response.data;
       if (!showSynonyms) {
@@ -221,7 +186,7 @@ const OntologyGraph: React.FC = () => {
           links: data.links.filter((l: GraphLink) => l.type !== 'synonym')
         };
       }
-      
+
       // Apply ELK layout if selected
       if (layoutType === 'elk') {
         const processedData = await processGraphForELK(data);
@@ -242,13 +207,11 @@ const OntologyGraph: React.FC = () => {
     const updateDimensions = () => {
       if (containerRef.current) {
         if (isFullscreen) {
-          // In fullscreen mode, use full viewport
           setDimensions({
-            width: window.innerWidth - 40, // Small margin
-            height: window.innerHeight - 100 // Account for controls
+            width: window.innerWidth - 40,
+            height: window.innerHeight - 100
           });
         } else {
-          // Normal mode
           setDimensions({
             width: containerRef.current.offsetWidth,
             height: window.innerHeight - 250
@@ -270,8 +233,7 @@ const OntologyGraph: React.FC = () => {
   // Graph interaction handlers
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedNode(node);
-    
-    // Toggle collapse state on double-click
+
     if (layoutType === 'elk') {
       const nodeId = String(node.id);
       setCollapsedNodes(prev => {
@@ -288,29 +250,12 @@ const OntologyGraph: React.FC = () => {
 
   const handleNodeHover = useCallback((_node: GraphNode | null) => {
     if (!highlightNeighbors || !graphRef.current) return;
-
-    // Highlight logic would go here
-    // This would highlight connected nodes
   }, [highlightNeighbors]);
 
   // Zoom controls
-  const handleZoomIn = () => {
-    if (graphRef.current) {
-      graphRef.current.zoom(1.2);
-    }
-  };
-
-  const handleZoomOut = () => {
-    if (graphRef.current) {
-      graphRef.current.zoom(0.8);
-    }
-  };
-
-  const handleZoomFit = () => {
-    if (graphRef.current) {
-      graphRef.current.zoomToFit(400);
-    }
-  };
+  const handleZoomIn = () => { graphRef.current?.zoom(1.2); };
+  const handleZoomOut = () => { graphRef.current?.zoom(0.8); };
+  const handleZoomFit = () => { graphRef.current?.zoomToFit(400); };
 
   // Export graph as image
   const handleExport = () => {
@@ -324,10 +269,7 @@ const OntologyGraph: React.FC = () => {
     }
   };
 
-  // Toggle fullscreen mode
-  const toggleFullscreen = () => {
-    setIsFullscreen(!isFullscreen);
-  };
+  const toggleFullscreen = () => { setIsFullscreen(!isFullscreen); };
 
   // Handle ESC key to exit fullscreen
   useEffect(() => {
@@ -339,7 +281,6 @@ const OntologyGraph: React.FC = () => {
 
     if (isFullscreen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevent scrolling in fullscreen
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
@@ -372,7 +313,6 @@ const OntologyGraph: React.FC = () => {
     );
   }
 
-  // Fullscreen container styles
   const containerStyles = isFullscreen ? {
     position: 'fixed' as const,
     top: 0,
@@ -400,9 +340,9 @@ const OntologyGraph: React.FC = () => {
             <Button size="sm" variant="outline" onClick={handleZoomFit}>
               <Maximize2 className="w-4 h-4" />
             </Button>
-            <Button 
-              size="sm" 
-              variant={isFullscreen ? "default" : "outline"} 
+            <Button
+              size="sm"
+              variant={isFullscreen ? "default" : "outline"}
               onClick={toggleFullscreen}
               title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
             >
@@ -506,7 +446,7 @@ const OntologyGraph: React.FC = () => {
             <RefreshCw className="w-4 h-4 mr-1" />
             Refresh
           </Button>
-          
+
           <Button size="sm" variant="outline" onClick={handleExport}>
             <Download className="w-4 h-4 mr-1" />
             Export
@@ -532,7 +472,7 @@ const OntologyGraph: React.FC = () => {
           </Badge>
           {layoutType === 'elk' && (
             <Badge variant="secondary" className="ml-auto">
-              💡 Click nodes to collapse/expand
+              Click nodes to collapse/expand
             </Badge>
           )}
         </div>
@@ -549,83 +489,7 @@ const OntologyGraph: React.FC = () => {
             nodeLabel="name"
             nodeAutoColorBy="level"
             nodeCanvasObject={(node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-              const label = node.name;
-              const fontSize = 12 / globalScale;
-              const nodeRadius = node.size || 5;
-              ctx.font = `${fontSize}px Sans-Serif`;
-              
-              // Draw node circle
-              ctx.fillStyle = node.color || '#999';
-              ctx.beginPath();
-              ctx.arc(node.x, node.y, nodeRadius, 0, 2 * Math.PI, false);
-              ctx.fill();
-              
-              // Draw border for nodes with children (in ELK layout)
-              if (layoutType === 'elk' && node.child_count && node.child_count > 0) {
-                ctx.strokeStyle = collapsedNodes.has(String(node.id)) ? '#ef4444' : '#10b981';
-                ctx.lineWidth = 2 / globalScale;
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, nodeRadius + 2, 0, 2 * Math.PI, false);
-                ctx.stroke();
-              }
-              
-              // Draw collapse/expand indicator for nodes with children (in ELK layout)
-              if (layoutType === 'elk' && node.child_count && node.child_count > 0) {
-                const isCollapsed = collapsedNodes.has(String(node.id));
-                const indicatorSize = 8 / globalScale;
-                const indicatorX = node.x + nodeRadius + 4;
-                const indicatorY = node.y - nodeRadius;
-                
-                // Draw background circle for indicator
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                ctx.arc(indicatorX, indicatorY, indicatorSize, 0, 2 * Math.PI, false);
-                ctx.fill();
-                
-                ctx.strokeStyle = isCollapsed ? '#ef4444' : '#10b981';
-                ctx.lineWidth = 1.5 / globalScale;
-                ctx.beginPath();
-                ctx.arc(indicatorX, indicatorY, indicatorSize, 0, 2 * Math.PI, false);
-                ctx.stroke();
-                
-                // Draw chevron
-                ctx.strokeStyle = isCollapsed ? '#ef4444' : '#10b981';
-                ctx.lineWidth = 2 / globalScale;
-                ctx.beginPath();
-                if (isCollapsed) {
-                  // Chevron right for collapsed
-                  ctx.moveTo(indicatorX - indicatorSize/2, indicatorY - indicatorSize/2);
-                  ctx.lineTo(indicatorX + indicatorSize/3, indicatorY);
-                  ctx.lineTo(indicatorX - indicatorSize/2, indicatorY + indicatorSize/2);
-                } else {
-                  // Chevron down for expanded
-                  ctx.moveTo(indicatorX - indicatorSize/2, indicatorY - indicatorSize/3);
-                  ctx.lineTo(indicatorX, indicatorY + indicatorSize/2);
-                  ctx.lineTo(indicatorX + indicatorSize/2, indicatorY - indicatorSize/3);
-                }
-                ctx.stroke();
-              }
-              
-              // Draw label
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillStyle = '#333';
-              ctx.fillText(label, node.x, node.y + nodeRadius + fontSize);
-              
-              // Draw usage count
-              if (node.usage > 0) {
-                ctx.font = `${fontSize * 0.8}px Sans-Serif`;
-                ctx.fillStyle = '#666';
-                ctx.fillText(`(${node.usage})`, node.x, node.y);
-              }
-              
-              // Draw verified badge (only if not already showing collapse indicator)
-              if (node.verified && !(layoutType === 'elk' && node.child_count > 0)) {
-                ctx.fillStyle = '#10b981';
-                ctx.beginPath();
-                ctx.arc(node.x + nodeRadius, node.y - nodeRadius, 3, 0, 2 * Math.PI, false);
-                ctx.fill();
-              }
+              renderNodeCanvas(node, ctx, globalScale, { layoutType, collapsedNodes });
             }}
             linkDirectionalArrowLength={3}
             linkDirectionalArrowRelPos={1}
@@ -643,82 +507,16 @@ const OntologyGraph: React.FC = () => {
 
         {/* Selected node info */}
         {selectedNode && (
-          <div className="absolute top-4 right-4 bg-white border rounded-lg shadow-lg p-4 max-w-xs">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold">{selectedNode.name}</h3>
-              <button
-                onClick={() => setSelectedNode(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="space-y-1 text-sm">
-              <div>Tag: <code className="bg-gray-100 px-1">{selectedNode.tag}</code></div>
-              <div>Level: {selectedNode.level}</div>
-              <div>Usage: {selectedNode.usage}</div>
-              {selectedNode.child_count !== undefined && (
-                <div>Children: {selectedNode.child_count}</div>
-              )}
-              {selectedNode.descendant_count !== undefined && (
-                <div>Descendants: {selectedNode.descendant_count}</div>
-              )}
-              {layoutType === 'elk' && selectedNode.child_count && selectedNode.child_count > 0 && (
-                <div className="flex items-center gap-2">
-                  <span>Status:</span>
-                  {collapsedNodes.has(String(selectedNode.id)) ? (
-                    <Badge variant="destructive" className="text-xs">
-                      <ChevronRight className="w-3 h-3 mr-1" />
-                      Collapsed
-                    </Badge>
-                  ) : (
-                    <Badge variant="default" className="text-xs">
-                      <ChevronDown className="w-3 h-3 mr-1" />
-                      Expanded
-                    </Badge>
-                  )}
-                </div>
-              )}
-              {selectedNode.verified && (
-                <Badge className="mt-2" variant="default">Verified</Badge>
-              )}
-              {selectedNode.is_synonym && (
-                <Badge className="mt-2" variant="secondary">Synonym</Badge>
-              )}
-              {selectedNode.description && (
-                <div className="mt-2 text-gray-600">{selectedNode.description}</div>
-              )}
-            </div>
-          </div>
+          <NodeInfoPanel
+            node={selectedNode}
+            layoutType={layoutType}
+            collapsedNodes={collapsedNodes}
+            onClose={() => setSelectedNode(null)}
+          />
         )}
 
         {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-white border rounded-lg shadow p-3">
-          <div className="text-xs font-semibold mb-2">Legend</div>
-          <div className="space-y-1 text-xs">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-400"></div>
-              <span>Root Concepts</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-teal-400"></div>
-              <span>Level 1</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-blue-400"></div>
-              <span>Level 2</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-green-400"></div>
-              <span>Level 3+</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-              <span>Synonyms</span>
-            </div>
-          </div>
-        </div>
+        <GraphLegend />
       </Card>
     </div>
   );

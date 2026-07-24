@@ -83,7 +83,7 @@ export default function PaperTagSuggestionModal({
 
   const loadExistingTags = async () => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/papers/${paper.id}`)
+      const response = await axios.get(`/api/papers/${paper.id}`)
       setExistingTags(response.data.tags || [])
     } catch (error) {
       console.error('Error loading existing tags:', error)
@@ -101,7 +101,7 @@ export default function PaperTagSuggestionModal({
     
     try {
       const response = await axios.post<TagSuggestionResponse>(
-        `http://localhost:8000/api/papers/${paper.id}/tags/suggest`,
+        `/api/papers/${paper.id}/tags/suggest`,
         {
           model: model || selectedModel
         },
@@ -182,20 +182,22 @@ export default function PaperTagSuggestionModal({
 
   const applyTags = async () => {
     if (selectedTags.size === 0) return
-    
+
     setApplying(true)
     setError(null)
-    
-    const tagsToApply = [...selectedTags]
-    
+
+    const conceptsToApply = [...selectedTags].map(tag => ({
+      display_name: tag,
+      slug: tag.toLowerCase().replace(/\s+/g, '-')
+    }))
+
     try {
-      // Apply each tag
-      for (const tag of tagsToApply) {
-        await axios.post(`http://localhost:8000/api/papers/${paper.id}/tags`, {
-          tag: tag
-        })
-      }
-      
+      await axios.post(
+        `/api/papers/${paper.id}/apply-concepts`,
+        conceptsToApply,
+        { timeout: 60000 }
+      )
+
       onTagsUpdated()
       onClose()
     } catch (error: any) {
@@ -304,6 +306,39 @@ export default function PaperTagSuggestionModal({
               </div>
             ) : suggestions ? (
               <div className="space-y-4 p-4">
+                {/* Select All / Clear All controls */}
+                {(() => {
+                  const allSuggestions = [
+                    ...(suggestions.existing_suggestions || []),
+                    ...(suggestions.new_suggestions || [])
+                  ]
+                  const allNames = allSuggestions.map(s => s.display_name || s.tag || '').filter(Boolean)
+                  const allSelected = allNames.length > 0 && allNames.every(n => selectedTags.has(n))
+                  return allNames.length > 0 ? (
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={allSelected}
+                            onChange={() => {
+                              if (allSelected) {
+                                setSelectedTags(new Set())
+                              } else {
+                                setSelectedTags(new Set(allNames))
+                              }
+                            }}
+                            className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Select all ({allNames.length})
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  ) : null
+                })()}
+
                 {/* Existing Tags Section */}
                 {suggestions.existing_suggestions.length > 0 && (
                   <div className="mb-6">

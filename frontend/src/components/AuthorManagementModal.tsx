@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
 interface Author {
   id: string;
   name: string;
@@ -48,7 +47,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
   const fetchAuthors = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/articles/authors/all');
+      const response = await axios.get(`/api/articles/authors/all`);
       setAuthors(response.data);
     } catch (err) {
       console.error('Error fetching authors:', err);
@@ -58,7 +57,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
   const fetchArticlesWithoutAuthor = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/articles/articles/without-author');
+      const response = await axios.get(`/api/articles/without-author`);
       setArticlesWithoutAuthor(response.data.articles || response.data);
     } catch (err) {
       console.error('Error fetching articles:', err);
@@ -73,7 +72,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     
     try {
       await axios.put(
-        `http://localhost:8000/api/articles/authors/${editingAuthor.id}`,
+        `/api/articles/authors/${editingAuthor.id}`,
         {
           name: editingAuthor.name,
           email: editingAuthor.email,
@@ -102,7 +101,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     
     try {
       await axios.delete(
-        `http://localhost:8000/api/articles/authors/${authorId}?delete_articles=${deleteArticles}`
+        `/api/articles/authors/${authorId}?delete_articles=${deleteArticles}`
       );
       
       await fetchAuthors();
@@ -129,7 +128,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     setError(null);
     
     try {
-      await axios.post('http://localhost:8000/api/articles/authors', newAuthor);
+      await axios.post(`/api/articles/authors`, newAuthor);
       
       await fetchAuthors();
       setNewAuthor({ name: '', email: '', subdomain: '' });
@@ -153,7 +152,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     
     try {
       await axios.post(
-        `http://localhost:8000/api/articles/authors/${selectedAuthor.id}/assign-articles`,
+        `/api/articles/authors/${selectedAuthor.id}/assign-articles`,
         selectedArticles
       );
       

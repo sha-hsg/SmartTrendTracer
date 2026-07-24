@@ -56,7 +56,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
       const tagList = tags.split(',').map(t => t.trim()).filter(t => t)
       const authorList = authors.split(',').map(a => a.trim()).filter(a => a)
       
-      const response = await axios.post('http://localhost:8000/api/papers/import-url', {
+      const response = await axios.post(`/api/papers/import-url`, {
         url,
         title: title.trim(),
         authors: authorList.join(', '),

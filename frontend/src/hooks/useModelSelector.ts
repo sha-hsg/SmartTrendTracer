@@ -24,6 +24,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { API_BASE_URL } from '@/config/api'
 
 interface ModelInfo {
   model: string
@@ -92,9 +93,9 @@ export function useModelSelector(
     try {
       // Fetch in parallel for performance
       const [taskRes, modelsRes, prefsRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/llm/tasks/${taskType}`),
-        fetch('http://localhost:8000/api/llm/models'),
-        fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`)
+        fetch(`${API_BASE_URL}/api/llm/tasks/${taskType}`),
+        fetch(`${API_BASE_URL}/api/llm/models`),
+        fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`)
       ])
 
       // Check responses
@@ -140,7 +141,7 @@ export function useModelSelector(
     setError(null)
 
     try {
-      const response = await fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -181,7 +182,7 @@ export function useModelSelector(
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/llm/preferences/${taskType}?user_id=${userId}`,
+        `/api/llm/preferences/${taskType}?user_id=${userId}`,
         { method: 'DELETE' }
       )
 
@@ -244,7 +245,7 @@ export function useMultiModelSelector(taskTypes: string[], userId: string = 'def
       setError(null)
 
       try {
-        const response = await fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`)
+        const response = await fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`)
         if (!response.ok) {
           throw new Error('Failed to fetch preferences')
         }
@@ -258,7 +259,7 @@ export function useMultiModelSelector(taskTypes: string[], userId: string = 'def
           }
 
           // Fetch default
-          const taskRes = await fetch(`http://localhost:8000/api/llm/tasks/${taskType}`)
+          const taskRes = await fetch(`${API_BASE_URL}/api/llm/tasks/${taskType}`)
           if (taskRes.ok) {
             const taskData = await taskRes.json()
             return [taskType, taskData.model]
@@ -285,7 +286,7 @@ export function useMultiModelSelector(taskTypes: string[], userId: string = 'def
   // Select model for a specific task
   const selectModel = useCallback(async (taskType: string, model: string) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -314,7 +315,7 @@ export function useMultiModelSelector(taskTypes: string[], userId: string = 'def
   // Reset all to defaults
   const resetAll = useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/llm/preferences?user_id=${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/llm/preferences?user_id=${userId}`, {
         method: 'DELETE'
       })
 
@@ -325,7 +326,7 @@ export function useMultiModelSelector(taskTypes: string[], userId: string = 'def
       // Reload defaults
       const defaults: Record<string, string> = {}
       for (const taskType of taskTypes) {
-        const taskRes = await fetch(`http://localhost:8000/api/llm/tasks/${taskType}`)
+        const taskRes = await fetch(`${API_BASE_URL}/api/llm/tasks/${taskType}`)
         if (taskRes.ok) {
           const taskData = await taskRes.json()
           defaults[taskType] = taskData.model

@@ -77,7 +77,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
     
     try {
       const response = await axios.post(
-        `http://localhost:8000/api/papers/${paperId}/grobid/process`
+        `/api/papers/${paperId}/grobid/process`
       )
       
       if (response.data.success) {
@@ -102,7 +102,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
     
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/papers/${paperId}/grobid/metadata`
+        `/api/papers/${paperId}/grobid/metadata`
       )
       
       if (response.data.grobid_metadata) {
@@ -123,7 +123,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
     try {
       // Use PUT endpoint for metadata update
       await axios.put(
-        `http://localhost:8000/api/papers/${paperId}/metadata`,
+        `/api/papers/${paperId}/metadata`,
         selectedFields
       )
       

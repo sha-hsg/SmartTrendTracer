@@ -4,7 +4,7 @@
  * Updated: December 24, 2025 - TESTED and WORKING model IDs
  */
 
-import { LucideIcon, Sparkles, Brain, Zap, Target, Hash, Layers, Crown, Bolt, MessageCircle } from 'lucide-react'
+import { LucideIcon, Sparkles, Brain, Zap, Target, Layers, Crown, Bolt, MessageCircle } from 'lucide-react'
 
 export interface ModelOption {
   value: string
@@ -50,7 +50,16 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
 
-  // ========== Claude 4 Models (TESTED) ==========
+  // ========== Claude Models (TESTED) ==========
+  {
+    value: 'claude-opus-4-5-20251101',
+    label: 'Claude Opus 4.5',
+    description: 'Most powerful - hybrid reasoning & creativity',
+    icon: Crown,
+    iconColor: 'text-orange-800',
+    badge: 'Latest',
+    badgeVariant: 'secondary'
+  },
   {
     value: 'claude-opus-4-1-20250805',
     label: 'Claude Opus 4.1',
@@ -88,10 +97,10 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
 
-  // ========== Gemini 3 Models (TESTED - NEWEST) ==========
+  // ========== Gemini 3.x Models (TESTED - NEWEST) ==========
   {
-    value: 'gemini/gemini-3-pro-preview',
-    label: 'Gemini 3 Pro Preview',
+    value: 'gemini/gemini-3.1-pro-preview',
+    label: 'Gemini 3.1 Pro Preview',
     description: 'Latest flagship with superior reasoning',
     icon: Crown,
     iconColor: 'text-blue-700',
@@ -99,13 +108,22 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'gemini/gemini-3-flash-preview',
-    label: 'Gemini 3 Flash Preview',
+    value: 'gemini/gemini-3.5-flash',
+    label: 'Gemini 3.5 Flash',
     description: 'Ultra-fast with latest capabilities',
     icon: Zap,
     iconColor: 'text-blue-600',
     badge: 'Fastest',
     badgeVariant: 'secondary'
+  },
+  {
+    value: 'gemini/gemini-3.1-flash-lite',
+    label: 'Gemini 3.1 Flash Lite',
+    description: 'Lightweight and cost-efficient',
+    icon: Bolt,
+    iconColor: 'text-blue-500',
+    badge: 'Lite',
+    badgeVariant: 'outline'
   },
 
   // ========== Gemini 2.5 Models (TESTED) ==========
@@ -156,35 +174,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badge: 'Balanced',
     badgeVariant: 'secondary'
   },
-  {
-    value: 'xai/grok-2-latest',
-    label: 'Grok 2 Latest',
-    description: 'Creative, collaborative interactions',
-    icon: MessageCircle,
-    iconColor: 'text-gray-500',
-    badge: 'Legacy',
-    badgeVariant: 'outline'
-  },
 
   // ========== Legacy Models (still available) ==========
-  {
-    value: 'gpt-4o',
-    label: 'GPT-4o',
-    description: 'Legacy - balanced performance',
-    icon: Brain,
-    iconColor: 'text-gray-500',
-    badge: 'Legacy',
-    badgeVariant: 'outline'
-  },
-  {
-    value: 'gpt-4o-mini',
-    label: 'GPT-4o Mini',
-    description: 'Legacy - fast and efficient',
-    icon: Hash,
-    iconColor: 'text-gray-400',
-    badge: 'Legacy',
-    badgeVariant: 'outline'
-  },
   {
     value: 'claude-3-opus-20240229',
     label: 'Claude 3 Opus',

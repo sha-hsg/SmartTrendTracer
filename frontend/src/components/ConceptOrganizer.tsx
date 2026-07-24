@@ -77,7 +77,7 @@ export default function ConceptOrganizer() {
   const loadUnorganizedConcepts = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('http://localhost:8000/api/concepts/organization/unorganized?limit=50')
+      const response = await axios.get(`/api/concepts/organization/unorganized?limit=50`)
       setUnorganizedConcepts(response.data.concepts || [])
     } catch (err) {
       console.error('Error loading unorganized concepts:', err)
@@ -89,7 +89,7 @@ export default function ConceptOrganizer() {
 
   const loadStats = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/concepts/organization/stats')
+      const response = await axios.get(`/api/concepts/organization/stats`)
       setStats(response.data.stats)
     } catch (err) {
       console.error('Error loading stats:', err)
@@ -98,7 +98,7 @@ export default function ConceptOrganizer() {
 
   const loadAllConcepts = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/ontology/concepts')
+      const response = await axios.get(`/api/ontology/concepts`)
       setAllConcepts(response.data.concepts || [])
     } catch (err) {
       console.error('Error loading concepts:', err)
@@ -126,7 +126,7 @@ export default function ConceptOrganizer() {
         throw new Error('Invalid concept ID')
       }
       
-      const response = await axios.post('http://localhost:8000/api/concepts/organization/organize', {
+      const response = await axios.post(`/api/concepts/organization/organize`, {
         concept_id: concept._id,
         auto_apply: false
       })
@@ -162,7 +162,7 @@ export default function ConceptOrganizer() {
       setProcessing(true)
       setError('')
       
-      const response = await axios.post(`http://localhost:8000/api/concepts/organization/apply-organization/${selectedConcept._id}`, suggestion)
+      const response = await axios.post(`/api/concepts/organization/apply-organization/${selectedConcept._id}`, suggestion)
       
       if (response.data.success) {
         setSuccess(`Successfully organized "${selectedConcept.display_name}"`)
@@ -193,7 +193,7 @@ export default function ConceptOrganizer() {
       setProcessing(true)
       setError('')
       
-      const response = await axios.post('http://localhost:8000/api/concepts/organization/organize-batch', {
+      const response = await axios.post(`/api/concepts/organization/organize-batch`, {
         limit: 5,
         auto_apply: false
       })

@@ -5,6 +5,8 @@ import ACLAnthologyImportModal from './ACLAnthologyImportModal'
 import DirectURLImportModal from './DirectURLImportModal'
 import { ACMImportModal } from './ACMImportModal'
 import OpenReviewImportModal from './OpenReviewImportModal'
+import JAIRImportModal from './JAIRImportModal'
+import { DBLPSearchModal } from './DBLPSearchModal'
 
 interface UnifiedImportDialogProps {
   isOpen: boolean
@@ -12,7 +14,7 @@ interface UnifiedImportDialogProps {
   onImportSuccess?: (paperId: number | string) => void
 }
 
-type ImportSource = 'selection' | 'arxiv' | 'acl' | 'acm' | 'url' | 'dblp' | 'openreview'
+type ImportSource = 'selection' | 'arxiv' | 'acl' | 'acm' | 'url' | 'dblp' | 'openreview' | 'jair'
 
 interface ImportOption {
   id: ImportSource
@@ -58,12 +60,18 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
       available: true
     },
     {
+      id: 'jair',
+      name: 'JAIR',
+      description: 'Import papers from Journal of AI Research',
+      icon: <FileText className="w-8 h-8 text-amber-600" />,
+      available: true
+    },
+    {
       id: 'dblp',
       name: 'DBLP',
       description: 'Search and import papers from DBLP computer science bibliography',
       icon: <Search className="w-8 h-8 text-teal-600" />,
-      available: false,
-      comingSoon: true
+      available: true
     },
     {
       id: 'url',
@@ -228,6 +236,27 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
         isOpen={true}
         onClose={handleBack}
         onImportSuccess={handleImportSuccess}
+      />
+    )
+  }
+
+  // Show JAIR import modal
+  if (selectedSource === 'jair') {
+    return (
+      <JAIRImportModal
+        isOpen={true}
+        onClose={handleBack}
+        onImportSuccess={handleImportSuccess}
+      />
+    )
+  }
+
+  // Show DBLP search modal
+  if (selectedSource === 'dblp') {
+    return (
+      <DBLPSearchModal
+        isOpen={true}
+        onClose={handleBack}
       />
     )
   }

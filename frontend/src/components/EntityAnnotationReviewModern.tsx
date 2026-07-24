@@ -1,26 +1,17 @@
 import { useState, useEffect } from 'react'
+import { API_BASE_URL } from '@/config/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Sparkles, Check, X, Edit2, Save, AlertCircle, Undo2, CheckSquare, XSquare } from 'lucide-react'
+import { Loader2, Sparkles, AlertCircle, Undo2, CheckSquare, XSquare } from 'lucide-react'
 import ModelBadge from './ModelBadge'
 import UnifiedModelSelector from './UnifiedModelSelector'
+import EntityCardReview from './EntityCardReview'
+import type { EntitySuggestion } from './EntityCardReview'
 import { getDefaultModel } from '@/config/models'
-
-interface EntitySuggestion {
-  id: string
-  text: string
-  type: string
-  confidence: number
-  context: string
-  normalized: string
-  metadata: Record<string, any>
-}
 
 interface EntityAnnotationReviewProps {
   articleId?: number
@@ -65,7 +56,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
 
   const loadSchema = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/entities/schema')
+      const response = await fetch(`${API_BASE_URL}/api/entities/schema`)
       const data = await response.json()
       setSchema(data)
     } catch (error) {
@@ -86,7 +77,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
       // Add model selection
       if (selectedModel) payload.model = selectedModel
 
-      const response = await fetch('http://localhost:8000/api/entities/extract', {
+      const response = await fetch(`${API_BASE_URL}/api/entities/extract`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -108,7 +99,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
 
   const acceptEntity = async (entity: EntitySuggestion) => {
     try {
-      const response = await fetch('http://localhost:8000/api/entities/review', {
+      const response = await fetch(`${API_BASE_URL}/api/entities/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -141,7 +132,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
 
   const rejectEntity = async (entity: EntitySuggestion) => {
     try {
-      const response = await fetch('http://localhost:8000/api/entities/review', {
+      const response = await fetch(`${API_BASE_URL}/api/entities/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -175,7 +166,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     if (entitiesToAccept.length === 0) return
 
     try {
-      const response = await fetch('http://localhost:8000/api/entities/bulk-action', {
+      const response = await fetch(`${API_BASE_URL}/api/entities/bulk-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -210,7 +201,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     if (entitiesToReject.length === 0) return
 
     try {
-      const response = await fetch('http://localhost:8000/api/entities/bulk-action', {
+      const response = await fetch(`${API_BASE_URL}/api/entities/bulk-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -525,134 +516,27 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
         {filteredEntities.length > 0 && (
           <ScrollArea className="h-[500px] w-full rounded-md border p-4">
             <div className="space-y-3">
-              {filteredEntities.map(entity => {
-                const typeInfo = getEntityTypeInfo(entity.type)
-                const isEditing = editingEntity === entity.id
-                const editValues = editedValues[entity.id] || {}
-                
-                return (
-                  <Card
-                    key={entity.id}
-                    className={`p-4 ${selectedEntities.has(entity.id) ? 'ring-2 ring-blue-500' : ''}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        checked={selectedEntities.has(entity.id)}
-                        onCheckedChange={() => toggleEntitySelection(entity.id)}
-                        className="mt-1"
-                      />
-                      
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            {isEditing ? (
-                              <Input
-                                value={editValues.text || entity.text}
-                                onChange={(e) => setEditedValues({
-                                  ...editedValues,
-                                  [entity.id]: { ...editValues, text: e.target.value }
-                                })}
-                                className="mb-2"
-                              />
-                            ) : (
-                              <span className="font-medium text-lg">{entity.text}</span>
-                            )}
-                            
-                            <div className="flex items-center gap-2 mt-2">
-                              {isEditing ? (
-                                <Select
-                                  value={editValues.type || entity.type}
-                                  onValueChange={(value) => setEditedValues({
-                                    ...editedValues,
-                                    [entity.id]: { ...editValues, type: value }
-                                  })}
-                                >
-                                  <SelectTrigger className="w-[180px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {uniqueTypes.map(type => (
-                                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Badge className={typeInfo.color}>
-                                  {typeInfo.icon} {entity.type}
-                                </Badge>
-                              )}
-                              
-                              <Badge variant="outline">
-                                {(entity.confidence * 100).toFixed(1)}%
-                              </Badge>
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-1">
-                            {isEditing ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => saveEntityEdit(entity.id)}
-                                  title="Save changes"
-                                >
-                                  <Save className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => cancelEntityEdit(entity.id)}
-                                  title="Cancel"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </>
-                            ) : (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => startEditingEntity(entity.id, entity)}
-                                  title="Edit entity"
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => acceptEntity(entity)}
-                                  title="Accept and add to ontology"
-                                  className="text-green-600 hover:text-green-700"
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => rejectEntity(entity)}
-                                  title="Reject suggestion"
-                                  className="text-red-600 hover:text-red-700"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {entity.context && (
-                          <p className="text-sm text-gray-600 italic">"{entity.context}"</p>
-                        )}
-                        
-                        <p className="text-sm text-gray-500">
-                          → {entity.normalized}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                )
-              })}
+              {filteredEntities.map(entity => (
+                <EntityCardReview
+                  key={entity.id}
+                  entity={entity}
+                  isSelected={selectedEntities.has(entity.id)}
+                  isEditing={editingEntity === entity.id}
+                  editValues={editedValues[entity.id] || {}}
+                  typeInfo={getEntityTypeInfo(entity.type)}
+                  uniqueTypes={uniqueTypes}
+                  onToggleSelection={toggleEntitySelection}
+                  onStartEditing={startEditingEntity}
+                  onSaveEdit={saveEntityEdit}
+                  onCancelEdit={cancelEntityEdit}
+                  onEditValueChange={(entityId, values) => setEditedValues({
+                    ...editedValues,
+                    [entityId]: values
+                  })}
+                  onAccept={acceptEntity}
+                  onReject={rejectEntity}
+                />
+              ))}
             </div>
           </ScrollArea>
         )}

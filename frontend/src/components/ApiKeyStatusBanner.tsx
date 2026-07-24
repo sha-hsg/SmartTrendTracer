@@ -19,7 +19,7 @@ export default function ApiKeyStatusBanner() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/llm/status')
+        const response = await axios.get(`/api/llm/status`)
         setStatus(response.data)
         setError(null)
       } catch (err) {

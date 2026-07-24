@@ -132,7 +132,7 @@ export default function SemanticConceptSearch({
       })
 
       const response = await axios.get(
-        `http://localhost:8000/api/concepts/suggestions/search-concepts?${params}`
+        `/api/concepts/suggestions/search-concepts?${params}`
       )
 
       setResults(response.data.results || [])

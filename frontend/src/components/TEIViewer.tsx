@@ -25,7 +25,7 @@ export default function TEIViewer({ paperId, paperTitle: _paperTitle }: TEIViewe
     
     try {
       const response = await axios.get(
-        `http://localhost:8000/api/papers/${paperId}/tei`,
+        `/api/papers/${paperId}/tei`,
         { responseType: 'text' }
       )
       setTeiXml(response.data)

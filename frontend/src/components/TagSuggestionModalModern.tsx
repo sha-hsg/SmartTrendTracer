@@ -19,9 +19,11 @@ import {
   Check,
   X,
   Zap,
-  Brain
+  Brain,
+  FileText
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
+import { toast } from 'sonner'
 import UnifiedModelSelector from './UnifiedModelSelector'
 import { useModelSelector } from '@/hooks/useModelSelector'
 
@@ -45,14 +47,20 @@ interface ConceptSuggestionResponse {
 }
 
 interface TagSuggestionModalProps {
-  tweet: any
+  contentId: string | number
+  contentType: 'tweet' | 'article' | 'reddit'
+  contentPreview?: string
+  contentTitle?: string
   isOpen: boolean
   onClose: () => void
   onTagsUpdated: () => void
 }
 
 export default function TagSuggestionModalModern({
-  tweet,
+  contentId,
+  contentType,
+  contentPreview,
+  contentTitle,
   isOpen,
   onClose,
   onTagsUpdated
@@ -72,28 +80,42 @@ export default function TagSuggestionModalModern({
     selectModel
   } = useModelSelector('tag_suggestion')
 
+  const suggestEndpoint = contentType === 'article'
+    ? `/api/articles/${contentId}/tags/suggest`
+    : contentType === 'reddit'
+    ? `/api/concepts/suggestions/reddit/${contentId}/suggest`
+    : `/api/concepts/suggestions/tweets/${contentId}/suggest`
+
+  const applyEndpoint = contentType === 'article'
+    ? `/api/articles/${contentId}/apply-concepts`
+    : contentType === 'reddit'
+    ? `/api/concepts/suggestions/reddit/${contentId}/apply-concepts`
+    : `/api/concepts/suggestions/tweets/${contentId}/apply-concepts`
+
+  const contentLabel = contentType === 'article' ? 'article' : contentType === 'reddit' ? 'post' : 'tweet'
+
   useEffect(() => {
-    if (isOpen && tweet) {
+    if (isOpen && contentId) {
       // Reset state when modal opens
       setShowModelSelector(true)
       setSuggestions(null)
       setSelectedConcepts(new Map())
       setError(null)
     }
-  }, [isOpen, tweet])
+  }, [isOpen, contentId])
 
   const fetchSuggestions = async (model?: string) => {
     setLoading(true)
     setError(null)
     setShowModelSelector(false)
-    
+
     // Create new abort controller for this request
     const controller = new AbortController()
     setAbortController(controller)
-    
+
     try {
       const response = await axios.post<ConceptSuggestionResponse>(
-        `http://localhost:8000/api/concepts/suggestions/tweets/${tweet.id}/suggest`,
+        suggestEndpoint,
         {
           model: model || selectedModel
         },
@@ -112,8 +134,11 @@ export default function TagSuggestionModalModern({
         setError('Concept generation was cancelled.')
       } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         setError('Concept generation timed out after 2 minutes. The model may be overloaded. Please try again.')
+        toast.error('Concept generation timed out')
       } else {
-        setError(error.response?.data?.detail || 'Failed to fetch suggestions')
+        const msg = error.response?.data?.detail || 'Failed to fetch suggestions'
+        setError(msg)
+        toast.error(msg)
       }
     } finally {
       setLoading(false)
@@ -157,19 +182,21 @@ export default function TagSuggestionModalModern({
     
     try {
       const response = await axios.post(
-        `http://localhost:8000/api/concepts/suggestions/tweets/${tweet.id}/apply-concepts`,
+        applyEndpoint,
         conceptsToApply
       )
       
       successCount = response.data.success_count || 0
       failCount = response.data.fail_count || 0
-      
+
       if (failCount > 0 && successCount > 0) {
-        setError(`Applied ${successCount} concepts. ${failCount} concepts were already present or failed.`)
+        toast.warning(`Applied ${successCount} concepts. ${failCount} already present or failed.`)
       } else if (failCount > 0) {
-        setError(`Failed to apply concepts. They may already be present.`)
+        toast.error('Failed to apply concepts. They may already be present.')
+      } else if (successCount > 0) {
+        toast.success(`${successCount} concept${successCount !== 1 ? 's' : ''} applied`)
       }
-      
+
       // Always update and close if at least one concept was applied
       if (successCount > 0) {
         onTagsUpdated()
@@ -177,7 +204,9 @@ export default function TagSuggestionModalModern({
       }
     } catch (error: any) {
       console.error('Error applying concepts:', error)
-      setError(error.response?.data?.detail || 'Failed to apply concepts')
+      const msg = error.response?.data?.detail || 'Failed to apply concepts'
+      setError(msg)
+      toast.error(msg)
     }
     
     setApplying(false)
@@ -190,9 +219,12 @@ export default function TagSuggestionModalModern({
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-purple-500" />
             AI Concept Suggestions
+            <span className="text-sm font-normal text-muted-foreground">
+              (for {contentLabel})
+            </span>
           </DialogTitle>
           <DialogDescription>
-            Select concepts to apply to this tweet. Green concepts are existing concepts that match, 
+            Select concepts to apply to this {contentLabel}. Green concepts are existing concepts that match,
             purple concepts are new AI-generated suggestions.
           </DialogDescription>
         </DialogHeader>
@@ -204,7 +236,7 @@ export default function TagSuggestionModalModern({
                   <Brain className="h-12 w-12 mx-auto text-purple-600" />
                   <h3 className="text-lg font-semibold">Choose AI Model</h3>
                   <p className="text-sm text-muted-foreground max-w-md">
-                    Select the AI model to analyze this tweet and generate concept tags
+                    Select the AI model to analyze this {contentLabel} and generate concept tags
                   </p>
                 </div>
 
@@ -244,14 +276,7 @@ export default function TagSuggestionModalModern({
                   <Loader2 className="h-10 w-10 animate-spin mx-auto text-purple-600" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-gray-900">
-                      Analyzing tweet with {
-                        selectedModel === 'gpt-5' ? 'GPT-5' :
-                        selectedModel === 'gpt-4o' ? 'GPT-4o' :
-                        selectedModel === 'gemini-2.5-pro' ? 'Gemini 2.5 Pro' :
-                        selectedModel === 'claude-3.5-sonnet' ? 'Claude 3.5 Sonnet' :
-                        selectedModel === 'gpt-4o-mini' ? 'GPT-4o Mini' :
-                        selectedModel
-                      }...
+                      Analyzing {contentLabel} with {selectedModel}...
                     </p>
                     <p className="text-xs text-muted-foreground">
                       This analysis may take 10-30 seconds
@@ -284,9 +309,21 @@ export default function TagSuggestionModalModern({
             </div>
           ) : suggestions ? (
             <div className="space-y-4 p-4">
-              {/* Tweet Preview */}
+              {/* Content Preview */}
               <Card className="mb-4 p-4 bg-gray-50">
-                <p className="text-sm text-gray-700 line-clamp-3">{tweet.text}</p>
+                {contentTitle ? (
+                  <div className="flex items-start gap-2">
+                    <FileText className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm">{contentTitle}</h3>
+                      {contentPreview && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{contentPreview}</p>
+                      )}
+                    </div>
+                  </div>
+                ) : contentPreview ? (
+                  <p className="text-sm text-gray-700 line-clamp-3">{contentPreview}</p>
+                ) : null}
               </Card>
 
               {/* Already Tagged - Show prominently */}
@@ -398,7 +435,7 @@ export default function TagSuggestionModalModern({
                (!suggestions.new_suggestions || suggestions.new_suggestions.length === 0) && (
                 <div className="py-8 text-center text-gray-500">
                   <Sparkles className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p>No suggestions available for this tweet</p>
+                  <p>No suggestions available for this {contentLabel}</p>
                 </div>
               )}
 

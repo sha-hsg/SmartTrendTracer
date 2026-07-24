@@ -65,7 +65,7 @@ export default function MetadataImportDialog({
   const loadCurrentPaper = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`http://localhost:8000/api/papers/${paperId}`)
+      const response = await axios.get(`/api/papers/${paperId}`)
       setCurrentPaper(response.data)
       compareMetadata(response.data)
     } catch (error) {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Download, Search, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api';
 
 interface ArxivImportModalProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
 
     try {
       // Import without analyses (user can generate them manually later)
-      const response = await fetch('http://localhost:8000/api/arxiv/import', {
+      const response = await fetch(`${API_BASE_URL}/api/arxiv/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +92,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
     setSearchResults([]);
 
     try {
-      const response = await fetch('http://localhost:8000/api/arxiv/search', {
+      const response = await fetch(`${API_BASE_URL}/api/arxiv/search`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

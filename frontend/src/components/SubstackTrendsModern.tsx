@@ -7,119 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import {
   TrendingUp,
-  TrendingDown,
   Clock,
   Users,
   FileText,
   Hash,
-  Activity,
   RefreshCw,
   AlertCircle,
   Sparkles,
-  ArrowUp,
-  ArrowRight,
-  Zap,
-  Target,
   Flame,
-  Link2,
   BookOpen,
-  PenTool,
   Lightbulb,
   Rocket,
   MessageSquare,
   ChevronRight,
-  Timer
 } from 'lucide-react'
-
-interface TrendData {
-  period: string
-  total_articles: number
-  date_range: {
-    start: string
-    end: string
-  }
-  topic_trends: {
-    top_topics: Array<{
-      term: string
-      score: number
-      articles: number
-    }>
-    trending_up: Array<{
-      term: string
-      growth: number
-      current_count: number
-    }>
-  }
-  author_trends: {
-    most_active: Array<{
-      author: string
-      articles: number
-      avg_words: number
-      avg_reading_time: number
-      total_snippets: number
-      topics: string[]
-      productivity: string
-    }>
-    total_authors: number
-    avg_articles_per_author: number
-  }
-  tag_trends: {
-    top_tags: Array<{
-      tag: string
-      count: number
-    }>
-    tag_relationships: Array<{
-      tag: string
-      related: Array<{
-        tag: string
-        strength: number
-      }>
-    }>
-    unique_tags: number
-  }
-  snippet_insights: {
-    categories: Record<string, number>
-    important_highlights: Array<{
-      text: string
-      category: string
-      article: string
-      annotation: string | null
-    }>
-    total_snippets: number
-  }
-  velocity_trends: Array<{
-    topic: string
-    velocity: number
-    first_period: number
-    second_period: number
-    trend: 'rising' | 'falling' | 'stable'
-  }>
-  content_clusters: Array<{
-    cluster_id: number
-    size: number
-    theme: string
-    keywords: string[]
-    articles: Array<{
-      title: string
-      author: string
-    }>
-  }>
-  emerging_themes: Array<{
-    theme: string
-    type: 'new' | 'growing'
-    occurrences: number
-    growth: string
-  }>
-  summary: {
-    key_insights: string[]
-    recommendations: string[]
-  }
-}
+import type { TrendData } from './substack-trends/types'
+import { formatDate } from './substack-trends/helpers'
+import {
+  TopicsTabPanel,
+  AuthorsTabPanel,
+  VelocityTabPanel,
+  ClustersTabPanel,
+} from './substack-trends/TabPanels'
 
 export default function SubstackTrendsModern() {
   const [trends, setTrends] = useState<TrendData | null>(null)
@@ -136,7 +49,7 @@ export default function SubstackTrendsModern() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.get(`http://localhost:8000/api/substack/trends?days=${days}`)
+      const response = await axios.get(`/api/substack/trends?days=${days}`)
       setTrends(response.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -149,47 +62,6 @@ export default function SubstackTrendsModern() {
   const handleRefresh = () => {
     setRefreshing(true)
     fetchTrends()
-  }
-
-  const getProductivityIcon = (productivity: string) => {
-    switch(productivity) {
-      case 'very_high': return <Flame className="h-4 w-4 text-red-500" />
-      case 'high': return <Zap className="h-4 w-4 text-orange-500" />
-      case 'moderate': return <PenTool className="h-4 w-4 text-blue-500" />
-      case 'low': return <Timer className="h-4 w-4 text-gray-500" />
-      default: return <Activity className="h-4 w-4 text-gray-400" />
-    }
-  }
-
-  const getProductivityColor = (productivity: string) => {
-    switch(productivity) {
-      case 'very_high': return 'bg-red-50 text-red-700 border-red-200'
-      case 'high': return 'bg-orange-50 text-orange-700 border-orange-200'
-      case 'moderate': return 'bg-blue-50 text-blue-700 border-blue-200'
-      case 'low': return 'bg-gray-50 text-gray-700 border-gray-200'
-      default: return 'bg-gray-50 text-gray-500 border-gray-200'
-    }
-  }
-
-  const getTrendIcon = (trend: string) => {
-    switch(trend) {
-      case 'rising': return <TrendingUp className="h-4 w-4 text-green-500" />
-      case 'falling': return <TrendingDown className="h-4 w-4 text-red-500" />
-      default: return <ArrowRight className="h-4 w-4 text-gray-500" />
-    }
-  }
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return 'N/A'
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        year: 'numeric'
-      })
-    } catch {
-      return 'N/A'
-    }
   }
 
   if (loading || !trends) {
@@ -242,7 +114,7 @@ export default function SubstackTrendsModern() {
                 <SelectItem value="30">Last month</SelectItem>
               </SelectContent>
             </Select>
-            <Button 
+            <Button
               onClick={handleRefresh}
               disabled={refreshing}
               variant="outline"
@@ -389,7 +261,7 @@ export default function SubstackTrendsModern() {
                   {(trends?.topic_trends?.top_topics || []).slice(0, 10).map((topic, idx) => {
                     const maxScore = trends?.topic_trends?.top_topics?.[0]?.score || 1
                     const percentage = (topic.score / maxScore) * 100
-                    
+
                     return (
                       <div key={idx} className="space-y-1">
                         <div className="flex items-center justify-between">
@@ -409,237 +281,19 @@ export default function SubstackTrendsModern() {
         </TabsContent>
 
         <TabsContent value="topics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Trending Up */}
-            {trends?.topic_trends?.trending_up?.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                    Trending Up
-                  </CardTitle>
-                  <CardDescription>Topics gaining momentum</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[400px]">
-                    <div className="space-y-2">
-                      {(trends?.topic_trends?.trending_up || []).map((topic, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
-                          <span className="font-medium">{topic.term}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-700 border-green-200">
-                              +{topic.growth} articles
-                            </Badge>
-                            <ArrowUp className="h-4 w-4 text-green-500" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Tag Relationships */}
-            {trends?.tag_trends?.tag_relationships?.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Link2 className="h-5 w-5 text-blue-500" />
-                    Related Tags
-                  </CardTitle>
-                  <CardDescription>Commonly co-occurring tags</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[400px]">
-                    <div className="space-y-3">
-                      {(trends?.tag_trends?.tag_relationships || []).slice(0, 5).map((rel, idx) => (
-                        <div key={idx} className="space-y-2">
-                          <div className="font-medium text-sm">{rel.tag}</div>
-                          <div className="flex flex-wrap gap-1">
-                            {rel.related.map((r, ridx) => (
-                              <Badge key={ridx} variant="outline" className="text-xs">
-                                {r.tag}
-                                <span className="ml-1 text-gray-400">({r.strength})</span>
-                              </Badge>
-                            ))}
-                          </div>
-                          {idx < (trends?.tag_trends?.tag_relationships?.length || 0) - 1 && (
-                            <Separator className="mt-2" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <TopicsTabPanel trends={trends} />
         </TabsContent>
 
         <TabsContent value="authors" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Most Active Authors
-              </CardTitle>
-              <CardDescription>Author productivity and focus areas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {(trends?.author_trends?.most_active || []).map((author, idx) => (
-                  <Card key={idx}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h4 className="font-semibold">{author.author}</h4>
-                          <Badge 
-                            variant="outline" 
-                            className={cn("mt-1", getProductivityColor(author.productivity))}
-                          >
-                            {getProductivityIcon(author.productivity)}
-                            <span className="ml-1">{author.productivity?.replace('_', ' ') || 'unknown'}</span>
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
-                        <div>
-                          <span className="text-gray-500">Articles:</span>
-                          <span className="ml-2 font-medium">{author.articles}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Avg words:</span>
-                          <span className="ml-2 font-medium">{author.avg_words?.toLocaleString() || 0}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Reading time:</span>
-                          <span className="ml-2 font-medium">{author.avg_reading_time?.toFixed(1) || 0} min</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Snippets:</span>
-                          <span className="ml-2 font-medium">{author.total_snippets}</span>
-                        </div>
-                      </div>
-
-                      {author.topics.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {author.topics.map((topic, tidx) => (
-                            <Badge key={tidx} variant="secondary" className="text-xs">
-                              {topic}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <AuthorsTabPanel trends={trends} />
         </TabsContent>
 
         <TabsContent value="velocity" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Topic Velocity Analysis
-              </CardTitle>
-              <CardDescription>Rate of change in topic discussion</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {(trends?.velocity_trends || []).map((item, idx) => (
-                  <div 
-                    key={idx} 
-                    className={cn(
-                      "flex items-center justify-between p-3 rounded-lg border",
-                      item.trend === 'rising' && "bg-green-50 border-green-200",
-                      item.trend === 'falling' && "bg-red-50 border-red-200",
-                      item.trend === 'stable' && "bg-gray-50 border-gray-200"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      {getTrendIcon(item.trend)}
-                      <span className="font-medium">{item.topic}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="text-gray-600">
-                        {item.first_period} → {item.second_period}
-                      </span>
-                      <Badge 
-                        variant={item.velocity > 0 ? "default" : "secondary"}
-                        className={cn(
-                          item.velocity > 0 && "bg-green-100 text-green-700",
-                          item.velocity < 0 && "bg-red-100 text-red-700"
-                        )}
-                      >
-                        {item.velocity > 0 ? '+' : ''}{((item.velocity || 0) * 100).toFixed(0)}%
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <VelocityTabPanel trends={trends} />
         </TabsContent>
 
         <TabsContent value="clusters" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Content Clusters
-              </CardTitle>
-              <CardDescription>Articles grouped by similar themes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {(trends?.content_clusters || []).map((cluster, idx) => (
-                  <Card key={idx}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">
-                          Cluster {cluster.cluster_id + 1}: {cluster.theme}
-                        </CardTitle>
-                        <Badge variant="secondary">{cluster.size} articles</Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Keywords</p>
-                          <div className="flex flex-wrap gap-1">
-                            {cluster.keywords.map((keyword, kidx) => (
-                              <Badge key={kidx} variant="outline" className="text-xs">
-                                {keyword}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        {cluster.articles.length > 0 && (
-                          <div>
-                            <p className="text-xs text-gray-500 mb-1">Sample Articles</p>
-                            <div className="space-y-1">
-                              {cluster.articles.slice(0, 2).map((article, aidx) => (
-                                <div key={aidx} className="text-xs">
-                                  <span className="font-medium">{article.title}</span>
-                                  <span className="text-gray-500 ml-1">by {article.author}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <ClustersTabPanel trends={trends} />
         </TabsContent>
       </Tabs>
 
