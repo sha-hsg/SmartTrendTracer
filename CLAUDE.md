@@ -1,3349 +1,492 @@
 # SmartTrendTracer - Claude Assistant Documentation
 
-## Project Overview
-SmartTrendTracer is a comprehensive AI content monitoring system that tracks both Twitter/X accounts and Substack newsletters to identify emerging trends, hot topics, and declining discussions in the AI space.
+## 1. Project Overview
 
-## Core Components
+SmartTrendTracer (STT) is a comprehensive AI content monitoring system that collects and
+analyzes content from Twitter/X, Substack newsletters, Reddit, research papers, and books
+to identify emerging trends, hot topics, and declining discussions in the AI space.
 
-### 1. Twitter/X Monitoring
-Tracks 7 specific AI-related accounts for real-time trends.
+### Data Sources
 
-### 2. Substack Newsletter Collection
-Collects and analyzes newsletters from both direct Gmail subscriptions and forwarded emails.
+**Twitter/X** — 21 monitored accounts, managed via the Twitter Account Manager UI and
+stored in `backend/accounts.json` / MongoDB. Current set:
+@OpenAI, @emollick, @stanfordnlp, @AnthropicAI, @GoogleDeepMind, @huggingface, @sama,
+@kaggle, @rasbt, @JayAlammar, @hwchase17, @Sebastienbubeck, @Shayneredford, @Langchainai,
+@Colm_Conf, @GH_Wiegand, @ABosselut, @LorenaRaichle, @_akhaliq, @zurichnlp, @AiBreakfast.
+Collection runs in Basic Account Mode by default (10k tweets/month budget, tiered
+priorities, 15-minute intervals).
 
-## Key Twitter Accounts Monitored
-1. @OpenAI (ID: 4398626122)
-2. @emollick (ID: 39125788)
-3. @stanfordnlp (ID: 118263124)
-4. @AnthropicAI (ID: 1353836358901501952)
-5. @GoogleDeepMind (ID: 4783690002)
-6. @huggingface (ID: 778764142412984320)
-7. @sama (ID: 1605)
+**Substack newsletters** — collected from Gmail (direct subscriptions, e.g. Ethan Mollick
+"One Useful Thing") and forwarded university mail. Forwarded authors are configured in
+`backend/forwarded_authors.json`: Gary Marcus (Marcus on AI), Nathan Lambert
+(Interconnects), Sebastian Raschka (Ahead of AI). ~14 authors in the database.
 
-## Substack Newsletter Authors
+**Reddit** — AI/ML subreddits configured in `backend/reddit_config.json`:
+r/LLM, r/LLMDevs, r/LocalLLM, r/MachineLearning, r/artificial, r/OpenAI, r/ChatGPT,
+r/singularity. Collected via PRAW (`app/collectors/reddit_collector.py`; requires
+REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET).
 
-### Direct Gmail Subscriptions
-- **Ethan Mollick** (One Useful Thing) - AI strategy and implications
-- **David Szabo-Stuban** (LumberjackAI) - Technical AI insights
+**Research papers** — PDF upload plus importers for arXiv, ACL Anthology, ACM DL,
+OpenReview, JAIR, DBLP and direct URLs. Processed with Marker or MinerU, enriched via
+GROBID (external server https://kermitt2-grobid.hf.space), analyzed with LLMs.
+A separate **review mode** (`paper_type: 'review'`) keeps papers under review out of
+global statistics, trends, and the RAG index (default is `paper_type: 'research'`).
 
-### Forwarded Newsletters (from university email)
-- **Gary Marcus** - Critical AI analysis
-- **Nathan Lambert** - AI research and development
-- **Sebastian Raschka** - Machine learning fundamentals
+**Books** — PDF/EPUB library with extended processing timeouts (Marker 6h, MinerU 5h),
+TOC extraction, reading-difficulty assessment. Processing jobs are queued in
+`book_processing_jobs` and consumed by `backend/book_processing_worker.py`
+(started by `start_stt.sh`).
 
-## Development Requirements and Standards
-
-### Cross-Platform Portability (MANDATORY)
-
-SmartTrendTracer must work seamlessly on both macOS and Linux systems. All code must follow these requirements:
-
-#### 1. Path Handling - Dynamically Determined Absolute Paths (REQUIRED)
-
-**ALWAYS use dynamically determined absolute paths in shell scripts:**
-
-```bash
-# ✅ CORRECT - Portable across systems
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-LOG_FILE="$SCRIPT_DIR/logs/startup.log"
-DATA_DIR="$SCRIPT_DIR/data"
-
-# ❌ WRONG - Hardcoded absolute path (breaks portability)
-LOG_FILE="/Users/siehan/Documents/Research/SmartTrendTracer/logs/startup.log"
-
-# ❌ WRONG - Relative path (breaks when changing directories)
-LOG_FILE="logs/startup.log"  # Breaks after 'cd backend'
-```
-
-**Why this matters:**
-- Works on any macOS path, any Linux path, any user's home directory
-- Immune to directory changes during script execution (`cd backend`, etc.)
-- No hardcoded paths that break when moving between machines
-
-#### 2. Virtual Environment Handling (REQUIRED)
-
-**ALWAYS use explicit virtual environment paths, NEVER use `source activate` with background processes:**
-
-```bash
-# ✅ CORRECT - Explicit path to venv Python
-PYTHON_BIN="venv/bin/python"
-nohup $PYTHON_BIN -m uvicorn app.main:app ... &
-
-# ❌ WRONG - Activation doesn't transfer to background processes
-source venv/bin/activate
-nohup python -m uvicorn app.main:app ... &  # Uses system Python!
-deactivate
-```
-
-**Rationale:** Background processes started with `nohup ... &` do not inherit shell environment from `source activate`.
-
-**Cross-Platform venv Validation:**
-venvs created on macOS have symlinks pointing to macOS Python paths, which break on Linux (and vice versa). Always validate venvs before use:
-
-```bash
-# Check if venv is valid (python binary exists and is executable)
-check_venv_valid() {
-    local venv_path=$1
-    if [ -d "$venv_path" ] && [ -x "$venv_path/bin/python" ]; then
-        return 0  # Valid
-    fi
-    return 1  # Invalid - needs recreation
-}
-
-# Usage in start_stt.sh
-if ! check_venv_valid "venv"; then
-    log "venv invalid or has broken symlinks, recreating..."
-    rm -rf venv
-    python3 -m venv venv
-    venv/bin/pip install -r requirements.txt
-fi
-```
-
-**Key Point:** When syncing project files between macOS and Linux via Syncthing, venvs will have broken symlinks and must be recreated on each platform.
-
-#### 3. MongoDB Cross-Machine Synchronization (REQUIRED)
-
-Each machine runs its own local MongoDB instance. Use sync scripts to synchronize databases when switching machines.
-
-**Scripts Location:** `scripts/` (project root, same as Samanta)
-
-| Script | Description |
-|--------|-------------|
-| `./scripts/sync-out.sh` | Export MongoDB to `db-sync/dumps/` |
-| `./scripts/sync-in.sh` | Import from other system |
-| `./scripts/sync-status.sh` | Show status of all systems |
-
-**Workflow:**
-```bash
-# END of work session on Machine A:
-./scripts/sync-out.sh           # Export MongoDB
-
-# Wait for Syncthing to sync...
-
-# START of work session on Machine B:
-./scripts/sync-status.sh        # Check what's available
-./scripts/sync-in.sh            # Import from other system
-```
-
-**Key Points:**
-- Each machine has independent MongoDB instance on `localhost:27017`
-- `sync-out.sh` creates compressed dump with SHA-256 checksum in `db-sync/dumps/`
-- `sync-in.sh` verifies checksum, creates backup, then imports with `--drop`
-- `sync-status.sh` shows all registered systems and recommendations
-- Configuration in `.db-sync-config` (project root)
-- Only sync when switching machines, not during daily work
-- MongoDB indexes are recreated on import (causes 30-60s startup delay on first run)
-
-**Directory Structure:**
-```
-SmartTrendTracer/
-├── .db-sync-config              # Sync configuration
-├── scripts/
-│   ├── sync-out.sh
-│   ├── sync-in.sh
-│   ├── sync-status.sh
-│   └── sync_manual.md           # Detailed documentation
-└── db-sync/
-    ├── dumps/                   # Syncthing syncs this
-    │   ├── .sync-status.json
-    │   └── dump_*.tar.gz
-    └── backups/                 # Local only (not synced)
-```
-
-#### 4. Environment Variables (REQUIRED)
-
-**LLM API keys and credentials MUST be in `~/.env` (user home directory), NOT in project directory:**
-
-```bash
-# ✅ CORRECT - ~/.env (synced across machines, not in git)
-~/.env contains:
-  OPENAI_API_KEY=sk-...
-  ANTHROPIC_API_KEY=sk-ant-...
-  GOOGLE_API_KEY=...
-  GEMINI_API_KEY=...
-
-# ❌ WRONG - backend/.env (project-specific, in gitignore)
-backend/.env  # DO NOT USE THIS
-```
-
-**Rationale:**
-- `~/.env` exists on both Linux and macOS machines
-- Contains all LLM keys for all projects
-- Not checked into git
-- `start_stt.sh` automatically loads `~/.env` using `set -a` (auto-export)
-
-**~/.env Format** (with or without `export` prefix):
-```bash
-export OPENAI_API_KEY=sk-...
-export ANTHROPIC_API_KEY=sk-ant-...
-export GOOGLE_API_KEY=...
-```
-
-**Automatic Loading in start_stt.sh:**
-```bash
-if [ -f "$HOME/.env" ]; then
-    set -a  # automatically export all variables
-    source "$HOME/.env"
-    set +a
-fi
-```
-
-#### 5. Service Startup Timeouts (REQUIRED)
-
-Different services have different startup times. Configure timeouts appropriately:
-
-```bash
-# Backend API - 60 seconds (MongoDB index creation takes 44s)
-wait_for_service $BACKEND_PORT "Backend API" 60   # BACKEND_PORT=8088
-
-# Marker Service - 30 seconds (default)
-wait_for_service 8002 "Marker Service"
-
-# MinerU Service - 30 seconds (default)
-wait_for_service 8003 "MinerU Service"
-```
-
-**Why Backend needs 60s:**
-- Creates 23 MongoDB indexes on startup
-- With 22,000+ documents, index creation takes 30-44 seconds
-- Especially slow for text indexes on papers/articles collections
-
-#### 6. Comprehensive Logging (REQUIRED)
-
-All startup scripts must create detailed, timestamped logs:
-
-```bash
-# Timestamped log file with absolute path
-STARTUP_LOG="$SCRIPT_DIR/logs/startup_$(date +%Y%m%d_%H%M%S).log"
-
-# Log function with timestamp
-log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$STARTUP_LOG"
-}
-
-# Log important events
-log "Starting Backend API Server (port $BACKEND_PORT)..."
-log "Backend process started with PID: $BACKEND_PID"
-log "Using Python: $PYTHON_BIN"
-```
-
-**Must include:**
-- Timestamp for every log entry
-- Process IDs (PIDs) for all services
-- Port availability checks
-- Service startup timing
-- Python/venv paths being used
-- MongoDB connection status
-
-#### 7. Platform-Specific Considerations
-
-**MongoDB Service Management:**
-```bash
-# macOS
-brew services start mongodb-community
-brew services stop mongodb-community
-
-# Linux
-sudo systemctl start mongod
-sudo systemctl stop mongod
-```
-
-**Scripts must detect platform and use appropriate commands when needed.**
-
-### Summary of MUST Requirements
-
-1. ✅ **Use `$SCRIPT_DIR` pattern** for all paths in shell scripts
-2. ✅ **Use explicit venv paths** (`venv/bin/python`), not `source activate`
-3. ✅ **Use sync scripts** for MongoDB synchronization between machines
-4. ✅ **Put LLM keys in `~/.env`**, never in project directory
-5. ✅ **Set appropriate timeouts** (backend needs 60s, others 30s)
-6. ✅ **Log everything** with timestamps, PIDs, and timing information
-7. ✅ **Test on both macOS and Linux** before considering code complete
-
-## Recent Enhancements (July 24, 2026)
-
-### Funktionsinventur & großer Fix-Durchlauf - COMPLETE
-
-Vollständige Funktionsinventur durchgeführt (siehe `docs/funktionsinventur.md`, Abschnitt „Priorisierte Handlungsliste") und umgesetzt:
-
-- **Aufräumen**: ~60 tote Dateien und ~90 tote Endpunkte entfernt (~12.000 LOC) — darunter alle Alt-Tag-Services (u.a. `unified_tag_service.py`, `spacy_tagger.py`), tote Collector-Ketten (`twitter_collector.py`, `twscrape_collector.py` etc.) und der tote Frontend-Ordner `components/substack/`.
-- **P1-Bugfixes**: Router-Shadowing behoben (books-/articles-Package: statische Routen vor Parameter-Routen), Tag-Reorganizer-NameError gefixt, String-vs-ObjectId-Bug in den Ontologie-Usage-Counts korrigiert, Media-Gallery-Sortierung („Most liked"/„Most retweeted") und -Filter serverseitig repariert, Topic-Explorer-Datumsfilter gefixt, DEF-001 (Article Viewer Optimistic UI) gelöst.
-- **P2-Fixes**: PERF-002-Volltextindizes werden jetzt tatsächlich angelegt (konkurrierende Single-Field-Textindizes entfernt), `book_processing_worker.py` in `start_stt.sh` integriert (Book-Processing-Queue hat jetzt einen Konsumenten).
-- **Modellpflege**: Veraltete Modelle (gpt-4o, gpt-4o-mini, grok-2-latest) aus allen Auswahllisten entfernt (`litellm_config.yaml`, `models.ts`) inkl. Migration-Mapping auf aktuelle Modelle.
+All content types share one concept/tagging system (poly-hierarchical ontology),
+faceted dashboards, entity extraction, batch annotation, and a concept-based RAG search
+with automatic trend-query detection.
 
 ---
 
-## Recent Enhancements (May 12, 2026)
+## 2. Architecture
 
-### Backend Port Migration: 8000 → 8088 - COMPLETE
+### Stack
 
-#### Problem
-Honcho (Docker container `honcho-api-1`) binds `127.0.0.1:8000`, blocking the STT backend. `start_stt.sh` only probed "is port busy?" → detected Docker → falsely reported `Backend API: ✓ Running (PID: 776)` and skipped starting the backend. Frontend then hit Docker on 8000 → CORS errors in browser.
+- **Backend**: FastAPI + MongoDB (PyMongo). Fully migrated — SQLite/SQLAlchemy are gone.
+- **Frontend**: React + TypeScript + Vite, Tailwind + shadcn/ui, react-force-graph-2d,
+  framer-motion. Config: `frontend/.env` (`VITE_API_URL=http://localhost:8088`),
+  proxy in `vite.config.ts`.
+- **PDF services**: Marker (port 8002) and MinerU (port 8003), each with its own venv
+  (`backend/marker_service/marker_env`, `backend/mineru_service/mineru_env`).
+  Only Marker has the real-time progress pipeline (PTY output capture, TQDM parsing,
+  psutil CPU/RAM health, progress callbacks to the backend). MinerU does **not** —
+  the pipeline was documented but never implemented.
+- **LLM access**: central `llm_manager` / LiteLLM router driven by `backend/llm.json`,
+  `backend/prompts_config.json` and `backend/litellm_config.yaml`. Providers: Anthropic,
+  OpenAI, Google (Gemini), xAI. Keys come from `~/.env`.
 
-#### Solution
-Migrated STT backend from port 8000 to **8088** (verified free against Honcho, Samanta, StatCoach, Docendi, Marker/MinerU).
+### MongoDB Collections (database `smarttrendtracer`, localhost:27017)
 
-#### Port Allocation (current)
+| Collection | Approx. size | Content |
+|---|---|---|
+| `tweets` | ~27k | Tweet documents; **`_id` is the Twitter ID string**, not ObjectId |
+| `papers` | ~360 | Papers incl. content, analyses, review fields (`paper_type`) |
+| `articles` | ~560 | Substack/imported articles |
+| `books` | few | PDF/EPUB books |
+| `reddit_posts` | varies | Reddit posts |
+| `tag_concepts_v2` | ~25k | Concept ontology (poly-hierarchy); `_id` is ObjectId |
+| `tag_instances` | ~129k | Tag usage (content_type/content_id/concept_id) |
+| `tag_aliases_v2` | ~330 | Concept aliases/synonyms |
+| `substack_authors` | ~14 | Newsletter authors |
+| `references` | ~2.4k | Normalized paper references |
+| `book_processing_jobs` | queue | Consumed by book_processing_worker.py |
+| `collection_state` | 1-few | Tweet collector state |
+
+Backend startup creates/repairs indexes centrally in
+`app/database/mongodb.py::_ensure_indexes` (incl. combined text indexes
+`papers_text_search` / `articles_text_search` / `tweets_text_search`; legacy
+single-field text indexes are dropped in `main.py` startup). Index creation on a fresh
+import can take 30-60s — hence the 60s backend startup timeout.
+
+### Repository Layout (orientation)
+
+```
+SmartTrendTracer/
+├── start_stt.sh / stop_stt.sh      # start/stop all services
+├── setup_python.sh                 # venv + frontend setup
+├── mise.toml                       # Python 3.12 pin
+├── .db-sync-config                 # MongoDB sync settings
+├── scripts/                        # setup.sh, sync-out/in/status.sh, sync_manual.md
+├── db-sync/                        # dumps/ (synced), backups/ (local only)
+├── docs/
+│   └── funktionsinventur.md        # 2026-07-24 full function inventory + fix status
+├── DEFECTS.md                      # defect tracking
+├── AUTHOR_UI_DESIGN.md             # planned author-management UI
+├── backend/
+│   ├── app/
+│   │   ├── main.py                 # FastAPI app, router registration, startup index care
+│   │   ├── api/                    # routers; larger areas are packages
+│   │   │   │                       #   (tweets/, papers/, books/, articles/, article_import/,
+│   │   │   │                       #    twitter_accounts/, statistics/, system_stats/,
+│   │   │   │                       #    analytics_trends/, tag_ontology/, tag_reorganization/)
+│   │   ├── collectors/             # gmail_substack_collector, reddit_collector, playwright
+│   │   ├── database/mongodb.py     # client singleton + _ensure_indexes (central)
+│   │   └── services/               # llm_manager, rag/ (index_manager, search, trend_analysis),
+│   │                               # analytics/, anomaly_detection, per-import services, …
+│   ├── tweet_collector_service.py  # standalone Twitter collector
+│   ├── book_processing_worker.py   # consumes book_processing_jobs queue
+│   ├── llm.json / prompts_config.json / litellm_config.yaml
+│   ├── marker_service/  (+ marker_env)   # Marker PDF service, port 8002
+│   ├── mineru_service/  (+ mineru_env)   # MinerU PDF service, port 8003
+│   └── data/                       # papers, paper_repository, book_repository,
+│                                   # rag_index_concepts (FAISS), media, tei_xml, …
+└── frontend/                       # React/TS/Vite app (src/components, src/config)
+```
+
+### Port Allocation
+
 | Project | Ports |
 |---|---|
-| Honcho (Docker) | 8000, 5433, 6379 |
+| **STT Backend** | **8088** (`BACKEND_PORT`, exported by start_stt.sh) |
+| STT Frontend (Vite) | 3470 |
+| STT Marker / MinerU | 8002 / 8003 |
+| MongoDB | 27017 |
+| Honcho (Docker — occupies 8000!) | 8000, 5433, 6379 |
 | Samanta | 3270, 8100, 8800 |
 | StatCoach | 8888, 3001, 5432 |
 | Docendi | 3005, 8005 |
-| **STT Backend** | **8088** |
-| STT Marker / MinerU | 8002, 8003 |
-| STT Frontend | 3470 |
 
-#### Files Modified
-| File | Change |
-|------|--------|
-| `start_stt.sh` | `export BACKEND_PORT=8088` variable, 4 hardcoded refs replaced |
-| `stop_stt.sh` | `BACKEND_PORT=8088` variable, 2 hardcoded refs replaced |
-| `frontend/.env` | **NEW**: `VITE_API_URL=http://localhost:8088` |
-| `frontend/vite.config.ts` | Proxy target → 8088 |
-| `frontend/src/config/api.ts` | Fallback default → 8088 |
-| `backend/app/main.py` | `__main__` uvicorn port via `os.getenv("BACKEND_PORT", "8088")` |
-| `backend/app/api/papers/processing_helpers.py` | Marker callback URL via `BACKEND_PORT` env var |
-| `backend/app/services/pdf_extraction_helpers.py` | MinerU callback URL via `BACKEND_PORT` env var |
-
-#### CORS
-No changes required — `CORSMiddleware` config in `backend/app/main.py:124` already includes `http://localhost:3470` in default origins. Only the **frontend origin** matters for CORS, not the backend port.
-
-#### Known Bug in start_stt.sh (not yet fixed)
-The port-busy check only verifies "is something listening?" — it doesn't verify that the listener is actually the STT backend. With port 8088 the conflict is unlikely to recur, but a proper fix would health-probe `curl -s http://localhost:$BACKEND_PORT/api/llm/status` before assuming "already running".
-
-#### Restart Sequence
-```bash
-cd /Users/siehan/Documents/Development/Research/SmartTrendTracer
-./stop_stt.sh -n          # Stop everything except MongoDB
-./start_stt.sh            # Fresh start on 8088
-# Hard-reload browser (Cmd+Shift+R) so Vite picks up new .env
-```
+Never use port 8000 for STT — Honcho's Docker container binds it. CORS origins default
+to `http://localhost:3470` (plus 3000/3001/3002); override via `CORS_ORIGINS` env var.
 
 ---
 
-## Recent Enhancements (March 8, 2026)
+## 3. Development Requirements (MANDATORY)
 
-### Paper Review Mode — Separate Data Area for Unpublished Papers - COMPLETE
+SmartTrendTracer must work seamlessly on both macOS and Linux (project is synced via
+Syncthing between machines).
 
-#### Overview
-Added a review mode for papers being reviewed before publication (e.g., conference submissions). Uses the same full functionality as the existing papers system (upload, process, analyze, tag, view), but with a **separate data area** so review papers don't mix with published research papers. Review papers are invisible in global statistics, trends, and RAG search.
+### 3.1 Path Handling — dynamically determined absolute paths
 
-#### Approach
-Added a `paper_type` field (`'research'` | `'review'`) to the existing `papers` MongoDB collection. All existing queries default to `paper_type='research'`, keeping review papers invisible. A "Paper Reviews" navigation item reuses the existing dashboard with a `paperType` prop.
-
-#### Review-Specific Fields
-| Field | Type | Description |
-|-------|------|-------------|
-| `review_deadline` | string (date) | Submission/review deadline |
-| `review_decision` | enum | `pending` / `accept` / `reject` / `major_revision` / `minor_revision` |
-| `review_notes` | string | Free-form review notes |
-| `review_confidence` | int (1-5) | Reviewer confidence score |
-
-#### Backend Changes
-
-| File | Change |
-|------|--------|
-| `backend/app/api/papers/query_builder.py` | Added `build_paper_type_filter()` |
-| `backend/app/api/papers/crud.py` | `paper_type` param on list + upload + single-paper endpoints |
-| `backend/app/api/papers/facets.py` | `paper_type` param on facets + stats endpoints |
-| `backend/app/api/papers/metadata.py` | Review-specific field support (deadline, decision, notes, confidence) |
-| `backend/app/services/analytics/content_fetchers.py` | `fetch_papers_in_range()` excludes `paper_type='review'` |
-| `backend/app/services/rag/index_manager.py` | RAG index excludes review papers |
-| `start_stt.sh` | Migration: sets `paper_type='research'` on existing papers at startup |
-
-#### Frontend Changes
-
-| File | Change |
-|------|--------|
-| `frontend/src/components/papers-dashboard/types.ts` | Added `paper_type`, `review_deadline`, `review_decision`, `review_notes`, `review_confidence` to `Paper` |
-| `frontend/src/components/papers-dashboard/usePapersDashboard.ts` | Accepts `paperType` param, passes to all API calls |
-| `frontend/src/components/FacetedPapersDashboard.tsx` | Accepts `paperType` prop, dynamic header title |
-| `frontend/src/components/PaperUploadModern.tsx` | Passes `paper_type` in upload request |
-| `frontend/src/components/ModernNavigation.tsx` | Added `reviews-dashboard` view type under Research Papers |
-| `frontend/src/ModernApp.tsx` | Routes `reviews-dashboard` → `FacetedPapersDashboard` with `paperType="review"` |
-
-#### Navigation
-Located under: **Research Papers → Paper Reviews**
-
-#### Data Isolation
-- Default `paper_type='research'` — all existing behavior unchanged
-- Review papers excluded from: global stats, AI summarization, trend analysis, RAG search index
-- Each dashboard (Research / Reviews) shows only its own papers with independent facets and statistics
-
-#### Verification
-```bash
-# Check migration:
-mongosh smarttrendtracer --eval "db.papers.countDocuments({paper_type: 'research'})"
-mongosh smarttrendtracer --eval "db.papers.countDocuments({paper_type: {'\$exists': false}})"
-
-# API test:
-curl "http://localhost:8888/api/papers/?paper_type=review" | jq '.total'
-```
-
----
-
-## Recent Enhancements (January 28, 2026)
-
-### Time Window Analysis: Separate Date Sliders - COMPLETE
-
-#### Overview
-Enhanced the TimeWindowAnalysis component to use two separate sliders for start and end dates instead of a single range slider. This provides more intuitive and precise date range selection.
-
-#### Changes Made
-
-**Handler Functions** (replaced `handleRangeChange`):
-- `handleStartChange`: Updates start date, enforces start ≤ end
-- `handleEndChange`: Updates end date, enforces end ≥ start
-
-**UI Layout**:
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ▽ Filter Time Range                                   Reset to full range  │
-│                                                                             │
-│ 📅 Start Date                                            Oct 30, 2025      │
-│ ○───────────────────────────────────────────────────────────────────────── │
-│                                                                             │
-│ 📅 End Date                                              Jan 28, 2026      │
-│ ─────────────────────────────────────────────────────────────────────────○ │
-│                                                                             │
-│                         ┌──────────────────┐                               │
-│                         │  91 days selected │                               │
-│                         └──────────────────┘                               │
-│                                                                             │
-│ ████████████████████████████████░░░░░░░░  32 / 100 concepts (32%)         │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### File Modified
-
-| File | Change |
-|------|--------|
-| `frontend/src/components/trends/TimeWindowAnalysis.tsx` | Separate handlers + two-slider UI |
-
-#### Features
-- **Independent Control**: Each slider moves separately
-- **Validation**: Start cannot exceed End (auto-corrected)
-- **Date Display**: Current date shown right-aligned next to each slider label
-- **Days Badge**: Centered badge shows selected range duration
-- **Reset**: "Reset to full range" sets Start=0%, End=100%
-
----
-
-### Sophisticated Topic & Trend Detection Dashboard - COMPLETE
-
-#### Overview
-New comprehensive Trend Detection Dashboard with 7 interactive visualizations for real-time trend analysis across all content sources (Tweets, Articles, Papers, Reddit).
-
-#### New Components Created
-
-| Component | Description | Location |
-|-----------|-------------|----------|
-| `TrendDashboardMain.tsx` | Orchestrating container with tabs | `frontend/src/components/trends/` |
-| `TrendAtAGlance.tsx` | 4-column grid: Hot/Declining/Stable/Anomalies | `frontend/src/components/trends/` |
-| `BubbleChart.tsx` | Scatter chart with X=Age, Y=Velocity, Size=Volume | `frontend/src/components/trends/` |
-| `TopicHeatmap.tsx` | Matrix: Concepts × Dates with activity intensity | `frontend/src/components/trends/` |
-| `CorrelationMatrix.tsx` | Co-occurrence patterns between concepts | `frontend/src/components/trends/` |
-| `TrendNetworkGraph.tsx` | Force-directed graph using react-force-graph-2d | `frontend/src/components/trends/` |
-| `AnimatedTimeline.tsx` | Bar chart race style animation with framer-motion | `frontend/src/components/trends/` |
-| `useTrendData.ts` | Custom hooks for fetching trend data | `frontend/src/components/trends/hooks/` |
-
-#### New Backend Endpoints
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /api/analytics/trends/at-a-glance` | Hot topics, declining, stable, anomalies with sparklines |
-| `GET /api/analytics/trends/cooccurrence` | Concept co-occurrence matrix and top pairs |
-| `GET /api/analytics/trends/animated-timeline` | Daily frames for bar chart race animation |
-| `GET /api/analytics/trends/heatmap` | Implemented with real data (was stubbed) |
-| `GET /api/analytics/trends/bubble-chart` | Implemented with real data (was stubbed) |
-| `GET /api/analytics/trends/network` | Implemented with co-occurrence data (was stubbed) |
-
-> **Hinweis (24.07.2026):** Die Pfade liegen unter `/api/analytics/trends/...` (nicht `/api/trends/...`). Die ungenutzten Stub-Endpunkte `/sankey`, `/radar`, `/sparklines`, `/wordcloud`, `/treemap` und `/forecast` wurden am 24.07.2026 entfernt.
-
-#### New Backend Service
-
-**`backend/app/services/anomaly_detection.py`** - Statistical anomaly detection:
-- `AnomalyDetector` class with Z-score analysis
-- `get_baseline_stats()` - 30-day baseline calculation
-- `detect_spikes()` - Z-score threshold detection (default 2.5)
-- `get_all_anomalies()` - Find all concepts with anomalous activity
-- `get_concept_cooccurrence()` - Calculate co-occurrence matrix with Jaccard similarity
-- `get_concept_activity_by_day()` - Daily activity for sparklines
-
-#### TypeScript Types
-
-**`frontend/src/types/trends.ts`** - Complete type definitions:
-- `ConceptTrend` - Core trend data with sparklines
-- `AnomalyAlert` - Z-score spike detection results
-- `AtAGlanceData` - Overview data structure
-- `HeatmapData` - Matrix with concepts × dates
-- `BubbleChartData` - Scatter chart with X/Y/Z ranges
-- `CooccurrenceData` - Co-occurrence matrix and pairs
-- `NetworkGraphData` - Nodes, links, clusters
-- `AnimatedTimelineData` - Frames for animation
-
-#### Navigation Integration
-
-Added to `ModernNavigation.tsx` under "Analysis" dropdown:
-- View type: `trend-dashboard`
-- Icon: Flame
-- Description: "Real-time trend detection and analysis"
-
-#### Features
-
-1. **At-a-Glance View**:
-   - Hot Topics: >50% increase in 24-48h
-   - Declining: >30% decrease
-   - Stable: Consistent evergreens
-   - Anomalies: Z-score >2.5 spikes
-   - Mini sparklines for each concept
-
-2. **Heatmap**:
-   - Top 20 concepts × dates matrix
-   - Color intensity = activity level
-   - Hover shows content breakdown
-
-3. **Bubble Chart**:
-   - X: Days since first occurrence
-   - Y: Velocity (% change)
-   - Size: Volume (total mentions)
-   - Color: Entity type
-   - Zoom/pan controls
-
-4. **Correlation Matrix**:
-   - Pairwise co-occurrence counts
-   - Jaccard similarity strength
-   - Top pairs list with click-to-filter
-
-5. **Network Graph**:
-   - Force-directed layout with react-force-graph-2d
-   - Node size = activity level
-   - Edge thickness = co-occurrence strength
-   - Highlight on hover/click
-
-6. **Animated Timeline**:
-   - Bar chart race style animation
-   - Play/Pause, speed control (0.5x-3x)
-   - Frame scrubber
-   - Cumulative counts over time
-
-#### Files Modified
-
-| File | Change |
-|------|--------|
-| `backend/app/api/analytics_trends_mongodb.py` | New endpoints + implemented stubs |
-| `backend/app/services/anomaly_detection.py` | NEW - Anomaly detection service |
-| `frontend/src/types/trends.ts` | NEW - TypeScript types |
-| `frontend/src/components/trends/*` | NEW - All visualization components |
-| `frontend/src/components/ModernNavigation.tsx` | Added trend-dashboard view type |
-| `frontend/src/ModernApp.tsx` | Added TrendDashboardMain routing |
-
-#### Access
-Navigate to: Analysis → Trend Dashboard
-
-## Recent Enhancements (January 26, 2026)
-
-### Suggest Concept Tags: Content Requirement Enforcement - COMPLETE
-
-#### Problem
-"Suggest Concept Tags" worked without processed paper content — it silently fell back to title + abstract only. "Entity Extraction" already required content (button disabled without it). Both features should consistently require processed content.
-
-#### Solution
-Made "Suggest Concept Tags" behave identically to "Entity Extraction":
-
-**Frontend** (`PaperViewerOptimized.tsx`):
-- Button `disabled={!paper?.content}` with `disabled:opacity-60` styling
-- Tooltip: "Paper must be processed first" when disabled, "Suggest concept tags using AI" when active
-- Keyboard shortcut `t` gated on `paper?.content` (matching `e` for Entity Extraction)
-
-**Backend** (`papers_mongodb.py`):
-- Removed silent fallback to title+abstract
-- Returns HTTP 400: "Paper must be processed first — no content available"
-- Also checks `markdown_content` as alternative content source
-
-#### Files Modified
-| File | Change |
-|------|--------|
-| `frontend/src/components/PaperViewerOptimized.tsx` | `disabled` + tooltip on Suggest button, keyboard shortcut guard |
-| `backend/app/api/papers_mongodb.py` | HTTP 400 instead of silent fallback when no content |
-
-#### Code Pattern
-```python
-# BEFORE (silent fallback):
-if paper.get('content'):
-    paper_text_for_llm += f"Full Paper Content:\n{paper['content']}"
-else:
-    logger.warning(f"Paper {paper_id} has no content, using title and abstract only")
-
-# AFTER (explicit error):
-if not paper.get('content') and not paper.get('markdown_content'):
-    raise HTTPException(status_code=400, detail="Paper must be processed first — no content available")
-full_content = paper.get('content') or paper.get('markdown_content')
-paper_text_for_llm += f"Full Paper Content:\n{full_content}"
-```
-
-### Startup Cleanup for Stale Processing Statuses - COMPLETE
-
-#### Problem
-When STT is stopped (or crashes) while a paper/book is being processed, the `processing_status` remains stuck at `processing_with_marker` or `processing_with_mineru`. On next startup, the UI shows "Processing..." but no actual process is running.
-
-#### Solution
-Added automatic cleanup in `start_stt.sh` that runs after MongoDB is confirmed running:
+Always use the `$SCRIPT_DIR` pattern in shell scripts. Never hardcode absolute paths,
+never rely on relative paths (they break after `cd backend` etc.):
 
 ```bash
-# Reset papers stuck in processing state
-db.papers.updateMany(
-    {processing_status: {$regex: /^processing/}},
-    {$set: {processing_status: 'pending', processing_progress: null, marker_process_health: null}}
-)
-
-# Reset books stuck in processing state
-db.books.updateMany(
-    {processing_status: {$regex: /^processing/}},
-    {$set: {processing_status: 'pending', processing_progress: null, marker_process_health: null}}
-)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LOG_FILE="$SCRIPT_DIR/logs/startup.log"
 ```
 
-#### Result
-- Papers/books stuck in `processing_*` state are automatically reset to `pending` on startup
-- Users can immediately retry processing without manual database intervention
-- Startup log shows: `"✓ Reset N papers and M books from stale processing state"`
+### 3.2 Virtual Environments — explicit paths, validated
 
-#### File Modified
-| File | Change |
-|------|--------|
-| `start_stt.sh` | Added stale processing cleanup after MongoDB check (lines 228-253) |
+- Always call venv binaries explicitly (`venv/bin/python`), **never**
+  `source venv/bin/activate` before `nohup ... &` — background processes do not inherit
+  the activated environment.
+- venvs synced between macOS and Linux have broken symlinks. Validate before use and
+  recreate if invalid:
 
-### Paper Content Tab: Fix "Processing" Display for Pending Papers - COMPLETE
-
-#### Problem
-Papers that were never processed (or had their status reset to `pending`) showed "Processing Content..." with a spinner, as if they were actively being processed. This was confusing because no processing was actually running.
-
-#### Root Cause
-The content tab checked `!paper.processed` to decide whether to show the processing spinner, but this doesn't distinguish between:
-1. **Pending** — never processed, should show "Process" buttons
-2. **Actively processing** — should show spinner + progress
-
-#### Solution
-Changed the condition to use `isAnyProcessing` (which checks `processing_status`):
-
-```tsx
-// BEFORE (wrong):
-{!paper.processed ? <Spinner /> : <Icon />}
-{!paper.processed ? "Processing Content..." : "No Content Available"}
-
-// AFTER (correct):
-{isAnyProcessing ? <Spinner /> : <Icon />}
-{isAnyProcessing ? "Processing Content..." : !paper.processed ? "Not Yet Processed" : "No Content Available"}
-```
-
-#### Three States Now Correctly Handled
-| State | Display |
-|-------|---------|
-| `isAnyProcessing` | Spinner + "Processing Content..." + ProcessingStatusIndicator |
-| `!isAnyProcessing && !paper.processed` | "Not Yet Processed" + Process buttons |
-| `!isAnyProcessing && paper.processed` | "No Content Available" + Retry buttons |
-
-#### File Modified
-| File | Change |
-|------|--------|
-| `frontend/src/components/PaperViewerOptimized.tsx` | Fixed content tab to use `isAnyProcessing` instead of `!paper.processed` |
-
----
-
-## Recent Enhancements (January 25, 2026)
-
-### Paper Analysis Concurrent Save Fix - COMPLETE
-
-#### Problem
-"Generate All Analyses" created 12 analyses but only 1-4 were saved. The analyses were generated correctly (UI showed progress) but lost when saved to MongoDB due to race conditions.
-
-#### Root Cause
-The save operation used `$set` which overwrites the entire `analyses` array. When multiple analyses were generated concurrently (LLM takes 2-5 seconds each), each operation:
-1. Read the same initial array
-2. Appended its analysis locally
-3. Wrote back with `$set` - whichever wrote last overwrote the others
-
-#### Solution
-Replaced `$set` with atomic MongoDB operations:
-- **`$push`**: Atomically appends new analyses without reading the whole array
-- **`$pull`**: Atomically removes analyses when regenerating
-
-#### Files Modified
-**`backend/app/api/papers_mongodb.py`** - 4 locations fixed:
-
-| Function | Lines | Change |
-|----------|-------|--------|
-| `create_analysis()` | 4167-4183 | `$pull` + `$push` instead of `$set` |
-| `generate_multiple_analyses()` | 4316-4323 | `$push` after each analysis |
-| `run_analysis_in_background()` | 252-262 | `$push` after each analysis |
-| `delete_analysis()` | 4978-4984 | `$pull` instead of `$set` |
-
-#### Code Pattern
-```python
-# BEFORE (loses data in concurrent scenarios):
-existing_analyses.append(analysis)
-db.papers.update_one(
-    {'_id': paper['_id']},
-    {'$set': {'analyses': existing_analyses}}
-)
-
-# AFTER (atomic, no race conditions):
-if existing and regenerate:
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$pull': {'analyses': {'$or': [
-            {'type': analysis_type},
-            {'analysis_type': analysis_type}
-        ]}}}
-    )
-
-db.papers.update_one(
-    {'_id': paper['_id']},
-    {'$push': {'analyses': analysis}}
-)
-```
-
-#### Verification
-Tested with 4 concurrent analysis requests - all 4 saved correctly (started with 2, ended with 6).
-
-### Paper Facets Endpoint Crash Fix - COMPLETE
-
-#### Problem
-Searching in the Papers dashboard caused CORS errors in the browser. Every keystroke in the search field triggered `Failed to load facets: AxiosError` with `No 'Access-Control-Allow-Origin' header`.
-
-#### Root Cause
-The CORS errors were a **symptom**, not the cause. The `/api/papers/facets` endpoint was returning a **500 Internal Server Error**. FastAPI does not add CORS headers to unhandled 500 responses, so the browser reported it as a CORS issue.
-
-The actual bug was in the fallback author aggregation pipeline (line ~894):
-1. **`$split` on array field**: One paper (`Semanta`) stored `authors` as an array of strings instead of a comma-separated string. `$split` fails on arrays with: `$split requires an expression that evaluates to a string as a first argument, found: array`
-2. **Invalid `$match` filter**: `{'$ne': None, '$ne': ''}` — the second `$ne` key overwrote the first in the Python dict, so the `None` check was silently dropped
-
-#### Solution
-**`backend/app/api/papers_mongodb.py`** - Fallback author pipeline:
-
-```python
-# BEFORE (crashes on array authors):
-{'$match': {'authors': {'$ne': None, '$ne': ''}}},
-{'$project': {'authors_split': {'$split': ['$authors', ', ']}}},
-
-# AFTER (handles both string and array):
-{'$match': {'authors': {'$nin': [None, '']}}},
-{'$project': {
-    'authors_list': {
-        '$cond': {
-            'if': {'$eq': [{'$type': '$authors'}, 'array']},
-            'then': '$authors',
-            'else': {'$split': ['$authors', ', ']}
-        }
-    }
-}},
-```
-
-#### Verification
-- `GET /api/papers/facets` returns 200 with full author/year/conference facets
-- `GET /api/papers/facets?search=T` returns 200 (previously returned 500)
-- CORS errors in browser resolved
-
----
-
-## Recent Enhancements (January 24, 2026)
-
-### Batch Marker Processing for Papers - COMPLETE
-
-#### Overview
-Added batch processing capability to process all unprocessed papers through Marker service with a single click.
-
-#### Features Implemented
-| Feature | Description |
-|---------|-------------|
-| **"Process All (N)" Button** | Shows count of unprocessed papers, starts batch |
-| **Progress Banner** | Real-time progress with completed/failed/skipped counts |
-| **localStorage Persistence** | Progress survives page navigation |
-| **Auto-Resume** | Batch continues from where it left off when returning |
-| **Smart Skip Logic** | Checks backend status before processing each paper |
-| **Duplicate Prevention** | Ref guard prevents React StrictMode double-execution |
-
-#### Technical Implementation
-- **Location**: `frontend/src/components/FacetedPapersDashboard.tsx`
-- **State**: `batchProgress` with localStorage initialization
-- **Guard**: `batchProcessingActiveRef` prevents concurrent executions
-- **Processing**: Sequential (Marker semaphore limits to 1 concurrent)
-
-#### UI Components
-```
-┌─────────────────────────────────────────────────────┐
-│ [Upload PDF] [Import Paper] [Refresh] [Process All (5)] │
-├─────────────────────────────────────────────────────┤
-│ ⚙️ Processing Papers with Marker...                 │
-│ ████████████░░░░░░░░░░░░░░░░░░ 3/5 completed       │
-│ 🔄 Currently processing: Attention Is All You Need │
-└─────────────────────────────────────────────────────┘
-```
-
-#### Parallel Processing Capabilities
-| Scenario | Behavior |
-|----------|----------|
-| **Marker + MinerU** | ✅ Can run in parallel (different services, ports 8002/8003) |
-| **Multiple Marker** | ❌ Serialized (semaphore limits to 1) |
-| **Multiple MinerU** | ✅ Can run concurrently (no semaphore) |
-
-#### React StrictMode Fix
-Added `batchProcessingActiveRef` to prevent duplicate batch execution when React StrictMode double-invokes effects in development mode.
-
-**To clear stuck batch state:**
-```javascript
-// In browser DevTools Console:
-localStorage.removeItem('batchProcessingProgress')
-```
-
-### MinerU Progress Feedback UI - TEILWEISE / NICHT IMPLEMENTIERT
-
-> **Korrektur (24.07.2026):** Die unten beschriebene Portierung wurde nie vollständig umgesetzt. `mineru_server.py` hat nur einfaches Stage-Keyword-Matching — KEINE PTY-basierte Output-Capture, kein `_parse_mineru_progress`, kein psutil-Health-Monitoring und keinen Heartbeat. Diese Features existieren nur im Marker-Service (`marker_server.py`).
-
-#### Overview
-Added real-time progress tracking for MinerU PDF processing, matching the existing Marker progress infrastructure.
-
-#### Problem Solved
-MinerU processing previously had no real-time feedback:
-- Only showed "Processing with MinerU..." with no progress updates
-- No CPU/RAM monitoring during processing
-- No stage information (layout, OCR, etc.)
-- Processing could take 5-30+ minutes with zero feedback
-
-#### Solution Implemented
-Ported Marker's progress infrastructure to MinerU:
-
-| Feature | Description |
-|---------|-------------|
-| **PTY-based Output Capture** | Real-time CLI output streaming (captures TQDM progress) |
-| **Progress Parsing** | Detects MinerU stages (Layout, MFD, MFR, OCR-det, OCR-rec) |
-| **Process Health Monitoring** | CPU%, RAM usage via psutil |
-| **Heartbeat Mechanism** | 15-second fallback when no progress detected |
-| **Callback Throttling** | 2-second minimum between callbacks to prevent spam |
-
-#### MinerU Progress Stages
-| Stage | Description | Progress Range |
-|-------|-------------|----------------|
-| `initializing` | Starting MinerU | 0-5% |
-| `layout_detection` | Layout Predict | 5-20% |
-| `formula_detection` | MFD Predict | 20-30% |
-| `formula_recognition` | MFR Predict | 30-40% |
-| `table_extraction` | Table-ocr | 40-50% |
-| `text_detection` | OCR-det | 50-65% |
-| `text_recognition` | OCR-rec | 65-80% |
-| `page_processing` | Processing pages | 80-95% |
-| `finalizing` | Writing output | 95-100% |
-
-#### Expected UI Result
-```
-┌────────────────────────────────────────────────┐
-│ ⟳ Processing with MinerU...                   │
-│                                                │
-│ Elapsed: 3.5 minutes                          │
-│                                                │
-│ OCR-det: Detecting text regions               │
-│ ████████████████░░░░░░░░░░░░░░░░░░ 55%       │
-│                                                │
-│ 📊 Process Health:                            │
-│ ┌──────────────────────────────────┐         │
-│ │ PID: 46966                        │         │
-│ │ CPU: 97.3%                        │         │
-│ │ RAM: 3.4 GB                       │         │
-│ │ Output: Processing...             │         │
-│ └──────────────────────────────────┘         │
-│                                                │
-│ Expected: 5-15 minutes  [Cancel]              │
-└────────────────────────────────────────────────┘
-```
-
-#### Technical Implementation
-- **File Modified**: `backend/mineru_service/mineru_server.py`
-- **Functions Added**:
-  - `_strip_ansi()` - Remove terminal escape codes
-  - `_get_process_health()` - CPU/RAM monitoring via psutil
-  - `_parse_mineru_progress()` - Parse MinerU CLI output
-  - `_cli_run_streaming()` - PTY-based CLI execution with callbacks
-- **No Backend/Frontend Changes Required**: Uses existing callback infrastructure
-
-#### Data Flow
-```
-MinerU CLI (stages/TQDM output)
-        ↓
-PTY captures output line-by-line (mineru_server.py)
-        ↓
-_parse_mineru_progress() extracts: stage, progress, message
-        ↓
-Progress callback sent to Backend API (every 2 seconds, throttled)
-POST /api/papers/{id}/progress-callback
-        ↓
-Backend stores in MongoDB (papers_mongodb.py)
-papers.processing_progress = {stage, message, progress, health}
-        ↓
-Frontend polls (every 10 seconds)
-GET /api/papers/{id}/processing-status
-GET /api/papers/{id}/process-health
-        ↓
-ProcessingStatusIndicator.tsx displays live metrics
-```
-
----
-
-## Recent Enhancements (January 23, 2026)
-
-### Scripts Reorganization - COMPLETE
-
-#### Overview
-Centralized all cross-platform scripts in `scripts/` directory (same structure as Samanta project).
-
-#### New Location
-```
-scripts/
-├── setup.sh           # Cross-platform environment setup (NEW)
-├── sync-out.sh        # Export MongoDB to db-sync/dumps/
-├── sync-in.sh         # Import from other system (with checksum verification)
-├── sync-status.sh     # Show status of all registered systems
-└── sync_manual.md     # Detailed sync documentation
-```
-
-#### setup.sh - Cross-Platform Environment Setup (NEW)
-
-Detects macOS or Linux and sets up the complete development environment.
-
-**Usage:**
 ```bash
-./scripts/setup.sh              # Full setup
-./scripts/setup.sh check        # Check status only
-./scripts/setup.sh mongodb      # MongoDB only
-./scripts/setup.sh python       # Python venvs only
-./scripts/setup.sh frontend     # Frontend only
-./scripts/setup.sh sync         # Check sync status
+check_venv_valid() {  # valid if bin/python exists and is executable
+    [ -d "$1" ] && [ -x "$1/bin/python" ]
+}
 ```
 
-**Features:**
-| Feature | Description |
-|---------|-------------|
-| **Platform Detection** | macOS vs Linux (Arch/Debian/Fedora) |
-| **MongoDB Setup** | Install and start MongoDB |
-| **Python Environments** | Delegates to setup_python.sh |
-| **Frontend Setup** | Node.js + npm install with platform check |
-| **API Key Check** | Validates ~/.env |
-| **Syncthing Check** | Optional sync service status |
+`setup_python.sh` and `start_stt.sh` do this automatically for backend venv,
+marker_env and mineru_env. Frontend `node_modules` also contain platform-native modules
+(`@rollup/rollup-darwin-*` vs `-linux-x64-gnu`) — run `npm install` after switching
+platforms.
 
-**Output Example:**
-```
-════════════════════════════════════════════════════════════
-  SmartTrendTracer - Environment Status
-════════════════════════════════════════════════════════════
+### 3.3 MongoDB Cross-Machine Synchronization
 
-  🐧 Platform: Linux
-  📦 Distribution: arch
+Each machine runs its own local MongoDB. Sync with the scripts in `scripts/`
+(config in `.db-sync-config`; dumps in `db-sync/dumps/` are synced by Syncthing,
+`db-sync/backups/` stays local):
 
-▶ Python
-  ✓ Python: Python 3.12.12
-  ✓ mise: installed
-
-▶ Virtual Environments
-  ✓ Backend: Valid
-  ✓ Marker: Valid
-  ✓ MinerU: Valid
-
-▶ MongoDB
-  ✓ MongoDB: Running
-
-▶ API Keys
-  ✓ OPENAI_API_KEY: Set
-  ✓ ANTHROPIC_API_KEY: Set
-```
-
-#### New Features
-| Feature | Description |
-|---------|-------------|
-| **sync-status.sh** | New script showing all systems and recommendations |
-| **SHA-256 Checksum** | Verifies dump integrity before import |
-| **Automatic Backup** | Creates backup before import |
-| **Configurable** | Settings in `.db-sync-config` |
-| **Cleanup** | Auto-removes dumps older than 7 days or > 5 per system |
-
-#### Configuration File (`.db-sync-config`)
 ```bash
-MONGO_URL="mongodb://localhost:27017"
-DATABASE_NAME="smarttrendtracer"
-SYNC_DIR="db-sync/dumps"
-BACKUP_DIR="db-sync/backups"
-MAX_DUMPS_PER_SYSTEM=5
-MAX_DUMP_AGE_DAYS=7
-REQUIRE_BACKUP_BEFORE_IMPORT=true
+./scripts/sync-out.sh      # END of session: export (compressed dump + SHA-256 checksum)
+./scripts/sync-status.sh   # START of session: check what's available
+./scripts/sync-in.sh       # import (verifies checksum, backs up, imports with --drop)
 ```
 
-#### Backwards Compatibility
-Old scripts in `backend/` now forward to new location with deprecation warning.
+Only sync when switching machines, not during daily work. Indexes are recreated on
+import (30-60s first startup).
 
-#### Usage
-```bash
-./scripts/sync-status.sh    # Check status
-./scripts/sync-out.sh       # Export before switching machines
-./scripts/sync-in.sh        # Import on new machine
-```
+### 3.4 Environment Variables — API keys in `~/.env`, never in the project
 
----
+`~/.env` (home directory, synced across machines, not in git) contains all LLM keys:
+`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`/`GEMINI_API_KEY`, `XAI_API_KEY`,
+plus `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`. Do **not** use `backend/.env`.
+`start_stt.sh` auto-loads it with `set -a; source "$HOME/.env"; set +a`
+(works with or without `export` prefixes).
 
-## Recent Enhancements (January 21, 2026)
+### 3.5 Service Startup Timeouts
 
-### Dashboard Refresh Buttons - COMPLETE
+- Backend API: **60 seconds** (MongoDB index creation on large collections)
+- Marker / MinerU: 30 seconds (default)
 
-#### Overview
-All faceted dashboards now have consistent Refresh buttons for manual list refresh without browser reload.
+### 3.6 Comprehensive Logging
 
-#### Dashboards with Refresh Buttons
-| Dashboard | File | Status |
-|-----------|------|--------|
-| Articles (Substack) | `FacetedSubstackDashboardModern.tsx` | Already had |
-| Tweets | `FacetedTweetsDashboardModern.tsx` | Already had |
-| Reddit | `FacetedRedditDashboardModern.tsx` | Already had |
-| Articles (Modern) | `FacetedArticlesDashboardModern.tsx` | Already had |
-| **Papers** | `FacetedPapersDashboard.tsx` | **Added** |
-| **Books** | `FacetedBooksDashboard.tsx` | **Added** |
+All startup scripts create timestamped logs (`logs/startup_YYYYmmdd_HHMMSS.log`) via a
+`log()` function with `tee`. Must include: timestamps, PIDs of all services, port checks,
+startup timing, Python/venv paths, MongoDB connection status.
 
-#### Features
-- Refresh button in header area next to Upload/Import buttons
-- Spin animation while loading (`animate-spin` class)
-- Disabled state during loading to prevent double-clicks
-- Consistent styling across all dashboards
+### 3.7 Platform Detection
 
-#### Files Modified
-- `frontend/src/components/FacetedPapersDashboard.tsx` - Added RefreshCw import, cn import, Refresh button
-- `frontend/src/components/FacetedBooksDashboard.tsx` - Added RefreshCw import, cn import, Refresh button
+Scripts detect the platform via `$OSTYPE` and use the appropriate commands:
 
-#### Usage
-Click the "Refresh" button in any dashboard header to reload the list data without navigating away or reloading the browser.
-
----
-
-### DEF-001: Article Viewer Optimistic UI - Still Open
-
-**Status:** In Progress (multiple fix attempts failed)
-
-The `articleViewerClosed` custom event is not being received by the parent component despite being dispatched. Fix attempts including `useCallback` for stable handler reference did not resolve the issue.
-
-**Workaround:** Use the Refresh button to manually update lists after viewer actions.
-
----
-
-## Recent Enhancements (January 20, 2026)
-
-### RAG Search Content Type Filtering Fix - COMPLETE
-
-#### Problem
-When searching with multiple content types selected (e.g., Tweets + Articles), only tweets appeared in results despite articles like "AI Agents of the Week" being relevant to queries about "agentic AI".
-
-#### Root Cause
-The RAG search used FAISS similarity ranking, which returns results sorted by embedding similarity. With ~11,422 tweets but only ~65 articles in the index, tweets dominated the top rankings and filled all result slots (k=50) before any articles appeared.
-
-**Example**: First article might appear at position 847 in FAISS ranking, but search stopped after collecting 50 results.
-
-#### Solution Implemented
-**Proportional blending** when multiple content types are selected:
-
-1. **Collect ALL matching results separately by type** (not just first k)
-2. **Ensure minimum quota** from each type:
-   - At least 3 items from each selected type
-   - Or `k / (2 * num_types)` items
-3. **Fill remaining slots** with highest-scoring items across all types
-4. **Sort final results** by similarity score
-
-**Code Location**: `backend/app/services/rag/search.py` (Funktion `_blend_results`) — der ursprüngliche Verweis `rag_service_concepts.py:312-402` ist veraltet
-
-#### Enhanced Logging Added
-```
-FIRST ARTICLE at position 847: AI Agents of the Week: Papers You Should Know About
-COLLECTED per type (before blending): tweets=11000, articles=65, papers=0
-Added 12 tweets (minimum quota)
-Added 12 articles (minimum quota)
-FINAL results by type: tweets=38, articles=12, papers=0
-```
-
-#### Files Modified
-- `backend/app/services/rag/search.py` - Proportional blending logic (`_blend_results`); ursprünglich in `rag_service_concepts.py`
-- `backend/app/services/rag_helpers.py` - *(Datei am 24.07.2026 entfernt; Logik im `app/services/rag/`-Package aufgegangen)*
-- `backend/app/api/rag_simple.py` - content_types parameter in RAGQuery model
-
-#### Result
-When selecting Tweets + Articles, results now include representation from both types instead of being dominated by tweets.
-
-### Cross-Platform Scripts Enhancement - COMPLETE
-
-#### Overview
-Complete rewrite of startup/shutdown scripts for seamless macOS ↔ Linux operation.
-
-#### setup_python.sh - New Commands
-```bash
-./setup_python.sh           # Full setup (backend + frontend)
-./setup_python.sh backend   # Backend only (all Python venvs)
-./setup_python.sh frontend  # Frontend only (npm install)
-./setup_python.sh check     # Check environment status
-./setup_python.sh activate  # Print venv activation command
-```
-
-#### Features Implemented
-| Feature | Description |
-|---------|-------------|
-| **venv validation** | Detects broken symlinks from other platform, auto-recreates |
-| **node_modules check** | Detects wrong platform's native modules (@rollup/rollup-darwin vs linux) |
-| **mise integration** | Auto-activates mise for Python version management |
-| **API key check** | Validates ~/.env contains required LLM keys |
-| **Status display** | Shows all environments, MongoDB status, API keys |
-
-#### stop_stt.sh - CLI Arguments
-```bash
-./stop_stt.sh              # Interactive (asks about MongoDB)
-./stop_stt.sh -y           # Stop MongoDB without asking
-./stop_stt.sh -n           # Keep MongoDB running without asking
-./stop_stt.sh --help       # Show usage
-```
-
-#### Platform-Specific Handling
 | Operation | macOS | Linux |
-|-----------|-------|-------|
-| MongoDB start | `brew services start mongodb-community` | `systemctl start mongod` |
-| MongoDB stop | `brew services stop mongodb-community` | `systemctl stop mongod` |
-| File timestamps | `date -r` / `stat -f` | `stat -c` |
-| Native modules | `@rollup/rollup-darwin-*` | `@rollup/rollup-linux-x64-gnu` |
+|---|---|---|
+| MongoDB start/stop | `brew services start/stop mongodb-community` | `systemctl start/stop mongod` |
+| File timestamps | `stat -f` / `date -r` | `stat -c` |
 
-#### Files Modified
-- `setup_python.sh` - Complete rewrite with all features above
-- `start_stt.sh` - Fixed `date -r` → `stat -c` for Linux
-- `stop_stt.sh` - Added platform detection, CLI args, Linux MongoDB support
+Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if present.
 
-#### Workflow beim Plattformwechsel
+### 3.8 Configuration Rules
+
+- **NEVER hardcode prompts or LLM model access.** Models/temperatures come from
+  `backend/llm.json` (per task type), prompts from `backend/prompts_config.json`,
+  the LiteLLM router from `backend/litellm_config.yaml`. All LLM calls go through the
+  central `llm_manager`.
+- **Deprecated models must not appear in any selection list** (backend defaults,
+  litellm_config model lists, `frontend/src/config/models.ts`). Removed models are
+  mapped to successors via `MODEL_MIGRATION_MAP`
+  (`app/api/llm_preferences.py` / `app/services/llm_manager.py`); saved user preferences
+  pointing to dead models are detected at startup and migrated via
+  `POST /api/llm/preferences/migrate`.
+- **Feature policy: extend existing modules, never create parallel implementations.**
+  The 2026-07-24 function inventory traced most real bugs to exactly such parallel
+  implementations (duplicate tag services, a second tweet-save path with an incompatible
+  schema, duplicate footer cleaners).
+
+### 3.9 Code Conventions (learned the hard way — do not regress)
+
+- **Register static routes before `/{id}` routes.** FastAPI matches in registration
+  order; `GET /{book_id}` registered before `GET /facets` shadows it into a 404.
+  Applies to every APIRouter package (`books/__init__.py`, `articles/__init__.py`, …).
+- **`tag_instances.concept_id` is stored in mixed form (ObjectId AND string).**
+  Any count/lookup must query
+  `{'concept_id': {'$in': [oid, str(oid)]}}` — a single-type query silently returns 0.
+- **`tweets._id` is the Twitter ID string** — never insert tweets with an auto ObjectId
+  `_id` or a separate `tweet_id` field; reuse the collector's save logic.
+- **`tag_concepts_v2._id` is ObjectId** — wrap incoming string IDs with `ObjectId()`.
+- **MongoDB filters: use `{'$nin': [None, '']}`**, never `{'$ne': None, '$ne': ''}` —
+  Python dict deduplication silently drops the first key.
+- **`tag_instances.created_at` is a native BSON datetime** — never insert
+  `.isoformat()` strings; query with datetime objects. Use
+  `datetime.now(timezone.utc)` (naive `utcnow()` is deprecated and caused
+  naive/aware TypeErrors).
+- **When modularizing/moving files**: re-check relative imports
+  (`..services` vs `...services`) and `Path(__file__).parents[n]` depths — both broke
+  silently during past refactors.
+- Prefer `except Exception:` over bare `except:`; never swallow `HTTPException` in a
+  generic `except` (turned documented 400s into empty 200s).
+
+---
+
+## 4. Key Commands
+
+### Start / Stop
+
 ```bash
-# Auf neuem System:
-./scripts/sync-status.sh       # Status prüfen
-./scripts/sync-in.sh           # MongoDB importieren
-./setup_python.sh              # Erkennt & fixt alles automatisch
-./start_stt.sh                 # Starten
+./start_stt.sh          # MongoDB, backend :8088, Marker :8002, MinerU :8003,
+                        # book_processing_worker, frontend :3470.
+                        # Also: resets stale processing_* statuses to 'pending',
+                        # runs paper_type migration, loads ~/.env, validates venvs.
+./stop_stt.sh           # interactive (asks about MongoDB)
+./stop_stt.sh -y        # stop MongoDB too (--mongo-yes)
+./stop_stt.sh -n        # keep MongoDB running (--mongo-no)
+```
+
+After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `.env`.
+
+### Setup
+
+```bash
+./scripts/setup.sh              # full cross-platform setup (detects macOS/Linux)
+./scripts/setup.sh check        # status only (also: mongodb|python|frontend|sync)
+./setup_python.sh               # Python venvs + frontend (also: backend|frontend|check|activate)
+```
+
+### Machine Sync
+
+```bash
+./scripts/sync-out.sh           # export MongoDB (end of session)
+./scripts/sync-status.sh        # show sync status of all systems
+./scripts/sync-in.sh            # import (start of session on other machine)
+```
+
+### Collectors
+
+```bash
+cd backend
+python tweet_collector_service.py            # Basic Account Mode default, 15-min loop
+./start_basic_collector.sh                   # wrapper for the above
+python -m app.collectors.gmail_substack_collector             # Gmail newsletters
+python -m app.collectors.gmail_substack_collector --forwarded # forwarded only
+python -m app.collectors.reddit_collector                     # Reddit posts
+```
+
+### Maintenance (all in `backend/`, all MongoDB-based)
+
+```bash
+python monitor_collection.py          # live collection status, 5s refresh (--once for snapshot)
+python check_collection_state.py      # tweet collector state
+python check_tag_consistency.py --analyze   # (or --fix, --test "tag")
+python rebuild_rag_index.py           # rebuild concept RAG FAISS index
+python clean_substack_footers.py --clean    # (or --test)
+python fix_previews.py                # fix article previews
+python summarize_articles.py          # batch article summaries
+```
+
+### MongoDB Quick Checks
+
+```bash
+mongosh smarttrendtracer --eval "db.tweets.countDocuments({})"
+mongosh smarttrendtracer --eval "db.papers.countDocuments({paper_type: 'review'})"
+mongodump --db smarttrendtracer --out backup_$(date +%Y%m%d)   # backup
 ```
 
 ---
 
-## Recent Enhancements (January 19, 2026)
+## 5. API Surface (overview)
 
-### TypeScript Error Cleanup - COMPLETE
+Router registration lives in `backend/app/main.py` (~266 routes). One line per prefix:
 
-#### Overview
-Comprehensive TypeScript error cleanup reducing blocking issues and enabling clean production builds.
+| Prefix | Module | Content |
+|---|---|---|
+| `/api/tweets` | `api/tweets/` | browse, `faceted-search`, hierarchy-facets, per-tweet concepts, batch-annotate(+`-all`, status, cancel) |
+| `/api/papers` | `api/papers/` | CRUD/upload/facets, Marker/MinerU processing + progress/health callbacks, analyses, entities, concepts/tags, snippets, sections, references, TEI/PDF/images, GROBID, affiliations |
+| `/api/papers` (also) | `direct_url_import` | `POST /import-url`, `GET /validate-url` |
+| `/api/papers/dblp`, `/api/dblp` | `dblp_mongodb` | DBLP search/BibTeX/metadata |
+| `/api/books` | `api/books/` | CRUD/upload/facets, concepts, content, `process` (queue → worker) / `process-direct` |
+| `/api/articles` | `api/articles/` | browse/faceted-search, concepts/snippets, **author management** (`/authors/...`), extract-metadata, tags/suggest, summarize, recollect. (Old `/api/substack/articles` paths are gone.) |
+| `/api/v2/articles` | `article_import/` | URL import: smart dispatch, cookies, Playwright, batch |
+| `/api/article-preview` | `article_preview` | regenerate / beautify previews |
+| `/api/article-clustering` | `article_clustering_mongodb` | k-means/topic clustering |
+| `/api/substack` | `substack_mongodb` | legacy remainder: `/trends` (partial stub), `/health` |
+| `/api/reddit` | `reddit_mongodb` | faceted-search, facets, tags, collect, stats |
+| `/api/twitter-accounts` | `api/twitter_accounts/` | account CRUD, lookup, stats/dashboard/usage (10k budget), collector-status, toggle/refresh/collect |
+| `/api/authors` | `authors_management` | author merge/analytics endpoints — **UI not built yet** (see AUTHOR_UI_DESIGN.md) |
+| `/api/statistics`, `/api/system` | `statistics/`, `system_stats/` | statistics dashboards |
+| `/api/trends`, `/api/trends/analysis`, `/api/user-trends` | trends modules | trend queries and analysis |
+| `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data: at-a-glance, heatmap, bubble-chart, network, cooccurrence, animated-timeline; AI summarization (`/summarize`) |
+| `/api/topics` | `topic_explorer` | frequency / correlation / popular topics |
+| `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, rebuild, sample-questions |
+| `/api/ontology`, `/api/ontology-graph` | `tag_ontology/`, `ontology_graph` | concept ontology CRUD + visualization |
+| `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
+| `/api/concepts/organization` | `concept_organization` | organizing unorganized concepts |
+| `/api/tags/reorganize` | `tag_reorganization/` | async ontology reorganization (SSE + apply) |
+| `/api/entities` | `entity_extraction` | entity extraction & review |
+| `/api/llm` | `llm_preferences` | model preferences, status, deprecated-model migration |
+| `/api/user-settings` | `user_settings` | per-user key-value settings (TweetDeck columns etc.) |
+| `/api/arxiv`, `/api/acl-anthology`, `/api/acm`, `/api/openreview`, `/api/jair` | importers | paper imports |
+| `/api/references` | `references` | normalized references, top-cited, import (arXiv path; DOI → 501) |
+| `/api/pdf` | `pdf_export` | article PDF export |
+| `/api/media-gallery` | `media_gallery_mongodb` | Twitter media gallery |
+| `/health`, `/` | `main.py` | health check (DB counts + Marker/MinerU status) |
 
-#### Changes Made
+Static mounts: `/papers` (PDF dir), `/books` (book repository).
 
-**1. Vite Environment Types**
-- Created `frontend/src/vite-env.d.ts` with proper `ImportMetaEnv` interface
-- Fixed 6 `import.meta.env` type errors
+### Notable behaviors
 
-**2. Interface Extension Conflicts Fixed**
-- `ConceptManagementCenter.tsx`: `ConceptTreeNode` no longer extends `Concept` (conflicting `children` types)
-- `types/tagConcept.ts`: `TagConceptNode` made standalone interface (same issue)
-
-**3. Missing Interface Properties Added**
-| File | Properties Added |
-|------|------------------|
-| `FacetedPapersDashboard.tsx` | `pdf_path`, `authors_detailed`, `year`, `concepts`, `ai_summary`, `key_findings`, `dblp_url` |
-| `GROBIDMetadataPanel.tsx` | `year`, `journal`, `volume`, `pages`, `eprint`, `bibtex_raw`, `dblp_key` |
-| `FacetedTweetsDashboardModern.tsx` | `like_count`, `retweet_count`, `reply_count`, `quote_count`, `concepts` |
-| `TwitterMediaGalleryModern.tsx` | `preview_image_url`, `alt_text`, `media_key` |
-| `TrendAnalysisOverview.tsx` | `peak_day`, `peak_value` |
-| `ArticleViewerErrorBoundary.tsx` | `onClose` prop |
-| `ArticleViewerModern.tsx` | `subdomain`, `url` in authors array |
-
-**4. Set Type Mismatches Fixed**
-- `FacetedArticlesDashboardModern.tsx`: Changed `Set<number>` to `Set<string | number>` for article ID sets
-
-**5. ReactMarkdown v9 Migration**
-- Replaced deprecated `inline` prop with `className?.includes('language-')` check
-- Added proper type assertions for custom `think` component
-- Files: `PaperViewerOptimized.tsx`, `ArticleViewerModern.tsx`, `BookViewerOptimized.tsx`
-
-**6. Component Prop Fixes**
-- `FacetedRedditDashboardModern.tsx`: Fixed `TagBadge` usage (use children, not `concept` prop)
-- `FacetedRedditDashboardModern.tsx`: Fixed `TagSuggestionModalModern` props
-- `FacetedRedditDashboardModern.tsx`: Fixed `SemanticConceptSearch` handler signature
-- `FacetedTweetsDashboardModern.tsx`: Removed conflicting `Tweet` import
-
-#### Build Status
-- **TypeScript Errors**: 229 (mostly unused variables - non-blocking)
-- **Production Build**: ✅ Successful (12.62s)
-- **All APIs**: ✅ Working (Papers, Tweets, Articles)
-
----
-
-## Recent Enhancements (January 4, 2026)
-
-### Paper Date Type Selection for AI Summarization - COMPLETE
-
-#### Feature
-Users can now choose between **Import Date** (`created_at`) or **Publication Date** (`published_date`) when filtering papers in AI-Powered Summarization.
-
-#### Implementation
-- **Backend** (`analytics_trends_mongodb.py`): Added `paper_date_type` parameter with values `"created"` or `"published"`
-- **Frontend** (`SummarizationModern.tsx`): Added toggle buttons for date type selection
-- **Fallback Logic**: If `published_date` missing, checks `publication_date` (legacy), then `year`
-- **ACL Import** (`acl_anthology.py`): Standardized to use `published_date` field (was `publication_date`)
-- **Metadata Endpoint** (`papers_mongodb.py`): Now accepts both `published_date` and `publication_date`
-
-#### Files Modified
-- `backend/app/api/analytics_trends_mongodb.py` - paper_date_type parameter
-- `backend/app/services/analytics_helpers.py` - date_type in fetch functions
-- `backend/app/api/acl_anthology.py` - field name standardization
-- `backend/app/api/papers_mongodb.py` - metadata update endpoint
-- `frontend/src/components/SummarizationModern.tsx` - Date Type Selector UI
-
-### Paper Analyses Pipeline - "Generate All Analyses" Fix - COMPLETE
-
-#### Problem
-The "Generate All Analyses" button (for "All" category) had poor UX:
-- Sent all 14 analyses in ONE batch request
-- No progress tracking during generation
-- 1-7 minute wait with only "Generating All..." spinner
-- Timeout risk for large batches
-
-#### Solution
-Rewrote `generateAllAnalyses()` to use sequential pattern with real-time progress:
-
-**Before:**
-```typescript
-// One batch request, no progress
-axios.post('/analyses/generate-multiple', {analysis_types: allTypes})
-```
-
-**After:**
-```typescript
-// Sequential with progress tracking
-for (let i = 0; i < allAnalyses.length; i++) {
-  setBatchProgress({ current: analysisName, completed: i })
-  await axios.post('/analyses/generate', { analysis_type })
-  setBatchProgress({ completed: i + 1, skipped: skippedCount })
-}
-```
-
-#### UI Enhancement
-Added Progress Bar for "All" tab (same as category view):
-- `"3 of 14 completed (2 skipped)"`
-- Visual progress bar with percentage
-- `"Generating: Layman Summary"` current step indicator
-
-#### Files Modified
-- `frontend/src/components/PaperAnalysisPanel.tsx`
-  - Lines 614-688: Rewrote `generateAllAnalyses()` function
-  - Lines 906-945: Added Progress Bar UI for "All" tab
-
-### ArXiv Import Fix - COMPLETE
-
-#### Problem
-ArXiv import failed with: `"cannot unpack non-iterable coroutine object"`
-
-#### Root Cause
-`validate_arxiv_id()` is an async endpoint being called without `await`
-
-#### Solution
-Replaced async endpoint call with synchronous service method:
-```python
-# Before (broken)
-is_valid, result = validate_arxiv_id(request.url_or_id)
-
-# After (fixed)
-validated_id = arxiv_service.extract_arxiv_id(request.url_or_id)
-```
-
-#### File Modified
-- `backend/app/api/arxiv.py` - Lines 108-121
+- **Paper review mode**: `paper_type` param on papers list/upload/facets/stats; review
+  papers are excluded from global stats, trends and the RAG index.
+- **RAG trend detection**: `/api/rag/ask` detects trend keywords, retrieves 50 docs and
+  returns `is_trend_analysis` / `documents_analyzed` / `source_type` metadata; supports
+  `content_types` filtering with proportional blending across types and
+  `concept_filter`.
+- **Batch annotation**: `/api/tweets/batch-annotate[-all]` with in-memory task state
+  (404 after backend restart is handled frontend-side), concurrency 1-8, cancel support.
+- **Suggest Concept Tags / Entity Extraction** on papers require processed content
+  (HTTP 400 otherwise; frontend disables the buttons).
+- **Analyses saves are atomic** (`$push`/`$pull`, never `$set` of the whole array) to
+  survive concurrent generation.
+- Global exception handlers sanitize 500s; request timing middleware adds
+  `X-Process-Time-Ms` and logs slow requests (>1s).
 
 ---
 
-## Recent Enhancements (December 30, 2025)
+## 6. Configuration Files
 
-### Optimistic UI Updates - IN PROGRESS
-
-#### Goal
-Nach Aktionen auf Articles/Papers/Tweets soll die Liste lokal aktualisiert werden, ohne Full Refresh.
-
-#### Implemented
-- **FacetedSubstackDashboardModern**: Local state updates for add/remove concepts
-- **FacetedTweetsDashboardModern**: Local state updates for concept operations
-- **FacetedPapersDashboard**: Custom event listener for tag updates from PaperViewer
-- **Backend APIs**: Konsistente concept response mit `concept_id`, `slug`, `display_name`
-
-#### Known Issue (DEF-001)
-Article Viewer `onClose` callback und Custom Events funktionieren nicht korrekt.
-- Event wird dispatched aber Parent empfängt es nicht
-- Workaround: Manuell "Refresh" klicken
-
-**Details:** Siehe `DEFECTS.md` und `DEFECTS_OPTIMISTIC_UI.md`
-
-### Fixes Applied
-- **Gemini 3 Temperature**: Set to 1.0 in `litellm_config.yaml` to avoid infinite loops
-- **ANTHROPIC_API_KEY**: Removed hardcoded check in `articles_mongodb.py`
-- **Papers Endpoint**: Added `slug` field to POST `/api/papers/{id}/concepts` response
-- **API Key Status Banner**: Added UI warning when LLM API keys are missing
-
-### New Files
-- `DEFECTS.md` - Zentrale Mängelliste für alle bekannten Issues
-- `DEFECTS_OPTIMISTIC_UI.md` - Detail-Dokumentation für Optimistic UI Issues
-- `frontend/src/components/ApiKeyStatusBanner.tsx` - API Key Status Warning
+| File | Purpose |
+|---|---|
+| `backend/llm.json` | Model per task type (tag_suggestion, summarization, trend_analysis, paper_section_extraction, …). Includes **`models.rag_embedding`**: primary `models/text-embedding-004` (Google, 768d), fallback `text-embedding-ada-002` (OpenAI, 1536d). **Changing embedding model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, index at `data/rag_index_concepts`). |
+| `backend/prompts_config.json` | All LLM prompts/templates (incl. paper analyses catalog, rag_trend_analysis). Never inline prompts in code. |
+| `backend/litellm_config.yaml` | LiteLLM router model list. No explicit `api_key:` lines — keys are auto-detected from env. Gemini 3 preview models pinned to temperature 1.0 (infinite-loop bug below 1.0). |
+| `backend/reddit_config.json` | Monitored subreddits, priorities, score thresholds. |
+| `backend/forwarded_authors.json` | Forwarded-newsletter author matching (name/email/search patterns). |
+| `backend/accounts.json` | Twitter accounts (also managed via UI/DB). |
+| `.db-sync-config` | MongoDB sync settings (dump dir, retention, backup-before-import). |
+| `frontend/.env` | `VITE_API_URL=http://localhost:8088`. |
+| `frontend/src/config/models.ts` | Model choices shown in the UI — keep in sync with litellm_config (no deprecated models). |
+| `mise.toml` | Pins Python 3.12. |
 
 ---
 
-## Recent Enhancements (December 26, 2025)
+## 7. Known Issues & Open Work
 
-### Topic Explorer & LLM Model Selection Fixes - COMPLETE
+Full defect list with priorities: **`DEFECTS.md`** (currently open: DEF-003 Twitter media
+URL expiry [by design], DEF-004 @sama timezone duplicates, DEF-005 React key warning
+[won't fix], DEF-006 forwarded-article HTML previews [has fix script], DEF-007 Gary
+Marcus attribution, DEF-008 rate limiting [use collector service]. DEF-001 and DEF-002
+are resolved).
 
-#### Topic Explorer Mouse Click Selection Fix
-**Problem**: Users could not select topics by clicking with mouse in Topic Explorer dropdown
-**Root Cause**: The cmdk library (shadcn/ui Command component) was capturing mouse events and only allowing keyboard selection
+Open work items (state after the 2026-07-24 inventory + fix pass, see
+`docs/funktionsinventur.md`):
 
-**Solution**: Replaced cmdk-based Command component with native HTML elements
-- Standard `<input>` for search functionality
-- Standard `<div>` elements with `onClick` handlers for topic items
-- Added `Search` icon import from lucide-react
-
-**Files Modified**:
-- `frontend/src/components/TopicExplorerModern.tsx` - Replaced Command with native HTML
-
-**Current Status**:
-- ✅ Mouse click selection works
-- ✅ Keyboard navigation re-implemented (DEF-002 resolved 2025-12-31 — ↑↓/Enter/Escape via `highlightedIndex` State)
-
-#### LLM Model Selection Fix
-**Problem**: User selected "Gemini 3 Flash Preview" but system used "gemini-2.5-pro" instead
-
-**Root Cause**: The `model_mapping` dictionaries were mapping to full LiteLLM paths (`gemini/gemini-3-flash-preview`) but LiteLLM Router expects `model_name` from config (without prefix: `gemini-3-flash-preview`)
-
-**Solution**: Updated all model_mapping values to use `model_name` format (without `gemini/` prefix)
-
-**Before (Wrong)**:
-```python
-model_mapping = {
-    "gemini/gemini-3-flash-preview": "gemini/gemini-3-flash-preview",  # WRONG!
-}
-```
-
-**After (Correct)**:
-```python
-model_mapping = {
-    "gemini/gemini-3-flash-preview": "gemini-3-flash-preview",  # Correct - matches model_name in litellm_config.yaml
-    "gemini-3-flash-preview": "gemini-3-flash-preview",
-}
-```
-
-**Files Modified**:
-- `backend/app/api/papers_mongodb.py` - Fixed 2 locations with model_mapping dictionaries
-
-**Verification**: User confirmed working - "success gemini/gemini-3-flash-preview"
+1. **No automated test suite** (most important gap, H-Q1). No pytest, no frontend tests.
+   Recommended: pytest + httpx TestClient for the ~30 actively used core endpoints
+   (faceted-search per content type, tagging roundtrip, import flows, batch annotation)
+   plus one regression test per P1 fix.
+2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
+   progress reporting; MinerU processing shows no live progress (deliberately not built,
+   docs corrected instead).
+3. **DOI-based reference import returns 501** — CrossRef integration planned
+   (`references.py`).
+4. **Author merge/analytics UI missing** — `/api/authors` endpoints exist and are kept
+   deliberately; UI design in `AUTHOR_UI_DESIGN.md`.
+5. **Reddit UI gaps** — frontend only uses `faceted-search` + `facets`; the collect
+   trigger and stats endpoints are kept but have no UI.
+6. **"Coming Soon" views** in navigation (author-analytics, author-merge, reddit-trends,
+   books-analysis) are placeholders.
+7. **`/api/substack/trends` is a partial stub** (some fields empty, "would need complex
+   analysis").
+8. **Semantic concept search is plain string matching** despite its name
+   (ontology `search-concepts`, "for now" in code).
+9. **`marker_env` / `mineru_env` venvs are wrongly tracked in git** (~40k files) —
+   should be removed from the index and gitignored (they must be rebuilt per platform
+   anyway).
+10. Pre-existing frontend `tsc` error count: 18 (non-blocking, build is green).
 
 ---
 
-### AI Summarization Fixes & Enhancements - COMPLETE
+## 8. Changelog (condensed)
 
-#### Problems Fixed
+Details live in `git log` and `docs/`; do not re-expand here.
 
-1. **Date Range Bug in Summaries**: User selected "last week" but received summary mentioning "Oct 24 – Oct 31, 2024" - completely wrong dates
-2. **Concept Filter Not Working**: Filtering by concept (e.g., "Agentic AI") returned generic content instead of tagged content
-3. **"All Time" Period Not Sent**: Frontend skipped sending period parameter for "All Time", causing backend to default to 7 days
-4. **Missing Time Period Options**: Only had today, 3 days, week, 2 weeks, 30 days
-
-#### Root Causes & Solutions
-
-**1. LLM Prompt Missing Explicit Dates** (`backend/app/api/analytics_trends_mongodb.py`):
-```python
-# BEFORE: LLM didn't know actual dates, hallucinated them
-prompt = f"...Analyze content from the past {days} day(s)..."
-
-# AFTER: Explicit date range in prompt
-date_range_str = f"from {start_date.strftime('%B %d, %Y')} to {end_date.strftime('%B %d, %Y')}"
-prompt = f"...Analyze content {date_range_str} (the past {days} day(s))..."
-```
-
-**2. Concept Filter Applied AFTER Limit** (`backend/app/api/analytics_trends_mongodb.py`):
-```python
-# BEFORE: Got first 200 tweets, THEN filtered by concept (missed tagged tweets beyond position 200)
-tweets = list(db.tweets.find(tweet_filter).limit(max_tweets))
-# Then loop through tweets checking for concept tags...
-
-# AFTER: Get tagged content IDs FIRST, add to query filter, THEN apply limit
-if tags:
-    tweet_ids = [inst['content_id'] for inst in db.tag_instances.find({
-        'content_type': 'tweet',
-        'concept_id': {'$in': concept_ids}
-    })]
-    tweet_filter['_id'] = {'$in': tweet_ids}
-
-tweets = list(db.tweets.find(tweet_filter).sort('created_at', -1).limit(max_tweets))
-```
-
-**3. Frontend Skipping "All Time" Period** (`frontend/src/components/SummarizationModern.tsx`):
-```typescript
-// BEFORE: Period not sent for "all", backend defaulted to 7 days
-if (period !== 'all') params.append('period', period)
-
-// AFTER: Always send period
-params.append('period', period)  // Always send period, including 'all'
-```
-
-**4. Extended Time Period Options**:
-- Frontend: Added 60, 90, 120, 200, 365 days options
-- Backend: Added handlers for all new periods, changed "all" from 365 to 3650 days (~10 years)
-
-#### Configurable Data Limits Feature - NEW
-
-Users can now configure max tweets/articles/papers in the UI with persistent settings.
-
-**Backend** (`analytics_trends_mongodb.py`):
-```python
-@router.post("/summarize")
-def generate_summary(
-    # ... existing params ...
-    max_tweets: int = Query(100, ge=10, le=500),
-    max_articles: int = Query(50, ge=5, le=200),
-    max_papers: int = Query(50, ge=5, le=200)
-):
-```
-
-**Frontend** (`SummarizationModern.tsx`):
-- Collapsible "Data Limits" settings panel with gear icon
-- Number inputs for tweets (10-500), articles (5-200), papers (5-200)
-- Settings persist to localStorage across sessions
-- Truncation warning displays when data exceeds limits
-
-#### Time Period Options (Complete List)
-
-| Value | Description | Days |
-|-------|-------------|------|
-| `today` | Today | 1 |
-| `3days` | Last 3 Days | 3 |
-| `week` | Last Week | 7 |
-| `14days` | Last 2 Weeks | 14 |
-| `30days` | Last 30 Days | 30 |
-| `60days` | Last 60 Days | 60 |
-| `90days` | Last 90 Days | 90 |
-| `120days` | Last 120 Days | 120 |
-| `200days` | Last 200 Days | 200 |
-| `365days` | Last Year | 365 |
-| `all` | All Time | 3650 |
-
-#### Files Modified
-- `backend/app/api/analytics_trends_mongodb.py` - Concept filter fix, period handlers, configurable limits
-- `frontend/src/components/SummarizationModern.tsx` - Period options, always send period, settings UI
-- `backend/app/api/media.py` - Fixed missing function definition (IndentationError)
-- `backend/app/api/collection.py` - Fixed missing function definition (IndentationError)
+- **2026-07-24 — Function inventory + complete fix pass** (`docs/funktionsinventur.md`;
+  commits 1391a511, 9ca3d647, ff9e7e4c). ~360 items audited; all P1/P2/P3 findings
+  fixed: router shadowing (books/facets, articles/authors, without-author),
+  ObjectId-vs-string usage counts, paper tag-delete stub + missing snippet POST,
+  ACL/OpenReview/ACM background processing, media gallery sort/filter/search, topic
+  explorer date filters, fake statistics values, RAG trend metadata + concept_filter,
+  entity-review persistence, DEF-001; PERF-002 text indexes live, import schema drift
+  (ACM/DBLP/JAIR/ACL/direct-url), book worker wired into start/stop scripts, real
+  cancels, config-driven RAG embeddings (`llm.json rag_embedding`), deprecated models
+  removed with MODEL_MIGRATION_MAP; ~60 dead files (~12k+ LOC) and ~90 dead endpoints
+  deleted. Verified: 266 routes import, frontend build green.
+- **2026-05-12** — Backend port migration 8000 → **8088** (Honcho Docker conflict);
+  `BACKEND_PORT` env var everywhere, frontend `.env`/proxy updated.
+- **2026-03-08** — Paper Review Mode: `paper_type` field, separate dashboard, review
+  papers excluded from stats/trends/RAG.
+- **2026-03-07** — Code-quality sweep: `datetime.now(timezone.utc)`, `$nin` fixes,
+  batch `$in` lookups in anomaly detection, `tag_instances.created_at` → native BSON.
+- **2026-01-28** — Trend Detection Dashboard (7 visualizations under
+  `/api/analytics/trends`, `anomaly_detection.py` service); TimeWindowAnalysis with
+  separate start/end sliders.
+- **2026-01-25/26** — Atomic `$push`/`$pull` for concurrent analysis saves; papers
+  facets 500/CORS fix (`$nin`, array-vs-string authors); Suggest Concept Tags requires
+  processed content; stale `processing_*` cleanup at startup.
+- **2026-01-23/24** — `scripts/` reorganization (setup.sh, sync scripts with SHA-256 +
+  auto-backup); batch Marker processing ("Process All" with localStorage resume).
+  A MinerU progress UI was documented but the pipeline never landed (see 2026-07-24).
+- **2026-01-19/20/21** — RAG proportional blending across content types; cross-platform
+  script rewrite (venv validation, node_modules checks); dashboard refresh buttons;
+  TypeScript cleanup; legacy SQLite scripts purged (DEBT-001).
+- **2026-01-04** — Paper date-type selection (import vs published) for summarization;
+  "Generate All Analyses" made sequential with progress; arXiv import await-bug fix.
+- **2025-12-24 → 30** — Cross-platform macOS↔Linux fixes (mise, ~/.env auto-load);
+  LiteLLM key auto-detection; Gemini 3 array-response handling + temperature 1.0;
+  model-name mapping fixes; Topic Explorer mouse selection; API key status banner.
+- **2025-11-23** — Marker real-time progress: TQDM parser, progress callbacks to
+  MongoDB, 10s frontend polling, CPU/RAM health.
+- **2025-09-16** — Book management system (PDF/EPUB, extended timeouts, TOC/difficulty).
+- **2025-09-15** — Retweet truncation fix (referenced_tweets expansions, full text).
+- **2025-09-05** — Reddit integration (PRAW collector, API, dashboard).
+- **2025-08-25 → 09-01** — Paper metadata/import fixes (ACL authors_detailed, ACM
+  errors, date formats, React hooks); section editing; DBLP MongoDB API; LLM affiliation
+  extraction; missing-data facets; external GROBID server.
+- **2025-08-22** — Tag ontology migrated to MongoDB (poly-hierarchy, entity types).
+- **2025-08-08 → 12** — RAG search implementation (FAISS + concept index); enhanced tag
+  suggestions with vector store; shadcn/ui migration; Substack Gmail collection;
+  Twitter timezone fix; automatic footer removal.
+- **2025-01** — Full MongoDB migration of all content data (SQLite retired); trends &
+  analytics phases; knowledge graph; unified tag filtering; text-selection tagging.
 
 ---
 
-## Recent Enhancements (December 25, 2025)
-
-### LLM Model Configuration & API Fixes - COMPLETE
-
-#### Problems Fixed
-
-1. **Gemini 3 Models 404 Errors**: Free Analysis with Gemini 3 Flash/Pro returned 404
-2. **Gemini Response Format**: Gemini 3 returns `[{type: 'text', text: '...'}]` array instead of string
-3. **Claude API Key Not Loading**: LiteLLM's `os.environ/ANTHROPIC_API_KEY` syntax not working
-4. **Frontend Crash**: ReactMarkdown received object instead of string
-
-#### Solutions Implemented
-
-**1. Gemini Model Name Fix** (`backend/app/services/llm_service.py:137-138`):
-```python
-# Strip 'gemini/' prefix - ChatGoogleGenerativeAI expects just the model name
-google_model = model.replace('gemini/', '') if model.startswith('gemini/') else model
-```
-
-**2. Gemini Array Response Handling** (`backend/app/services/llm_service.py:170-187`):
-```python
-# Gemini 3 models may return list of content blocks
-if isinstance(content, list):
-    text_parts = []
-    for part in content:
-        if isinstance(part, str):
-            text_parts.append(part)
-        elif hasattr(part, 'text'):
-            text_parts.append(part.text)
-        elif isinstance(part, dict) and 'text' in part:
-            text_parts.append(part['text'])
-    content = '\n'.join(text_parts)
-```
-
-**3. Frontend Content Extraction** (`frontend/src/components/PaperAnalysisPanel.tsx:59-78`):
-```typescript
-// Helper to handle both string and Gemini's array format
-const extractTextContent = (content: unknown): string => {
-  if (typeof content === 'string') return content
-  if (Array.isArray(content)) {
-    return content.map(part => {
-      if (typeof part === 'string') return part
-      if (part && typeof part === 'object' && 'text' in part) return part.text
-      return ''
-    }).join('\n')
-  }
-  return String(content || '')
-}
-```
-
-**4. LiteLLM API Key Loading** (`backend/litellm_config.yaml`):
-- Removed all explicit `api_key: os.environ/...` lines
-- LiteLLM auto-detects API keys from environment variables
-- Keys loaded from `~/.env`: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY`
-
-#### Tested & Working Models
-
-| Provider | Models | Status |
-|----------|--------|--------|
-| Google | `gemini-3-flash-preview`, `gemini-3-pro-preview`, `gemini-2.5-pro`, `gemini-2.5-flash` | ✅ |
-| Anthropic | `claude-sonnet-4-20250514`, `claude-opus-4-1-20250805`, `claude-3-haiku-20240307` | ✅ |
-| OpenAI | `gpt-5.2`, `gpt-5.1`, `gpt-5-nano`, `gpt-4o` | ✅ |
-| xAI | `grok-4-1-fast-reasoning`, `grok-4-1-fast`, `grok-2-latest` | ✅ |
-
-#### Files Modified
-- `backend/app/services/llm_service.py` - Gemini prefix strip + array response handling
-- `backend/litellm_config.yaml` - Removed explicit api_key lines
-- `frontend/src/components/PaperAnalysisPanel.tsx` - Added extractTextContent helper
-- `frontend/src/config/models.ts` - Updated model IDs and labels
-- `backend/llm.json` - Updated model configurations
-
----
-
-## Recent Enhancements (December 24, 2025)
-
-### Cross-Platform Compatibility Fixes (macOS ↔ Linux) - COMPLETE
-
-#### Problem
-After syncing project from macOS to Linux (Arch Linux) via Syncthing, `start_stt.sh` failed with:
-- `venv/bin/python: No such file or directory` - venv symlinks pointed to macOS paths
-- `ModuleNotFoundError: No module named 'psutil'` - Marker service missing dependencies
-- Frontend `node_modules` had macOS-native bindings that failed on Linux
-- API keys from `~/.env` not being loaded by backend services
-
-#### Solutions Implemented
-
-**1. Automatic ~/.env Loading in start_stt.sh:**
-```bash
-if [ -f "$HOME/.env" ]; then
-    set -a  # automatically export all variables
-    source "$HOME/.env"
-    set +a
-fi
-```
-
-**2. venv Validation Function:**
-- Added `check_venv_valid()` to detect broken venvs (symlinks pointing to wrong platform)
-- Automatically recreates venv if python binary doesn't exist or isn't executable
-- Works for backend venv, marker_env, and mineru_env
-
-**3. Platform Detection:**
-```bash
-detect_platform() {
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        PLATFORM="macos"
-    elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        PLATFORM="linux"
-    fi
-}
-```
-
-**4. Mise Integration:**
-- Added mise activation at script start for Python version management
-- Created `mise.toml` to pin Python 3.12 (3.14 too new for many packages)
-
-**5. node_modules Handling:**
-- Frontend `node_modules` with native bindings (rollup, etc.) must be reinstalled per platform
-- Run `npm install` after syncing to Linux/macOS
-
-#### Files Modified
-- `start_stt.sh` - Added ~/.env loading, venv validation, platform detection, mise activation
-- `mise.toml` - Created to pin Python 3.12
-
-#### Cross-Platform Workflow
-```bash
-# On macOS (end of session):
-./scripts/sync-out.sh          # Export MongoDB
-
-# On Linux (start of session):
-./scripts/sync-status.sh       # Check sync status
-./scripts/sync-in.sh           # Import MongoDB
-./setup_python.sh              # Auto-detects broken venvs, recreates them
-./start_stt.sh                 # Start services
-cd frontend && npm install     # Reinstall native modules (if needed)
-```
-
----
-
-## Recent Enhancements (November 23, 2025)
-
-### Marker PDF Processing - Real-time Progress Tracking - COMPLETE
-
-#### Problem
-The Marker PDF processing progress indicator showed static "CPU: 0.0%, RAM: 0 MB, Output: Processing..." without updates, even though processing was working in the background.
-
-#### Root Cause
-The `_parse_marker_progress()` function in `marker_server.py` used synthetic regex patterns that didn't match the actual TQDM progress bar format output by Marker CLI.
-
-**Before (Broken)**:
-```python
-# Looking for patterns that don't exist in real Marker output
-if "Processing page" in line:  # ← This string never appears!
-    match = re.search(r"Processing page (\d+)[/\s]+(\d+)", line, re.IGNORECASE)
-```
-
-#### Solution Implemented
-
-**Updated TQDM Parser** (`backend/marker_service/marker_server.py:138-206`):
-```python
-def _parse_marker_progress(line: str) -> Optional[dict]:
-    """Parse marker output for progress information (supports TQDM format)"""
-
-    # TQDM progress bar pattern: "50%|█████     | 25/50 [00:15<00:15, 1.66it/s]"
-    tqdm_match = re.search(r'(\d+)%\s*\|[█\s]*\|\s*(\d+)/(\d+)', line)
-    if tqdm_match:
-        percent, current, total = tqdm_match.groups()
-        # Extract description and determine stage
-        # Returns: {stage, message, progress, current, total}
-
-    # Fallback patterns for standalone percentages and keywords
-    # ...
-```
-
-**Real Marker Output Examples**:
-```
-Recognizing Layout:  38% 5/13 [00:20<00:26, 3.35s/it]
-Recognizing Text:    9% 19/220 [02:32<15:26, 4.61s/it]
-Converting to Markdown: 100% 13/13 [00:30<00:00, 1.29s/it]
-```
-
-#### Complete Progress Pipeline
-
-**End-to-End Data Flow**:
-```
-1. Marker CLI (TQDM output)
-   ↓
-2. PTY captures output line-by-line (marker_server.py)
-   ↓
-3. _parse_marker_progress() extracts: percentage, current/total, stage
-   ↓
-4. Progress callback sent to Backend API (every 2 seconds, throttled)
-   POST /api/papers/{id}/progress-callback
-   ↓
-5. Backend stores in MongoDB (papers_mongodb.py:1958-1996)
-   papers.processing_progress = {stage, message, progress, health}
-   papers.marker_process_health = {cpu_percent, memory_mb, pid}
-   ↓
-6. Frontend polls two endpoints (every 10 seconds)
-   GET /api/papers/{id}/processing-status  (message, percentage)
-   GET /api/papers/{id}/process-health     (CPU, RAM)
-   ↓
-7. UI updates in real-time
-   ProcessingStatusIndicator.tsx displays live metrics
-```
-
-#### Frontend Polling Configuration
-
-**Updated Intervals** (`frontend/src/components/ProcessingStatusIndicator.tsx`):
-- **Progress Status**: 10 seconds (down from 60s) - Line 100
-- **Process Health**: 10 seconds (down from 30s) - Line 133
-
-```typescript
-// Near real-time updates for better user experience
-const interval = setInterval(checkStatus, 10000);
-const healthInterval = setInterval(checkHealth, 10000);
-```
-
-#### Asynchronous Processing Architecture
-
-**Key Features**:
-- ✅ **Background Processing**: Marker runs as separate service, continues even if browser closes
-- ✅ **Persistent State**: Progress stored in MongoDB, survives browser/tab closures
-- ✅ **Resume on Return**: When user comes back to UI, sees current status from database
-- ✅ **FastAPI BackgroundTasks**: Non-blocking processing with immediate API response
-
-**User Workflow**:
-1. User uploads PDF and starts processing
-2. Backend starts Marker service in background
-3. User can close browser/navigate away
-4. Processing continues on server
-5. User returns later → sees current progress or completed status
-
-#### Files Modified
-
-**Backend**:
-- `backend/marker_service/marker_server.py` - TQDM parser fix (lines 138-206)
-- `backend/app/api/papers_mongodb.py` - Progress callback handler (lines 1958-1996)
-
-**Frontend**:
-- `frontend/src/components/ProcessingStatusIndicator.tsx` - 10-second polling intervals
-
-#### Testing & Verification
-
-**Monitor Live Progress**:
-```bash
-# Watch Marker logs for TQDM output
-tail -f backend/marker_service/../../logs/marker.log
-
-# Check MongoDB for stored progress
-mongosh smarttrendtracer --eval "db.papers.findOne({_id: ObjectId('...')}, {processing_progress: 1, marker_process_health: 1})"
-
-# Test API endpoints
-curl http://localhost:8088/api/papers/{id}/processing-status | jq
-curl http://localhost:8088/api/papers/{id}/process-health | jq
-```
-
-#### UI Display
-
-**What Users See Now**:
-- ✅ Live progress message: `"Recognizing Text: 45% 99/220 [05:30<06:42, 3.5s/it]"`
-- ✅ CPU usage: `"98.8%"` (updated every 10s)
-- ✅ RAM usage: `"2279 MB"` (updated every 10s)
-- ✅ Progress bar: Visual percentage indicator
-- ✅ Elapsed time: Minutes since processing started
-
-**Status**: ✅ COMPLETE - Full end-to-end real-time progress tracking working
-
-## Recent Enhancements (September 16, 2025)
-
-### Book Management System - COMPLETE
-
-#### Comprehensive Book Library Extension
-SmartTrendTracer now includes a complete book management system similar to the research paper management but optimized for longer documents:
-
-**Features Implemented**:
-- **MongoDB Collection**: Complete `books` collection with book-specific schema
-- **File Support**: PDF and EPUB books with dedicated processors
-- **Extended Processing**: 6-hour timeouts for Marker, 5-hour for MinerU to handle large books
-- **EPUB Native Processing**: Built-in EPUB parsing using langchain-community
-- **Book-Specific Metadata**: Publishers, ISBN, genres, reading difficulty, table of contents
-- **Faceted Browsing**: Filter by genre, publisher, author, difficulty level, file type
-- **Smart Pagination**: Optimized viewer for book-length content with overlap
-- **Concept Integration**: Full tagging system compatibility with existing hierarchy
-
-**Technical Architecture**:
-```
-backend/app/api/books_mongodb.py          # Complete books CRUD API
-backend/app/services/book_processor_service.py  # Extended PDF/EPUB processing
-frontend/src/components/FacetedBooksDashboard.tsx  # Main books interface
-frontend/src/components/BookUploadModal.tsx        # Book upload with metadata
-frontend/src/components/BookViewerOptimized.tsx    # Book content viewer
-```
-
-**API Endpoints**:
-- `GET /api/books/` - Browse books with filtering and pagination
-- `POST /api/books/upload` - Upload PDF/EPUB with metadata
-- `GET /api/books/{book_id}` - Get book details
-- `POST /api/books/{book_id}/process` - Background book processing
-- `POST /api/books/{book_id}/process-direct` - Direct processing (1-6 hours)
-- `GET /api/books/{book_id}/content` - Get extracted markdown content
-- `POST /api/books/{book_id}/concepts` - Add concept tags to books
-
-**Book-Specific Features**:
-- **Table of Contents Extraction**: Automatic TOC generation from headings
-- **Glossary Term Detection**: Extract definitions and terminology
-- **Reading Difficulty Assessment**: Automatic difficulty estimation (beginner/intermediate/advanced/expert)
-- **Chapter Detection**: Smart chapter boundary identification
-- **Extended Timeouts**: Handles books up to 500MB and 2000+ pages
-- **Multiple Formats**: PDF processing via Marker/MinerU, native EPUB parsing
-
-**Navigation Integration**: Added to ModernNavigation with dedicated "Book Library" section including "Browse Books" and "Book Analytics" views.
-
-## Recent Enhancements (January 24, 2025)
-
-### Complete MongoDB Migration - ALL DATA NOW IN MONGODB
-
-#### Full System Migration
-- **Status**: ✅ COMPLETE - Entire system migrated from SQLite to MongoDB
-- **Migration Date**: January 24, 2025
-- **Data Migrated**:
-  - 1,169 tweets with full metadata and media
-  - 34 papers with authors, content, and references
-  - 40 articles with summaries and metrics
-  - 13 Substack authors
-  - 1,746 tag concepts with hierarchy
-  - 2,854 tag instances
-  - **Books collection added** for PDF/EPUB book management
-
-#### MongoDB Collections
-```
-smarttrendtracer database:
-├── tweets           # 1,169 tweet documents
-├── papers           # 34 paper documents
-├── articles         # 40 article documents
-├── books            # PDF/EPUB book collection (new)
-├── substack_authors # Author information
-├── tag_concepts_v2  # Tag concepts/hierarchy
-├── tag_aliases_v2   # Tag aliases/synonyms
-├── tag_instances    # Tag usage tracking
-└── collection_state # Tweet collector state
-```
-
-#### System Components Updated
-- **Main API** (`app/main.py`): Fully MongoDB-based, no SQLite dependencies
-- **Tweet Collector** (`tweet_collector_service.py`): Uses MongoDB for all storage
-- **API Modules**:
-  - `tweets_mongodb.py` - Complete MongoDB tweets API
-  - `papers_mongodb.py` - MongoDB papers API with embedded data
-  - `articles_mongodb.py` - MongoDB articles API
-  - `statistics_mongodb.py` - MongoDB aggregation pipelines
-- **Dependencies** (`requirements.txt`): SQLAlchemy removed, PyMongo added
-
-#### Benefits of Full MongoDB Migration
-1. **Unified Data Store**: All data in one database system
-2. **Better Performance**: Native aggregation pipelines for complex queries
-3. **Flexible Schema**: Easy to add fields without migrations
-4. **Scalability**: Handles large datasets better than SQLite
-5. **Native JSON**: Natural fit for JavaScript frontend
-6. **No ORM Overhead**: Direct document operations
-
-#### Backup Files Created
-- `app/main_sqlite_backup.py` - Original SQLite-based main.py
-- `tweet_collector_service_sqlite_backup.py` - Original collector
-- `data/tweets.db` - Original SQLite database (preserved)
-
-## Recent Enhancements (September 5, 2025)
-
-### Reddit Integration - COMPLETE
-
-#### Full Reddit Support Added to SmartTrendTracer
-- **New Data Source**: Reddit posts from AI/ML subreddits now monitored alongside Twitter, articles, and papers
-- **Subreddits Monitored**: r/LLM, r/LLMDevs, r/LocalLLM, r/MachineLearning, r/artificial, r/OpenAI, r/ChatGPT, r/singularity
-- **Features**:
-  - Complete CRUD API with faceted browsing and filtering
-  - MongoDB storage with full schema compatibility
-  - Tagging system integration using existing concept hierarchy
-  - Real-time collection with configurable intervals
-  - Full UI dashboard with filtering by subreddit, author, score, time range
-
-#### Technical Implementation
-- **Backend**:
-  - `reddit_collector.py` - PRAW-based collector service
-  - `reddit_mongodb.py` - Complete API endpoints
-  - MongoDB models for posts, comments, and subreddit configuration
-  - Integration with existing concept tagging system
-- **Frontend**:
-  - `FacetedRedditDashboardModern.tsx` - Full-featured dashboard
-  - Navigation integration with dedicated Reddit section
-  - Dashboard cards and feature overview
-- **Configuration**: `reddit_config.json` - Subreddit monitoring configuration
-
-#### Collection Features
-- **Smart Collection**: Respects rate limits with 2-second delays between requests
-- **Comment Integration**: Optionally collects top comments per post
-- **URL Extraction**: Automatically extracts and indexes external links
-- **Score Filtering**: Configurable minimum score thresholds
-- **Time-based Collection**: Incremental collection with configurable time windows
-
-#### UI Features Implemented
-- **Faceted Browsing**: Filter by subreddit, author, score, time range, post type
-- **Search**: Full-text search across titles and content
-- **Concept Integration**: Use existing tag system for Reddit posts
-- **Statistics**: Real-time statistics and collection monitoring
-- **Manual Collection**: Trigger collection directly from UI
-
-#### API Endpoints Added
-- `GET /api/reddit/` - Browse Reddit posts with filtering
-- `GET /api/reddit/faceted-search` - Paginated faceted search
-- `GET /api/reddit/facets` - Get filter options and statistics
-- `GET /api/reddit/{post_id}` - Get specific post details
-- `POST /api/reddit/{post_id}/tags` - Add tags to posts
-- `DELETE /api/reddit/{post_id}/tags/{concept_id}` - Remove tags
-- `GET /api/reddit/stats/collection` - Collection statistics
-- `POST /api/reddit/collect` - Manual collection trigger
-
-#### Setup Requirements
-- **Reddit API**: Requires REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET environment variables
-- **Dependencies**: Added `praw==7.7.1` to requirements.txt
-- **MongoDB**: Uses existing smarttrendtracer database with reddit_posts collection
-
-## Recent Enhancements (September 1, 2025)
-
-### Paper Metadata & Import System Fixes - COMPLETE
-
-#### ACL Anthology Author Extraction Fixed
-- **Problem**: Authors from ACL Anthology papers displayed correctly but didn't appear in "Edit Paper Metadata" dialog
-- **Root Cause**: ACL papers used `authors_list` field but edit dialog expected `authors_detailed` field
-- **Solution**: 
-  - Updated all 24 ACL papers to include `authors_detailed` field extracted from `authors_list`
-  - Enhanced edit dialog logic to handle multiple author field formats (`authors_detailed`, `authors_list`, `authors` string)
-- **Result**: Edit dialog now shows all authors correctly regardless of import source
-
-#### Date Format Warning Resolved
-- **Problem**: HTML date inputs received "yyyy-MM-ddT00:00:00" format but expected "yyyy-MM-dd"
-- **Solution**: Added date format conversion in metadata edit dialog
-- **Code**: `date.toISOString().split('T')[0]` to extract proper format
-- **Result**: No more browser console warnings for date format mismatches
-
-#### React Hooks Violations Completely Fixed
-- **Problem**: "Rendered fewer hooks than expected" errors in development
-- **Solutions Applied**:
-  - Moved early return statements after all hook declarations in `PaperViewerOptimized`
-  - Refactored conditional `useMemo` in `PDFViewerModern` to prevent hooks order violations
-  - Fixed function declaration order before hooks that use them
-- **Result**: Frontend builds successfully without React hooks warnings
-
-#### Enhanced ACM Import Error Handling  
-- **Problem**: ACM Digital Library returns HTML instead of PDF for access-restricted papers
-- **Solution**: Enhanced ACM service to detect 403/401 errors and prevent invalid PDF creation
-- **Features**: Proper access restriction messages instead of "Invalid PDF structure" errors
-- **Result**: ACM imports now work reliably and create valid PDF files when accessible
-
-#### Author Field Consistency Across All Import Sources
-- **Database Schema**: All papers now have consistent author field structure:
-  - `authors`: Comma-separated string for compatibility
-  - `authors_detailed`: Array of author objects for structured data
-  - `authors_list`: Preserved for ACL papers with position information
-- **Import Sources Supported**:
-  - ✅ ACL Anthology: 24 papers with authors properly extracted
-  - ✅ ACM Digital Library: Enhanced error handling and valid PDF downloads
-  - ✅ GROBID Processing: Authors extracted from TEI XML and saved correctly
-  - ✅ Direct Upload: Manual author entry through edit dialog
-- **Result**: "Edit Paper Metadata" dialog works consistently across all import methods
-
-## Recent Enhancements (August 25, 2025)
-
-### PDF Processing & Viewer Fixes - COMPLETE
-
-#### Paper Image Serving Fixed
-- **Problem**: Images from Marker-processed papers weren't being served (404 errors)
-- **Solution**: Added missing `paper_images` module import and router to `main.py`
-- **Result**: Images now correctly served at `/api/papers/{id}/images/...` endpoints
-
-#### PDF Viewer Flickering Resolved
-- **Problem**: PDF viewer would flicker/reload when Marker processing completed
-- **Root Cause**: `ProcessingStatusIndicator` was reloading entire paper data on completion
-- **Solutions Applied**:
-  - Modified `onComplete` callback to only update markdown content
-  - Reduced polling frequency from 30s to 60s
-  - Wrapped `PDFViewerModern` component with `React.memo()`
-  - Added proper display name for debugging
-
-#### GROBID Processing Fixed
-- **External Server**: Using https://kermitt2-grobid.hf.space (HuggingFace Spaces)
-- **Issues Fixed**:
-  - Removed incorrect `await` on non-async `process_pdf` function
-  - Fixed citation processing endpoint (was using wrong API)
-  - Added proper error handling for server connectivity
-  - Added XML validation before parsing responses
-- **Benefits**: No local GROBID installation needed on Mac
-
-## Recent Enhancements (August 30, 2025)
-
-### Paper Section Management - COMPLETE
-
-#### Section Title Editing
-- **Problem**: Extracted sections had numbers in titles (e.g., "11 Conclusion")
-- **Solution**: Added inline editing capability with automatic number removal
-- **Features**:
-  - Hover-to-show edit buttons for section titles
-  - Automatic removal of leading numbers when saving
-  - PUT endpoint `/api/papers/{paper_id}/sections/{section_id}` for updates
-
-#### DBLP Integration Fixed
-- **Problem**: DBLP search was giving 404 errors due to SQLite dependencies
-- **Solution**: Created MongoDB-compatible `dblp_mongodb.py`
-- **Endpoints**:
-  - `/api/dblp/search` - Search DBLP bibliography
-  - `/api/dblp/bibtex` - Get BibTeX citations
-  - `/api/dblp/metadata` - Get full paper metadata
-
-### Author Affiliation Extraction - COMPLETE
-
-#### LLM-Powered Affiliation Extraction
-- **Feature**: Extract author affiliations from paper headers using AI
-- **Configuration**: Uses `llm.json` and `prompts_config.json` (no hardcoding)
-- **Model**: Claude Sonnet 4 with low temperature (0.1) for accuracy
-
-#### API Endpoints
-- **POST** `/api/papers/{paper_id}/extract-affiliations`
-  - Extracts affiliations from paper header (title to abstract)
-  - Returns suggestions with confidence levels (high/medium/low)
-  - Handles both string and array author formats
-- **PUT** `/api/papers/{paper_id}/apply-affiliations`
-  - Applies selected affiliations to paper authors
-  - Updates MongoDB with new author data
-
-#### UI Components
-- **Affiliations Button**: Appears in Paper Details when authors exist
-- **Review Dialog**: 
-  - Shows AI-extracted affiliation suggestions
-  - Displays current vs. suggested affiliations
-  - Color-coded confidence badges
-  - Checkbox selection for each suggestion
-  - Apply Selected / Cancel actions
-
-### Missing Data Facets Fix - COMPLETE
-
-#### Problem
-- "Missing Data → Affiliation" count was incorrect
-- Counted from current page (20 papers) instead of entire database
-- Count changed when filters were applied
-
-#### Solution
-- **Backend**: Added `missing_data` counts to `/api/papers/facets` endpoint
-  - Calculates counts from entire database (or filtered set)
-  - Uses MongoDB aggregation for complex affiliation checks
-  - Returns counts for: no_processor, no_year, no_conference, no_affiliation, no_annotations
-- **Frontend**: Updated to use backend-provided counts
-  - Changed from local `papers.filter()` to `facets?.missing_data?.no_affiliation`
-  - Now shows accurate count of papers WITHOUT affiliations
-
-#### Result
-- Missing Data counts now always show papers MISSING that data (proper negation)
-- Counts remain consistent whether selected or not
-- Updates correctly when other filters are applied
-
-## Recent Enhancements (August 22, 2025)
-
-### MongoDB Migration for Tag Ontology - COMPLETE
-
-#### Poly-hierarchy Support
-- **Database**: Migrated tag system from SQLite to MongoDB for true poly-hierarchy support
-- **Collections**: tag_concepts_v2, tag_aliases_v2, tag_instances
-- **Features**:
-  - Concepts can have multiple parent concepts (e.g., "Knowledge Graphs" under both "AI/ML Fundamentals" AND "Data and Datasets")
-  - 43 concepts now have multiple parents in the hierarchy
-  - Entity type integration from top_level.json schema
-
-#### Entity Type Integration
-- **Entity Types**: Integrated top_level.json entity type schema into concept hierarchy
-- **Categories**: Named Entities, Research Entities, Content Types
-- **Fixes Applied**:
-  - India and Silicon Valley moved under Location entity type
-  - People (Sam Altman, Dario Amodei) set as entity_type: person
-  - Organizations (OpenAI, Anthropic) set as entity_type: organisation
-  - Knowledge Graphs and Semantic Web given multiple parents
-
-#### Backend Infrastructure
-- **MongoDB Setup**: `setup_mongodb.py` - Creates collections with proper indexes
-- **Data Migration**: `migrate_tags_to_mongodb.py` - Migrated 116 concepts, 308 aliases, 2,089 tag instances
-- **Entity Integration**: `integrate_entity_types.py` - Integrates entity types and fixes misplaced concepts
-- **API**: `tag_ontology_v2_mongodb.py` - MongoDB-based API with singleton connection pattern
-
-#### UI Enhancements
-- **Poly-hierarchy Display**: Shows all parent concepts with "(poly-hierarchy)" label when multiple
-- **Usage Statistics**: Now includes papers alongside tweets and articles
-- **Entity Type Icons**: Visual indicators for different entity types (👤 person, 🏢 organisation, 📍 location)
-- **Color Coding**: Entity-specific colors for better visual hierarchy
-
-#### MongoDB Commands
-```bash
-# Install MongoDB (macOS)
-brew tap mongodb/brew
-brew install mongodb-community
-
-# Start MongoDB service
-brew services start mongodb-community
-
-# Access MongoDB shell
-mongosh
-
-# Database operations
-use smarttrendtracer
-db.tag_concepts_v2.find().count()  # 119 concepts
-db.tag_aliases_v2.find().count()   # 308 aliases
-db.tag_instances.find().count()    # 2089 instances
-
-# Check poly-hierarchy concepts
-db.tag_concepts_v2.find({parents: {$size: {$gt: 1}}}).count()  # 43 concepts
-
-# View entity types
-db.tag_concepts_v2.distinct("entity_type")
-```
-
-#### Current System Architecture (Full MongoDB - COMPLETE January 24, 2025)
-- **MongoDB**: Stores ALL data (tweets, papers, articles, tags, concepts, everything)
-- **SQLite**: No longer used (backup preserved at data/tweets.db)
-- **Migration Status**: ✅ COMPLETE - Entire system migrated to MongoDB
-
-#### Key Files Modified
-- `backend/app/main.py` - Uses MongoDB API for ontology
-- `backend/app/api/tag_ontology_v2_mongodb.py` - MongoDB-based ontology API
-- `backend/app/api/orphan_tags.py` - Updated to query MongoDB
-- `frontend/src/components/TagOntologyModern.tsx` - Shows poly-hierarchy and papers in usage stats
-
-## Recent Enhancements (January 13, 2025)
-
-### Phase 4: Trends Analysis & Cross-Source Integration - COMPLETE
-
-#### Unified Timeline View
-- **Component**: `UnifiedTimelineView.tsx`
-- **Features**:
-  - Chronological timeline of papers, tweets, and articles
-  - Time window selection (7-90 days)
-  - Type filtering (all/papers/tweets/articles)
-  - Color-coded items by source type
-  - Real-time statistics display
-
-#### Research Analytics Dashboard
-- **Component**: `ResearchAnalyticsDashboard.tsx`
-- **Features**:
-  - Popular papers with engagement metrics
-  - Emerging topics with growth visualization
-  - Active researchers and their focus areas
-  - Impact analysis for individual papers
-  - Cross-source mention detection
-
-#### Backend Trend Services
-- **Paper Trends Service**: `paper_trends_service.py`
-  - Popular papers ranking
-  - Emerging topic detection
-  - Author activity analysis
-  - Cross-source mention finding
-  - Topic evolution tracking
-  - Citation network analysis
-
-#### API Endpoints
-- `GET /api/papers/trends/popular` - Most popular papers
-- `GET /api/papers/trends/emerging-topics` - Rising research topics
-- `GET /api/papers/trends/active-authors` - Most active researchers
-- `GET /api/papers/trends/cross-mentions/{paper_id}` - Find paper mentions in social media
-- `GET /api/papers/trends/topic-evolution` - Track topic changes over time
-- `GET /api/papers/trends/citation-network/{paper_id}` - Build citation networks
-- `GET /api/papers/trends/unified-timeline` - Combined timeline across all sources
-- `GET /api/papers/trends/research-impact/{paper_id}` - Comprehensive impact metrics
-
-### Phase 5: Advanced Features - COMPLETE
-
-#### Knowledge Graph Visualization
-- **Component**: `PaperKnowledgeGraph.tsx`
-- **Library**: react-force-graph-2d
-- **Features**:
-  - Interactive force-directed graph
-  - Color-coded nodes (papers, authors, citations)
-  - Zoom, pan, and center controls
-  - Node click interactions
-  - Real-time statistics
-  - Visual legend for node types
-
-#### AI-Powered Paper Analytics
-- **Component**: `PaperAdvancedDashboard.tsx`
-- **Features**:
-  - Paper recommendations based on similarity
-  - AI-generated summaries with key insights
-  - GitHub repository link extraction
-  - ArXiv paper import functionality
-  - External resource links (Semantic Scholar, Google Scholar)
-
-#### Advanced Backend Services
-- **Service**: `paper_advanced_service.py`
-  - Paper recommendation system (Jaccard similarity)
-  - AI summarization with GPT-4
-  - Knowledge graph builder
-  - ArXiv API integration
-  - GitHub link extraction
-  - Author collaboration network
-  - Semantic Scholar integration (placeholder)
-
-#### Advanced API Endpoints
-- `GET /api/papers/advanced/recommendations/{paper_id}` - Get similar papers
-- `POST /api/papers/advanced/summarize` - Generate AI summary
-- `GET /api/papers/advanced/knowledge-graph` - Build knowledge graph
-- `POST /api/papers/advanced/import-arxiv` - Import from ArXiv
-- `GET /api/papers/advanced/github-links/{paper_id}` - Extract GitHub links
-- `GET /api/papers/advanced/author-network` - Get collaboration network
-
-### Critical Tag System Fix - COMPLETE (January 13, 2025)
-
-#### Problem Identified
-The tag system had fundamental architectural issues preventing cross-compatibility between flat tags and the hierarchical ontology:
-- Tags stored as strings instead of concept references
-- Inconsistent capitalization across content types
-- Broken hierarchy filtering
-- No proper synonym resolution
-- Tag filtering failed for papers and articles
-
-#### Solution Implemented
-
-##### UnifiedTagService (HISTORISCH)
-
-> **HISTORISCH (Stand 24.07.2026):** Der aktive Tag-Service ist heute `ConceptOnlyTagService` (`backend/app/services/concept_tag/`). `unified_tag_service.py` und die übrigen Alt-Tag-Services wurden am 24.07.2026 gelöscht. Die folgende Beschreibung dokumentiert nur den damaligen Stand.
-
-- **Location**: `app/services/unified_tag_service.py` *(gelöscht)*
-- **Features**:
-  - Handles all tag variations (original, slugified, capitalized)
-  - Proper hierarchy resolution with parent/child relationships
-  - Case-insensitive matching while preserving display names
-  - Cross-content-type compatibility
-  - Synonym and descendant tag inclusion
-  - Smart tag normalization with proper noun preservation
-
-##### API Integration
-- **Updated APIs**:
-  - `/api/tweets` - Now uses UnifiedTagService for filtering
-  - `/api/papers` - Integrated UnifiedTagService with hierarchy support
-  - `/api/substack/articles` - Added UnifiedTagService filtering
-- **New Parameter**: `use_ontology=true/false` for hierarchy control
-- **Tag Normalization**: Applied when adding new tags to maintain consistency
-
-##### Tag Consistency Tools
-- **Script**: `check_tag_consistency.py`
-- **Commands**:
-  ```bash
-  # Analyze tag inconsistencies
-  python check_tag_consistency.py --analyze
-  
-  # Fix tag consistency issues
-  python check_tag_consistency.py --fix
-  
-  # Test tag filtering
-  python check_tag_consistency.py --test "machine-learning"
-  ```
-
-#### Tag System Analysis
-- **Report**: `TAG_SYSTEM_ANALYSIS.md`
-- Documents all issues found and recommended long-term fixes
-- Provides migration strategy for proper foreign key relationships
-- Includes testing checklist for tag functionality
-
-## Recent Enhancements (August 12, 2025)
-
-### 1. RAG Search System - Complete Implementation
-Fully functional AI-powered search with modern UI:
-
-#### Features:
-- **Working RAG Endpoints**: Fixed 404 errors, all endpoints now operational
-- **Modern UI with shadcn/ui**: Complete redesign using Tailwind CSS and shadcn components
-- **Index Management**: Real-time index status display with document count
-- **Rebuild Capability**: One-click index rebuild button with progress tracking
-- **Auto-refresh**: Automatic status updates during index building
-- **1,740 Documents Indexed**: Full corpus of tweets and articles searchable
-
-#### Technical Implementation:
-- Backend: `app/api/rag_simple.py` - Simplified, working RAG endpoints
-- Frontend: `RAGSearchModern.tsx` - Modern interface with shadcn/ui components
-- Endpoints:
-  - `GET /api/rag/stats` - Index statistics
-  - `GET /api/rag/sample-questions` - Sample queries
-  - `POST /api/rag/ask` - AI-powered question answering
-  - `POST /api/rag/rebuild` - Rebuild search index
-
-#### Manual Index Rebuild:
-```bash
-cd backend
-python rebuild_rag_index.py
-```
-
-### 2. Tag Ontology Manager - Modern UI & Extended Details
-Complete modernization with shadcn/ui and enhanced concept information:
-
-#### UI Modernization:
-- **shadcn/ui Components**: Cards, Buttons, Inputs, Badges, Tabs, Dialogs
-- **Responsive Layout**: 3-column grid (tree, details, actions)
-- **Tabbed Interface**: Organized Details, Synonyms, and Create New tabs
-- **Visual Hierarchy**: Color-coded badges, icons for clarity
-- **Smooth Interactions**: Hover effects, loading states, auto-dismiss alerts
-
-#### Extended Concept Details:
-- **Parent Concept**: Shows parent with clickable navigation
-- **Child Concepts List**: Scrollable list of all direct children
-- **Usage Statistics**:
-  - Tweet count with Twitter icon
-  - Article count with document icon
-  - Total usage across system
-- **Hierarchy Navigation**: Click to navigate between parent/child concepts
-
-#### Backend Enhancements:
-- Enhanced `/api/ontology/concept/{id}` endpoint
-- Returns parent info, children list, and usage statistics
-- Counts include all synonyms and mapped tags
-
-### 3. UI Component Migration to shadcn/ui
-Systematic migration to shadcn/ui component library:
-
-#### Components Added:
-- `button.tsx`, `card.tsx`, `input.tsx`, `badge.tsx`
-- `dialog.tsx`, `separator.tsx`, `scroll-area.tsx`
-- `alert.tsx`, `tooltip.tsx`, `tabs.tsx`, `textarea.tsx`
-- `label.tsx` - Form labels with proper accessibility
-
-#### Benefits:
-- Consistent design system across application
-- Full TypeScript support
-- Accessibility via Radix UI primitives
-- Customizable with Tailwind CSS variables
-- Professional, modern appearance
-
-## Recent Enhancements (January 11, 2025)
-
-### 1. Tag Hierarchy Toggle in Faceted Browser
-Added a "Hierarchy View" toggle to switch between raw tags and organized hierarchy:
-
-#### Features:
-- **Toggle Button**: Switch between 🏷️ All Tags (757 raw tags) and 📊 Hierarchy (116 organized concepts)
-- **Hierarchical Display**: Shows 8 root categories with indented children
-- **Smart Filtering**: Parent categories include all child tags and synonyms when selected
-- **Visual Enhancements**: Color-coded toggle, proper indentation, hover effects
-- **Aggregate Counts**: Parent concepts show total tweets from all children
-
-#### Implementation:
-- Backend endpoint: `/api/v2/tweets/tweets/hierarchy-facets`
-- Frontend component: `FacetedTweetsDashboard.tsx` with dynamic view switching
-- Tag expansion: Parent tags automatically include all descendants in search
-
-### 2. RAG Search Fixed
-Fixed AI-powered search functionality with proper LLM configuration:
-
-#### Issues Resolved:
-- Fixed `LLMService.config` attribute error (should be `llm_config`)
-- Resolved Claude model compatibility with OpenAI client
-- Implemented proper fallback to GPT-4o-mini for RAG queries
-
-#### Current Configuration:
-- **Search/Embeddings**: Gemini text-embedding-004 for semantic search
-- **Answer Generation**: GPT-4o-mini for generating responses
-- **Hybrid Approach**: Gemini finds relevant content, GPT-4o-mini generates answers
-
-### 3. UI Component Library Migration to shadcn/ui
-Complete migration to shadcn/ui component library for consistent, modern UI:
-
-#### Installation and Configuration:
-- **shadcn CLI**: Initialized with New York style and Neutral color scheme
-- **TypeScript Path Aliases**: Added `@/*` alias for clean imports
-- **Tailwind Integration**: Fixed content paths and CSS variable system
-- **Vite Configuration**: Updated with path resolution for aliases
-
-#### Components Installed:
-- **Core Components**: button, input, dialog, badge, card
-- **Layout Components**: separator, scroll-area
-- **Feedback Components**: alert, tooltip
-- **Utility Functions**: cn() helper for className merging
-
-#### Benefits:
-- **Accessibility**: Built on Radix UI primitives with ARIA support
-- **Customization**: Components copied locally for full control
-- **Type Safety**: Full TypeScript support with proper types
-- **Consistent Styling**: CSS variables for theming
-- **Modern Design**: Clean, professional appearance
-
-#### Usage:
-```tsx
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-```
-
-## Recent Enhancements (January 10, 2025)
-
-### 1. Text Selection and Context Menu for Content Tagging
-Added comprehensive text selection and context menu functionality:
-
-#### Twitter View:
-- **Text Selection**: Select any text within tweets for tagging
-- **Context Menu**: Right-click on selected text to open context menu
-- **Tag Creation**: Create tags from selected text with preserved capitalization
-- **Smart Positioning**: Context menu intelligently positions to avoid screen edges
-- **Portal Rendering**: Context menu rendered at document root to avoid z-index issues
-
-#### Article View:
-- **Persistent Selection**: Text remains selected until action is taken
-- **Multiple Actions**: Context menu offers Highlighting, Create Snippet, and Tag Creation
-- **Tag Creation Form**: Edit selected text before creating tag
-- **Capitalization Preserved**: Tags maintain original capitalization for proper nouns
-
-### 2. Enhanced UI Components
-
-#### Twitter Cards:
-- **X Button**: Circular blue gradient button with X logo to open original tweet
-- **Hover Effects**: Smooth scale and shadow animations on hover
-- **Compact Design**: Replaced double-click with dedicated button for better UX
-- **Text Selection Support**: Tweet text is selectable for context menu actions
-
-#### Tag Suggestions:
-- **Custom Tag Capitalization**: Custom tags preserve user-entered capitalization
-- **Tag Type Differentiation**: System distinguishes between AI-suggested and custom tags
-- **Proper Backend Handling**: Manual tags bypass normalization to preserve capitalization
-
-### 3. Entity Extraction and Automatic Annotation
-- **Bulk Annotation**: "Automatic Annotation" button for AI-powered entity extraction
-- **Capitalization Preserved**: AI-proposed entity tags maintain natural capitalization
-- **Loading Indicators**: Visual feedback during LLM processing
-- **Duplicate Handling**: Gracefully handles existing tags without errors
-
-### 4. Error Handling Improvements
-
-#### Twitter Media URLs:
-- **Graceful Degradation**: Broken images show placeholder instead of error
-- **Auto-Hide**: Media section hides if all images are broken
-- **Fallback UI**: "🖼️ Image unavailable" for photos, "🎬 GIF unavailable" for GIFs
-- **Smart Caching**: Tracks broken images to prevent repeated load attempts
-
-#### Context Menu Positioning:
-- **Boundary Detection**: Prevents menu from appearing off-screen
-- **Above Cursor**: Positions above when near bottom edge
-- **Z-Index Management**: Ensures menu appears above all UI elements
-- **Event Propagation**: Proper event stopping to prevent "running away" behavior
-
-## Recent Enhancements (August 10, 2025)
-
-### 1. Substack Integration
-Complete Gmail-based newsletter collection system with:
-- **Automatic email parsing** from Gmail API
-- **HTML to Markdown conversion** preserving article structure
-- **Image preservation** (filters tracking pixels, keeps content images)
-- **Forwarded email handling** for university-forwarded newsletters
-- **Article viewer** with markdown rendering and highlighting
-- **Snippet annotation** system for capturing key insights
-- **AI summarization** using GPT-4 for article summaries
-
-### 2. Twitter Timezone Fix
-Fixed critical timezone issues affecting tweet collection:
-- **Problem**: Naive datetime objects caused incorrect sorting and duplicate detection
-- **Solution**: All 3,269+ timestamp fields now use UTC timezone format
-- **Impact**: Fixed @sama tweet collection issues and improved reliability
-
-### 3. UI Improvements
-- **Markdown rendering** in article tiles and summaries
-- **Scrollable summaries** with proper styling
-- **Clean previews** for all forwarded articles (removed HTML artifacts)
-- **Database caching** for generated summaries
-
-### 4. Automatic Footer Removal
-- **Removes copyright notices** and author attribution from article endings
-- **Strips promotional content** like "Start writing" and "Get the app" buttons
-- **Cleans address information** from newsletter footers
-- **Integrated into Gmail collector** for automatic cleaning during collection
-- **Handles manually cleaned articles** gracefully (won't break on already-cleaned content)
-
-## Recent Enhancements (August 8, 2025)
-
-### 1. Enhanced Tag Suggestion System with Semantic Similarity
-The system now provides intelligent tag suggestions using both existing tags and AI-generated new tags.
-
-#### Features:
-- **Dual Suggestions**: 
-  - 🔍 **Existing Tags** (Green in UI): Semantically similar tags from vector store
-  - ✨ **New Tags** (Purple in UI): AI-generated tags for new concepts
-- **Vector Store**: FAISS-based index with OpenAI embeddings for 600+ existing tags
-- **Semantic Search**: Finds existing tags with 50%+ similarity to tweet content
-- **Usage Statistics**: Shows how many times each existing tag has been used
-- **Smart Ranking**: Popular tags (high usage count) are boosted in results
-
-#### Technical Implementation (HISTORISCH):
-
-> **HISTORISCH (Stand 24.07.2026):** Die unten genannten Dateien (`vector_store_openai.py`, `build_vector_store.py`, `spacy_tagger.py`) und der Endpunkt `POST /api/tags/suggest/{tweet_id}` existieren nicht mehr. Tag-Vorschläge laufen heute über `POST /api/concepts/suggestions/tweets/{id}/suggest`.
-
-```python
-# Vector store for semantic similarity
-backend/app/services/vector_store_openai.py  # OpenAI embeddings + FAISS (gelöscht)
-backend/build_vector_store.py                 # Build/rebuild vector store (gelöscht)
-
-# Enhanced LLM service with fallback chain
-backend/app/services/llm_service.py          # GPT-4o-mini → spaCy → Keywords (spaCy-Stufe entfernt)
-backend/app/services/spacy_tagger.py         # NLP-based fallback (gelöscht)
-
-# API endpoint
-POST /api/tags/suggest/{tweet_id}            # (entfernt — heute /api/concepts/suggestions/tweets/{id}/suggest)
-```
-
-### 2. Server-Side Tag Filtering Fix
-Fixed issue where tags with special characters weren't filtering correctly.
-
-#### Problem:
-- Frontend was only loading first 100 tweets
-- Client-side filtering missed tweets outside that range
-- Tags like "Research & Development" and "80GB GPU" appeared to have no tweets
-
-#### Solution:
-- Implemented server-side filtering in `/api/tweets?tag={tag_name}`
-- Properly handles URL encoding for special characters
-- Works with entire database, not just first 100 tweets
-
-> **Hinweis (24.07.2026):** Der `tag`-Parameter existiert nicht mehr — Tweet-Filterung läuft heute über `concept_id` bzw. `GET /api/tweets/faceted-search`.
-
-### 3. Intelligent Fallback System (aktualisiert 24.07.2026)
-
-> **Korrektur:** Die frühere dreistufige Kette (GPT → spaCy → Keywords) existiert nicht mehr — `spacy_tagger.py` wurde gelöscht. Modell-Fallbacks laufen heute über die LiteLLM-Router-Fallback-Ketten in `backend/litellm_config.yaml`.
-
-## Collecting New Tweets (Python)
-
-### Default Mode: Basic Account ($100/month plan)
-The collector now defaults to Basic Account Mode with optimized settings for the $100/month Twitter API plan.
-
-### Daily Collection Commands
-
-#### 1. **Main Collection (Recommended)**
-```bash
-cd backend
-./start_basic_collector.sh
-# Press Enter to use default Basic Account Mode
-```
-- **Basic Account Mode is now DEFAULT**
-- Collects 1 page (100 tweets max) per account
-- Uses tiered priority system
-- Monitors usage to stay within 10,000 tweets/month
-- 15-minute collection intervals
-
-#### 2. **Direct Collection**
-```bash
-cd backend
-python tweet_collector_service.py
-# Runs in Basic Account Mode by default
-```
-
-#### 3. **Pro/Enterprise Mode** (if you have higher tier)
-```bash
-cd backend
-export BASIC_ACCOUNT_MODE=false
-python tweet_collector_service.py
-```
-
-> **Entfernt (Script-Bereinigung):** `smart_collect.py`, `force_collect.py`, `scheduled_collector.py`, `collect_tweets.py` und `wait_and_collect.py` existieren nicht mehr. Einziger Collector-Einstieg ist `tweet_collector_service.py` bzw. `./start_basic_collector.sh`.
-
-#### 4. **Monitor Collection Progress**
-```bash
-python monitor_collection.py
-```
-- Shows collection statistics (einmalige Ausgabe — kein 5-Sekunden-Loop)
-
-### Check Collection Status
-
-```bash
-# Check last collection time (MongoDB)
-python -c "from pymongo import MongoClient; db = MongoClient().smarttrendtracer; print(list(db.collection_state.find()))"
-
-# View database statistics (MongoDB)
-mongosh smarttrendtracer --eval "db.tweets.count()"
-mongosh smarttrendtracer --eval "db.tweets.aggregate([{'\$group': {_id: '\$author_username', count: {'\$sum': 1}}}])"
-
-# Check most recent tweet
-mongosh smarttrendtracer --eval "db.tweets.find().sort({created_at: -1}).limit(1)"
-```
-
-### If Rate Limited
-
-If you encounter rate limit errors (429): `tweet_collector_service.py` verwenden — hat eingebautes Rate Limiting und Retry-Logik (`wait_and_collect.py`/`smart_collect.py` wurden entfernt).
-
-### Best Practice - Daily Workflow
-
-```bash
-# 1. Collect new tweets
-cd backend
-./start_basic_collector.sh   # (collect_tweets.py wurde entfernt)
-
-# 2. Process and tag them
-python app/main.py  # Start the API server
-# Then use the web interface to review and tag
-
-# 3. Trend-Analyse über das Trend Dashboard in der UI (die Analyzer-Skripte wurden entfernt)
-```
-
-## Book Management Commands
-
-### Upload and Process Books
-```bash
-cd frontend
-npm run dev
-# Navigate to: http://localhost:3000 → "Book Library" → "Browse Books"
-# Use "Upload Book" button for PDF/EPUB files
-```
-
-### Manual Book Processing
-```bash
-cd backend
-# Start the API server
-python app/main.py
-
-# Use API endpoints directly:
-# POST /api/books/{book_id}/process - Background processing (recommended)
-# POST /api/books/{book_id}/process-direct - Direct processing (1-6 hours)
-```
-
-### Book Storage and Organization
-```bash
-# Check book repository
-ls -la data/book_repository/
-# Each book gets its own directory: data/book_repository/{book_id}/
-
-# View book collection status
-mongosh smarttrendtracer --eval "db.books.find().count()"
-mongosh smarttrendtracer --eval "db.books.aggregate([{'\$group': {_id: '\$processing_status', count: {'\$sum': 1}}}])"
-
-# Check processing status
-mongosh smarttrendtracer --eval "db.books.find({processing_status: 'completed'}).count()"
-mongosh smarttrendtracer --eval "db.books.find({processing_status: 'failed'}).count()"
-```
-
-### Book Processing Options
-```bash
-# Processor selection:
-# - "auto": Automatically choose best processor (default)
-# - "marker": Use Marker service (6-hour timeout, best for large books)
-# - "mineru": Use MinerU service (5-hour timeout)
-# - "epub_native": EPUB-specific processing (EPUB files only)
-
-# Example: Process with specific processor
-curl -X POST "http://localhost:8088/api/books/{book_id}/process?preferred_processor=marker"
-```
-
-### Book Features Testing
-```bash
-# Test EPUB processing (requires langchain-community)
-pip install langchain-community
-
-# Test table of contents extraction
-# Upload a book with clear chapter headings
-
-# Test glossary extraction
-# Upload technical books with definition sections
-
-# Test reading difficulty assessment
-# Compare results across different book types (textbook vs novel)
-```
-
-## API Endpoints
-
-### Tag Suggestions (Concept Suggestions)
-```http
-POST /api/concepts/suggestions/tweets/{tweet_id}/suggest
-```
-> **Hinweis (24.07.2026):** Der frühere Endpunkt `POST /api/tags/suggest/{tweet_id}` wurde entfernt — Tag-Vorschläge laufen über die Concept-Suggestions-API (`backend/app/api/concepts_suggestions_mongodb.py`).
-
-### RAG Search with Trend Analysis (NEW - November 2025)
-
-#### Overview
-The RAG Search system now includes LLM-powered trend analysis that automatically detects when users are asking about trends and provides comprehensive analysis of hot topics across different content sources.
-
-#### Trend Query Detection
-The system automatically detects trend-related questions using keyword matching:
-- **Trend keywords**: "trend", "trending", "hot topic", "popular", "what's happening", "latest", "emerging", "buzz", "key topics", "most discussed"
-- **Auto-routing**: Questions with these keywords automatically use trend analysis instead of standard RAG search
-- **Enhanced retrieval**: Retrieves 50 documents instead of 10 for better trend detection
-
-#### API Endpoint
-```http
-POST /api/rag/ask
-Content-Type: application/json
-
-{
-  "question": "What are the key trends on Twitter?",
-  "content_types": ["tweet"],  // Optional: "tweet", "article", "paper"
-  "k": 50  // Optional: number of documents to analyze
-}
-```
-
-**Response for Trend Queries**:
-```json
-{
-  "answer": "# Top 5 Trending Topics\n\n1. **Claude 4 Release**...",
-  "sources": [
-    {
-      "type": "tweet",
-      "id": "123",
-      "author": "OpenAI",
-      "score": 0.95,
-      "concepts": ["gpt-4", "language-models"]
-    }
-  ],
-  "is_trend_analysis": true,
-  "documents_analyzed": 50,
-  "source_type": "tweets"
-}
-```
-
-**Response for Normal Queries**:
-```json
-{
-  "answer": "GPT-4 is a large language model...",
-  "sources": [...],
-  "concepts_used": ["gpt-4", "transformer-architecture"]
-}
-```
-
-#### Frontend Quick Actions
-The UI includes quick action buttons for instant trend analysis:
-- **🔥 Trending on Twitter** - Analyzes 50 recent tweets for hot topics
-- **📄 Trending in Papers** - Identifies research trends from papers
-- **📰 Hot Topics in Articles** - Finds trending topics in Substack articles
-
-#### How It Works
-
-1. **Question Analysis**:
-   - User asks: "What are the key trends on Twitter?"
-   - System detects trend keywords and routes to `analyze_trends()`
-
-2. **Document Retrieval**:
-   - Retrieves 50 documents (instead of 10 for normal queries)
-   - Filters by content type if specified (`tweet`, `article`, `paper`)
-   - Uses broad semantic search to capture recent content
-
-3. **LLM Analysis**:
-   - Uses Claude Opus 4.1 model (200K context, 32K output)
-   - Analyzes all 50 documents to identify patterns
-   - Generates structured trend report with:
-     - Top 5 trending topics
-     - Key insights and developments
-     - Notable examples from documents
-     - Emerging patterns
-
-4. **Enhanced Display**:
-   - Blue-highlighted card for trend analysis results
-   - Badge showing number of documents analyzed
-   - TrendingUp icon to distinguish from regular answers
-   - Formatted markdown with headers and bullet points
-
-#### Example Trend Queries
-```
-"What are the key trends on Twitter?"
-"Show me trending topics in research papers"
-"What's hot in articles right now?"
-"What are people talking about in AI?"
-"What are the most discussed topics?"
-"What's the biggest emerging topic?"
-```
-
-#### Configuration
-
-**Prompt Template** (`prompts_config.json`):
-```json
-{
-  "rag_trend_analysis": {
-    "system": "You are a trend analyst expert...",
-    "user_template": "Analyze these {count} {source_type} documents...",
-    "output_format": "text"
-  }
-}
-```
-
-**LLM Model** (`llm.json`):
-```json
-{
-  "trend_analysis": {
-    "model": "claude-opus-4-1-20250805",
-    "temperature": 0.3,
-    "max_tokens": 10000
-  }
-}
-```
-
-#### Testing
-Run comprehensive trend analysis tests:
-```bash
-cd backend
-export KMP_DUPLICATE_LIB_OK=TRUE  # For FAISS on macOS
-python test_rag_trends.py
-```
-
-Tests include:
-- Trend query detection accuracy
-- Trend analysis for tweets, papers, and articles
-- ask() method routing logic
-- Normal query handling (ensuring they're not routed to trends)
-- Response format validation
-
-#### Source Filtering Verification
-To verify that content type filtering works correctly:
-```bash
-cd backend
-export KMP_DUPLICATE_LIB_OK=TRUE
-python test_rag_source_filtering.py
-```
-
-This confirms that:
-- Tweets-only filter returns only tweets
-- Articles-only filter returns only articles
-- Papers-only filter returns only papers
-- Mixed filters work correctly
-- Empty filter returns all content types
-
-### Tweet Filtering
-```http
-GET /api/tweets/faceted-search?concept_id={concept_id}&...
-```
-- Filterung läuft über `concept_id` — der frühere `tag`-Parameter (`GET /api/tweets?tag=...`) wurde entfernt
-- Server-side filtering for performance
-
-## Configuration Files
-
-### llm.json
-```json
-{
-  "models": {
-    "tag_suggestion": {
-      "model": "gpt-4o-mini",
-      "temperature": 0.3,
-      "max_tokens": 500
-    },
-    "summarization": {
-      "model": "gpt-4o-mini",  // Changed from o1-mini
-      "temperature": 0.3
-    }
-  }
-}
-```
-
-### Environment Variables
-```bash
-OPENAI_API_KEY=your_key_here  # Required for embeddings and tag generation
-```
-
-## Database Schema Updates
-
-### Tags Table
-- Stores all tags with relationships to tweets
-- Used for both filtering and vector store building
-- Supports special characters (spaces, &, hyphens, etc.)
-
-### Vector Store
-- Location: `data/vector_store/`
-- Files:
-  - `faiss_index.bin` - FAISS index for similarity search
-  - `metadata.pkl` - Tag metadata (counts, contexts)
-  - `embeddings_cache.pkl` - Cached OpenAI embeddings
-
-## Frontend Updates
-
-### TagSuggestionModal Component
-- Displays existing and new suggestions separately
-- Color coding:
-  - Green tags = existing (with usage stats)
-  - Purple tags = new AI-generated
-- Hover tooltips show similarity scores and usage counts
-
-### Dashboard Component
-- Server-side filtering via API
-- Proper URL encoding for special characters
-- Removed client-side filtering for better performance
-
-## Testing Scripts
-
-> **Entfernt:** `test_enhanced_tags.py`, `test_vector_search.py`, `test_tag_filtering.py` und `build_vector_store.py` existieren nicht mehr (Script-Bereinigung). RAG-Index-Rebuild: `python backend/rebuild_rag_index.py`.
-
-## Common Issues & Solutions
-
-### Tags Not Filtering
-**Issue**: Tags with special characters show "No tweets found"
-**Solution**: Implemented server-side filtering with proper URL encoding
-
-### Empty Summarization
-**Issue**: Summarization returns empty despite 200 OK
-**Solution**: Switched from o1-mini to gpt-4o-mini (o1-mini is reasoning model, not suitable for summarization)
-
-### Fallback Not Working
-**Obsolet (24.07.2026):** Die spaCy-Fallback-Stufe wurde entfernt (`spacy_tagger.py` gelöscht). Modell-Fallbacks laufen über die LiteLLM-Router-Fallback-Ketten in `backend/litellm_config.yaml`.
-
-### Rate Limiting
-**Issue**: OpenAI API rate limits
-**Solution**: 
-- Embeddings are cached in `embeddings_cache.pkl`
-- Batch processing for vector store building
-- Fallback to local NLP when API fails
-
-## Performance Optimizations
-
-1. **Vector Store Caching**: Embeddings cached to reduce API calls
-2. **Server-Side Filtering**: More efficient than client-side
-3. **Batch Processing**: Vector store builds in batches of 20
-4. **FAISS Index**: Fast similarity search even with 600+ tags
-
-## Future Enhancements
-
-1. **Tag Synonyms**: Group similar tags (e.g., "AI" and "artificial-intelligence")
-2. **Tag Hierarchies**: Parent-child relationships for tags
-3. **Auto-Tagging**: Automatically tag new tweets on collection
-4. **Tag Trends**: Track tag usage over time
-5. **Custom Embeddings**: Fine-tune embeddings for AI/ML domain
-
-## Usage Guide - New Features (January 2025)
-
-### Creating Tags from Selected Text
-
-#### In Twitter View:
-1. **Select text** in any tweet by clicking and dragging
-2. **Right-click** on the selected text
-3. Choose **"🏷️ Tag Creation"** from context menu
-4. **Edit the tag** if needed (preserves capitalization)
-5. Click **"Create Tag"** to add to tweet
-
-#### In Article View:
-1. **Select text** in the article content
-2. **Right-click** for context menu with multiple options:
-   - **🎨 Highlighting**: Color-code important text
-   - **📝 Create Snippet**: Save with annotation
-   - **🏷️ Create Tag**: Create tag from selection
-3. **Edit and apply** as needed
-
-### Tag Capitalization Rules
-- **Manual tags**: Preserve exact capitalization as entered
-- **Custom tags**: Maintain user's capitalization choice
-- **AI-suggested tags**: Keep AI's proposed capitalization
-- **Normalized tags**: Only for system-generated tags
-
-### Opening Original Tweets
-- Click the **blue X button** in tweet header
-- Hover for "Open original tweet in X/Twitter" tooltip
-- Opens tweet in new browser tab
-
-## Workflow for Tag Management
-
-1. **View Tweet** → Click "Suggest Tags"
-2. **Review Suggestions**:
-   - Green tags: Already used elsewhere, semantically similar
-   - Purple tags: New AI-generated suggestions
-3. **Select Tags** → Apply to tweet
-4. **Filter by Tag** → Click tag in Tag Cloud
-5. **Server Filters** → Shows all tweets with that tag
-
-## Dependencies
-
-### Backend
-```
-fastapi
-pymongo        # MongoDB driver (primary database)
-motor          # Async MongoDB driver
-openai
-faiss-cpu
-spacy
-sentence-transformers  # Optional, for local embeddings
-```
-
-### Frontend
-```
-react
-axios
-typescript
-```
-
-## Debug Mode
-
-To enable debug logging:
-```python
-# In backend/app/services/llm_service.py
-# Debug messages already implemented, showing:
-# - Why fallback is triggered
-# - Which model is used
-# - Token length issues
-# - API failures
-```
-
-## Substack Collection Commands
-
-### Collect Newsletters from Gmail
-```bash
-cd backend
-
-# Collect all Substack newsletters (direct + forwarded)
-python -m app.collectors.gmail_substack_collector
-
-# Collect only forwarded newsletters
-python -m app.collectors.gmail_substack_collector --forwarded
-
-# Collect with specific date range
-python -m app.collectors.gmail_substack_collector --max 100
-```
-
-### Manage Substack Articles
-```bash
-# View Substack dashboard
-cd frontend
-npm start
-# Navigate to: http://localhost:3000/substack
-
-# Generate summaries for articles
-python summarize_articles.py
-
-# Fix previews for forwarded articles
-python fix_previews.py
-
-# Clean footers from existing articles
-python clean_substack_footers.py --clean
-
-# Test footer removal
-python clean_substack_footers.py --test
-```
-
-### Configuration Files
-
-#### forwarded_authors.json
-```json
-{
-  "forwarded_authors": [
-    {"name": "Nathan Lambert", "email": "robotic@substack.com"},
-    {"name": "Gary Marcus", "email": "garymarcus@substack.com"},
-    {"name": "Sebastian Raschka", "email": "sebastianraschka@substack.com"}
-  ]
-}
-```
-
-## Twitter Collection Commands
-
-### Standalone Tweet Collector Service
-```bash
-cd backend
-
-# Start the tweet collector service (runs every 15 minutes)
-python tweet_collector_service.py
-
-# Check collector logs
-tail -f tweet_collector.log
-```
-
-### Manual Collection
-> **Entfernt:** `collect_tweets.py`, `smart_collect.py` und `force_collect.py` existieren nicht mehr — manuelle Collection über `python tweet_collector_service.py` bzw. `./start_basic_collector.sh`.
-
-## Database Maintenance
-
-### MongoDB Database Status
-```bash
-# Check MongoDB collections
-mongosh smarttrendtracer --eval "show collections"
-
-# Twitter stats
-mongosh smarttrendtracer --eval "db.tweets.aggregate([{\$group: {_id: '\$author_username', count: {\$sum: 1}}}])"
-
-# Papers stats
-mongosh smarttrendtracer --eval "db.papers.count()"
-
-# Articles stats
-mongosh smarttrendtracer --eval "db.articles.count()"
-
-# Tag concepts
-mongosh smarttrendtracer --eval "db.tag_concepts_v2.count()"
-```
-
-### MongoDB Backup
-```bash
-# Backup entire database
-mongodump --db smarttrendtracer --out backup_$(date +%Y%m%d)
-
-# Restore from backup
-mongorestore --db smarttrendtracer backup_20250124/smarttrendtracer
-```
-
-## Known Issues & Solutions
-
-> **Full defect list:** See `DEFECTS.md` for comprehensive issue tracking with priorities and status.
-
-### Quick Reference
-
-| ID | Issue | Status | Workaround |
-|----|-------|--------|------------|
-| DEF-001 | Article Viewer optimistic updates | Resolved (2026-07-24) | — |
-| DEF-002 | Topic Explorer keyboard nav | Resolved (2025-12-31) | — |
-| DEF-003 | Twitter media 404s | By Design | Re-collect tweets |
-| DEF-004 | @sama duplicate detection | Known | Timezone fix script |
-| DEF-005 | React key warning | Won't Fix | None needed |
-| DEF-006 | Substack HTML previews | Has Fix | `python fix_previews.py` |
-| DEF-007 | Gary Marcus attribution | Known | Manual correction |
-| DEF-008 | Twitter rate limiting | Has Fix | Use collector service |
-
-### Common Fixes
-
-```bash
-# Fix Substack previews
-cd backend && python fix_previews.py
-
-# Re-collect tweets for fresh media URLs (collect_tweets.py wurde entfernt)
-cd backend && python tweet_collector_service.py
-
-# Use rate-limited collector
-cd backend && python tweet_collector_service.py
-```
-
-## API Endpoints (Extended)
-
-### Article Endpoints (ehemals Substack)
-> **Korrektur (24.07.2026):** Die `/api/substack/articles/*`-Routen existieren nicht mehr — die Artikel-Funktionalität liegt unter `/api/articles/*`. `/api/substack` bietet nur noch `/trends` und `/health`.
-```http
-GET /api/articles/
-GET /api/articles/{article_id}
-GET /api/articles/faceted-search
-GET /api/substack/trends
-GET /api/substack/health
-```
-
-### Twitter Endpoints
-```http
-GET /api/tweets
-GET /api/tweets/{tweet_id}
-GET /api/tweets/faceted-search
-POST /api/concepts/suggestions/tweets/{tweet_id}/suggest   # (ehemals POST /api/tags/suggest/{tweet_id})
-GET /api/trends
-```
-
-## System Completeness Status
-
-### ✅ Phase 1-3: Basic PDF Papers (COMPLETE)
-- PDF upload and processing
-- Text extraction and metadata parsing
-- Paper browsing and viewing
-- PDF viewer with react-pdf
-- Tagging and snippet management
-- RAG search integration
-
-### ✅ Phase 4: Trends & Analytics (COMPLETE)
-- Unified timeline across all sources
-- Research analytics dashboard
-- Cross-source mention detection
-- Citation network analysis
-- Topic evolution tracking
-- Impact metrics calculation
-
-### ✅ Phase 5: Advanced Features (COMPLETE)
-- Knowledge graph visualization
-- AI-powered paper summaries
-- Paper recommendation system
-- ArXiv import functionality
-- GitHub repository extraction
-- Author collaboration networks
-
-### 🔧 Critical Fixes Applied
-- **Tag System**: Unified service for cross-compatibility
-- **Filtering**: Fixed hierarchy and synonym resolution
-- **Capitalization**: Consistent handling across content types
-
-### ✅ Phase 6: MongoDB Migration for Tag System (COMPLETE - January 22, 2025)
-- **MongoDB Setup**: Installed MongoDB Community Edition via Homebrew
-- **Data Migration**: Migrated all tag concepts from SQLite to MongoDB
-  - 116 concepts with full poly-hierarchy support
-  - 308 aliases for synonym resolution
-  - 2,089 tag instances tracking usage
-- **Collections Created**:
-  - `tag_concepts_v2`: Main concept definitions with hierarchy
-  - `tag_aliases_v2`: Aliases and synonyms
-  - `tag_instances`: Actual tag usage on content
-- **API Updates**: New MongoDB-based API with singleton connection pattern
-- **Benefits**:
-  - Poly-hierarchy support (concepts can have multiple parents)
-  - Flexible schema for entity types, icons, colors
-  - Better performance for hierarchical queries
-  - Built-in text search capabilities
-
-## MongoDB Tag System
-
-### MongoDB Collections
-```
-smarttrendtracer database:
-├── tag_concepts_v2     # 116 concept definitions
-├── tag_aliases_v2      # 308 aliases/synonyms  
-└── tag_instances       # 2,089 usage records (647 resolved, 1,442 orphans)
-```
-
-### MongoDB Service Management
-```bash
-# Start MongoDB
-brew services start mongodb-community
-
-# Stop MongoDB
-brew services stop mongodb-community
-
-# Restart MongoDB
-brew services restart mongodb-community
-
-# Check status
-brew services list | grep mongodb
-```
-
-### Tag System Migration Commands
-```bash
-# Setup MongoDB collections and indexes
-python setup_mongodb.py
-
-# Migrate tags from SQLite to MongoDB
-python migrate_tags_to_mongodb.py
-
-# Verify migration
-python -c "from pymongo import MongoClient; client = MongoClient(); db = client.smarttrendtracer; print(f'Concepts: {db.tag_concepts_v2.count_documents({})}'); print(f'Orphans: {db.tag_instances.count_documents({\"concept_id\": None})}')"
-```
-
-## Known Issues & Future Improvements
-
-> **See `DEFECTS.md`** for full issue tracking. Technical debt items listed as DEBT-XXX.
-
-### Technical Debt (DEBT-001)
-- Tag Ontology uses MongoDB, but some legacy patterns remain
-- See `TAG_SYSTEM_ANALYSIS.md` for migration plan
-
-### Future Enhancements
-- Complete Semantic Scholar API integration
-- Add CrossRef API for DOI metadata
-- Implement Google Scholar tracking
-- Performance optimization for large datasets
-
-## Quick Start Commands
-
-### Machine Sync (when switching between macOS/Linux)
-```bash
-# Before leaving current machine:
-./scripts/sync-out.sh
-
-# On new machine:
-./scripts/sync-status.sh       # Check sync status
-./scripts/sync-in.sh           # Import database
-./scripts/setup.sh             # Setup environment (auto-detects OS)
-./start_stt.sh                 # Start all services
-```
-
-### Environment Setup
-```bash
-./scripts/setup.sh check       # Check environment status
-./scripts/setup.sh             # Full setup (MongoDB, Python, Frontend)
-./scripts/setup.sh mongodb     # MongoDB only
-./scripts/setup.sh python      # Python venvs only
-./scripts/setup.sh frontend    # Frontend only
-```
-
-### Daily Operations
-```bash
-# Collect tweets (collect_tweets.py wurde entfernt)
-cd backend
-./start_basic_collector.sh
-
-# Collect newsletters
-python -m app.collectors.gmail_substack_collector
-
-# Start services
-cd backend && python app/main.py  # API on :8088
-cd frontend && npm run dev         # UI on :3470
-```
-
-### Maintenance
-```bash
-# Fix timezone issues
-python fix_twitter_timestamps.py
-
-# Clean article footers
-python clean_substack_footers.py
-
-# Rebuild RAG index
-python rebuild_rag_index.py
-
-# Check tag consistency
-python check_tag_consistency.py --analyze
-
-# Fix tag consistency issues
-python check_tag_consistency.py --fix
-```
-
-## Environment Variables
-
-```bash
-# MongoDB (optional - defaults to localhost)
-MONGODB_URL=mongodb://localhost:27017/
-
-# OpenAI API
-OPENAI_API_KEY=your_key_here
-
-# Other LLM APIs as needed
-GEMINI_API_KEY=your_key_here
-```
-
-## System Architecture Overview
-
-### Current State (Full MongoDB - Completed January 24, 2025)
-```
-┌─────────────────────────────────────────┐
-│            MongoDB                      │
-├─────────────────────────────────────────┤
-│ tweets (1,169 documents)               │
-│ papers (34 documents)                  │
-│ articles (40 documents)                │
-│ substack_authors (13 documents)        │
-│ tag_concepts_v2 (1,746 concepts)       │
-│ tag_aliases_v2 (308 aliases)           │
-│ tag_instances (2,854 instances)        │
-│ collection_state (tweet collector)     │
-└─────────────────────────────────────────┘
-              ↑
-              │
-      ALL Data Operations
-
-SQLite: Retired (backup at data/tweets.db)
-```
-
-### Migration Complete
-- **Full System Migration**: All data moved from SQLite to MongoDB
-- **1,169 tweets**, **34 papers**, **40 articles** migrated
-- **Tweet collector** updated to use MongoDB
-- **All APIs** now use MongoDB exclusively
-- **SQLAlchemy removed** from dependencies
-
-## Important Configuration Notes
-
-- **NEVER hardcode prompts or LLM access** - always use `llm.json` and `prompts_config.json`
-- **GROBID Server**: External service at https://kermitt2-grobid.hf.space (no local installation needed)
-- **Image Storage**: Paper images stored in `data/paper_repository/{paper_id}/images/`
-- **PDF Processing**: Supports both Marker and MinerU services for extraction
-
-Last updated: September 16, 2025
-
-## System Status: All Critical Issues Resolved ✅
-
-### Latest Completions (September 16, 2025)
-- ✅ **Book Management System**: Complete PDF/EPUB book library with extended processing, faceted browsing, and concept integration
-- ✅ **Extended Processing Services**: 6-hour timeouts for Marker, 5-hour for MinerU, native EPUB support
-- ✅ **Book-Specific Features**: Table of contents extraction, glossary detection, reading difficulty assessment
-- ✅ **Full API Integration**: Background and direct processing endpoints with comprehensive error handling
-
-### Latest Fixes (September 1, 2025)
-- ✅ **ACL Author Extraction**: All 24 ACL papers now show authors correctly in edit dialog
-- ✅ **Date Format Warnings**: HTML date inputs use proper "yyyy-MM-dd" format
-- ✅ **React Hooks Violations**: Frontend builds without development warnings
-- ✅ **ACM Import Reliability**: Enhanced error handling for access-restricted papers
-- ✅ **Author Field Consistency**: All import sources use unified author schema
-
-### New Features (September 14, 2025)
-
-#### Large Document Virtual Scrolling - COMPLETE
-**Problem**: Books and large documents (>200KB) cause performance issues when rendered all at once
-**Solution**: Implemented intelligent virtual scrolling with lazy loading for large documents
-
-**Features Implemented**:
-- **Automatic Detection**: Documents >200KB automatically switch to "Large Document Mode"
-- **Smart Chunking**: Splits content into 50KB chunks at natural paragraph boundaries
-- **Lazy Loading**: Initially loads first 3 chunks, others load as user scrolls
-- **Performance Optimized**:
-  - Intersection Observer for efficient scroll tracking
-  - Pre-loads chunks 500px before viewport
-  - Memoized components prevent re-renders
-- **User Experience**:
-  - Blue banner shows "Large Document Mode" with chunk statistics
-  - Loading placeholders with animations for unloaded sections
-  - Table of Contents works seamlessly across all chunks
-  - All navigation features (keyboard shortcuts, TOC clicking) remain functional
-- **Backward Compatible**: Regular papers (<200KB) render normally without changes
-
-**Technical Details**:
-- Location: `frontend/src/components/PaperViewerOptimized.tsx`
-- Thresholds: 200KB for large doc mode, 50KB per chunk
-- Components: `MarkdownChunk` component handles individual chunk rendering
-- State: Tracks `isLargeDocument`, `documentChunks`, `loadedChunks`
-
-**Benefits**:
-- Fast initial load even for 1000+ page books
-- Smooth scrolling without lag
-- Memory efficient - only renders visible content
-- Scales from small papers to full textbooks
-
-### Latest Fixes (September 15, 2025)
-
-#### Twitter Retweet Truncation Fix - COMPLETE
-**Problem**: Retweets were being truncated with "..." showing only partial content instead of full original tweet text
-**Example**:
-- **Before**: `"RT @laurentsifre: We've been cooking this summer: Holo1.5 is here! SOTA UI localization + QA, 3× gains vs Qwen-2.5 VL 🍳 Now up to 72B 💥 — a…"`
-- **After**: `"RT @laurentsifre: We've been cooking this summer: Holo1.5 is here! SOTA UI localization + QA, 3× gains vs Qwen-2.5 VL 🍳 Now up to 72B 💥 — a strong base for computer-use agents like Surfer. • Open weights on HuggingFace 🤗 https://huggingface.co/Hcompany/Holo1.5-7B • Blog post 📝 https://hcompany.ai/blog/holo-1-5 (1/n 🧵)" + Media`
-
-**Root Cause**: The `tweet_collector_service.py` was missing critical API parameters for fetching full retweet content
-**Solution Applied**:
-- **Enhanced API Request**: Added `'referenced_tweets.id'` and `'referenced_tweets.id.attachments.media_keys'` to expansions parameter
-- **Referenced Tweets Processing**: Added logic to extract and process referenced tweets from API response
-- **Text Replacement Logic**: Implemented smart text replacement that preserves "RT @username:" prefix while appending full original text
-- **Media Handling**: Enhanced to capture media from original tweets in retweets
-
-**Technical Implementation**:
-- Location: `backend/tweet_collector_service.py` lines 550, 578-611
-- **API Enhancement**: Uses existing requests more efficiently - no additional API calls required
-- **Basic API Compatible**: Works within 15K tweets/month limit
-- **Rate Limit Friendly**: Respects all existing rate limiting and tiered collection
-
-**Benefits**:
-- Complete retweet content with full text and media
-- No impact on API usage limits
-- Backward compatible with existing data
-- Maintains all existing collector features and optimizations
-
-### Technical Notes
-- No batch mode for Concept reorganization! GPT-5 can handle ~3000 Concepts, if not, we use Gemini 2.5 Pro with large Context Window
-- Always update existing implementations rather than creating new applications
-- Virtual scrolling automatically activates for documents >200KB
-- Twitter retweets now capture complete original content instead of truncated versions
+Last updated: July 24, 2026
