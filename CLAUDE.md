@@ -439,7 +439,7 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
 Details live in `git log` and `docs/`; do not re-expand here.
 
 - **2026-07-24 — Function inventory + complete fix pass** (`docs/funktionsinventur.md`;
-  commits 1391a511, 9ca3d647, ff9e7e4c). ~360 items audited; all P1/P2/P3 findings
+  commits a28dc269, b4799d3e, a1e17616). ~360 items audited; all P1/P2/P3 findings
   fixed: router shadowing (books/facets, articles/authors, without-author),
   ObjectId-vs-string usage counts, paper tag-delete stub + missing snippet POST,
   ACL/OpenReview/ACM background processing, media gallery sort/filter/search, topic
