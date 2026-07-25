@@ -11,7 +11,7 @@ Marker PDF Service (CLI-only, tolerant, canonical image refs)
 
 from __future__ import annotations
 
-import os, re, sys, json, pty, select, shutil, logging, tempfile, subprocess, asyncio, time
+import os, re, sys, json, pty, select, shutil, logging, tempfile, subprocess, asyncio, time, threading
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List
 import glob
@@ -20,6 +20,19 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 import httpx  # For progress callbacks
 import psutil  # For process health monitoring
+
+# ---- Subprocess timeout & stall detection constants ----------------------------
+# 6h default: must cover the documented book-processing contract
+# (book_processor_service.py uses a 21600s client timeout; CLAUDE.md: "Marker 6h").
+# Can be raised/lowered via env, or per request via the optional 'timeout' form field.
+SUBPROCESS_TIMEOUT = int(os.getenv("MARKER_SUBPROCESS_TIMEOUT", "21600"))  # 6 h default
+STALL_CPU_THRESHOLD = 1.0   # CPU% below this is considered idle
+STALL_HEARTBEAT_LIMIT = 20  # consecutive low-CPU heartbeats before kill (~5 min)
+HEARTBEAT_INTERVAL = 15.0   # seconds without progress before a heartbeat/stall check
+
+# ---- Active process tracking ---------------------------------------------------
+_active_process: Optional[subprocess.Popen] = None
+_active_process_lock = threading.Lock()
 
 # ---- Project import (ImageManager) ------------------------------------------------
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -43,6 +56,33 @@ def _prepend_venv_bin_to_path():
     os.environ["PATH"] = f"{bin_dir}{os.pathsep}{os.environ.get('PATH','')}"
     logger.info("PATH primed with interpreter bin: %s", bin_dir)
 _prepend_venv_bin_to_path()
+
+def _kill_process_tree(proc: subprocess.Popen, reason: str = "unknown") -> None:
+    """Kill a process and all its children using psutil. Waits 5s then force-kills survivors."""
+    pid = proc.pid
+    logger.warning("Killing process tree PID %d (reason: %s)", pid, reason)
+    try:
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)
+        # Terminate parent + children
+        for p in children + [parent]:
+            try:
+                p.terminate()
+            except psutil.NoSuchProcess:
+                pass
+        # Wait up to 5s for graceful exit
+        gone, alive = psutil.wait_procs(children + [parent], timeout=5)
+        # Force-kill survivors
+        for p in alive:
+            try:
+                logger.warning("Force-killing surviving PID %d", p.pid)
+                p.kill()
+            except psutil.NoSuchProcess:
+                pass
+    except psutil.NoSuchProcess:
+        logger.info("Process %d already exited", pid)
+    except Exception as e:
+        logger.error("Error killing process tree %d: %s", pid, e)
 
 # ---- FastAPI ----------------------------------------------------------------------
 app = FastAPI(title="Marker PDF Service (CLI-only)", version=APP_VERSION)
@@ -96,14 +136,39 @@ def _strip_ansi(text: str) -> str:
     return _ANSI_ESCAPE_PATTERN.sub('', text)
 
 def _get_process_health(pid: int, out_dir: str) -> dict:
-    """Collect process health metrics using psutil"""
-    try:
-        process = psutil.Process(pid)
+    """Collect process health metrics using psutil.
 
-        # Get CPU and memory info
-        cpu_times = process.cpu_times()
-        memory_info = process.memory_info()
-        cpu_percent = process.cpu_percent(interval=0.1)
+    CPU and RAM are aggregated over the WHOLE process tree (parent + all
+    children, recursive) — marker_single spawns workers that do the actual
+    work, so parent-only metrics would falsely report an idle process.
+    """
+    try:
+        parent = psutil.Process(pid)
+        procs = [parent]
+        try:
+            procs.extend(parent.children(recursive=True))
+        except psutil.NoSuchProcess:
+            pass
+
+        # Prime cpu_percent for every process, then measure over one short window
+        for p in procs:
+            try:
+                p.cpu_percent(interval=None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        time.sleep(0.1)
+
+        cpu_percent = 0.0
+        cpu_time = 0.0
+        memory_rss = 0
+        for p in procs:
+            try:
+                cpu_percent += p.cpu_percent(interval=None)
+                ct = p.cpu_times()
+                cpu_time += ct.user + ct.system
+                memory_rss += p.memory_info().rss
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
 
         # Check for output files
         out_path = Path(out_dir)
@@ -121,8 +186,8 @@ def _get_process_health(pid: int, out_dir: str) -> dict:
 
         return {
             "pid": pid,
-            "cpu_time": cpu_times.user + cpu_times.system,
-            "memory_mb": memory_info.rss / (1024 * 1024),
+            "cpu_time": cpu_time,
+            "memory_mb": memory_rss / (1024 * 1024),
             "cpu_percent": cpu_percent,
             "output_files": {
                 "markdown_exists": markdown_exists,
@@ -216,10 +281,67 @@ def _parse_marker_progress(line: str) -> Optional[dict]:
 
     return None
 
-def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] = None) -> Tuple[bool, str, Optional[int]]:
+def _heartbeat_stall_check(
+    proc: subprocess.Popen,
+    out_dir: str,
+    zero_cpu_count: int,
+    callback_url: Optional[str],
+    context: str = "",
+) -> Tuple[int, bool, Optional[str]]:
+    """Shared heartbeat + stall detection for both streaming-loop paths.
+
+    Counts consecutive low-CPU heartbeats (across the whole process tree) and
+    kills the subprocess after STALL_HEARTBEAT_LIMIT. The kill always applies;
+    only the progress-callback POSTs are gated on callback_url.
+
+    Returns (new_zero_cpu_count, killed, kill_note).
+    """
+    health = _get_process_health(proc.pid, out_dir)
+    cpu_pct = health.get('cpu_percent', 0)
+
+    if cpu_pct < STALL_CPU_THRESHOLD:
+        zero_cpu_count += 1
+    else:
+        zero_cpu_count = 0
+
+    idle_seconds = zero_cpu_count * HEARTBEAT_INTERVAL
+    if zero_cpu_count >= STALL_HEARTBEAT_LIMIT:
+        logger.error("Process stalled%s: %d consecutive low-CPU heartbeats (%.0fs idle)",
+                     f" ({context})" if context else "", zero_cpu_count, idle_seconds)
+        _kill_process_tree(proc, reason=f"stalled {idle_seconds:.0f}s idle" + (f" ({context})" if context else ""))
+        if callback_url:
+            _send_progress_callback(callback_url, {
+                "stage": "failed",
+                "message": f"Processing killed: stalled for {idle_seconds:.0f}s (CPU < {STALL_CPU_THRESHOLD}%)",
+                "progress": 0,
+                "error": f"Process stalled for {idle_seconds:.0f}s"
+            })
+        note = f"\n[KILLED: stalled {idle_seconds:.0f}s" + (f", {context}" if context else "") + "]"
+        return zero_cpu_count, True, note
+
+    if callback_url:
+        _send_progress_callback(callback_url, {
+            "stage": "processing",
+            "message": f"Processing... (CPU: {cpu_pct:.1f}%, RAM: {health.get('memory_mb', 0):.0f}MB, idle: {idle_seconds:.0f}s)",
+            "progress": -1,  # -1 indicates indeterminate progress
+            "health": health
+        })
+    return zero_cpu_count, False, None
+
+def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] = None,
+                       timeout_s: Optional[int] = None) -> Tuple[bool, str, Optional[int], bool]:
+    """Run marker_single under a PTY.
+
+    Returns (ok, combined_output, returncode, killed) — `killed` is True when
+    the subprocess was terminated by timeout or stall detection; callers must
+    NOT apply the tolerant "markdown exists" recovery in that case.
+    """
+    global _active_process
+    effective_timeout = timeout_s if (timeout_s is not None and timeout_s > 0) else SUBPROCESS_TIMEOUT
     cmd = ["marker_single", pdf_path, "--output_dir", out_dir]
     env = os.environ.copy(); env.setdefault("PYTHONUNBUFFERED", "1"); env.setdefault("TQDM_DISABLE", "0")
     master_fd = None  # Track for cleanup in finally
+    proc = None  # Initialize before try for safe finally
     try:
         logger.info("CLI: %s %s", cmd[0], " ".join(cmd[1:]))
         master_fd, slave_fd = pty.openpty()
@@ -228,11 +350,17 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
                                     close_fds=True, env=env, text=False)
         finally:
             os.close(slave_fd)
+
+        # Track active process
+        with _active_process_lock:
+            _active_process = proc
+
         chunks: List[str] = []
         last_callback_time = 0.0  # Track time of last callback for throttling
         callback_interval = 2.0  # Minimum seconds between callbacks
-        heartbeat_interval = 15.0  # Send heartbeat if no progress update for this long
         last_progress_update = time.time()  # Track when we last got a real progress update
+        process_start_time = time.time()  # For subprocess timeout
+        zero_cpu_count = 0  # For stall detection
 
         # Send initial progress
         if callback_url:
@@ -244,11 +372,29 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
             last_callback_time = time.time()
 
         while True:
+            # --- Subprocess timeout check ---
+            elapsed = time.time() - process_start_time
+            if elapsed > effective_timeout:
+                logger.error("Subprocess timeout after %.0fs (limit: %ds)", elapsed, effective_timeout)
+                _kill_process_tree(proc, reason=f"timeout after {elapsed:.0f}s")
+                if callback_url:
+                    _send_progress_callback(callback_url, {
+                        "stage": "failed",
+                        "message": f"Processing killed: exceeded {effective_timeout}s timeout",
+                        "progress": 0,
+                        "error": f"Subprocess timeout after {elapsed:.0f}s"
+                    })
+                return False, "".join(chunks) + f"\n[KILLED: timeout after {elapsed:.0f}s]", -9, True
+
             r, _, _ = select.select([master_fd], [], [], 0.1)
             if master_fd in r:
                 data = os.read(master_fd, 8192)
                 if not data: break
                 s = data.decode(errors="replace"); sys.stdout.write(s); sys.stdout.flush(); chunks.append(s)
+
+                # Real output arrived: the process is not idle — reset the
+                # stall counter so it only measures CONSECUTIVE idle heartbeats.
+                zero_cpu_count = 0
 
                 # Parse progress and send callbacks with time-based throttling
                 if callback_url:
@@ -269,29 +415,24 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
                                     break  # Only send one update per interval
 
                         # Heartbeat fallback: if no progress found and it's been a while
-                        if not found_progress and (current_time - last_progress_update) >= heartbeat_interval:
-                            health = _get_process_health(proc.pid, out_dir)
-                            _send_progress_callback(callback_url, {
-                                "stage": "processing",
-                                "message": f"Processing... (CPU: {health.get('cpu_percent', 0):.1f}%, RAM: {health.get('memory_mb', 0):.0f}MB)",
-                                "progress": -1,  # -1 indicates indeterminate progress
-                                "health": health
-                            })
+                        if not found_progress and (current_time - last_progress_update) >= HEARTBEAT_INTERVAL:
+                            zero_cpu_count, killed, kill_note = _heartbeat_stall_check(
+                                proc, out_dir, zero_cpu_count, callback_url)
+                            if killed:
+                                return False, "".join(chunks) + kill_note, -9, True
                             last_callback_time = current_time
                             last_progress_update = current_time  # Reset to avoid spamming
             else:
-                # No data received, but process still running - check for heartbeat
-                if callback_url:
-                    current_time = time.time()
-                    if (current_time - last_progress_update) >= heartbeat_interval:
-                        health = _get_process_health(proc.pid, out_dir)
-                        _send_progress_callback(callback_url, {
-                            "stage": "processing",
-                            "message": f"Processing... (CPU: {health.get('cpu_percent', 0):.1f}%, RAM: {health.get('memory_mb', 0):.0f}MB)",
-                            "progress": -1,  # -1 indicates indeterminate progress
-                            "health": health
-                        })
-                        last_progress_update = current_time
+                # No data received, but process still running — heartbeat + stall
+                # detection always run here; only the callback POST inside the
+                # helper is gated on callback_url.
+                current_time = time.time()
+                if (current_time - last_progress_update) >= HEARTBEAT_INTERVAL:
+                    zero_cpu_count, killed, kill_note = _heartbeat_stall_check(
+                        proc, out_dir, zero_cpu_count, callback_url, context="no output")
+                    if killed:
+                        return False, "".join(chunks) + kill_note, -9, True
+                    last_progress_update = current_time
 
             if proc.poll() is not None:
                 while True:
@@ -315,7 +456,7 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
         os.close(master_fd)
         master_fd = None  # Mark as closed
         combined = "".join(chunks); rc = proc.returncode; ok = (rc == 0)
-        
+
         # Send completion callback
         if callback_url:
             if ok:
@@ -326,20 +467,29 @@ def _cli_run_streaming(pdf_path: str, out_dir: str, callback_url: Optional[str] 
                 })
             else:
                 _send_progress_callback(callback_url, {
-                    "stage": "failed", 
+                    "stage": "failed",
                     "message": f"PDF processing failed (exit code: {rc})",
                     "progress": 0,
                     "error": f"Command failed with exit code {rc}"
                 })
-        
-        return ok, combined, rc
+
+        return ok, combined, rc, False
     except FileNotFoundError:
         msg = "marker_single not found in PATH. Install marker-pdf in this venv."
-        logger.error(msg); return False, msg, 127
+        logger.error(msg); return False, msg, 127, False
     except Exception as e:
         msg = f"unexpected CLI error: {e}"
-        logger.error(msg); return False, msg, None
+        logger.error(msg); return False, msg, None, False
     finally:
+        # Clear active process tracking — but only if it still points to OUR
+        # proc (a concurrent /kill or a newer conversion may have changed it).
+        with _active_process_lock:
+            if _active_process is proc:
+                _active_process = None
+        # Kill subprocess if still running
+        if proc is not None and proc.poll() is None:
+            logger.warning("Cleaning up still-running subprocess PID %d", proc.pid)
+            _kill_process_tree(proc, reason="finally cleanup")
         # Always close master_fd if it was opened but not yet closed
         if master_fd is not None:
             try:
@@ -489,6 +639,7 @@ def convert_pdf(
     debug: bool = Form(DEBUG_DEFAULT),
     rewrite_to_files: bool = Form(REWRITE_TO_FILES_DEFAULT),
     callback_url: Optional[str] = Form(None),  # Progress callback URL
+    timeout: Optional[int] = Form(None),  # Per-request subprocess timeout in seconds (overrides SUBPROCESS_TIMEOUT)
     # compatibility params (ignored by CLI)
     force_ocr: bool = Form(False),
     page_range: Optional[str] = Form(None),
@@ -505,6 +656,17 @@ def convert_pdf(
     if not orig_name.lower().endswith(".pdf"):
         raise HTTPException(status_code=415, detail="Only PDF files are supported.")
 
+    # Single-conversion service: reject parallel conversions up front.
+    # (The backend serializes Marker calls anyway via asyncio.Semaphore(1) in
+    # app/api/papers/utils.py; this guard prevents _active_process corruption
+    # if a second client ever calls /convert concurrently.)
+    with _active_process_lock:
+        if _active_process is not None and _active_process.poll() is None:
+            raise HTTPException(
+                status_code=409,
+                detail="A conversion is already in progress. This service handles one conversion at a time."
+            )
+
     # run directory
     if debug:
         keep_root = Path(__file__).parent / "debug_runs"; keep_root.mkdir(parents=True, exist_ok=True)
@@ -516,7 +678,23 @@ def convert_pdf(
 
     try:
         with open(pdf_path, "wb") as f: shutil.copyfileobj(file.file, f)
-        ok, cli_logs, rc = _cli_run_streaming(pdf_path, run_dir, callback_url=callback_url)
+        ok, cli_logs, rc, killed = _cli_run_streaming(pdf_path, run_dir, callback_url=callback_url,
+                                                      timeout_s=timeout)
+
+        if killed:
+            # The subprocess was killed by timeout or stall detection. Do NOT
+            # apply the tolerant "markdown exists" recovery path — any partial
+            # markdown on disk is untrustworthy. Report an explicit failure.
+            detail: Any = {
+                "success": False,
+                "error": "Marker processing was killed (subprocess timeout or stall detection). "
+                         "No usable result was produced."
+            }
+            if debug:
+                detail["rc"] = rc
+                detail["cli_logs"] = cli_logs[-6000:]
+                detail["kept_dir"] = kept_dir or run_dir
+            raise HTTPException(status_code=500, detail=detail)
 
         stem = Path(orig_name).stem
         md_path, meta_path = _cli_find_markdown_and_meta(run_dir, stem_preference=stem)
@@ -615,7 +793,44 @@ def convert_pdf(
             except Exception as cleanup_err:
                 logger.warning("Failed to clean up run dir: %s", cleanup_err)
 
+# ---- Kill endpoint & graceful shutdown -------------------------------------------
+@app.post("/kill")
+def kill_active_process():
+    """Kill the currently running marker_single subprocess if any."""
+    global _active_process
+    with _active_process_lock:
+        proc = _active_process
+    if proc is None or proc.poll() is not None:
+        return {"status": "no_active_process", "message": "No active subprocess to kill"}
+    pid = proc.pid
+    _kill_process_tree(proc, reason="/kill endpoint")
+    with _active_process_lock:
+        # Only clear if it still points to the proc we killed (a new
+        # conversion may have started in the meantime).
+        if _active_process is proc:
+            _active_process = None
+    return {"status": "killed", "pid": pid, "message": f"Killed process tree rooted at PID {pid}"}
+
+def _shutdown_cleanup():
+    """Kill active subprocess on server shutdown."""
+    global _active_process
+    with _active_process_lock:
+        proc = _active_process
+        _active_process = None
+    if proc is not None and proc.poll() is None:
+        _kill_process_tree(proc, reason="server shutdown")
+
+@app.on_event("shutdown")
+def on_shutdown():
+    _shutdown_cleanup()
+
 if __name__ == "__main__":
     import uvicorn
+
+    # NOTE: no signal.signal() handlers here — uvicorn installs its own
+    # SIGINT/SIGTERM handlers and would overwrite ours. Subprocess teardown
+    # happens via the FastAPI shutdown hook (_shutdown_cleanup above), which
+    # uvicorn invokes during graceful shutdown.
+
     print(f"Starting Marker PDF service (CLI-only) on http://0.0.0.0:8002 (v{APP_VERSION}) ...")
     uvicorn.run(app, host="0.0.0.0", port=8002)

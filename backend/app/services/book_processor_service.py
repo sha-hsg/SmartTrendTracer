@@ -133,7 +133,7 @@ class BookProcessorService:
             with open(pdf_path, "rb") as pdf_file:
                 response = requests.post(
                     f"{self.marker_service_url}/convert",
-                    files={"pdf": pdf_file},
+                    files={"file": pdf_file},
                     data=data,
                     timeout=self.marker_timeout,  # 6 hours for large books
                 )
@@ -201,7 +201,7 @@ class BookProcessorService:
             with open(pdf_path, "rb") as pdf_file:
                 response = requests.post(
                     f"{self.mineru_service_url}/convert",
-                    files={"pdf": pdf_file},
+                    files={"file": pdf_file},
                     data=data,
                     timeout=self.mineru_timeout,  # 5 hours for large books
                 )
