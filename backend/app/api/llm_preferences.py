@@ -104,7 +104,7 @@ async def get_available_models():
         {
             "tag_suggestion": [
                 {
-                    "model": "claude-sonnet-4-20250514",
+                    "model": "claude-sonnet-5",
                     "provider": "anthropic",
                     "temperature": 0.3,
                     "max_tokens": 1000
@@ -141,7 +141,7 @@ async def get_task_info(task_type: str):
     Example:
         {
             "task_type": "tag_suggestion",
-            "model": "claude-sonnet-4-20250514",
+            "model": "claude-sonnet-5",
             "provider": "anthropic",
             "temperature": 0.3,
             "max_tokens": 1000

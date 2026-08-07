@@ -6,8 +6,7 @@ model_list:
   # Tag Suggestion - Claude Sonnet 4 with GPT-5.2 fallback
   - model_name: tag_suggestion
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.3
+      model: claude-sonnet-5
       max_tokens: 1000
 
   - model_name: tag_suggestion
@@ -26,15 +25,13 @@ model_list:
   # Advanced Tag Generation
   - model_name: tag_generation_advanced
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.4
+      model: claude-sonnet-5
       max_tokens: 1000
 
   # Trend Analysis - Claude Opus 4 with GPT-5.2 fallback
   - model_name: trend_analysis
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.3
+      model: claude-opus-5
       max_tokens: 10000
 
   - model_name: trend_analysis
@@ -46,57 +43,51 @@ model_list:
   # Deep Trend Analysis
   - model_name: trend_analysis_deep
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.4
+      model: claude-opus-5
       max_tokens: 30000
 
   # Content Classification - Claude Haiku 3 (fastest)
   - model_name: content_classification
     litellm_params:
-      model: claude-3-haiku-20240307
+      model: claude-haiku-4-5
       temperature: 0.1
       max_tokens: 500
 
   # Summarization - Claude Sonnet 4
   - model_name: summarization
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.3
+      model: claude-sonnet-5
       max_tokens: 2000
 
   # Comprehensive Summarization - Claude Opus 4.1
   - model_name: summarization_comprehensive
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.3
+      model: claude-opus-5
       max_tokens: 15000
 
   # Ontology Suggestion
   - model_name: ontology_suggestion
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.2
+      model: claude-sonnet-5
       max_tokens: 8000
 
   # Ontology Validation - Claude Haiku 3 (fast)
   - model_name: ontology_validation
     litellm_params:
-      model: claude-3-haiku-20240307
+      model: claude-haiku-4-5
       temperature: 0.1
       max_tokens: 1000
 
   # Bulk Ontology
   - model_name: ontology_bulk
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.3
+      model: claude-sonnet-5
       max_tokens: 20000
 
   # Code Generation - Claude Sonnet 4 with GPT-5.1 fallback
   - model_name: code_generation
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.2
+      model: claude-sonnet-5
       max_tokens: 10000
 
   - model_name: code_generation
@@ -155,34 +146,30 @@ model_list:
 
   - model_name: rag_answer
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.3
+      model: claude-opus-5
       max_tokens: 8000
 
   # Article Summarizer - Claude Sonnet 4
   - model_name: article_summarizer
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.3
+      model: claude-sonnet-5
       max_tokens: 3000
 
   # Article Summarization (camelCase for frontend) - Claude Sonnet 4
   - model_name: articleSummarization
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.3
+      model: claude-sonnet-5
       max_tokens: 5000
 
   # Entity Extraction - Claude Opus 4.1
   - model_name: entity_extraction
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.1
+      model: claude-opus-5
       max_tokens: 5000
 
   - model_name: entity_extraction_fast
     litellm_params:
-      model: claude-3-haiku-20240307
+      model: claude-haiku-4-5
       temperature: 0.1
       max_tokens: 2000
 
@@ -229,22 +216,19 @@ model_list:
   # Concept Organization
   - model_name: concept_organization
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.2
+      model: claude-opus-5
       max_tokens: 5000
 
   # Paper Author Extraction
   - model_name: paper_author_extraction
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.1
+      model: claude-sonnet-5
       max_tokens: 2000
 
   # Paper Affiliation Extraction
   - model_name: paper_affiliation_extraction
     litellm_params:
-      model: claude-sonnet-4-20250514
-      temperature: 0.1
+      model: claude-sonnet-5
       max_tokens: 2000
 
   # Paper Analysis - Gemini 2.5 Pro with Claude fallback
@@ -256,8 +240,7 @@ model_list:
 
   - model_name: paper_analysis
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.3
+      model: claude-opus-5
       max_tokens: 8000
 
   # Paper Section Extraction
@@ -310,42 +293,23 @@ model_list:
       temperature: 0.3
       max_tokens: 5000
 
-  # Claude Models (TESTED)
-  - model_name: claude-opus-4-5-20251101
+  # Claude Models (current lineup, July 2026)
+  # NOTE: claude-opus-5 / claude-sonnet-5 reject temperature/top_p/top_k (400) - do not add sampling params
+  - model_name: claude-opus-5
     litellm_params:
-      model: claude-opus-4-5-20251101
-      temperature: 0.3
+      model: claude-opus-5
       max_tokens: 32000
 
-  - model_name: claude-opus-4-1-20250805
+  - model_name: claude-sonnet-5
     litellm_params:
-      model: claude-opus-4-1-20250805
-      temperature: 0.3
+      model: claude-sonnet-5
       max_tokens: 16000
 
-  - model_name: claude-opus-4-20250514
+  - model_name: claude-haiku-4-5
     litellm_params:
-      model: claude-opus-4-20250514
-      temperature: 0.3
-      max_tokens: 16000
-
-  - model_name: claude-sonnet-4-20250514
-    litellm_params:
-      model: claude-sonnet-4-20250514
+      model: claude-haiku-4-5
       temperature: 0.3
       max_tokens: 8000
-
-  - model_name: claude-3-haiku-20240307
-    litellm_params:
-      model: claude-3-haiku-20240307
-      temperature: 0.3
-      max_tokens: 4000
-
-  - model_name: claude-3-opus-20240229
-    litellm_params:
-      model: claude-3-opus-20240229
-      temperature: 0.3
-      max_tokens: 4000
 
   # Gemini Models (TESTED)
   # NOTE: Gemini 3 models require temperature=1.0 to avoid infinite loops
@@ -402,19 +366,19 @@ model_list:
 router_settings:
   # Automatic Fallback Chains
   fallbacks:
-    - tag_suggestion: ["gpt-5.2", "claude-sonnet-4-20250514"]
+    - tag_suggestion: ["gpt-5.2", "claude-sonnet-5"]
     - trend_analysis: ["gpt-5.2"]
-    - chat_general: ["gpt-5-nano", "claude-sonnet-4-20250514"]
-    - rag_answer: ["claude-opus-4-1-20250805", "gpt-5.1"]
+    - chat_general: ["gpt-5-nano", "claude-sonnet-5"]
+    - rag_answer: ["claude-opus-5", "gpt-5.1"]
     - article_summarizer: ["gpt-5-nano"]
     - entity_extraction_gpt5: ["entity_extraction_gemini", "entity_extraction_fast"]
-    - paper_analysis: ["claude-opus-4-1-20250805"]
+    - paper_analysis: ["claude-opus-5"]
     - paper_tag_suggestion_deep: ["paper_tag_suggestion_gpt5"]
 
   # Context Window Fallbacks
   context_window_fallbacks:
-    - gemini-2.5-pro: ["claude-opus-4-1-20250805"]
-    - claude-opus-4-1-20250805: ["gemini-2.5-pro"]
+    - gemini-2.5-pro: ["claude-opus-5"]
+    - claude-opus-5: ["gemini-2.5-pro"]
 
   # Retry & Timeout Settings
   num_retries: 3

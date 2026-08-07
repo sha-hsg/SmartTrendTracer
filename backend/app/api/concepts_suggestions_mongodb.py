@@ -104,9 +104,9 @@ Return as JSON array with format:
 
             # Working Claude models
             "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-            "claude-opus-4.1": "claude-opus-4-1-20250805",
+            "claude-opus-4.1": "claude-opus-5",
             "claude-haiku-4.5": "claude-haiku-4-5-20251001",
-            "claude-3.5-sonnet": "claude-sonnet-4-20250514",
+            "claude-3.5-sonnet": "claude-sonnet-5",
 
             # Working Gemini models
             "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
@@ -296,9 +296,9 @@ Return as JSON array with format:
             "gpt-4o": "gpt-4o",
             "gpt-4o-mini": "gpt-4o-mini",
             "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-            "claude-opus-4.1": "claude-opus-4-1-20250805",
+            "claude-opus-4.1": "claude-opus-5",
             "claude-haiku-4.5": "claude-haiku-4-5-20251001",
-            "claude-3.5-sonnet": "claude-sonnet-4-20250514",
+            "claude-3.5-sonnet": "claude-sonnet-5",
             "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
             "gemini-3.5-flash": "gemini-3.5-flash",
             "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",

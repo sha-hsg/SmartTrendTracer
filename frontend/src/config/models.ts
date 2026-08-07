@@ -50,37 +50,19 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
 
-  // ========== Claude Models (TESTED) ==========
+  // ========== Claude Models (current lineup, July 2026) ==========
   {
-    value: 'claude-opus-4-5-20251101',
-    label: 'Claude Opus 4.5',
-    description: 'Most powerful - hybrid reasoning & creativity',
-    icon: Crown,
-    iconColor: 'text-orange-800',
-    badge: 'Latest',
-    badgeVariant: 'secondary'
-  },
-  {
-    value: 'claude-opus-4-1-20250805',
-    label: 'Claude Opus 4.1',
-    description: 'Flagship - best coding, agents & research',
+    value: 'claude-opus-5',
+    label: 'Claude Opus 5',
+    description: 'Flagship - deep reasoning, agents & long-horizon work',
     icon: Crown,
     iconColor: 'text-orange-700',
     badge: 'Flagship',
     badgeVariant: 'secondary'
   },
   {
-    value: 'claude-opus-4-20250514',
-    label: 'Claude Opus 4',
-    description: 'Powerful analysis and reasoning',
-    icon: Layers,
-    iconColor: 'text-orange-600',
-    badge: 'Powerful',
-    badgeVariant: 'secondary'
-  },
-  {
-    value: 'claude-sonnet-4-20250514',
-    label: 'Claude Sonnet 4',
+    value: 'claude-sonnet-5',
+    label: 'Claude Sonnet 5',
     description: 'Balanced intelligence, speed & cost',
     icon: Target,
     iconColor: 'text-orange-500',
@@ -88,8 +70,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'claude-3-haiku-20240307',
-    label: 'Claude Haiku 3',
+    value: 'claude-haiku-4-5',
+    label: 'Claude Haiku 4.5',
     description: 'Fastest and most cost-effective',
     icon: Zap,
     iconColor: 'text-orange-400',
@@ -175,16 +157,6 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
 
-  // ========== Legacy Models (still available) ==========
-  {
-    value: 'claude-3-opus-20240229',
-    label: 'Claude 3 Opus',
-    description: 'Legacy - powerful analysis',
-    icon: Layers,
-    iconColor: 'text-orange-400',
-    badge: 'Legacy',
-    badgeVariant: 'outline'
-  }
 ]
 
 /**
@@ -193,49 +165,49 @@ export const AVAILABLE_MODELS: ModelOption[] = [
 export const MODEL_PRESETS = {
   // Tag suggestion for papers - prioritize comprehensive analysis
   paperTagSuggestion: {
-    default: 'claude-sonnet-4-20250514',
-    alternatives: ['gemini/gemini-2.5-pro', 'openai/gpt-5.2', 'claude-opus-4-1-20250805']
+    default: 'claude-sonnet-5',
+    alternatives: ['gemini/gemini-2.5-pro', 'openai/gpt-5.2', 'claude-opus-5']
   },
 
   // Paper analysis - need deep understanding
   paperAnalysis: {
     default: 'gemini/gemini-2.5-pro',
-    alternatives: ['claude-opus-4-1-20250805', 'openai/gpt-5.1', 'claude-sonnet-4-20250514']
+    alternatives: ['claude-opus-5', 'openai/gpt-5.1', 'claude-sonnet-5']
   },
 
   // Entity extraction - need accuracy
   entityExtraction: {
-    default: 'claude-opus-4-1-20250805',
-    alternatives: ['openai/gpt-5.1', 'gemini/gemini-2.5-pro', 'claude-sonnet-4-20250514']
+    default: 'claude-opus-5',
+    alternatives: ['openai/gpt-5.1', 'gemini/gemini-2.5-pro', 'claude-sonnet-5']
   },
 
   // Article summarization - need speed and quality
   articleSummarization: {
-    default: 'claude-sonnet-4-20250514',
-    alternatives: ['gemini/gemini-2.5-flash', 'claude-3-haiku-20240307', 'openai/gpt-5.2']
+    default: 'claude-sonnet-5',
+    alternatives: ['gemini/gemini-2.5-flash', 'claude-haiku-4-5', 'openai/gpt-5.2']
   },
 
   // Tweet annotation - need speed
   tweetAnnotation: {
-    default: 'claude-3-haiku-20240307',
+    default: 'claude-haiku-4-5',
     alternatives: ['gemini/gemini-2.5-flash', 'openai/gpt-5-nano']
   },
 
   // Free-form paper analysis
   freeAnalysis: {
     default: 'gemini/gemini-2.5-flash',
-    alternatives: ['claude-sonnet-4-20250514', 'openai/gpt-5.2', 'gemini/gemini-2.5-pro']
+    alternatives: ['claude-sonnet-5', 'openai/gpt-5.2', 'gemini/gemini-2.5-pro']
   },
 
   // RAG search answers
   ragAnswer: {
     default: 'gemini/gemini-2.5-pro',
-    alternatives: ['claude-opus-4-1-20250805', 'openai/gpt-5.1']
+    alternatives: ['claude-opus-5', 'openai/gpt-5.1']
   },
 
   // Trend analysis
   trendAnalysis: {
-    default: 'claude-opus-4-1-20250805',
+    default: 'claude-opus-5',
     alternatives: ['openai/gpt-5.2', 'gemini/gemini-2.5-pro']
   }
 } as const

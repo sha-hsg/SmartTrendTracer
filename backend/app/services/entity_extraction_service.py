@@ -54,7 +54,7 @@ class EntityExtractionService:
         Args:
             use_fast_model: Use fast model (deprecated, kept for backward compatibility)
             model_choice: Specific model to use ('gpt5', 'gemini', 'claude', 'fast')
-            custom_model: Direct model name from UI (e.g., 'gemini-2.5-flash-lite', 'claude-opus-4-1-20250805')
+            custom_model: Direct model name from UI (e.g., 'gemini-2.5-flash-lite', 'claude-opus-5')
             user_id: User ID for preference lookup
         """
         self.use_fast_model = use_fast_model

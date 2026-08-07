@@ -363,7 +363,7 @@ class LLMService:
 
         Args:
             prompt: The prompt text
-            model: Model name (e.g., 'gemini-2.5-pro', 'claude-opus-4-1-20250805')
+            model: Model name (e.g., 'gemini-2.5-pro', 'claude-opus-5')
             temperature: Temperature for generation
             max_tokens: Maximum tokens to generate
 

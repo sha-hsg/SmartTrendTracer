@@ -8,7 +8,11 @@ interface ModelBadgeProps {
 const ModelBadge: React.FC<ModelBadgeProps> = ({ model, size = 'small', style }) => {
   const getModelDisplay = (modelName: string) => {
     const modelMap: { [key: string]: { name: string, color: string } } = {
-      // Claude 4 models
+      // Claude 5 / current models
+      'claude-opus-5': { name: 'Claude Opus 5', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+      'claude-sonnet-5': { name: 'Claude Sonnet 5', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+      'claude-haiku-4-5': { name: 'Claude Haiku 4.5', color: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' },
+      // Claude 4 models (historical usage data)
       'claude-sonnet-4-20250514': { name: 'Claude 4 Sonnet', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
       'claude-opus-4-1-20250805': { name: 'Claude Opus 4.1', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
       // Claude 3.5 models

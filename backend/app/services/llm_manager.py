@@ -348,7 +348,7 @@ class LLMManager:
             task_type: Task type (e.g., "tag_suggestion", "entity_extraction")
 
         Returns:
-            Actual model name (e.g., "claude-sonnet-4-20250514")
+            Actual model name (e.g., "claude-sonnet-5")
             Falls back to task_type if not found in config
         """
         try:
@@ -358,7 +358,7 @@ class LLMManager:
                     litellm_model = model_config.get('litellm_params', {}).get('model', '')
 
                     # Extract just the model name without provider prefix
-                    # e.g., "anthropic/claude-sonnet-4-20250514" -> "claude-sonnet-4-20250514"
+                    # e.g., "anthropic/claude-sonnet-5" -> "claude-sonnet-5"
                     if '/' in litellm_model:
                         return litellm_model.split('/', 1)[1]
                     return litellm_model
@@ -395,7 +395,7 @@ class LLMManager:
         # Check for user preference or use task_type for routing
         model_name = self.get_user_preference(task_type, user_id) or task_type
 
-        # Resolve actual model name for logging (e.g., "claude-sonnet-4-20250514")
+        # Resolve actual model name for logging (e.g., "claude-sonnet-5")
         actual_model_name = self._resolve_actual_model(task_type)
 
         # Merge parameters
@@ -466,7 +466,7 @@ class LLMManager:
         # Check for user preference
         model_name = self.get_user_preference(task_type, user_id) or task_type
 
-        # Resolve actual model name for logging (e.g., "claude-sonnet-4-20250514")
+        # Resolve actual model name for logging (e.g., "claude-sonnet-5")
         actual_model_name = self._resolve_actual_model(task_type)
 
         # Merge parameters
@@ -566,6 +566,16 @@ class LLMManager:
         'openai/gpt-4o-mini': 'gpt-5-nano',
         'grok-2-latest': 'grok-4-1-fast',
         'xai/grok-2-latest': 'grok-4-1-fast',
+        # Anthropic models retired/deprecated (removed from configs July 2026)
+        'claude-sonnet-4-20250514': 'claude-sonnet-5',
+        'anthropic/claude-sonnet-4-20250514': 'claude-sonnet-5',
+        'claude-opus-4-1-20250805': 'claude-opus-5',
+        'anthropic/claude-opus-4-1-20250805': 'claude-opus-5',
+        'claude-opus-4-20250514': 'claude-opus-5',
+        'claude-opus-4-5-20251101': 'claude-opus-5',
+        'claude-3-opus-20240229': 'claude-opus-5',
+        'claude-3-haiku-20240307': 'claude-haiku-4-5',
+        'anthropic/claude-3-haiku-20240307': 'claude-haiku-4-5',
     }
 
     def get_valid_model_names(self) -> set:

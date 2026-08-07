@@ -87,7 +87,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
         const data = await response.json()
         setEntities(data.entities)
         setStats(data.stats)
-        setExtractionModel(data.model || selectedModel || 'claude-sonnet-4-20250514')
+        setExtractionModel(data.model || selectedModel || 'claude-sonnet-5')
       }
     } catch (error) {
       console.error('Error extracting entities:', error)
