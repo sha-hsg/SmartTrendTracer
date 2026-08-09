@@ -23,8 +23,8 @@ export interface ModelOption {
 export const AVAILABLE_MODELS: ModelOption[] = [
   // ========== OpenAI GPT-5 Models (TESTED) ==========
   {
-    value: 'openai/gpt-5.2',
-    label: 'GPT-5.2',
+    value: 'openai/gpt-5.5',
+    label: 'GPT-5.5',
     description: 'Latest flagship for knowledge work',
     icon: Crown,
     iconColor: 'text-purple-600',
@@ -32,8 +32,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'openai/gpt-5.1',
-    label: 'GPT-5.1',
+    value: 'openai/gpt-5.4',
+    label: 'GPT-5.4',
     description: 'Powerful reasoning and analysis',
     icon: Brain,
     iconColor: 'text-purple-700',
@@ -41,8 +41,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'openai/gpt-5-nano',
-    label: 'GPT-5 Nano',
+    value: 'openai/gpt-5.4-nano',
+    label: 'GPT-5.4 Nano',
     description: 'Fast and cost-effective',
     icon: Zap,
     iconColor: 'text-purple-500',
@@ -79,19 +79,19 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
 
-  // ========== Gemini 3.x Models (TESTED - NEWEST) ==========
+  // ========== Gemini Models (current lineup, Aug 2026) ==========
   {
     value: 'gemini/gemini-3.1-pro-preview',
     label: 'Gemini 3.1 Pro Preview',
-    description: 'Latest flagship with superior reasoning',
+    description: 'Flagship with superior reasoning, 1M context',
     icon: Crown,
     iconColor: 'text-blue-700',
-    badge: 'Latest',
+    badge: 'Flagship',
     badgeVariant: 'secondary'
   },
   {
-    value: 'gemini/gemini-3.5-flash',
-    label: 'Gemini 3.5 Flash',
+    value: 'gemini/gemini-3.6-flash',
+    label: 'Gemini 3.6 Flash',
     description: 'Ultra-fast with latest capabilities',
     icon: Zap,
     iconColor: 'text-blue-600',
@@ -99,8 +99,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'gemini/gemini-3.1-flash-lite',
-    label: 'Gemini 3.1 Flash Lite',
+    value: 'gemini/gemini-3.5-flash-lite',
+    label: 'Gemini 3.5 Flash Lite',
     description: 'Lightweight and cost-efficient',
     icon: Bolt,
     iconColor: 'text-blue-500',
@@ -108,30 +108,19 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'outline'
   },
 
-  // ========== Gemini 2.5 Models (TESTED) ==========
+  // ========== Grok Models (current lineup, Aug 2026) ==========
   {
-    value: 'gemini/gemini-2.5-pro',
-    label: 'Gemini 2.5 Pro',
-    description: '2M context, comprehensive analysis',
-    icon: Sparkles,
-    iconColor: 'text-blue-500',
-    badge: 'Large Context',
+    value: 'xai/grok-4.5',
+    label: 'Grok 4.5',
+    description: 'Balanced speed and capability',
+    icon: MessageCircle,
+    iconColor: 'text-gray-700',
+    badge: 'Balanced',
     badgeVariant: 'secondary'
   },
   {
-    value: 'gemini/gemini-2.5-flash',
-    label: 'Gemini 2.5 Flash',
-    description: 'Fast and reliable',
-    icon: Bolt,
-    iconColor: 'text-blue-400',
-    badge: 'Fast',
-    badgeVariant: 'outline'
-  },
-
-  // ========== Grok 4.1 Models (TESTED) ==========
-  {
-    value: 'xai/grok-4-1-fast-reasoning',
-    label: 'Grok 4.1 Fast Reasoning',
+    value: 'xai/grok-4.20-0309-reasoning',
+    label: 'Grok 4.20 Reasoning',
     description: 'Fast with chain-of-thought reasoning',
     icon: Brain,
     iconColor: 'text-gray-700',
@@ -139,21 +128,12 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'xai/grok-4-1-fast-non-reasoning',
-    label: 'Grok 4.1 Fast',
+    value: 'xai/grok-4.20-0309-non-reasoning',
+    label: 'Grok 4.20 Fast',
     description: 'Fastest Grok model',
     icon: Zap,
     iconColor: 'text-gray-600',
     badge: 'Fastest',
-    badgeVariant: 'secondary'
-  },
-  {
-    value: 'xai/grok-4-1-fast',
-    label: 'Grok 4.1',
-    description: 'Balanced speed and capability',
-    icon: MessageCircle,
-    iconColor: 'text-gray-700',
-    badge: 'Balanced',
     badgeVariant: 'secondary'
   },
 
@@ -166,49 +146,49 @@ export const MODEL_PRESETS = {
   // Tag suggestion for papers - prioritize comprehensive analysis
   paperTagSuggestion: {
     default: 'claude-sonnet-5',
-    alternatives: ['gemini/gemini-2.5-pro', 'openai/gpt-5.2', 'claude-opus-5']
+    alternatives: ['gemini/gemini-3.1-pro-preview', 'openai/gpt-5.5', 'claude-opus-5']
   },
 
   // Paper analysis - need deep understanding
   paperAnalysis: {
-    default: 'gemini/gemini-2.5-pro',
-    alternatives: ['claude-opus-5', 'openai/gpt-5.1', 'claude-sonnet-5']
+    default: 'gemini/gemini-3.1-pro-preview',
+    alternatives: ['claude-opus-5', 'openai/gpt-5.4', 'claude-sonnet-5']
   },
 
   // Entity extraction - need accuracy
   entityExtraction: {
     default: 'claude-opus-5',
-    alternatives: ['openai/gpt-5.1', 'gemini/gemini-2.5-pro', 'claude-sonnet-5']
+    alternatives: ['openai/gpt-5.4', 'gemini/gemini-3.1-pro-preview', 'claude-sonnet-5']
   },
 
   // Article summarization - need speed and quality
   articleSummarization: {
     default: 'claude-sonnet-5',
-    alternatives: ['gemini/gemini-2.5-flash', 'claude-haiku-4-5', 'openai/gpt-5.2']
+    alternatives: ['gemini/gemini-3.6-flash', 'claude-haiku-4-5', 'openai/gpt-5.5']
   },
 
   // Tweet annotation - need speed
   tweetAnnotation: {
     default: 'claude-haiku-4-5',
-    alternatives: ['gemini/gemini-2.5-flash', 'openai/gpt-5-nano']
+    alternatives: ['gemini/gemini-3.6-flash', 'openai/gpt-5.4-nano']
   },
 
   // Free-form paper analysis
   freeAnalysis: {
-    default: 'gemini/gemini-2.5-flash',
-    alternatives: ['claude-sonnet-5', 'openai/gpt-5.2', 'gemini/gemini-2.5-pro']
+    default: 'gemini/gemini-3.6-flash',
+    alternatives: ['claude-sonnet-5', 'openai/gpt-5.5', 'gemini/gemini-3.1-pro-preview']
   },
 
   // RAG search answers
   ragAnswer: {
-    default: 'gemini/gemini-2.5-pro',
-    alternatives: ['claude-opus-5', 'openai/gpt-5.1']
+    default: 'gemini/gemini-3.1-pro-preview',
+    alternatives: ['claude-opus-5', 'openai/gpt-5.4']
   },
 
   // Trend analysis
   trendAnalysis: {
     default: 'claude-opus-5',
-    alternatives: ['openai/gpt-5.2', 'gemini/gemini-2.5-pro']
+    alternatives: ['openai/gpt-5.5', 'gemini/gemini-3.1-pro-preview']
   }
 } as const
 

@@ -91,35 +91,13 @@ Return as JSON array with format:
 ]
 """
         
-        # Get LLM response
-        # Map frontend model names to actual model names
-        model_mapping = {
-            # Working GPT models
-            "gpt-5": "gpt-5-2025-08-07",  # Reasoning model (temperature=1 only)
-            "gpt-5.1": "gpt-5.1",  # Reasoning model (temperature=1 only)
-            "gpt-5-mini": "gpt-5-mini",  # Reasoning model (temperature=1 only)
-            "gpt-5-nano": "gpt-5-nano",  # Reasoning model (temperature=1 only)
-            "gpt-4o": "gpt-4o",
-            "gpt-4o-mini": "gpt-4o-mini",
-
-            # Working Claude models
-            "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-            "claude-opus-4.1": "claude-opus-5",
-            "claude-haiku-4.5": "claude-haiku-4-5-20251001",
-            "claude-3.5-sonnet": "claude-sonnet-5",
-
-            # Working Gemini models
-            "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
-            "gemini-3.5-flash": "gemini-3.5-flash",
-            "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
-            "gemini-2.5-pro": "gemini-2.5-pro",  # Uses gemini-pro-latest
-            "gemini-2.5-flash": "gemini-2.5-flash",  # Uses gemini-flash-latest
-            "gemini-2.5-flash-lite": "gemini-2.5-flash-lite"
-        }
-
-        # Extract model from request or use default
-        selected_model = request.model if request.model else "claude-3.5-sonnet"
-        actual_model = model_mapping.get(selected_model, selected_model)
+        # Resolve deprecated model aliases centrally (MODEL_MIGRATION_MAP);
+        # without an explicit model the tag_suggestion task route decides.
+        selected_model = request.model
+        actual_model = (
+            llm_manager.MODEL_MIGRATION_MAP.get(selected_model, selected_model)
+            if selected_model else None
+        )
 
         logger.info(f"Concept suggestion using LLMManager with tag_suggestion task type and model: {actual_model}")
 
@@ -133,7 +111,7 @@ Return as JSON array with format:
             task_type='tag_suggestion',
             messages=messages,
             user_id='default',
-            model=actual_model  # Pass the selected model
+            override_params={'model': actual_model} if actual_model else None
         )
 
         response = llm_response.choices[0].message.content
@@ -287,26 +265,13 @@ Return as JSON array with format:
   }}
 ]
 """
-        selected_model = request.model if request.model else "claude-3.5-sonnet"
-        model_mapping = {
-            "gpt-5": "gpt-5-2025-08-07",
-            "gpt-5.1": "gpt-5.1",
-            "gpt-5-mini": "gpt-5-mini",
-            "gpt-5-nano": "gpt-5-nano",
-            "gpt-4o": "gpt-4o",
-            "gpt-4o-mini": "gpt-4o-mini",
-            "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-            "claude-opus-4.1": "claude-opus-5",
-            "claude-haiku-4.5": "claude-haiku-4-5-20251001",
-            "claude-3.5-sonnet": "claude-sonnet-5",
-            "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
-            "gemini-3.5-flash": "gemini-3.5-flash",
-            "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
-            "gemini-2.5-pro": "gemini-2.5-pro",
-            "gemini-2.5-flash": "gemini-2.5-flash",
-            "gemini-2.5-flash-lite": "gemini-2.5-flash-lite"
-        }
-        actual_model = model_mapping.get(selected_model, selected_model)
+        # Resolve deprecated model aliases centrally (MODEL_MIGRATION_MAP);
+        # without an explicit model the tag_suggestion task route decides.
+        selected_model = request.model
+        actual_model = (
+            llm_manager.MODEL_MIGRATION_MAP.get(selected_model, selected_model)
+            if selected_model else None
+        )
 
         logger.info(f"Reddit concept suggestion using LLMManager with model: {actual_model}")
 
@@ -315,7 +280,7 @@ Return as JSON array with format:
             task_type='tag_suggestion',
             messages=messages,
             user_id='default',
-            model=actual_model
+            override_params={'model': actual_model} if actual_model else None
         )
 
         response = llm_response.choices[0].message.content

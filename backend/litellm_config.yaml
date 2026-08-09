@@ -11,15 +11,14 @@ model_list:
 
   - model_name: tag_suggestion
     litellm_params:
-      model: openai/gpt-5.2
-      temperature: 0.3
+      model: openai/gpt-5.5
       max_tokens: 1000
 
   # Tag Reorganization - Gemini 2.5 Pro for massive context
   - model_name: tag_reorganization
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 100000
 
   # Advanced Tag Generation
@@ -36,8 +35,7 @@ model_list:
 
   - model_name: trend_analysis
     litellm_params:
-      model: openai/gpt-5.2
-      temperature: 0.5
+      model: openai/gpt-5.5
       max_tokens: 10000
 
   # Deep Trend Analysis
@@ -92,56 +90,53 @@ model_list:
 
   - model_name: code_generation
     litellm_params:
-      model: openai/gpt-5.1
-      temperature: 0.2
+      model: openai/gpt-5.4
       max_tokens: 10000
 
   # Complex Reasoning - GPT-5.2
   - model_name: reasoning_complex
     litellm_params:
-      model: openai/gpt-5.2
-      temperature: 0.5
+      model: openai/gpt-5.5
       max_tokens: 10000
 
   # General Chat - Gemini 2.5 Flash with GPT-5-nano fallback
   - model_name: chat_general
     litellm_params:
-      model: gemini/gemini-2.5-flash
-      temperature: 0.5
+      model: gemini/gemini-3.6-flash
+      temperature: 1.0
       max_tokens: 8000
 
   - model_name: chat_general
     litellm_params:
-      model: openai/gpt-5-nano
-      temperature: 0.5
+      model: openai/gpt-5.4-nano
       max_tokens: 8000
 
   # Experimental Analysis - Gemini 2.5 Flash
   - model_name: experimental_analysis
     litellm_params:
-      model: gemini/gemini-2.5-flash
-      temperature: 0.4
+      model: gemini/gemini-3.6-flash
+      temperature: 1.0
       max_tokens: 2000
 
   # Multimodal Analysis - Gemini 2.5 Pro
   - model_name: multimodal_analysis
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 1500
 
   # Research Assistant - Gemini 2.5 Flash
   - model_name: research_assistant
     litellm_params:
-      model: gemini/gemini-2.5-flash
-      temperature: 0.2
+      model: gemini/gemini-3.6-flash
+      temperature: 1.0
       max_tokens: 3000
 
   # RAG Answer - Gemini 2.5 Pro with Claude fallback
   - model_name: rag_answer
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 10000
 
   - model_name: rag_answer
@@ -175,42 +170,40 @@ model_list:
 
   - model_name: entity_extraction_gpt5
     litellm_params:
-      model: openai/gpt-5.1
-      temperature: 0.3
+      model: openai/gpt-5.4
       max_tokens: 10000
 
   - model_name: entity_extraction_gemini
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.1
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 10000
 
   # Tag Reorganization Full
   - model_name: tag_reorganization_full
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 100000
 
   # Tag Reorganization Analysis
   - model_name: tag_reorganization_analysis
     litellm_params:
-      model: gemini/gemini-2.5-flash
-      temperature: 0.3
+      model: gemini/gemini-3.6-flash
+      temperature: 1.0
       max_tokens: 50000
 
   # Tag Reorganization Comprehensive
   - model_name: tag_reorganization_comprehensive
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 120000
 
   # Orphan Tag Assignment
   - model_name: orphan_tag_assignment
     litellm_params:
-      model: openai/gpt-5.2
-      temperature: 0.5
+      model: openai/gpt-5.5
       max_tokens: 30000
 
   # Concept Organization
@@ -234,8 +227,8 @@ model_list:
   # Paper Analysis - Gemini 2.5 Pro with Claude fallback
   - model_name: paper_analysis
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 32000
 
   - model_name: paper_analysis
@@ -246,51 +239,48 @@ model_list:
   # Paper Section Extraction
   - model_name: paper_section_extraction
     litellm_params:
-      model: gemini/gemini-2.5-flash
-      temperature: 0.1
+      model: gemini/gemini-3.6-flash
+      temperature: 1.0
       max_tokens: 20000
 
   # Deep Paper Analysis
   - model_name: paper_analysis_deep
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.4
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 100000
 
   # Paper Tag Suggestion
   - model_name: paper_tag_suggestion_deep
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
+      model: gemini/gemini-3.1-pro-preview
+      temperature: 1.0
       max_tokens: 5000
 
   - model_name: paper_tag_suggestion_gpt5
     litellm_params:
-      model: openai/gpt-5.2
-      temperature: 0.5
+      model: openai/gpt-5.5
       max_tokens: 5000
 
   # ========================================
   # Direct Model Access (User-Selectable Models)
   # ========================================
 
-  # OpenAI GPT-5 Models (TESTED)
-  - model_name: gpt-5.2
+  # OpenAI GPT-5 Models (current lineup, Aug 2026)
+  # NOTE: gpt-5.4/5.5 reject non-default temperature - do not add sampling params
+  - model_name: gpt-5.5
     litellm_params:
-      model: openai/gpt-5.2
-      temperature: 0.3
+      model: openai/gpt-5.5
       max_tokens: 10000
 
-  - model_name: gpt-5.1
+  - model_name: gpt-5.4
     litellm_params:
-      model: openai/gpt-5.1
-      temperature: 0.3
+      model: openai/gpt-5.4
       max_tokens: 10000
 
-  - model_name: gpt-5-nano
+  - model_name: gpt-5.4-nano
     litellm_params:
-      model: openai/gpt-5-nano
-      temperature: 0.3
+      model: openai/gpt-5.4-nano
       max_tokens: 5000
 
   # Claude Models (current lineup, July 2026)
@@ -311,54 +301,42 @@ model_list:
       temperature: 0.3
       max_tokens: 8000
 
-  # Gemini Models (TESTED)
-  # NOTE: Gemini 3 models require temperature=1.0 to avoid infinite loops
+  # Gemini Models (current lineup, Aug 2026)
+  # NOTE: Gemini 3.x models require temperature=1.0 to avoid infinite loops
   - model_name: gemini-3.1-pro-preview
     litellm_params:
       model: gemini/gemini-3.1-pro-preview
       temperature: 1.0
       max_tokens: 100000
 
-  - model_name: gemini-3.5-flash
+  - model_name: gemini-3.6-flash
     litellm_params:
-      model: gemini/gemini-3.5-flash
+      model: gemini/gemini-3.6-flash
       temperature: 1.0
       max_tokens: 100000
 
-  - model_name: gemini-3.1-flash-lite
+  - model_name: gemini-3.5-flash-lite
     litellm_params:
-      model: gemini/gemini-3.1-flash-lite
+      model: gemini/gemini-3.5-flash-lite
       temperature: 1.0
       max_tokens: 100000
 
-  - model_name: gemini-2.5-pro
+  # Grok Models (current lineup, Aug 2026)
+  - model_name: grok-4.5
     litellm_params:
-      model: gemini/gemini-2.5-pro
-      temperature: 0.3
-      max_tokens: 100000
-
-  - model_name: gemini-2.5-flash
-    litellm_params:
-      model: gemini/gemini-2.5-flash
-      temperature: 0.3
-      max_tokens: 100000
-
-  # Grok Models (TESTED)
-  - model_name: grok-4-1-fast-reasoning
-    litellm_params:
-      model: xai/grok-4-1-fast-reasoning
+      model: xai/grok-4.5
       temperature: 0.5
       max_tokens: 8000
 
-  - model_name: grok-4-1-fast-non-reasoning
+  - model_name: grok-4.20-0309-reasoning
     litellm_params:
-      model: xai/grok-4-1-fast-non-reasoning
+      model: xai/grok-4.20-0309-reasoning
       temperature: 0.5
       max_tokens: 8000
 
-  - model_name: grok-4-1-fast
+  - model_name: grok-4.20-0309-non-reasoning
     litellm_params:
-      model: xai/grok-4-1-fast
+      model: xai/grok-4.20-0309-non-reasoning
       temperature: 0.5
       max_tokens: 8000
 
@@ -366,19 +344,19 @@ model_list:
 router_settings:
   # Automatic Fallback Chains
   fallbacks:
-    - tag_suggestion: ["gpt-5.2", "claude-sonnet-5"]
-    - trend_analysis: ["gpt-5.2"]
-    - chat_general: ["gpt-5-nano", "claude-sonnet-5"]
-    - rag_answer: ["claude-opus-5", "gpt-5.1"]
-    - article_summarizer: ["gpt-5-nano"]
+    - tag_suggestion: ["gpt-5.5", "claude-sonnet-5"]
+    - trend_analysis: ["gpt-5.5"]
+    - chat_general: ["gpt-5.4-nano", "claude-sonnet-5"]
+    - rag_answer: ["claude-opus-5", "gpt-5.4"]
+    - article_summarizer: ["gpt-5.4-nano"]
     - entity_extraction_gpt5: ["entity_extraction_gemini", "entity_extraction_fast"]
     - paper_analysis: ["claude-opus-5"]
     - paper_tag_suggestion_deep: ["paper_tag_suggestion_gpt5"]
 
   # Context Window Fallbacks
   context_window_fallbacks:
-    - gemini-2.5-pro: ["claude-opus-5"]
-    - claude-opus-5: ["gemini-2.5-pro"]
+    - gemini-3.1-pro-preview: ["claude-opus-5"]
+    - claude-opus-5: ["gemini-3.1-pro-preview"]
 
   # Retry & Timeout Settings
   num_retries: 3
