@@ -113,6 +113,21 @@ start_mongodb() {
         macos)
             log "   Using brew services (macOS)..."
             brew services start mongodb-community >> "$STARTUP_LOG" 2>&1
+            # Fallback: mongodb/brew 8.3.7 ships a broken service block (empty
+            # ProgramArguments -> launchd bootstrap error 5). Start mongod
+            # directly with the brew config if brew services did not bring it up.
+            sleep 2
+            if ! pgrep -x "mongod" > /dev/null; then
+                log "   ⚠️  brew services failed, starting mongod directly (brew config)..."
+                MONGOD_BIN="$(brew --prefix 2>/dev/null)/opt/mongodb-community/bin/mongod"
+                MONGOD_CONF="$(brew --prefix 2>/dev/null)/etc/mongod.conf"
+                if [ -x "$MONGOD_BIN" ] && [ -f "$MONGOD_CONF" ]; then
+                    nohup "$MONGOD_BIN" --config "$MONGOD_CONF" >> "$STARTUP_LOG" 2>&1 &
+                    log "   mongod started directly (PID $!)"
+                else
+                    log "   ✗ mongod binary or config not found ($MONGOD_BIN)"
+                fi
+            fi
             ;;
         linux)
             log "   Using systemctl (Linux)..."

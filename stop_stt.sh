@@ -235,6 +235,15 @@ if [ "$STOP_MONGO" = true ]; then
         macos)
             echo "Using brew services (macOS)..."
             brew services stop mongodb-community 2>/dev/null
+            # Fallback: a directly-started mongod (see start_stt.sh fallback)
+            # is not managed by brew services - shut it down cleanly.
+            sleep 1
+            if pgrep -x "mongod" > /dev/null; then
+                echo "Shutting down directly-started mongod..."
+                MONGOD_BIN="$(brew --prefix 2>/dev/null)/opt/mongodb-community/bin/mongod"
+                MONGOD_DBPATH="$(brew --prefix 2>/dev/null)/var/mongodb"
+                "$MONGOD_BIN" --shutdown --dbpath "$MONGOD_DBPATH" 2>/dev/null || pkill -x mongod
+            fi
             ;;
         linux)
             echo "Using systemctl (Linux)..."
