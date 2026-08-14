@@ -19,10 +19,7 @@ import { cn } from "@/lib/utils"
 interface IndexStats {
   indexed_documents: number
   is_ready: boolean
-  is_building: boolean
   last_updated?: string
-  current_step?: string
-  progress_percent?: number
   error?: string
   tweets?: number
   articles?: number
@@ -241,6 +238,18 @@ export default function SearchControls({
                 )}
               </Button>
             </div>
+
+            {/* Why is the search button disabled? */}
+            {!loading && !includeTweets && !includeArticles && !includePapers && (
+              <p className="text-xs text-amber-600 dark:text-amber-400" role="status">
+                Select at least one content type above ("Search in") to enable search.
+              </p>
+            )}
+            {!loading && !modelLoading && !ragModel && (includeTweets || includeArticles || includePapers) && (
+              <p className="text-xs text-amber-600 dark:text-amber-400" role="status">
+                No AI model selected — choose one under "AI Model for Answer Generation" to enable search.
+              </p>
+            )}
 
             {/* Search History */}
             {searchHistory.length > 0 && (

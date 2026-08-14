@@ -1,9 +1,11 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import axios from 'axios'
 import ReactMarkdown from 'react-markdown'
+import { toast } from 'sonner'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Search,
   RefreshCw,
@@ -22,6 +24,7 @@ import SearchControls from './SearchControls'
 import SearchResultCard, { Source } from './SearchResultCard'
 
 const ArticleViewerModern = React.lazy(() => import('../article-viewer/ArticleViewerModern'))
+const PaperViewerOptimized = React.lazy(() => import('../PaperViewerOptimized'))
 
 interface RAGResponse {
   question: string
@@ -43,15 +46,13 @@ interface RAGResponse {
   is_trend_analysis?: boolean
   documents_analyzed?: number
   source_type?: string
+  needs_rebuild?: boolean
 }
 
 interface IndexStats {
   indexed_documents: number
   is_ready: boolean
-  is_building: boolean
   last_updated?: string
-  current_step?: string
-  progress_percent?: number
   error?: string
   tweets?: number
   articles?: number
@@ -73,6 +74,7 @@ export default function RAGSearchModern() {
   const [rebuildingIndex, setRebuildingIndex] = useState(false)
   const [indexStats, setIndexStats] = useState<IndexStats | null>(null)
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null)
+  const [selectedPaperId, setSelectedPaperId] = useState<string | null>(null)
 
   const [includeTweets, setIncludeTweets] = useState(true)
   const [includeArticles, setIncludeArticles] = useState(true)
@@ -115,15 +117,7 @@ export default function RAGSearchModern() {
     loadSampleQuestions()
     loadSearchHistory()
     loadIndexStats()
-
-    const interval = setInterval(() => {
-      if (indexStats && indexStats.is_building) {
-        loadIndexStats()
-      }
-    }, 5000)
-
-    return () => clearInterval(interval)
-  }, [indexStats?.is_building])
+  }, [])
 
   const loadSampleQuestions = async () => {
     try {
@@ -216,9 +210,14 @@ export default function RAGSearchModern() {
       const updatedHistory = [queryText, ...searchHistory.filter(q => q !== queryText)].slice(0, 10)
       setSearchHistory(updatedHistory)
       localStorage.setItem('rag_search_history', JSON.stringify(updatedHistory))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching:', error)
-      alert('Failed to search. Please try again.')
+      const detail = error?.response?.data?.detail
+      toast.error('Search failed', {
+        description: detail
+          ? String(detail)
+          : 'The server could not answer the question. Please try again.'
+      })
     } finally {
       setLoading(false)
     }
@@ -232,19 +231,27 @@ export default function RAGSearchModern() {
   }
 
   const rebuildIndex = async () => {
-    if (!confirm('Rebuild the RAG index? This may take a few minutes.')) return
-
     setRebuildingIndex(true)
-    try {
-      const result = await axios.post('/api/rag/rebuild')
-      alert(result.data.message || 'Index rebuild started successfully!')
-      setTimeout(() => loadIndexStats(), 2000)
-    } catch (error) {
-      console.error('Error rebuilding index:', error)
-      alert('Failed to rebuild index. Make sure the server is running.')
-    } finally {
+    const rebuild = axios.post('/api/rag/rebuild').finally(() => {
       setRebuildingIndex(false)
-    }
+      loadIndexStats()
+    })
+
+    toast.promise(rebuild, {
+      loading: 'Rebuilding search index — this can take a few minutes…',
+      success: (result) => {
+        const docs = result.data?.stats?.total_documents
+        return docs
+          ? `Index rebuilt — ${docs} documents indexed.`
+          : (result.data?.message || 'Index rebuilt successfully.')
+      },
+      error: (error: any) => {
+        const detail = error?.response?.data?.detail
+        return detail
+          ? `Index rebuild failed: ${detail}`
+          : 'Index rebuild failed — is the backend running?'
+      }
+    })
   }
 
   const navigateToSource = (source: Source) => {
@@ -277,7 +284,7 @@ export default function RAGSearchModern() {
                      source.metadata?.id?.replace('paper_', '') ||
                      source.metadata?.paper_id
       if (paperId) {
-        window.location.href = `/papers?id=${paperId}`
+        setSelectedPaperId(paperId)
       } else if (source.metadata?.arxiv_id) {
         window.open(`https://arxiv.org/abs/${source.metadata.arxiv_id}`, '_blank')
       } else if (source.metadata?.doi) {
@@ -317,18 +324,15 @@ export default function RAGSearchModern() {
                     <span>{indexStats.indexed_documents || 0} documents</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {indexStats.is_ready ? (
+                    {rebuildingIndex ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-yellow-500" />
+                        <span>Rebuilding…</span>
+                      </>
+                    ) : indexStats.is_ready ? (
                       <>
                         <CheckCircle className="w-4 h-4 text-green-500" />
                         <span>Ready</span>
-                      </>
-                    ) : indexStats.is_building ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-yellow-500" />
-                        <span>Building...</span>
-                        {indexStats.progress_percent !== undefined && (
-                          <span>({indexStats.progress_percent}%)</span>
-                        )}
                       </>
                     ) : (
                       <>
@@ -337,20 +341,12 @@ export default function RAGSearchModern() {
                       </>
                     )}
                   </div>
-                  {indexStats.current_step && (
-                    <div className="text-xs">{indexStats.current_step}</div>
-                  )}
-                  {indexStats.progress_percent !== undefined && indexStats.progress_percent < 100 && !indexStats.is_ready && (
-                    <div className="text-xs">
-                      Progress: {indexStats.progress_percent}%
-                    </div>
-                  )}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={rebuildIndex}
-                  disabled={rebuildingIndex || indexStats.is_building}
+                  disabled={rebuildingIndex}
                 >
                   {rebuildingIndex ? (
                     <>
@@ -396,8 +392,26 @@ export default function RAGSearchModern() {
         getSearchingMessage={getSearchingMessage}
       />
 
+      {/* Empty index: actionable hint instead of a fake answer */}
+      {response?.needs_rebuild && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Search index is empty</AlertTitle>
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span>Nothing has been indexed yet, so there is nothing to search. Build the index once — after that it stays up to date.</span>
+            <Button size="sm" onClick={rebuildIndex} disabled={rebuildingIndex}>
+              {rebuildingIndex ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Rebuilding…</>
+              ) : (
+                <><RefreshCw className="w-4 h-4 mr-2" />Rebuild Index</>
+              )}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Results */}
-      {response && (
+      {response && !response.needs_rebuild && (
         <div className="space-y-6">
           {/* Answer */}
           <Card className={response.is_trend_analysis ? "border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/30" : ""}>
@@ -492,6 +506,25 @@ export default function RAGSearchModern() {
             onClose={() => setSelectedArticleId(null)}
           />
         </Suspense>
+      )}
+
+      {/* Paper Viewer Modal - same pattern as FacetedPapersDashboard */}
+      {selectedPaperId && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-950 rounded-lg w-full max-w-7xl max-h-[90vh] overflow-auto shadow-2xl">
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-96">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading Paper Viewer...</span>
+              </div>
+            }>
+              <PaperViewerOptimized
+                paperId={selectedPaperId}
+                onClose={() => setSelectedPaperId(null)}
+              />
+            </Suspense>
+          </div>
+        </div>
       )}
     </div>
   )

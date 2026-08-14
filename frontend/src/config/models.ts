@@ -4,7 +4,7 @@
  * Updated: December 24, 2025 - TESTED and WORKING model IDs
  */
 
-import { LucideIcon, Sparkles, Brain, Zap, Target, Layers, Crown, Bolt, MessageCircle } from 'lucide-react'
+import { LucideIcon, Brain, Zap, Target, Crown, Bolt, MessageCircle } from 'lucide-react'
 
 export interface ModelOption {
   value: string
