@@ -1,6 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Twitter,
   FileText,
@@ -9,7 +8,6 @@ import {
   TrendingUp,
   BarChart3,
   Sparkles,
-  Activity,
   ChevronRight,
   BookOpen,
   MessageSquare,
@@ -22,9 +20,48 @@ import {
   Users
 } from 'lucide-react'
 import type { ViewType } from './ModernNavigation'
+import { cn } from "@/lib/utils"
 
 interface DashboardHomeProps {
   onNavigate: (view: ViewType) => void
+}
+
+interface QuickAccessCardProps {
+  title: string
+  heading: string
+  description: string
+  icon: React.ReactNode
+  onClick: () => void
+  className?: string
+}
+
+function QuickAccessCard({ title, heading, description, icon, onClick, className }: QuickAccessCardProps) {
+  return (
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onClick()
+        }
+      }}
+      className={cn(
+        "cursor-pointer hover:shadow-lg transition-shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        className
+      )}
+    >
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{heading}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
@@ -39,132 +76,27 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('statistics')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Overview</CardTitle>
-            <BarChart3 className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Statistics</div>
-            <p className="text-xs text-muted-foreground">View system metrics</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('rag-search')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">AI Search</CardTitle>
-            <Search className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">RAG Search</div>
-            <p className="text-xs text-muted-foreground">Search all content</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('twitter-faceted')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Twitter/X</CardTitle>
-            <Twitter className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Tweets</div>
-            <p className="text-xs text-muted-foreground">Browse tweets</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('articles-faceted')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Articles</CardTitle>
-            <FileText className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Articles</div>
-            <p className="text-xs text-muted-foreground">Browse web articles</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('reddit-faceted')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reddit Posts</CardTitle>
-            <MessageSquare className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Reddit</div>
-            <p className="text-xs text-muted-foreground">AI/ML discussions</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('papers-dashboard')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Research Papers</CardTitle>
-            <BookOpen className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Papers</div>
-            <p className="text-xs text-muted-foreground">Analyze PDFs</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow"
-          onClick={() => onNavigate('books-dashboard')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Book Library</CardTitle>
-            <Library className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Books</div>
-            <p className="text-xs text-muted-foreground">Browse long-form content</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950"
-          onClick={() => onNavigate('twitter-summary')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">AI Summary</CardTitle>
-            <ScrollText className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Summarize</div>
-            <p className="text-xs text-muted-foreground">AI-powered insights</p>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 dark:border-orange-800"
-          onClick={() => onNavigate('trend-dashboard')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trend Detection</CardTitle>
-            <Flame className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">Trends</div>
-            <p className="text-xs text-muted-foreground">Real-time trend analysis</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <QuickAccessCard title="System Overview" heading="Statistics" description="View system metrics"
+          icon={<BarChart3 className="h-4 w-4 text-blue-500" />} onClick={() => onNavigate('statistics')} />
+        <QuickAccessCard title="AI Search" heading="RAG Search" description="Search all content"
+          icon={<Search className="h-4 w-4 text-green-500" />} onClick={() => onNavigate('rag-search')} />
+        <QuickAccessCard title="Twitter/X" heading="Tweets" description="Browse tweets"
+          icon={<Twitter className="h-4 w-4 text-blue-400" />} onClick={() => onNavigate('twitter-faceted')} />
+        <QuickAccessCard title="Articles" heading="Articles" description="Browse web articles"
+          icon={<FileText className="h-4 w-4 text-purple-500" />} onClick={() => onNavigate('articles-faceted')} />
+        <QuickAccessCard title="Reddit Posts" heading="Reddit" description="AI/ML discussions"
+          icon={<MessageSquare className="h-4 w-4 text-red-500" />} onClick={() => onNavigate('reddit-faceted')} />
+        <QuickAccessCard title="Research Papers" heading="Papers" description="Analyze PDFs"
+          icon={<BookOpen className="h-4 w-4 text-orange-500" />} onClick={() => onNavigate('papers-dashboard')} />
+        <QuickAccessCard title="Book Library" heading="Books" description="Browse long-form content"
+          icon={<Library className="h-4 w-4 text-emerald-500" />} onClick={() => onNavigate('books-dashboard')} />
+        <QuickAccessCard title="AI Summary" heading="Summarize" description="AI-powered insights"
+          icon={<ScrollText className="h-4 w-4 text-purple-500" />} onClick={() => onNavigate('twitter-summary')}
+          className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950" />
+        <QuickAccessCard title="Trend Detection" heading="Trends" description="Real-time trend analysis"
+          icon={<Flame className="h-4 w-4 text-orange-500" />} onClick={() => onNavigate('trend-dashboard')}
+          className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 dark:border-orange-800" />
       </div>
 
       {/* Analysis & Insights Section */}
@@ -179,7 +111,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button
               variant="outline"
               className="h-auto py-4 flex-col items-start gap-2 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900 dark:to-red-900 border-orange-300 dark:border-orange-700 hover:from-orange-100 hover:to-red-100"
@@ -550,48 +482,6 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
         </Card>
       </div>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Recent Activity
-          </CardTitle>
-          <CardDescription>Latest updates across the system</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Tweets</Badge>
-                <span className="text-sm">New tweets collected from @OpenAI</span>
-              </div>
-              <span className="text-sm text-muted-foreground">2 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Articles</Badge>
-                <span className="text-sm">New article from Ethan Mollick</span>
-              </div>
-              <span className="text-sm text-muted-foreground">5 hours ago</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Papers</Badge>
-                <span className="text-sm">Research papers system ready for upload</span>
-              </div>
-              <span className="text-sm text-muted-foreground">Just now</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Tags</Badge>
-                <span className="text-sm">15 new tags added to ontology</span>
-              </div>
-              <span className="text-sm text-muted-foreground">1 day ago</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
