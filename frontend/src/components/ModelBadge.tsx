@@ -8,6 +8,12 @@ interface ModelBadgeProps {
 const ModelBadge: React.FC<ModelBadgeProps> = ({ model, size = 'small', style }) => {
   const getModelDisplay = (modelName: string) => {
     const modelMap: { [key: string]: { name: string, color: string } } = {
+      // Current lineup (Aug 2026, second refresh)
+      'gemini-3.7-flash': { name: 'Gemini 3.7 Flash', color: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)' },
+      'gpt-5.6-sol': { name: 'GPT-5.6 Sol', color: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)' },
+      'gpt-5.6-terra': { name: 'GPT-5.6 Terra', color: 'linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%)' },
+      'gpt-5.6-luna': { name: 'GPT-5.6 Luna', color: 'linear-gradient(135deg, #10a37f 0%, #74d0bd 100%)' },
+      'grok-4.6': { name: 'Grok 4.6', color: 'linear-gradient(135deg, #333333 0%, #666666 100%)' },
       // Current lineup (Aug 2026)
       'gemini-3.6-flash': { name: 'Gemini 3.6 Flash', color: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)' },
       'gemini-3.5-flash-lite': { name: 'Gemini 3.5 Flash Lite', color: 'linear-gradient(135deg, #4285f4 0%, #fbbc05 100%)' },

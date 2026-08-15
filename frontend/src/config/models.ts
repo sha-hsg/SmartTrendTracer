@@ -23,8 +23,8 @@ export interface ModelOption {
 export const AVAILABLE_MODELS: ModelOption[] = [
   // ========== OpenAI GPT-5 Models (TESTED) ==========
   {
-    value: 'openai/gpt-5.5',
-    label: 'GPT-5.5',
+    value: 'openai/gpt-5.6-sol',
+    label: 'GPT-5.6 Sol',
     description: 'Latest flagship for knowledge work',
     icon: Crown,
     iconColor: 'text-purple-600',
@@ -32,8 +32,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'openai/gpt-5.4',
-    label: 'GPT-5.4',
+    value: 'openai/gpt-5.6-terra',
+    label: 'GPT-5.6 Terra',
     description: 'Powerful reasoning and analysis',
     icon: Brain,
     iconColor: 'text-purple-700',
@@ -41,8 +41,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'openai/gpt-5.4-nano',
-    label: 'GPT-5.4 Nano',
+    value: 'openai/gpt-5.6-luna',
+    label: 'GPT-5.6 Luna',
     description: 'Fast and cost-effective',
     icon: Zap,
     iconColor: 'text-purple-500',
@@ -90,8 +90,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'gemini/gemini-3.6-flash',
-    label: 'Gemini 3.6 Flash',
+    value: 'gemini/gemini-3.7-flash',
+    label: 'Gemini 3.7 Flash',
     description: 'Ultra-fast with latest capabilities',
     icon: Zap,
     iconColor: 'text-blue-600',
@@ -110,8 +110,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
 
   // ========== Grok Models (current lineup, Aug 2026) ==========
   {
-    value: 'xai/grok-4.5',
-    label: 'Grok 4.5',
+    value: 'xai/grok-4.6',
+    label: 'Grok 4.6',
     description: 'Balanced speed and capability',
     icon: MessageCircle,
     iconColor: 'text-gray-700',
@@ -146,49 +146,49 @@ export const MODEL_PRESETS = {
   // Tag suggestion for papers - prioritize comprehensive analysis
   paperTagSuggestion: {
     default: 'claude-sonnet-5',
-    alternatives: ['gemini/gemini-3.1-pro-preview', 'openai/gpt-5.5', 'claude-opus-5']
+    alternatives: ['gemini/gemini-3.1-pro-preview', 'openai/gpt-5.6-sol', 'claude-opus-5']
   },
 
   // Paper analysis - need deep understanding
   paperAnalysis: {
     default: 'gemini/gemini-3.1-pro-preview',
-    alternatives: ['claude-opus-5', 'openai/gpt-5.4', 'claude-sonnet-5']
+    alternatives: ['claude-opus-5', 'openai/gpt-5.6-terra', 'claude-sonnet-5']
   },
 
   // Entity extraction - need accuracy
   entityExtraction: {
     default: 'claude-opus-5',
-    alternatives: ['openai/gpt-5.4', 'gemini/gemini-3.1-pro-preview', 'claude-sonnet-5']
+    alternatives: ['openai/gpt-5.6-terra', 'gemini/gemini-3.1-pro-preview', 'claude-sonnet-5']
   },
 
   // Article summarization - need speed and quality
   articleSummarization: {
     default: 'claude-sonnet-5',
-    alternatives: ['gemini/gemini-3.6-flash', 'claude-haiku-4-5', 'openai/gpt-5.5']
+    alternatives: ['gemini/gemini-3.7-flash', 'claude-haiku-4-5', 'openai/gpt-5.6-sol']
   },
 
   // Tweet annotation - need speed
   tweetAnnotation: {
     default: 'claude-haiku-4-5',
-    alternatives: ['gemini/gemini-3.6-flash', 'openai/gpt-5.4-nano']
+    alternatives: ['gemini/gemini-3.7-flash', 'openai/gpt-5.6-luna']
   },
 
   // Free-form paper analysis
   freeAnalysis: {
-    default: 'gemini/gemini-3.6-flash',
-    alternatives: ['claude-sonnet-5', 'openai/gpt-5.5', 'gemini/gemini-3.1-pro-preview']
+    default: 'gemini/gemini-3.7-flash',
+    alternatives: ['claude-sonnet-5', 'openai/gpt-5.6-sol', 'gemini/gemini-3.1-pro-preview']
   },
 
   // RAG search answers
   ragAnswer: {
     default: 'gemini/gemini-3.1-pro-preview',
-    alternatives: ['claude-opus-5', 'openai/gpt-5.4']
+    alternatives: ['claude-opus-5', 'openai/gpt-5.6-terra']
   },
 
   // Trend analysis
   trendAnalysis: {
     default: 'claude-opus-5',
-    alternatives: ['openai/gpt-5.5', 'gemini/gemini-3.1-pro-preview']
+    alternatives: ['openai/gpt-5.6-sol', 'gemini/gemini-3.1-pro-preview']
   }
 } as const
 

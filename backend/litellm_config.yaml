@@ -11,7 +11,7 @@ model_list:
 
   - model_name: tag_suggestion
     litellm_params:
-      model: openai/gpt-5.5
+      model: openai/gpt-5.6-sol
       max_tokens: 1000
 
   # Tag Reorganization - Gemini 2.5 Pro for massive context
@@ -35,7 +35,7 @@ model_list:
 
   - model_name: trend_analysis
     litellm_params:
-      model: openai/gpt-5.5
+      model: openai/gpt-5.6-sol
       max_tokens: 10000
 
   # Deep Trend Analysis
@@ -90,31 +90,31 @@ model_list:
 
   - model_name: code_generation
     litellm_params:
-      model: openai/gpt-5.4
+      model: openai/gpt-5.6-terra
       max_tokens: 10000
 
   # Complex Reasoning - GPT-5.2
   - model_name: reasoning_complex
     litellm_params:
-      model: openai/gpt-5.5
+      model: openai/gpt-5.6-sol
       max_tokens: 10000
 
   # General Chat - Gemini 2.5 Flash with GPT-5-nano fallback
   - model_name: chat_general
     litellm_params:
-      model: gemini/gemini-3.6-flash
+      model: gemini/gemini-3.7-flash
       temperature: 1.0
       max_tokens: 8000
 
   - model_name: chat_general
     litellm_params:
-      model: openai/gpt-5.4-nano
+      model: openai/gpt-5.6-luna
       max_tokens: 8000
 
   # Experimental Analysis - Gemini 2.5 Flash
   - model_name: experimental_analysis
     litellm_params:
-      model: gemini/gemini-3.6-flash
+      model: gemini/gemini-3.7-flash
       temperature: 1.0
       max_tokens: 2000
 
@@ -128,7 +128,7 @@ model_list:
   # Research Assistant - Gemini 2.5 Flash
   - model_name: research_assistant
     litellm_params:
-      model: gemini/gemini-3.6-flash
+      model: gemini/gemini-3.7-flash
       temperature: 1.0
       max_tokens: 3000
 
@@ -170,7 +170,7 @@ model_list:
 
   - model_name: entity_extraction_gpt5
     litellm_params:
-      model: openai/gpt-5.4
+      model: openai/gpt-5.6-terra
       max_tokens: 10000
 
   - model_name: entity_extraction_gemini
@@ -189,7 +189,7 @@ model_list:
   # Tag Reorganization Analysis
   - model_name: tag_reorganization_analysis
     litellm_params:
-      model: gemini/gemini-3.6-flash
+      model: gemini/gemini-3.7-flash
       temperature: 1.0
       max_tokens: 50000
 
@@ -203,7 +203,7 @@ model_list:
   # Orphan Tag Assignment
   - model_name: orphan_tag_assignment
     litellm_params:
-      model: openai/gpt-5.5
+      model: openai/gpt-5.6-sol
       max_tokens: 30000
 
   # Concept Organization
@@ -239,7 +239,7 @@ model_list:
   # Paper Section Extraction
   - model_name: paper_section_extraction
     litellm_params:
-      model: gemini/gemini-3.6-flash
+      model: gemini/gemini-3.7-flash
       temperature: 1.0
       max_tokens: 20000
 
@@ -259,7 +259,7 @@ model_list:
 
   - model_name: paper_tag_suggestion_gpt5
     litellm_params:
-      model: openai/gpt-5.5
+      model: openai/gpt-5.6-sol
       max_tokens: 5000
 
   # ========================================
@@ -267,20 +267,20 @@ model_list:
   # ========================================
 
   # OpenAI GPT-5 Models (current lineup, Aug 2026)
-  # NOTE: gpt-5.4/5.5 reject non-default temperature - do not add sampling params
-  - model_name: gpt-5.5
+  # NOTE: gpt-5.6 sol/terra/luna reject non-default temperature - do not add sampling params
+  - model_name: gpt-5.6-sol
     litellm_params:
-      model: openai/gpt-5.5
+      model: openai/gpt-5.6-sol
       max_tokens: 10000
 
-  - model_name: gpt-5.4
+  - model_name: gpt-5.6-terra
     litellm_params:
-      model: openai/gpt-5.4
+      model: openai/gpt-5.6-terra
       max_tokens: 10000
 
-  - model_name: gpt-5.4-nano
+  - model_name: gpt-5.6-luna
     litellm_params:
-      model: openai/gpt-5.4-nano
+      model: openai/gpt-5.6-luna
       max_tokens: 5000
 
   # Claude Models (current lineup, July 2026)
@@ -309,9 +309,9 @@ model_list:
       temperature: 1.0
       max_tokens: 100000
 
-  - model_name: gemini-3.6-flash
+  - model_name: gemini-3.7-flash
     litellm_params:
-      model: gemini/gemini-3.6-flash
+      model: gemini/gemini-3.7-flash
       temperature: 1.0
       max_tokens: 100000
 
@@ -322,9 +322,9 @@ model_list:
       max_tokens: 100000
 
   # Grok Models (current lineup, Aug 2026)
-  - model_name: grok-4.5
+  - model_name: grok-4.6
     litellm_params:
-      model: xai/grok-4.5
+      model: xai/grok-4.6
       temperature: 0.5
       max_tokens: 8000
 
@@ -344,11 +344,11 @@ model_list:
 router_settings:
   # Automatic Fallback Chains
   fallbacks:
-    - tag_suggestion: ["gpt-5.5", "claude-sonnet-5"]
-    - trend_analysis: ["gpt-5.5"]
-    - chat_general: ["gpt-5.4-nano", "claude-sonnet-5"]
-    - rag_answer: ["claude-opus-5", "gpt-5.4"]
-    - article_summarizer: ["gpt-5.4-nano"]
+    - tag_suggestion: ["gpt-5.6-sol", "claude-sonnet-5"]
+    - trend_analysis: ["gpt-5.6-sol"]
+    - chat_general: ["gpt-5.6-luna", "claude-sonnet-5"]
+    - rag_answer: ["claude-opus-5", "gpt-5.6-terra"]
+    - article_summarizer: ["gpt-5.6-luna"]
     - entity_extraction_gpt5: ["entity_extraction_gemini", "entity_extraction_fast"]
     - paper_analysis: ["claude-opus-5"]
     - paper_tag_suggestion_deep: ["paper_tag_suggestion_gpt5"]
