@@ -56,7 +56,7 @@ export const ProcessingStatus: React.FC<{
     return (
       <div className="mb-2">
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
+          <Badge variant="destructive" className="bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300 text-xs">
             Processing Error
           </Badge>
           <Button
@@ -72,7 +72,7 @@ export const ProcessingStatus: React.FC<{
             }
           </Button>
         </div>
-        <p className="text-xs text-red-600 pl-1">{paper.processing_error}</p>
+        <p className="text-xs text-red-600 dark:text-red-400 pl-1">{paper.processing_error}</p>
       </div>
     )
   }
@@ -80,7 +80,7 @@ export const ProcessingStatus: React.FC<{
   if (!paper.processed && !paper.processing_error) {
     return (
       <div className="mb-2 flex items-center gap-2">
-        <Badge className="bg-yellow-50 dark:bg-yellow-950 text-yellow-700 border-yellow-200 text-xs">
+        <Badge className="bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900 text-xs">
           Not Processed
         </Badge>
         <Button
@@ -105,15 +105,15 @@ export const ProcessingStatus: React.FC<{
         return <Badge className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 text-xs">Basic (Backup)</Badge>
       }
       if (paper.processor_used === 'marker' || paper.processor_used === 'marker_service') {
-        return <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">Marker</Badge>
+        return <Badge className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900 text-xs">Marker</Badge>
       }
       if (paper.processor_used === 'mineru' || paper.processor_used === 'mineru_service') {
-        return <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-xs">MinerU</Badge>
+        return <Badge className="bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900 text-xs">MinerU</Badge>
       }
       if (paper.processor_used === 'pix2text') {
-        return <Badge className="bg-green-100 text-green-700 border-green-200 text-xs">Pix2Text</Badge>
+        return <Badge className="bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 border-green-200 dark:border-green-900 text-xs">Pix2Text</Badge>
       }
-      return <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs">{paper.processor_used.replace('_', ' ').replace('service', '').trim()}</Badge>
+      return <Badge className="bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-900 text-xs">{paper.processor_used.replace('_', ' ').replace('service', '').trim()}</Badge>
     })()
 
     return (

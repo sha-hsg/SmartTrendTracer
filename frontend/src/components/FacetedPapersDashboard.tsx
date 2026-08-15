@@ -289,8 +289,30 @@ const FacetedPapersDashboard: React.FC<FacetedPapersDashboardProps> = ({ paperTy
                 </div>
               </div>
 
+              {/* Sorting Controls */}
+              <Select value={dashboard.sortBy} onValueChange={(value: any) => dashboard.setSortBy(value)}>
+                <SelectTrigger className="w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_at">Date Added</SelectItem>
+                  <SelectItem value="publication_date">Publication Date</SelectItem>
+                  <SelectItem value="title">Title</SelectItem>
+                  <SelectItem value="rating">Rating (Highest First)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={dashboard.sortOrder} onValueChange={(value: any) => dashboard.setSortOrder(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="desc">Newest First</SelectItem>
+                  <SelectItem value="asc">Oldest First</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Results Counter */}
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                 <FileText className="h-4 w-4" />
                 <span>{dashboard.totalPapers} {dashboard.totalPapers === 1 ? 'paper' : 'papers'}</span>
                 {dashboard.activeFilterCount > 0 && (
@@ -311,7 +333,7 @@ const FacetedPapersDashboard: React.FC<FacetedPapersDashboardProps> = ({ paperTy
                     <Badge
                       key={tagId}
                       variant="default"
-                      className="bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer"
+                      className="bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900 cursor-pointer"
                       onClick={() => dashboard.toggleFacetValue('tag', tagId)}
                     >
                       {concept?.display_name || tagId}
@@ -329,37 +351,6 @@ const FacetedPapersDashboard: React.FC<FacetedPapersDashboardProps> = ({ paperTy
                 </Button>
               </div>
             )}
-
-            {/* Sorting Controls */}
-            <Card className="bg-white dark:bg-gray-950">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Sort by:</span>
-                    <Select value={dashboard.sortBy} onValueChange={(value: any) => dashboard.setSortBy(value)}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="created_at">Date Added</SelectItem>
-                        <SelectItem value="publication_date">Publication Date</SelectItem>
-                        <SelectItem value="title">Title</SelectItem>
-                        <SelectItem value="rating">Rating (Highest First)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={dashboard.sortOrder} onValueChange={(value: any) => dashboard.setSortOrder(value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="desc">Newest First</SelectItem>
-                        <SelectItem value="asc">Oldest First</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {/* Papers List */}
             <PaperListRenderer

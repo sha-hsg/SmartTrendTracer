@@ -124,8 +124,8 @@ const PaperCard: React.FC<PaperCardProps> = ({
                   size="sm"
                   variant={paper.is_flagged ? "default" : "outline"}
                   className={paper.is_flagged
-                    ? "bg-orange-50 dark:bg-orange-9500 hover:bg-orange-600 text-white h-7 px-2"
-                    : "h-7 px-2 hover:bg-orange-50 dark:bg-orange-950 hover:text-orange-600 hover:border-orange-300"}
+                    ? "bg-orange-500 hover:bg-orange-600 text-white h-7 px-2"
+                    : "h-7 px-2 hover:bg-orange-50 dark:hover:bg-orange-950 hover:text-orange-600 hover:border-orange-300"}
                   onClick={(e) => togglePaperFlag(paper.id, e)}
                   title={paper.is_flagged ? "Remove flag" : "Flag this paper"}
                 >
@@ -133,7 +133,8 @@ const PaperCard: React.FC<PaperCardProps> = ({
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white h-7 px-3 text-xs"
+                  variant="outline"
+                  className="h-7 px-3 text-xs"
                   onClick={() => setSelectedPaperId(paper.id)}
                 >
                   <Eye className="h-3 w-3 mr-1" />
@@ -169,7 +170,7 @@ const PaperCard: React.FC<PaperCardProps> = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 w-7 p-0 hover:bg-red-50 dark:bg-red-950 hover:text-red-600"
+                  className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600"
                   onClick={(e) => handleDeletePaper(paper.id, e)}
                   title="Delete"
                 >
@@ -224,15 +225,15 @@ const PaperCard: React.FC<PaperCardProps> = ({
             {(paper.tei_content || (paper.analyses && paper.analyses.length > 0)) && (
               <div className="flex items-center gap-2 mb-2">
                 {paper.tei_content && (
-                  <div className="flex items-center text-xs text-blue-600" title="TEI/XML available">
+                  <div className="flex items-center text-xs text-blue-600 dark:text-blue-400" title="TEI/XML available">
                     <FileCode className="h-3 w-3 mr-1" />
                     XML
                   </div>
                 )}
                 {paper.analyses && paper.analyses.length > 0 && (
-                  <div className="flex items-center text-xs text-purple-600" title={`${paper.analyses.length} analysis available`}>
+                  <div className="flex items-center text-xs text-purple-600 dark:text-purple-400" title={`${paper.analyses.length} ${paper.analyses.length === 1 ? 'analysis' : 'analyses'} available`}>
                     <BarChart3 className="h-3 w-3 mr-1" />
-                    {paper.analyses.length} Analysis
+                    {paper.analyses.length} {paper.analyses.length === 1 ? 'Analysis' : 'Analyses'}
                   </div>
                 )}
               </div>
@@ -254,7 +255,7 @@ const PaperCard: React.FC<PaperCardProps> = ({
 
             {/* Mollick-Style Summary */}
             {mollickSummary && (
-              <div className="mb-2 border-l-2 border-purple-200 pl-2">
+              <div className="mb-2 border-l-2 border-purple-200 dark:border-purple-900 pl-2">
                 <div className="flex items-center justify-between">
                   <button
                     onClick={(e) => {
@@ -266,11 +267,11 @@ const PaperCard: React.FC<PaperCardProps> = ({
                         return newSet
                       })
                     }}
-                    className="flex items-center gap-1 text-xs font-medium text-purple-700 hover:text-purple-900 transition-colors"
+                    className="flex items-center gap-1 text-xs font-medium text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 transition-colors"
                   >
                     {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                     <span>Mollick-Style Summary</span>
-                    <Badge variant="outline" className="h-4 px-1 text-[10px] bg-purple-50 dark:bg-purple-950 border-purple-200">AI</Badge>
+                    <Badge variant="outline" className="h-4 px-1 text-[10px] bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-900">AI</Badge>
                   </button>
                   {isExpanded && !isEditing && (
                     <Button
@@ -283,7 +284,7 @@ const PaperCard: React.FC<PaperCardProps> = ({
                       }}
                       title="Edit summary"
                     >
-                      <Edit2 className="h-3 w-3 text-purple-600" />
+                      <Edit2 className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                     </Button>
                   )}
                 </div>
@@ -333,7 +334,7 @@ const PaperCard: React.FC<PaperCardProps> = ({
             {/* Compact Metrics Row */}
             <div className="flex flex-wrap items-center gap-1.5 mb-2 text-xs">
               {paper.readability?.difficulty && (
-                <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-purple-200 bg-purple-50 dark:bg-purple-950 text-purple-700"
+                <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-purple-200 dark:border-purple-900 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300"
                   title={`Flesch Reading Ease: ${paper.readability.flesch_reading_ease || 'N/A'}`}>
                   {paper.readability.difficulty}
                 </Badge>
@@ -344,11 +345,11 @@ const PaperCard: React.FC<PaperCardProps> = ({
                   {paper.readability.academic_level.replace(' Level', '')}
                 </Badge>
               )}
-              {paper.word_count && paper.word_count > 0 && (
+              {paper.word_count != null && paper.word_count > 0 && (
                 <span className="text-gray-500 dark:text-gray-400">{paper.word_count.toLocaleString()} words</span>
               )}
               {paper.conference && (
-                <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-blue-200 bg-blue-50 dark:bg-blue-950 text-blue-700">
+                <Badge variant="outline" className="h-5 px-1.5 text-[10px] border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
                   {paper.conference}
                 </Badge>
               )}
@@ -419,25 +420,25 @@ const PaperCard: React.FC<PaperCardProps> = ({
         {paper.ai_summary && (
           <div className="mt-4 pt-4 border-t">
             <button
-              onClick={(e) => { e.stopPropagation(); toggleSummary(String(paper.id)) }}
+              onClick={(e) => { e.stopPropagation(); toggleSummary(`ai-${paper.id}`) }}
               className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors w-full text-left"
             >
               <span className="text-purple-600">&#127891;</span>
-              <span>Mollick-Style Summary</span>
-              {expandedSummaries.has(String(paper.id)) ? (
+              <span>AI Summary</span>
+              {expandedSummaries.has(`ai-${paper.id}`) ? (
                 <ChevronUp className="h-4 w-4 ml-auto" />
               ) : (
                 <ChevronDown className="h-4 w-4 ml-auto" />
               )}
             </button>
-            {expandedSummaries.has(String(paper.id)) && (
+            {expandedSummaries.has(`ai-${paper.id}`) && (
               <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg">
                 <div className="prose prose-sm max-w-none">
                   <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{paper.ai_summary}</p>
                 </div>
                 {paper.key_findings && (
-                  <div className="mt-3 pt-3 border-t border-purple-100">
-                    <h4 className="text-xs font-semibold text-purple-700 mb-2">Key Findings:</h4>
+                  <div className="mt-3 pt-3 border-t border-purple-100 dark:border-purple-900">
+                    <h4 className="text-xs font-semibold text-purple-700 dark:text-purple-300 mb-2">Key Findings:</h4>
                     <ul className="list-disc list-inside text-xs text-gray-600 dark:text-gray-400 space-y-1">
                       {paper.key_findings.map((finding: string, idx: number) => (
                         <li key={idx}>{finding}</li>
@@ -454,12 +455,12 @@ const PaperCard: React.FC<PaperCardProps> = ({
         {(paper.arxiv_id || paper.doi) && (
           <div className="flex gap-4 pt-3 border-t">
             {paper.arxiv_id && (
-              <a href={`https://arxiv.org/abs/${paper.arxiv_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800">
+              <a href={`https://arxiv.org/abs/${paper.arxiv_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                 arXiv:{paper.arxiv_id}
               </a>
             )}
             {paper.doi && (
-              <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:text-blue-800">
+              <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                 DOI:{paper.doi}
               </a>
             )}
