@@ -347,7 +347,7 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
           </a>
         </div>
         
-        <NavigationMenu className="mx-2 [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!top-full">
+        <NavigationMenu viewport={false} className="mx-2">
           <NavigationMenuList className="flex-wrap">
             {navigationItems.map((item) => {
               if (item.items) {
@@ -363,7 +363,14 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                       <item.icon className="mr-2 h-4 w-4" />
                       {item.title}
                     </NavigationMenuTrigger>
-                    <NavigationMenuContent>
+                    <NavigationMenuContent
+                      className={cn(
+                        // Groups in the right half open right-aligned so the
+                        // panel never overflows the window edge
+                        ['Authors', 'Reddit', 'Papers', 'Books', 'Analysis', 'Concepts']
+                          .includes(item.title) && "left-auto right-0"
+                      )}
+                    >
                       <ul className={cn(
                         "grid gap-3 p-4",
                         item.items.length <= 3
