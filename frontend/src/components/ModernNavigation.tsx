@@ -30,7 +30,8 @@ import {
   BookOpen,
   GitBranch,
   MessageSquare,
-  FileSearch
+  FileSearch,
+  Library
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
@@ -218,7 +219,7 @@ const navigationItems = [
     ]
   },
   {
-    title: 'Reddit Posts',
+    title: 'Reddit',
     icon: MessageSquare,
     items: [
       { 
@@ -236,7 +237,7 @@ const navigationItems = [
     ]
   },
   {
-    title: 'Research Papers',
+    title: 'Papers',
     icon: BookOpen,
     items: [
       {
@@ -260,8 +261,8 @@ const navigationItems = [
     ]
   },
   {
-    title: 'Book Library',
-    icon: BookOpen,
+    title: 'Books',
+    icon: Library,
     items: [
       {
         title: 'Browse Books',
@@ -336,18 +337,18 @@ const navigationItems = [
 export default function ModernNavigation({ activeView, onViewChange }: ModernNavigationProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 flex">
-          <a className="mr-6 flex items-center space-x-2" href="/">
-            <Database className="h-6 w-6 text-blue-600" />
-            <span className="hidden font-bold sm:inline-block">
+      <div className="container flex min-h-14 flex-wrap items-center py-1 gap-y-1">
+        <div className="mr-2 flex">
+          <a className="mr-4 flex items-center space-x-2" href="/">
+            <Database className="h-6 w-6 text-primary" />
+            <span className="hidden font-bold xl:inline-block">
               SmartTrendTracer
             </span>
           </a>
         </div>
         
-        <NavigationMenu className="mx-6 [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!top-full">
-          <NavigationMenuList>
+        <NavigationMenu className="mx-2 [&_[data-radix-popper-content-wrapper]]:!transform-none [&_[data-radix-popper-content-wrapper]]:!top-full">
+          <NavigationMenuList className="flex-wrap">
             {navigationItems.map((item) => {
               if (item.items) {
                 // Dropdown menu
@@ -355,7 +356,7 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                   <NavigationMenuItem key={item.title}>
                     <NavigationMenuTrigger 
                       className={cn(
-                        "h-9",
+                        "h-9 px-2",
                         item.items.some(i => i.view === activeView) && "bg-accent"
                       )}
                     >
@@ -363,7 +364,12 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                       {item.title}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2">
+                      <ul className={cn(
+                        "grid gap-3 p-4",
+                        item.items.length <= 3
+                          ? "w-[320px]"
+                          : "w-[400px] md:w-[500px] md:grid-cols-2"
+                      )}>
                         {item.items.map((subItem) => (
                           <li key={subItem.view}>
                             <NavigationMenuLink asChild>
@@ -399,7 +405,7 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                       variant={activeView === item.view ? "secondary" : "ghost"}
                       size="sm"
                       onClick={() => onViewChange(item.view!)}
-                      className="h-9"
+                      className="h-9 px-2"
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       {item.title}
