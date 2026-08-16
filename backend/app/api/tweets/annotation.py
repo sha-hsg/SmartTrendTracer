@@ -95,27 +95,46 @@ Return as JSON array with format:
         return []
 
 
-def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str], concurrency: int = 1):
-    """Process batch annotation in background, optionally parallel."""
+MAX_FINISHED_TASKS = 20
 
-    cancel_event = threading.Event()
-    progress_lock = threading.Lock()
-    total = len(tweet_ids)
+
+def create_annotation_task(task_id: str, total: int, annotate_all: bool = False) -> dict:
+    """Register a task BEFORE the background worker starts, so status/cancel
+    never 404 in the request-to-worker window (the frontend treats that 404 as
+    'backend restarted, task finished'). Also evicts old finished tasks so the
+    in-memory dict cannot grow forever."""
+    finished = [tid for tid, t in batch_annotation_tasks.items()
+                if t.get("status") in ("completed", "cancelled", "failed")]
+    if len(finished) > MAX_FINISHED_TASKS:
+        finished.sort(key=lambda tid: batch_annotation_tasks[tid].get("completed_at") or "")
+        for tid in finished[:len(finished) - MAX_FINISHED_TASKS]:
+            batch_annotation_tasks.pop(tid, None)
 
     batch_annotation_tasks[task_id] = {
-        "status": "running",
+        "status": "queued",
         "progress": 0,
         "total": total,
         "processed": 0,
         "new_tags_count": 0,
         "skipped_count": 0,
         "error_count": 0,
-        "results": {},
+        "annotate_all": annotate_all,
         "started_at": datetime.now(timezone.utc).isoformat(),
-        "_cancel_event": cancel_event,
+        "_cancel_event": threading.Event(),
     }
+    return batch_annotation_tasks[task_id]
 
-    task = batch_annotation_tasks[task_id]
+
+def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str], concurrency: int = 1):
+    """Process batch annotation in background, optionally parallel."""
+
+    task = batch_annotation_tasks.get(task_id)
+    if task is None:
+        task = create_annotation_task(task_id, len(tweet_ids))
+    task["status"] = "running"
+    cancel_event = task["_cancel_event"]
+    progress_lock = threading.Lock()
+    total = len(tweet_ids)
 
     def annotate_one(tweet_id):
         if cancel_event.is_set():
@@ -148,6 +167,7 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
                 if suggestions is not None:
                     new_concepts = []
                     skipped = 0
+                    add_failures = 0
                     for suggestion in suggestions:
                         slug = suggestion.get('slug', '')
                         if slug and slug not in existing_slugs:
@@ -160,12 +180,18 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
                             if success:
                                 new_concepts.append(suggestion['display_name'])
                                 existing_slugs.add(slug)
+                            else:
+                                add_failures += 1
                         else:
                             skipped += 1
 
+                    if add_failures:
+                        local_error = 1
+
                     # Sentinel only when the LLM genuinely returned no useful concepts
-                    # AND the tweet had none before — prevents re-processing empty tweets.
-                    if not new_concepts and not existing_concepts:
+                    # AND the tweet had none before AND nothing failed — a tweet whose
+                    # add_tag calls all failed must stay in the unannotated pool.
+                    if not new_concepts and not existing_concepts and add_failures == 0:
                         db.tag_instances.update_one(
                             {'content_type': 'tweet', 'content_id': str(tweet_id), 'concept_id': None},
                             {'$setOnInsert': {
@@ -194,8 +220,29 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
             task["skipped_count"] += local_skipped
             task["error_count"] += local_error
             task["progress"] = int((task["processed"] / total) * 100)
-            task["results"][str(tweet_id)] = result
+            # Keep only failures (bounded) — full per-tweet results for a 50k
+            # run leaked memory for the process lifetime and were never read
+            if local_error and len(task.setdefault("failed_tweets", {})) < 500:
+                task["failed_tweets"][str(tweet_id)] = result
 
+    try:
+        _run_annotation_loop(task, tweet_ids, cancel_event, annotate_one, concurrency, task_id, total)
+    except Exception as e:
+        logger.error(f"Batch annotation {task_id} crashed: {e}")
+        task["status"] = "failed"
+        task["error"] = str(e)
+        task["completed_at"] = datetime.now(timezone.utc).isoformat()
+        task.pop("_cancel_event", None)
+        return
+
+    task["status"] = "cancelled" if cancel_event.is_set() else "completed"
+    task["completed_at"] = datetime.now(timezone.utc).isoformat()
+    task.pop("_cancel_event", None)  # Clean up internal reference
+
+    logger.info(f"Batch annotation {task_id} {task['status']}: {task['new_tags_count']} new tags, {task['skipped_count']} skipped, {task['error_count']} errors")
+
+
+def _run_annotation_loop(task, tweet_ids, cancel_event, annotate_one, concurrency, task_id, total):
     if concurrency <= 1:
         # Sequential (existing behavior for page-batch)
         for tweet_id in tweet_ids:
@@ -216,12 +263,6 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
                 except Exception as e:
                     logger.error(f"Unexpected error in annotation worker: {e}")
 
-    task["status"] = "cancelled" if cancel_event.is_set() else "completed"
-    task["completed_at"] = datetime.now(timezone.utc).isoformat()
-    task.pop("_cancel_event", None)  # Clean up internal reference
-
-    logger.info(f"Batch annotation {task_id} {task['status']}: {task['new_tags_count']} new tags, {task['skipped_count']} skipped, {task['error_count']} errors")
-
 
 # =============================================================================
 # Batch Annotation Endpoints
@@ -239,23 +280,27 @@ async def batch_annotate_tweets(
     if not request.tweet_ids:
         raise HTTPException(status_code=400, detail="No tweet IDs provided")
 
+    # Dedupe while preserving order (a repeated id would be annotated twice)
+    tweet_ids = list(dict.fromkeys(request.tweet_ids))
+
     task_id = str(uuid.uuid4())
+    create_annotation_task(task_id, len(tweet_ids))
 
     # Start background task
     background_tasks.add_task(
         run_batch_annotation,
         task_id,
-        request.tweet_ids,
+        tweet_ids,
         request.model
     )
 
-    logger.info(f"Started batch annotation task {task_id} for {len(request.tweet_ids)} tweets")
+    logger.info(f"Started batch annotation task {task_id} for {len(tweet_ids)} tweets")
 
     return {
         "task_id": task_id,
         "status": "started",
-        "total": len(request.tweet_ids),
-        "message": f"Batch annotation started for {len(request.tweet_ids)} tweets"
+        "total": len(tweet_ids),
+        "message": f"Batch annotation started for {len(tweet_ids)} tweets"
     }
 
 
@@ -299,6 +344,15 @@ async def batch_annotate_all_unannotated(
     Queries unannotated tweet IDs internally and starts background processing.
     Returns immediately with a task_id for status polling.
     """
+    # Refuse overlapping annotate-all runs: two concurrent runs would compute
+    # the same unannotated set and process every tweet twice (2x LLM spend)
+    for tid, t in batch_annotation_tasks.items():
+        if t.get("annotate_all") and t.get("status") in ("queued", "running"):
+            raise HTTPException(
+                status_code=409,
+                detail=f"An annotate-all task is already running (task_id={tid})"
+            )
+
     # Get all annotated tweet IDs from tag_instances
     annotated_pipeline = [
         {'$match': {'content_type': 'tweet'}},
@@ -330,6 +384,7 @@ async def batch_annotate_all_unannotated(
         }
 
     task_id = str(uuid.uuid4())
+    create_annotation_task(task_id, len(unannotated_ids), annotate_all=True)
 
     concurrency = max(1, min(request.concurrency, 8))
 

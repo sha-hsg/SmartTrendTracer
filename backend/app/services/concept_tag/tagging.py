@@ -77,35 +77,32 @@ class ConceptTaggingMixin:
             # Get unique concept IDs (filter out sentinel entries where concept_id is None)
             concept_ids = list(set(inst['concept_id'] for inst in instances if inst.get('concept_id') is not None))
 
-            # Fetch all concepts at once
+            # Fetch all concepts at once via the central resolver (handles
+            # ObjectId, stringified-ObjectId and legacy slug _ids alike — the
+            # previous len(cid)==24 check raised TypeError on ObjectIds and
+            # silently returned [] for ~98% of tagged content)
             concepts = []
             if concept_ids:
-                # Convert to ObjectIds
-                object_ids = []
-                for cid in concept_ids:
-                    try:
-                        if len(cid) == 24:
-                            object_ids.append(ObjectId(cid))
-                    except Exception:
-                        pass
+                docs_by_id = self.get_concepts_by_ids(concept_ids)
+                seen = set()
+                for doc in docs_by_id.values():
+                    if str(doc['_id']) in seen:
+                        continue
+                    seen.add(str(doc['_id']))
+                    # Convert any ObjectIds to strings
+                    parents = doc.get('parents', [])
+                    if parents:
+                        parents = [str(p) if hasattr(p, '__str__') else p for p in parents]
 
-                if object_ids:
-                    concept_docs = self.tag_concepts.find({"_id": {"$in": object_ids}})
-                    for doc in concept_docs:
-                        # Convert any ObjectIds to strings
-                        parents = doc.get('parents', [])
-                        if parents:
-                            parents = [str(p) if hasattr(p, '__str__') else p for p in parents]
-
-                        concepts.append({
-                            "concept_id": str(doc['_id']),
-                            "id": doc.get('id', f"c_{str(doc['_id'])[:4]}"),
-                            "slug": doc.get('slug', ''),
-                            "display_name": doc.get('display_name', doc.get('name', '')),
-                            "entity_type": doc.get('entity_type', 'topic'),
-                            "description": doc.get('description', ''),
-                            "parents": parents
-                        })
+                    concepts.append({
+                        "concept_id": str(doc['_id']),
+                        "id": doc.get('id', f"c_{str(doc['_id'])[:4]}"),
+                        "slug": doc.get('slug', ''),
+                        "display_name": doc.get('display_name', doc.get('name', '')),
+                        "entity_type": doc.get('entity_type', 'topic'),
+                        "description": doc.get('description', ''),
+                        "parents": parents
+                    })
 
             return concepts
 
@@ -161,20 +158,29 @@ class ConceptTaggingMixin:
                     "auto_generated": True
                 }
 
-                # Create concept first
+                # Create concept first. Under concurrency two workers can race
+                # on the same new slug (unique index) — on duplicate, adopt the
+                # winner's concept instead of dropping the tag.
                 try:
                     result = self.tag_concepts.insert_one(new_concept)
                     concept_id = str(result.inserted_id)
                     logger.info(f"Created concept: {display_name} (id: {new_concept['id']})")
                 except Exception as e:
-                    logger.error(f"Failed to create concept: {e}")
-                    return False, None
+                    winner = self.tag_concepts.find_one({"slug": slug})
+                    if winner is not None:
+                        concept_id = str(winner['_id'])
+                        logger.info(f"Concept '{slug}' created concurrently; reusing {concept_id}")
+                    else:
+                        logger.error(f"Failed to create concept: {e}")
+                        return False, None
 
             # Check if already tagged
+            from app.database.mongodb import safe_object_id, concept_id_query_variants
+            native_concept_id = safe_object_id(concept_id) or concept_id
             existing_tag = self.tag_instances.find_one({
                 'content_type': content_type,
                 'content_id': str(content_id),
-                'concept_id': ObjectId(concept_id) if len(concept_id) == 24 else concept_id
+                'concept_id': {'$in': concept_id_query_variants(concept_id)}
             })
 
             if existing_tag:
@@ -185,7 +191,7 @@ class ConceptTaggingMixin:
             tag_instance = {
                 'content_type': content_type,
                 'content_id': str(content_id),
-                'concept_id': ObjectId(concept_id) if len(concept_id) == 24 else concept_id,
+                'concept_id': native_concept_id,
                 'created_at': datetime.now(timezone.utc),
                 'source': 'api',
                 'tag_type': 'concept',
