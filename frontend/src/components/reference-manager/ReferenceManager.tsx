@@ -216,7 +216,7 @@ export default function ReferenceManager() {
         )
         setReferences(updatedRefs)
 
-        window.open(`/papers/${response.data.paper_id}`, '_blank')
+        window.open(`/api/papers/${response.data.paper_id}/pdf`, '_blank')
       }
     } catch (error: any) {
       console.error('Failed to import reference:', error)

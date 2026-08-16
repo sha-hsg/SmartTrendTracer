@@ -172,7 +172,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
                 <p className="text-red-800">{error}</p>
                 {importedPaperId && (
                   <button
-                    onClick={() => window.open(`/papers/${importedPaperId}`, '_blank')}
+                    onClick={() => window.open(`/api/papers/${importedPaperId}/pdf`, '_blank')}
                     className="mt-2 text-sm text-red-600 hover:underline"
                   >
                     View existing paper →
@@ -190,7 +190,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
                 <p className="text-green-800">Paper imported successfully!</p>
                 {importedPaperId && (
                   <button
-                    onClick={() => window.open(`/papers/${importedPaperId}`, '_blank')}
+                    onClick={() => window.open(`/api/papers/${importedPaperId}/pdf`, '_blank')}
                     className="mt-2 text-sm text-green-600 hover:underline"
                   >
                     View imported paper →

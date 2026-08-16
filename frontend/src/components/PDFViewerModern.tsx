@@ -4,8 +4,11 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 
-// Configure PDF.js worker - use the version that matches react-pdf
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+// PDF.js worker bundled locally from node_modules (no CDN/network dependency)
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString()
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,8 +35,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
-
-// PDF viewing without worker - simpler and avoids CORS issues
 
 interface PDFViewerModernProps {
   pdfUrl: string
@@ -72,11 +73,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
   }, [])
 
   const onDocumentLoadError = useCallback((error: any) => {
-    // Ignore fake worker warnings and still try to load
-    if (error.message?.includes('fake worker') || error.message?.includes('Setting up fake worker')) {
-      console.info('Using fallback PDF rendering (no worker)')
-      // Don't set error for worker issues, PDF can still render
-    } else if (error.status === 404 || error.message?.includes('404')) {
+    if (error.status === 404 || error.message?.includes('404')) {
       setError('PDF file not available for this paper. The paper may need to be re-imported or the PDF file may not have been uploaded.')
     } else if (error.message?.includes('Invalid PDF structure')) {
       setError('This PDF file appears to be corrupted or invalid. This can happen when the PDF download failed or the file is not actually a PDF. Please try re-importing this paper.')
@@ -206,11 +203,6 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
     window.open(pdfUrl, '_blank')
   }
 
-  // Memoize Document options to prevent "options" prop changed warnings
-  const documentOptions = useMemo(() => ({
-    cMapUrl: 'cmaps/',
-    cMapPacked: true,
-  }), [])
 
   // Memoize loading component
   const loadingComponent = useMemo(() => (
@@ -233,7 +225,6 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
           </AlertDescription>
         </Alert>
       }
-      options={documentOptions}
     >
       <Page 
         pageNumber={pageNumber} 
@@ -244,7 +235,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
         loading=""
       />
     </Document>
-  ), [pdfUrl, pageNumber, scale, onDocumentLoadSuccess, onDocumentLoadError, loadingComponent, documentOptions])
+  ), [pdfUrl, pageNumber, scale, onDocumentLoadSuccess, onDocumentLoadError, loadingComponent])
 
   return (
     <div 

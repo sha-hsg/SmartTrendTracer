@@ -240,7 +240,7 @@ export function ReferenceCard({
                         ref.citing_papers_sample.map(paper => (
                           <div key={paper.id} className="text-xs">
                             <a
-                              href={`/papers/${paper.id}`}
+                              href={`/api/papers/${paper.id}/pdf`}
                               className="text-blue-600 hover:underline"
                               target="_blank"
                               rel="noopener noreferrer"

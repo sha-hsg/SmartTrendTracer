@@ -147,7 +147,7 @@ const PaperCard: React.FC<PaperCardProps> = ({
                     className="h-7 w-7 p-0"
                     onClick={(e) => {
                       e.stopPropagation()
-                      window.open(`/papers/${paper.pdf_path?.split('/').pop()}`, '_blank')
+                      window.open(`/api/papers/${paper.id}/pdf`, '_blank')
                     }}
                     title="Download PDF"
                   >
