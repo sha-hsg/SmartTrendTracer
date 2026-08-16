@@ -36,83 +36,8 @@ def beautify_markdown(markdown: str) -> str:
         return markdown
 
 
-def generate_preview(markdown: str, length: int = 500) -> str:
-    """
-    Generate a preview from markdown content.
-    Enhanced version with better cleaning.
-    """
-    if not markdown:
-        return ""
-    
-    # Start with the markdown content
-    preview = markdown
-    
-    # Remove any CDN image references first
-    cdn_patterns = [
-        r'<img[^>]*src="[^"]*substackcdn\.com[^"]*"[^>]*>',
-        r'<img[^>]*src="[^"]*s3\.amazonaws\.com[^"]*"[^>]*>',
-        r'!\[[^\]]*\]\([^)]*substackcdn\.com[^)]*\)',
-        r'!\[[^\]]*\]\([^)]*s3\.amazonaws\.com[^)]*\)',
-        r'https://substackcdn\.com/image/fetch/[^\s\)\'"<]+',
-        r'https://[^/]+\.s3\.amazonaws\.com/[^\s\)\'"<]+',
-    ]
-    
-    for pattern in cdn_patterns:
-        preview = re.sub(pattern, '', preview, flags=re.IGNORECASE)
-    
-    # Remove local image references (keep text clean)
-    preview = re.sub(r'!\[[^\]]*\]\(/api/articles/[^)]+\)', '', preview)
-    
-    # Remove markdown formatting
-    preview = re.sub(r'^#+\s+', '', preview, flags=re.MULTILINE)  # Headers
-    preview = re.sub(r'\*{1,3}([^\*]+)\*{1,3}', r'\1', preview)  # Bold/italic
-    preview = re.sub(r'_{1,3}([^_]+)_{1,3}', r'\1', preview)  # Underline emphasis
-    preview = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', preview)  # Links
-    preview = re.sub(r'`{1,3}([^`]+)`{1,3}', r'\1', preview)  # Code blocks
-    preview = re.sub(r'^>\s+', '', preview, flags=re.MULTILINE)  # Blockquotes
-    preview = re.sub(r'^\*\s+', '', preview, flags=re.MULTILINE)  # Bullet points
-    preview = re.sub(r'^\-\s+', '', preview, flags=re.MULTILINE)  # Dashes
-    preview = re.sub(r'^\d+\.\s+', '', preview, flags=re.MULTILINE)  # Numbered lists
-    preview = re.sub(r'\n{3,}', '\n\n', preview)  # Multiple newlines
-    preview = re.sub(r'\n+', ' ', preview)  # Convert newlines to spaces
-    preview = re.sub(r'\s+', ' ', preview)  # Multiple spaces to single
-    
-    # Clean up any HTML entities
-    preview = preview.replace('&nbsp;', ' ')
-    preview = preview.replace('&amp;', '&')
-    preview = preview.replace('&lt;', '<')
-    preview = preview.replace('&gt;', '>')
-    preview = preview.replace('&quot;', '"')
-    preview = preview.replace('&#39;', "'")
-    
-    # Remove any remaining HTML tags
-    preview = re.sub(r'<[^>]+>', '', preview)
-    
-    # Trim to length
-    preview = preview.strip()
-    if len(preview) > length:
-        # Try to cut at a sentence boundary
-        sentences = preview[:length + 100].split('. ')
-        if len(sentences) > 1:
-            # Take complete sentences that fit within length
-            result = []
-            current_length = 0
-            for sentence in sentences:
-                if current_length + len(sentence) + 2 <= length:  # +2 for ". "
-                    result.append(sentence)
-                    current_length += len(sentence) + 2
-                else:
-                    break
-            if result:
-                preview = '. '.join(result) + '.'
-            else:
-                # Fall back to word boundary
-                preview = preview[:length].rsplit(' ', 1)[0] + '...'
-        else:
-            # Fall back to word boundary
-            preview = preview[:length].rsplit(' ', 1)[0] + '...'
-    
-    return preview.strip()
+# Moved to the shared helper so collectors/importers use the same cleaning
+from app.services.preview_utils import generate_preview  # noqa: E402,F401
 
 
 @router.post("/regenerate/{article_id}")

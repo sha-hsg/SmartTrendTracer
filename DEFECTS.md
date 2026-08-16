@@ -75,36 +75,40 @@ React Strict Mode Development Checks - False Positive
 ---
 
 ### DEF-006: Forwarded Substack Articles - HTML in Previews
-**Status:** Has Fix
+**Status:** Resolved (2026-08-16 — Root Cause behoben + Backfill)
 **Priorität:** Low
 **Bereich:** Backend - Substack
 
 **Problem:**
 Weitergeleitete Substack Artikel haben HTML-Artefakte in den Previews.
 
-**Lösung:**
-`clean_substack_footers.py` wurde auf MongoDB migriert (Januar 2026).
-
-**Fix anwenden:**
-```bash
-cd backend
-python clean_substack_footers.py --clean
-```
+**Root Cause & Fix (2026-08-16):** Fünf Stellen (substack_parser 2x,
+url_import 2x, playwright markdown_converter) erzeugten Previews als rohen
+`markdown[:500]`-Slice — jede Collection erzeugte den Schmutz neu; das frühere
+Rezept `clean_substack_footers.py` entfernte nur Footer, nicht die Artefakte.
+Alle Stellen nutzen jetzt den gemeinsamen Cleaner
+`app/services/preview_utils.generate_preview` (inkl. Empty-Label-Autolinks
+`[](<url>)` und verschachtelter Bild-in-Link-Reste). 329 Alt-Previews per
+Backfill regeneriert; 0 verbleibende Artefakte in der DB.
 
 ---
 
-### DEF-007: Gary Marcus Articles - Falsche Author Attribution
-**Status:** Known Issue
+### DEF-007: Gary Marcus Artikel - Falsche Autor-Zuordnung
+**Status:** Fixed in Code (2026-08-16 — latent, Gmail-Pfad aktuell ohne DB-Daten)
 **Priorität:** Low
-**Bereich:** Backend - Email Parsing
+**Bereich:** Backend - Gmail Collector
 
 **Problem:**
 Gary Marcus Artikel werden manchmal Ethan Mollick zugeordnet.
 
-**Ursache:**
-Email-Parsing Konfusion bei weitergeleiteten Inhalten.
-
-**Workaround:** Manuell Author korrigieren in UI
+**Root Cause & Fix (2026-08-16):** Die Attribution matchte Autor-Namen als
+Substring im gesamten Mail-Body (Newsletter zitieren einander!) mit
+First-Match nach Config-Reihenfolge, und der Sender-Header war nur letzter
+Fallback. Neue Präzedenz in substack_parser.parse_author_from_sender:
+1) kanonische Artikel-URL (<subdomain>.substack.com/p/...), 2) Sender-Header,
+3) Body-Match mit frühester Fundstelle statt Config-Reihenfolge, ohne den
+zu breiten E-Mail-Localpart-Indikator. Ethan Mollick ist jetzt explizit in
+forwarded_authors.json konfiguriert.
 
 ---
 

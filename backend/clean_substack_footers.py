@@ -68,8 +68,8 @@ def clean_existing_articles():
                 # Regenerate preview from cleaned markdown
                 new_markdown = update_fields.get('content_markdown', content_markdown)
                 if new_markdown:
-                    preview_text = new_markdown[:500].strip()
-                    update_fields['preview'] = preview_text + '...' if len(new_markdown) > 500 else preview_text
+                    from app.services.preview_utils import generate_preview
+                    update_fields['preview'] = generate_preview(new_markdown)
 
                 # Prepare bulk update
                 updates.append(UpdateOne(

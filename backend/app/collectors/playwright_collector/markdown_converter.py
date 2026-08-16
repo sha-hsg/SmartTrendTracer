@@ -226,27 +226,8 @@ class MarkdownConverter:
         Returns:
             Clean preview text
         """
-        if not markdown:
-            return ''
-
-        # Remove images for preview
-        preview = re.sub(r'!\[.*?\]\(.*?\)', '', markdown)
-
-        # Remove markdown formatting for cleaner preview
-        preview = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', preview)  # Links to text
-        preview = re.sub(r'#{1,6}\s+', '', preview)  # Remove headers
-        preview = re.sub(r'\*\*([^*]+)\*\*', r'\1', preview)  # Bold
-        preview = re.sub(r'\*([^*]+)\*', r'\1', preview)  # Italic
-        preview = re.sub(r'`([^`]+)`', r'\1', preview)  # Code
-
-        # Clean whitespace
-        preview = ' '.join(preview.split())
-
-        # Truncate
-        if len(preview) > max_length:
-            preview = preview[:max_length].rsplit(' ', 1)[0] + '...'
-
-        return preview
+        from app.services.preview_utils import generate_preview
+        return generate_preview(markdown, length=max_length)
 
     def count_words(self, markdown: str) -> int:
         """

@@ -1,4 +1,6 @@
 import re
+
+from app.services.preview_utils import generate_preview
 import json
 import logging
 from pathlib import Path
@@ -73,59 +75,61 @@ class SubstackParser:
                     for author in config.get('forwarded_authors', [])
                 }
 
-        # Check if this is a forwarded email by looking for configured authors in the content
+        def _author_result(email: str, author_config: Dict) -> Dict:
+            username = email.split('@')[0]
+            return {
+                'name': author_config['name'],
+                'subdomain': username,
+                'email': email
+            }
+
+        # 1) Strongest signal: the canonical article URL host. Newsletters
+        #    routinely cite each other by name, so content matching (below)
+        #    misattributes; the <subdomain>.substack.com/p/... link does not.
         if email_body and forwarded_authors:
-            # Convert HTML to text for cleaner searching
+            url_match = re.search(r'https?://([a-z0-9-]+)\.substack\.com/p/', email_body, re.IGNORECASE)
+            if url_match:
+                subdomain = url_match.group(1).lower()
+                for email, author_config in forwarded_authors.items():
+                    if email.split('@')[0].lower() == subdomain:
+                        return _author_result(email, author_config)
+
+        # 2) Sender header: a configured direct-subscription sender wins
+        #    before any content matching.
+        sender_match = re.search(r'<?([\w.+-]+@[\w.-]+)>?', sender or '')
+        if sender_match:
+            sender_email = sender_match.group(1).lower()
+            if sender_email in forwarded_authors:
+                return _author_result(sender_email, forwarded_authors[sender_email])
+
+        # 3) Content matching as a fallback — earliest occurrence in the text
+        #    wins (not config order), and only strong indicators are used:
+        #    the bare email local-part ("robotic") caused false matches.
+        if email_body and forwarded_authors:
             from bs4 import BeautifulSoup
             soup = BeautifulSoup(email_body, 'html.parser')
-            text_content = soup.get_text()
+            text_content = soup.get_text().lower()
 
-            # Look for each configured author in the email content
+            best_email, best_pos = None, None
             for email, author_config in forwarded_authors.items():
-                # Check multiple patterns that might indicate this author
                 author_indicators = [
                     author_config['name'],                    # "Nathan Lambert"
-                    author_config.get('newsletter', ''),     # "Interconnects"
+                    author_config.get('newsletter', ''),      # "Interconnects"
                     email,                                    # "robotic@substack.com"
-                    email.split('@')[0]                       # "robotic"
                 ]
-
-                # If any of these indicators appear in the email, attribute to this author
                 for indicator in author_indicators:
-                    if indicator and indicator.lower() in text_content.lower():
-                        username = email.split('@')[0]
-                        return {
-                            'name': author_config['name'],
-                            'subdomain': username,
-                            'email': email
-                        }
+                    if not indicator:
+                        continue
+                    pos = text_content.find(indicator.lower())
+                    if pos >= 0 and (best_pos is None or pos < best_pos):
+                        best_email, best_pos = email, pos
 
-        # Handle self-forwarded emails (from:me to:me) by checking subject and content
+            if best_email is not None:
+                return _author_result(best_email, forwarded_authors[best_email])
+
+        # Handle self-forwarded emails (from:me to:me): content matching above
+        # already ran; fall back to a generic forwarded entry
         if 'siegfried.handschuh@gmail.com' in sender or 'from:me to:me' in str(email_body):
-            # This is a self-forwarded email, try to identify the author from content
-            if email_body and forwarded_authors:
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(email_body, 'html.parser')
-                text_content = soup.get_text()
-
-                # Look for configured authors in content
-                for email, author_config in forwarded_authors.items():
-                    author_indicators = [
-                        author_config['name'],
-                        author_config.get('newsletter', ''),
-                        email.split('@')[0]
-                    ]
-
-                    for indicator in author_indicators:
-                        if indicator and indicator.lower() in text_content.lower():
-                            username = email.split('@')[0]
-                            return {
-                                'name': author_config['name'],
-                                'subdomain': username,
-                                'email': email
-                            }
-
-            # If we can't identify a configured author, return a generic forwarded entry
             return {
                 'name': 'Siegfried Handschuh',
                 'subdomain': 'siegfried.handschuh',
@@ -284,7 +288,7 @@ class SubstackParser:
                 markdown = self.validate_and_fix_content(markdown, is_forwarded, check_only)
 
                 # Extract preview AFTER cleaning
-                preview = markdown[:500].strip() + '...' if len(markdown) > 500 else markdown
+                preview = generate_preview(markdown)
 
                 # Count words from cleaned markdown
                 word_count = len(markdown.split())
@@ -484,7 +488,7 @@ class SubstackParser:
         markdown = self.validate_and_fix_content(markdown, is_forwarded, check_only)
 
         # Extract preview AFTER cleaning (first 500 chars)
-        preview = markdown[:500].strip() + '...' if len(markdown) > 500 else markdown
+        preview = generate_preview(markdown)
 
         # Count words from cleaned markdown
         word_count = len(markdown.split())

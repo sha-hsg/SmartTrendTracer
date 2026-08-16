@@ -16,6 +16,8 @@ from app.database.mongodb import get_database
 from app.services.author_service import AuthorService
 import logging
 
+from app.services.preview_utils import generate_preview
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -298,7 +300,7 @@ async def import_article_from_url(request: URLImportRequest):
             'co_author_names': co_author_names,  # Denormalized for display
             'url': url,
             'content_markdown': markdown_content,
-            'preview': markdown_content[:500] if markdown_content else '',
+            'preview': generate_preview(markdown_content) if markdown_content else '',
             'word_count': word_count,
             'publication_date': metadata['publication_date'],
             'description': metadata['description'],
@@ -473,7 +475,7 @@ def import_article_enhanced(request: EnhancedImportRequest):
             'co_author_names': co_author_names,  # Denormalized for display
             'url': url,
             'content_markdown': markdown_content,
-            'preview': markdown_content[:500] if markdown_content else '',
+            'preview': generate_preview(markdown_content) if markdown_content else '',
             'word_count': word_count,
             'publication_date': metadata['publication_date'],
             'description': metadata['description'],
