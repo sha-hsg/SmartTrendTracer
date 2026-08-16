@@ -4,7 +4,7 @@ Provides topic frequency over time and correlation analysis
 """
 
 from fastapi import APIRouter, Query, HTTPException
-from app.database.mongodb import get_database
+from app.database.mongodb import get_database, concept_id_query_variants
 from bson import ObjectId
 from typing import Optional
 from datetime import datetime, timezone, timedelta
@@ -102,19 +102,14 @@ async def get_topic_frequency(
         if len(concept_id_list) > 10:
             raise HTTPException(status_code=400, detail="Maximum 10 concepts allowed")
 
-        # Convert to ObjectIds
-        object_ids = []
+        # concept_id may be an ObjectId string or a legacy slug id — build all
+        # storage variants (see concept_id_query_variants)
+        id_variants = []
         for cid in concept_id_list:
-            try:
-                object_ids.append(ObjectId(cid))
-            except Exception:
-                logger.warning(f"Invalid ObjectId: {cid}")
+            id_variants.extend(concept_id_query_variants(cid))
 
-        if not object_ids:
-            raise HTTPException(status_code=400, detail="No valid concept IDs provided")
-
-        # Get concept names
-        concepts = list(db.tag_concepts_v2.find({'_id': {'$in': object_ids}}))
+        # Get concept names (covers ObjectId and string _id concepts)
+        concepts = list(db.tag_concepts_v2.find({'_id': {'$in': id_variants}}))
         concept_map = {str(c['_id']): c.get('display_name', c.get('name', 'Unknown')) for c in concepts}
 
         # Parse source types
@@ -126,7 +121,7 @@ async def get_topic_frequency(
 
         # Build query filter for tag_instances
         instance_filter = {
-            'concept_id': {'$in': object_ids}
+            'concept_id': {'$in': id_variants}
         }
         if source_type_list:
             instance_filter['content_type'] = {'$in': source_type_list}

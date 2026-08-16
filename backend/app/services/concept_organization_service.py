@@ -6,6 +6,8 @@ Uses configuration from llm.json and prompts_config.json
 
 import json
 import logging
+
+from app.database.mongodb import concept_id_query_variants
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime, timezone
 from bson import ObjectId
@@ -112,10 +114,10 @@ class ConceptOrganizationService:
     
     def get_usage_examples(self, concept_id: str) -> str:
         """Get usage examples for a concept"""
-        # Convert to ObjectId if needed for tag_instances (they store string IDs)
-        # tag_instances uses string concept_id, not ObjectId
+        # tag_instances.concept_id is stored in mixed form (ObjectId 98%,
+        # string/slug rest) — the previous string-only query matched ~0 rows
         instances = list(self.db.tag_instances.find(
-            {"concept_id": str(concept_id) if not isinstance(concept_id, str) else concept_id},
+            {"concept_id": {"$in": concept_id_query_variants(concept_id)}},
             {"content_type": 1, "content_id": 1}
         ).limit(5))
         
@@ -239,9 +241,11 @@ class ConceptOrganizationService:
                         "created_by": "concept_organizer"
                     })
                     
-                    # Update all instances to point to the main concept
+                    # Update all instances to point to the main concept.
+                    # Mixed-form concept_id: the previous string-only match
+                    # repointed ~0 rows, silently breaking alias merges.
                     self.db.tag_instances.update_many(
-                        {"concept_id": str(concept_obj_id)},
+                        {"concept_id": {"$in": concept_id_query_variants(concept_obj_id)}},
                         {"$set": {"concept_id": alias_of}}
                     )
                     

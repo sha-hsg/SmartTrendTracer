@@ -4,7 +4,7 @@ Provides per-user trend analysis for tweets
 """
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
+from app.database.mongodb import get_database, concept_id_query_variants
 from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 import logging
@@ -353,17 +353,15 @@ def get_user_trends(
     if concepts_used:
         # Batch-fetch tag_instances for top 10 concepts (fixes N+1)
         top_concept_ids_for_sim = concepts_used[:10]
-        # Convert to ObjectId for query since concept_id is stored as ObjectId
-        sim_concept_obj_ids = []
+        # concept_id is stored in mixed form (ObjectId / string / slug) —
+        # query all variants
+        sim_concept_id_variants = []
         for cid in top_concept_ids_for_sim:
-            try:
-                sim_concept_obj_ids.append(ObjectId(cid))
-            except Exception:
-                pass
+            sim_concept_id_variants.extend(concept_id_query_variants(cid))
 
         sim_instances = list(db.tag_instances.find({
             'content_type': 'tweet',
-            'concept_id': {'$in': sim_concept_obj_ids}
+            'concept_id': {'$in': sim_concept_id_variants}
         }).limit(1000))
 
         # Batch-fetch all referenced tweets

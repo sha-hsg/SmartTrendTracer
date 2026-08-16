@@ -177,27 +177,43 @@ class ConceptLookupMixin:
         if not concept_ids:
             return {}
 
-        # Convert to ObjectIds where applicable
+        # Split ids into ObjectId and legacy string/slug buckets — 177
+        # concepts have a string _id, and dropping those ids rendered their
+        # tagged content as untagged
         object_ids = []
+        string_ids = []
         for cid in concept_ids:
             if cid is None or cid == '' or cid == 'None':
                 continue
+            if isinstance(cid, ObjectId):
+                object_ids.append(cid)
+                continue
+            cid = str(cid)
             try:
-                if isinstance(cid, ObjectId):
-                    object_ids.append(cid)
-                elif isinstance(cid, str) and len(cid) == 24:
-                    object_ids.append(ObjectId(cid))
+                object_ids.append(ObjectId(cid))
             except Exception:
-                pass
+                string_ids.append(cid)
 
-        if not object_ids:
+        if not object_ids and not string_ids:
             return {}
 
-        # Single batch query
-        concepts = list(self.tag_concepts.find({"_id": {"$in": object_ids}}))
+        # Single batch query over both _id forms (plus the legacy custom id)
+        id_clauses = []
+        if object_ids:
+            id_clauses.append({"_id": {"$in": object_ids}})
+        if string_ids:
+            id_clauses.append({"_id": {"$in": string_ids}})
+            id_clauses.append({"id": {"$in": string_ids}})
+        concepts = list(self.tag_concepts.find(
+            id_clauses[0] if len(id_clauses) == 1 else {"$or": id_clauses}))
 
-        # Build lookup dict
-        return {str(c['_id']): c for c in concepts}
+        # Build lookup dict (key both _id and legacy id string forms)
+        lookup = {}
+        for c in concepts:
+            lookup[str(c['_id'])] = c
+            if c.get('id'):
+                lookup[str(c['id'])] = c
+        return lookup
 
     def search_concepts(self, query: str, limit: int = 10) -> List[Dict]:
         """

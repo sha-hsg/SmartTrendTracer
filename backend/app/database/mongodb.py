@@ -42,6 +42,26 @@ def safe_object_id(value) -> Optional[ObjectId]:
             return None
     return None
 
+
+def concept_id_query_variants(concept_id) -> list:
+    """All forms under which tag_instances.concept_id may store this id.
+
+    tag_instances.concept_id is stored in mixed form: ObjectId (98%),
+    stringified ObjectId, or a legacy slug id like 'c_method_...'. Querying a
+    single form silently drops rows — always use
+    {'concept_id': {'$in': concept_id_query_variants(cid)}}.
+    (For the inverse case — you hold the concept *document* — use
+    app.api.tag_ontology.utils.concept_id_variants.)
+    """
+    variants = []
+    for v in (concept_id, str(concept_id)):
+        if v not in variants:
+            variants.append(v)
+    oid = safe_object_id(concept_id)
+    if oid is not None and oid not in variants:
+        variants.append(oid)
+    return variants
+
 # Slow query threshold in seconds (configurable via environment)
 SLOW_QUERY_THRESHOLD = float(os.getenv("MONGODB_SLOW_QUERY_MS", "100")) / 1000  # Default 100ms
 

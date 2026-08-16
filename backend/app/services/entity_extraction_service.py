@@ -3,6 +3,7 @@ AI-powered entity extraction service for automatic annotation
 Migrated to use LLM Manager with LiteLLM
 """
 import json
+from bson import ObjectId
 from pathlib import Path
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timezone
@@ -483,10 +484,13 @@ class EntityExtractionService:
             if entity_info:
                 break
 
-        # Create concept
+        # Create concept. _id must be a native ObjectId — assigning the slug
+        # string as _id created the mixed-type tag_instances.concept_id data
+        # (the legacy custom id stays available in the "id" field).
+        new_oid = ObjectId()
         concept = {
             "id": concept_id,
-            "_id": concept_id,
+            "_id": new_oid,
             "slug": slug,
             "display_name": entity.text,
             "description": f"{entity.entity_type}: {entity.context[:200] if entity.context else ''}",
@@ -522,7 +526,7 @@ class EntityExtractionService:
 
         return {
             "id": concept_id,
-            "_id": concept_id,  # Include _id for compatibility with tag_instances
+            "_id": new_oid,  # Include _id for compatibility with tag_instances
             "tag": slug,
             "slug": slug,
             "display_name": entity.text,

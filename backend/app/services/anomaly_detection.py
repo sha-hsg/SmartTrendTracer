@@ -9,7 +9,7 @@ from collections import defaultdict
 import numpy as np
 import logging
 
-from app.database.mongodb import safe_object_id
+from app.database.mongodb import safe_object_id, concept_id_query_variants
 
 logger = logging.getLogger(__name__)
 
@@ -99,13 +99,10 @@ class AnomalyDetector:
         """
         daily_counts: Dict[str, int] = defaultdict(int)
 
-        concept_oid = safe_object_id(concept_id)
-        if concept_oid is None:
-            return daily_counts
-
-        # Get all tag instances for this concept
+        # Mixed-form concept_id (ObjectId / string / slug) — query all
+        # variants; slug-id concepts previously returned empty counts
         instances = list(self.db.tag_instances.find({
-            'concept_id': concept_oid
+            'concept_id': {'$in': concept_id_query_variants(concept_id)}
         }))
 
         if not instances:

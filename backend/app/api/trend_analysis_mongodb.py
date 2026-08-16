@@ -5,7 +5,7 @@ Provides comprehensive trend analysis across tweets, papers, and articles
 
 from fastapi import APIRouter, Query, HTTPException
 from pymongo import ASCENDING, DESCENDING
-from app.database.mongodb import get_database
+from app.database.mongodb import get_database, concept_id_query_variants
 from bson import ObjectId
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
@@ -422,16 +422,13 @@ async def get_trend_timeline(
     match_criteria = {'created_at': {'$gte': cutoff_date}}
 
     if concept_ids:
-        # Convert string IDs to ObjectIds
-        object_ids = []
+        # Mixed-form concept_id: always filter with all id variants. (The old
+        # code dropped the filter entirely when no id was a valid ObjectId,
+        # silently returning the unfiltered timeline.)
+        id_variants = []
         for cid in concept_ids:
-            try:
-                if len(cid) == 24:
-                    object_ids.append(ObjectId(cid))
-            except Exception:
-                pass
-        if object_ids:
-            match_criteria['concept_id'] = {'$in': object_ids}
+            id_variants.extend(concept_id_query_variants(cid))
+        match_criteria['concept_id'] = {'$in': id_variants}
 
     # Aggregation pipeline for timeline
     pipeline = [

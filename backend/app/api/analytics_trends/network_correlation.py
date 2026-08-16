@@ -7,6 +7,8 @@ from fastapi import APIRouter, Query
 from collections import defaultdict
 from bson import ObjectId
 
+from app.database.mongodb import concept_id_query_variants
+
 from .utils import (
     db,
     get_date_range,
@@ -52,7 +54,8 @@ def get_concept_network(
         node_connections[pair['concept_b_id']] += 1
 
     for i, concept_id in enumerate(cooc_data['concept_ids']):
-        concept = db.tag_concepts_v2.find_one({'_id': ObjectId(concept_id)})
+        concept = db.tag_concepts_v2.find_one(
+            {'_id': {'$in': concept_id_query_variants(concept_id)}})
         if concept:
             entity_type = concept.get('entity_type', 'concept')
             activity = node_connections.get(concept_id, 0)

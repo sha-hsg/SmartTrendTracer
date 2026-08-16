@@ -237,9 +237,12 @@ Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if
 - **Register static routes before `/{id}` routes.** FastAPI matches in registration
   order; `GET /{book_id}` registered before `GET /facets` shadows it into a 404.
   Applies to every APIRouter package (`books/__init__.py`, `articles/__init__.py`, …).
-- **`tag_instances.concept_id` is stored in mixed form (ObjectId AND string).**
-  Any count/lookup must query
-  `{'concept_id': {'$in': [oid, str(oid)]}}` — a single-type query silently returns 0.
+- **`tag_instances.concept_id` is stored in mixed form: ObjectId (~98%), plus
+  legacy slug-string ids like `c_method_...` (from 177 concepts whose `_id` is a
+  string).** Any count/lookup must query all variants — use
+  `app.database.mongodb.concept_id_query_variants(cid)` (id in hand) or
+  `app.api.tag_ontology.utils.concept_id_variants(concept)` (document in hand)
+  with `{'concept_id': {'$in': variants}}`. A single-form query silently drops rows.
 - **`tweets._id` is the Twitter ID string** — never insert tweets with an auto ObjectId
   `_id` or a separate `tweet_id` field; reuse the collector's save logic.
 - **`tag_concepts_v2._id` is ObjectId** — wrap incoming string IDs with `ObjectId()`.
