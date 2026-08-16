@@ -3,7 +3,7 @@ Concept-aware suggestion API for tweets (MongoDB version).
 Generates suggestions with proper concept structure (display_name, slug).
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 import json
@@ -362,11 +362,42 @@ async def apply_concepts_to_reddit(post_id: str, concepts: List[Dict[str, str]])
     }
 
 
+def _score_concept_text(query_lower: str, query_words: List[str],
+                        display_name: str, slug: str, description: str,
+                        aliases: List[str]) -> float:
+    """Pure text-match score in [0, 100]; 0 means no textual match at all.
+
+    Exact display-name/slug match ranks above exact alias match, which ranks
+    above substring matches, which rank above per-word matches. The usage
+    boost is applied by the caller and must never rescue a zero text score.
+    """
+    if not query_lower:
+        return 0
+
+    display_name_lower = display_name.lower()
+    slug_lower = slug.lower()
+    description_lower = (description or '').lower()
+    aliases_lower = [a.lower() for a in aliases]
+
+    if query_lower == display_name_lower or query_lower == slug_lower:
+        return 100
+    if any(query_lower == a for a in aliases_lower):
+        return 95
+    if query_lower in display_name_lower or query_lower in slug_lower:
+        return 80
+    if any(query_lower in a for a in aliases_lower):
+        return 75
+
+    haystacks = [display_name_lower, slug_lower, description_lower] + aliases_lower
+    word_matches = sum(1 for word in query_words if any(word in h for h in haystacks))
+    return (word_matches / len(query_words)) * 60 if query_words else 0
+
+
 @router.get("/search-concepts")
 async def search_concepts_semantic(
     query: str,
-    content_types: Optional[List[str]] = None,
-    limit: int = 20
+    content_types: Optional[List[str]] = Query(None),
+    limit: int = Query(20, ge=1, le=100)
 ):
     """
     Universal concept text search that can filter by content types.
@@ -412,37 +443,34 @@ async def search_concepts_semantic(
                 concept_map[concept_id]['content_types'].append(content_type)
             concept_map[concept_id]['usage_by_type'][content_type] = concept.get('count', 0)
         
-        # Perform semantic search (for now, simple text matching - can be enhanced with embeddings)
+        # Aliases: map concept_id (string form) -> [alias_text, ...] so that
+        # e.g. "LLM" finds "Large Language Model"
+        alias_map: dict = {}
+        try:
+            for alias_doc in db.tag_aliases_v2.find({}, {'alias_text': 1, 'concept_id': 1}):
+                if alias_doc.get('alias_text') and alias_doc.get('concept_id') is not None:
+                    alias_map.setdefault(str(alias_doc['concept_id']), []).append(alias_doc['alias_text'])
+        except Exception as alias_err:
+            logger.warning(f"Could not load concept aliases for search: {alias_err}")
+
+        # Text matching (word/substring based; see _score_concept_text)
         query_lower = query.lower()
         query_words = query_lower.split()
         
         results = []
         for concept_data in concept_map.values():
-            # Calculate similarity score
-            score = 0
-            display_name_lower = concept_data['display_name'].lower()
-            slug_lower = concept_data['slug'].lower()
-            description_lower = (concept_data.get('description') or '').lower()
-            
-            # Exact match gets highest score
-            if query_lower == display_name_lower or query_lower == slug_lower:
-                score = 100
-            # Contains query gets high score
-            elif query_lower in display_name_lower or query_lower in slug_lower:
-                score = 80
-            # Word matches get medium score
-            else:
-                word_matches = 0
-                for word in query_words:
-                    if word in display_name_lower or word in slug_lower or word in description_lower:
-                        word_matches += 1
-                score = (word_matches / len(query_words)) * 60
-            
-            # Boost score based on usage (popular concepts rank higher)
-            usage_boost = min(concept_data['total_usage'] / 10, 20)  # Max 20 point boost
-            score += usage_boost
-            
-            if score > 10:  # Only include concepts with reasonable similarity
+            text_score = _score_concept_text(
+                query_lower, query_words,
+                concept_data['display_name'], concept_data['slug'],
+                concept_data.get('description') or '',
+                alias_map.get(str(concept_data['concept_id']), [])
+            )
+
+            # Usage boost only refines ranking among textual matches — it must
+            # not surface popular concepts for unrelated queries
+            if text_score > 10:
+                usage_boost = min(concept_data['total_usage'] / 10, 20)  # Max 20 point boost
+                score = text_score + usage_boost
                 results.append({
                     'concept_id': concept_data['concept_id'],
                     'display_name': concept_data['display_name'],
@@ -453,17 +481,23 @@ async def search_concepts_semantic(
                     'total_usage': concept_data['total_usage'],
                     'content_types': concept_data['content_types'],
                     'usage_by_type': concept_data['usage_by_type'],
+                    'text_score': text_score,
                     'similarity_score': round(score, 2)
                 })
         
-        # Sort by similarity score (highest first)
-        results.sort(key=lambda x: x['similarity_score'], reverse=True)
-        
+        # Sort by text relevance first, usage second — an exact match on a
+        # rarely-used concept must outrank a popular substring match
+        results.sort(key=lambda x: (x['text_score'], x['total_usage']), reverse=True)
+        for r in results:
+            r.pop('text_score', None)
+
+        page = results[:limit]
         return {
             'query': query,
             'content_types_searched': content_types,
-            'total_results': len(results),
-            'results': results[:limit]
+            'total_results': len(page),
+            'total_matches': len(results),
+            'results': page
         }
         
     except Exception as e:

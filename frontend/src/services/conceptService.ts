@@ -70,11 +70,17 @@ class ConceptService {
    */
   async searchConcepts(query: string, limit: number = 10): Promise<Concept[]> {
     try {
-      const response = await axios.get(`/api/concepts/search`, {
-        params: { q: query, limit }
+      const response = await axios.get(`/api/concepts/suggestions/search-concepts`, {
+        params: { query, limit }
       });
-      
-      const concepts = response.data.concepts || [];
+
+      const concepts = (response.data.results || []).map((r: any) => ({
+        id: r.concept_id,
+        display_name: r.display_name,
+        slug: r.slug,
+        entity_type: r.entity_type,
+        description: r.description,
+      }));
       concepts.forEach((c: Concept) => this.cacheContent(c));
       return concepts;
     } catch (error) {
