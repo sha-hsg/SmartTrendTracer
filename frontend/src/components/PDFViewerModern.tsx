@@ -216,7 +216,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
   const loadingComponent = useMemo(() => (
     <div className="flex flex-col items-center justify-center py-12">
       <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-      <p className="text-gray-600">Loading PDF...</p>
+      <p className="text-gray-600 dark:text-gray-400">Loading PDF...</p>
     </div>
   ), [])
 
@@ -226,6 +226,13 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
       onLoadSuccess={onDocumentLoadSuccess}
       onLoadError={onDocumentLoadError}
       loading={loadingComponent}
+      error={
+        <Alert variant="destructive" className="m-4 max-w-md">
+          <AlertDescription>
+            Failed to load the PDF file. Use the download button to open it directly.
+          </AlertDescription>
+        </Alert>
+      }
       options={documentOptions}
     >
       <Page 
@@ -243,7 +250,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
     <div 
       className={cn(
         "flex flex-col h-full",
-        isFullscreen && "fixed inset-0 z-50 bg-white",
+        isFullscreen && "fixed inset-0 z-50 bg-white dark:bg-gray-950",
         className
       )}
     >
@@ -266,9 +273,10 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
               onChange={(e) => setPageInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && goToPage()}
               className="w-12 h-8 text-center"
+              disabled={!numPages}
             />
-            <span className="text-sm text-gray-500">
-              / {numPages || '?'}
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              / {numPages || '–'}
             </span>
           </div>
           
@@ -287,12 +295,12 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
             size="sm"
             variant="outline"
             onClick={handleZoomOut}
-            disabled={scale <= 0.5}
+            disabled={!numPages || scale <= 0.5}
           >
             <ZoomOut className="h-4 w-4" />
           </Button>
           
-          <span className="text-sm text-gray-600 min-w-[60px] text-center">
+          <span className="text-sm text-gray-600 dark:text-gray-400 min-w-[60px] text-center">
             {Math.round(scale * 100)}%
           </span>
           
@@ -300,7 +308,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
             size="sm"
             variant="outline"
             onClick={handleZoomIn}
-            disabled={scale >= 3.0}
+            disabled={!numPages || scale >= 3.0}
           >
             <ZoomIn className="h-4 w-4" />
           </Button>
@@ -331,12 +339,12 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
 
       {/* PDF Content */}
       <div 
-        className="flex-1 overflow-auto bg-gray-100 rounded-lg"
+        className="flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 rounded-lg"
         onContextMenu={handleContextMenu}
       >
         {error ? (
-          <Alert className="m-4 bg-red-50 border-red-200">
-            <AlertDescription className="text-red-800">
+          <Alert className="m-4 bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-900">
+            <AlertDescription className="text-red-800 dark:text-red-300">
               {error}
             </AlertDescription>
           </Alert>
@@ -349,9 +357,9 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
 
       {/* Selected Text Display */}
       {selectedText && (
-        <Card className="mt-2 p-2 bg-yellow-50 border-yellow-200">
+        <Card className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-900">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-700 truncate flex-1">
+            <p className="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
               Selected: {selectedText.substring(0, 100)}...
             </p>
             <Button
@@ -368,7 +376,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
       {/* Context Menu Portal */}
       {showContextMenu && ReactDOM.createPortal(
         <div
-          className="fixed z-[9999] bg-white rounded-lg shadow-2xl border border-gray-200 py-1 min-w-[180px]"
+          className="fixed z-[9999] bg-white dark:bg-gray-950 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 py-1 min-w-[180px]"
           style={{
             left: `${contextMenuPosition.x}px`,
             top: `${contextMenuPosition.y}px`,

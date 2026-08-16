@@ -108,16 +108,16 @@ const PaperDetailsSidebar: React.FC<PaperDetailsSidebarProps> = ({
   return (
     <div
       className={cn(
-        "bg-white border-r border-gray-200 transition-all duration-300 flex flex-col overflow-hidden shadow-sm",
+        "bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 flex flex-col overflow-hidden shadow-sm",
         sidebarCollapsed ? "w-16" : "w-[440px]"
       )}
     >
       {/* Enhanced Sidebar Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-900">
         {!sidebarCollapsed ? (
           <div className="flex items-center gap-2">
             <FileText className="h-4 w-4 text-blue-600" />
-            <h3 className="font-semibold text-sm text-gray-800">Paper Details</h3>
+            <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200">Paper Details</h3>
           </div>
         ) : (
           <FileText className="h-4 w-4 text-blue-600 mx-auto" />
@@ -126,7 +126,7 @@ const PaperDetailsSidebar: React.FC<PaperDetailsSidebarProps> = ({
           variant="ghost"
           size="sm"
           onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="hover:bg-white/60 transition-colors"
+          className="hover:bg-white/60 dark:hover:bg-gray-800/60 transition-colors"
           title={sidebarCollapsed ? "Expand details" : "Collapse details"}
         >
           {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}

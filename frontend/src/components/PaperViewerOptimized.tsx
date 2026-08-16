@@ -174,43 +174,43 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
   // Enhanced loading state with skeleton
   if (loading) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex bg-gray-50">
+      <div className="h-[calc(100vh-4rem)] flex bg-gray-50 dark:bg-gray-900">
         {/* Skeleton Sidebar */}
-        <div className="w-[440px] bg-white border-r border-gray-200 p-4 space-y-4 animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+        <div className="w-[440px] bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-gray-800 p-4 space-y-4 animate-pulse">
+          <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
           <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-8 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded"></div>
           </div>
           <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-            <div className="h-20 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+            <div className="h-20 bg-gray-200 dark:bg-gray-800 rounded"></div>
           </div>
           <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2"></div>
             <div className="flex flex-wrap gap-2">
-              <div className="h-6 bg-gray-200 rounded w-16"></div>
-              <div className="h-6 bg-gray-200 rounded w-20"></div>
-              <div className="h-6 bg-gray-200 rounded w-12"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-16"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-20"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-12"></div>
             </div>
           </div>
         </div>
 
         {/* Skeleton Main Content */}
         <div className="flex-1 flex flex-col">
-          <div className="p-4 border-b bg-white">
-            <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse"></div>
+          <div className="p-4 border-b dark:border-gray-800 bg-white dark:bg-gray-950">
+            <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded w-1/4 animate-pulse"></div>
           </div>
           <div className="flex-1 p-4">
-            <div className="h-full bg-white rounded-lg border p-6">
+            <div className="h-full bg-white dark:bg-gray-950 rounded-lg border dark:border-gray-800 p-6">
               <div className="space-y-4 animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-full"></div>
+                <div className="h-8 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
                 <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  <div className="h-4 bg-gray-200 rounded w-4/5"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-4/5"></div>
                 </div>
-                <div className="h-48 bg-gray-200 rounded"></div>
+                <div className="h-48 bg-gray-200 dark:bg-gray-800 rounded"></div>
               </div>
             </div>
           </div>
@@ -220,10 +220,10 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 group border border-gray-200"
+            className="absolute top-4 right-4 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 group border border-gray-200 dark:border-gray-700"
             title="Close viewer (Esc)"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         )}
       </div>
@@ -232,7 +232,7 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
 
   if (!paper) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-white relative">
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center bg-white dark:bg-gray-950 relative">
         <div className="max-w-md w-full px-6">
           <Alert variant="destructive" className="shadow-sm">
             <AlertDescription>
@@ -243,10 +243,10 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
         {onClose && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 group border border-gray-200"
+            className="absolute top-4 right-4 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 group border border-gray-200 dark:border-gray-700"
             title="Close viewer (Esc)"
           >
-            <X className="w-5 h-5 text-gray-600" />
+            <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </button>
         )}
       </div>
@@ -254,18 +254,7 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex bg-gray-50 relative">
-      {/* Modern Close Button */}
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-50 bg-white/90 backdrop-blur-sm rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-200 group border border-gray-200 hover:border-gray-300 hover:scale-105"
-          title="Close viewer (Esc)"
-        >
-          <X className="w-5 h-5 text-gray-600 group-hover:text-gray-900 transition-colors" />
-        </button>
-      )}
-
+    <div className="h-[calc(100vh-4rem)] flex bg-gray-50 dark:bg-gray-900 relative">
       {error && (
         <div className="absolute top-4 left-1/2 z-40 w-full max-w-2xl -translate-x-1/2 px-4">
           <Alert variant="destructive" className="shadow-sm">
@@ -323,12 +312,12 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Enhanced Header Bar with Keyboard Shortcuts */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {sidebarCollapsed && (
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900 truncate max-w-md">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate max-w-md">
                   {paper.title}
                 </h2>
               </div>
@@ -336,12 +325,12 @@ const PaperViewerOptimized: React.FC<PaperViewerOptimizedProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="text-xs text-gray-500 hidden sm:flex items-center gap-2">
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">
+            <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:flex items-center gap-2">
+              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
                 Ctrl+T
               </kbd>
               <span>Tags</span>
-              <kbd className="px-2 py-1 bg-gray-100 rounded text-xs">
+              <kbd className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
                 Ctrl+1-5
               </kbd>
               <span>Tabs</span>

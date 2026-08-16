@@ -275,11 +275,11 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
       {/* PDF Tab */}
       <TabsContent value="pdf" className="flex-1 p-4">
         {pdfAvailable ? (
-          <div className="h-full bg-white rounded-lg border overflow-hidden">
+          <div className="h-full bg-white dark:bg-gray-950 rounded-lg border dark:border-gray-800 overflow-hidden">
             <Suspense fallback={
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <span className="ml-2 text-gray-600">Loading PDF Viewer...</span>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading PDF Viewer...</span>
               </div>
             }>
               <PDFViewerModern
@@ -303,7 +303,7 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
             </Suspense>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full bg-white rounded-lg border">
+          <div className="flex items-center justify-center h-full bg-white dark:bg-gray-950 rounded-lg border dark:border-gray-800">
             <div className="text-center max-w-md">
               <div className="mb-4">
                 {!paper.processed ? (
@@ -312,12 +312,12 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 )}
               </div>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">
+              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {!paper.processed
                   ? "Processing PDF..."
                   : "PDF Not Available"}
               </h3>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 {!paper.processed
                   ? "The PDF is being processed to extract text and structure. This may take a few minutes."
                   : "The PDF file may not have been uploaded or may be corrupted. Try re-importing the paper."}
@@ -487,7 +487,7 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
                   {paper.metadata.supplementary.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex items-center justify-between p-3 border dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-100 rounded-lg">
@@ -495,7 +495,7 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
                         </div>
                         <div>
                           <p className="font-medium">{item.type || 'Supplementary Material'}</p>
-                          <p className="text-sm text-gray-500 truncate max-w-md">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-md">
                             {item.url}
                           </p>
                         </div>

@@ -54,10 +54,10 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
   pollingIntervalRef,
 }) => {
   return (
-    <div className="bg-gray-50 rounded-lg p-3 border">
+    <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border dark:border-gray-800">
       <div className="flex items-center gap-2 mb-2">
         <Cpu className="h-4 w-4 text-blue-600" />
-        <span className="text-sm font-medium text-gray-700">Processing Status</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Processing Status</span>
       </div>
       {isProcessing ? (
         <ProcessingTimer
@@ -93,13 +93,13 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 {paper.processor_used === "marker_service" && (
-                  <Badge className="text-xs bg-purple-100 text-purple-800 border-purple-300">Marker</Badge>
+                  <Badge className="text-xs bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-900">Marker</Badge>
                 )}
                 {paper.processor_used === "mineru_service" && (
-                  <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-300">MinerU</Badge>
+                  <Badge className="text-xs bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-900">MinerU</Badge>
                 )}
                 {paper.processor_used === "pypdfium2" && (
-                  <Badge className="text-xs bg-gray-100 text-gray-600 border-gray-300">Basic</Badge>
+                  <Badge className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700">Basic</Badge>
                 )}
                 {!["marker_service", "mineru_service", "pypdfium2"].includes(paper.processor_used || "") &&
                   paper.processor_used && (
@@ -109,14 +109,14 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
 
               {/* Reprocess Options */}
               {!isProcessing && (
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="text-xs text-gray-500 mb-2">Reprocess with different method:</div>
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Reprocess with different method:</div>
                   <div className="flex flex-wrap gap-1">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setShowMarkerModal(true)}
-                      className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300"
+                      className="h-6 px-2 text-xs bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-900"
                     >
                       <Cpu className="h-3 w-3 mr-1" />
                       Use Marker
@@ -138,7 +138,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                           console.error("Failed to start MinerU processing:", error);
                         }
                       }}
-                      className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300"
+                      className="h-6 px-2 text-xs bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-900"
                     >
                       <GraduationCap className="h-3 w-3 mr-1" />
                       Use MinerU
@@ -150,12 +150,12 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full bg-amber-100 flex items-center justify-center">
+                <div className="h-4 w-4 rounded-full bg-amber-100 dark:bg-amber-950 flex items-center justify-center">
                   <div className="h-2 w-2 rounded-full bg-amber-500" />
                 </div>
-                <span className="text-sm font-medium text-amber-700">Ready to Process</span>
+                <span className="text-sm font-medium text-amber-700 dark:text-amber-300">Ready to Process</span>
               </div>
-              <p className="text-xs text-gray-600">Choose a processing method to extract text and structure:</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Choose a processing method to extract text and structure:</p>
               {processingError && (
                 <Alert variant="destructive" className="mb-2">
                   <AlertDescription className="text-xs">{processingError}</AlertDescription>
@@ -186,7 +186,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                       }
                     }}
                     disabled={processingWithMarker || processingWithMinerU || processingWithAuto}
-                    className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-6 px-2 text-xs bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {processingWithMarker ? (
                       <>
@@ -223,7 +223,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                       }
                     }}
                     disabled={processingWithMarker || processingWithMinerU || processingWithAuto}
-                    className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="h-6 px-2 text-xs bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {processingWithMinerU ? (
                       <>
@@ -286,7 +286,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
           {/* Show retry button for errors */}
           {paper.processing_error && (
             <div className="mt-2 space-y-1">
-              <p className="text-xs text-red-600">{paper.processing_error.slice(0, 100)}...</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{paper.processing_error.slice(0, 100)}...</p>
               <div className="flex gap-2">
                 <Button
                   size="sm"
@@ -340,7 +340,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
 
       {/* Processing Status Indicator */}
       {isAnyProcessing && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
           <ProcessingStatusIndicator
             paperId={paperId}
             compact={true}

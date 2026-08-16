@@ -78,7 +78,7 @@ const renderAuthors = (paper: Paper) => {
   }
 
   return authorsList.length > 0 ? (
-    <div className="text-sm text-gray-700 space-y-1.5">
+    <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1.5">
       {authorsList.map((author, idx) => {
         let authorName = "";
         if (typeof author === "string") authorName = author;
@@ -99,7 +99,7 @@ const renderAuthors = (paper: Paper) => {
 
         return (
           <div key={idx} className="flex items-start gap-1">
-            <span className="font-medium text-gray-800">{authorName}</span>
+            <span className="font-medium text-gray-800 dark:text-gray-200">{authorName}</span>
             {affiliation && (
               <span className="text-xs text-gray-500 italic">• {affiliation}</span>
             )}
@@ -108,7 +108,7 @@ const renderAuthors = (paper: Paper) => {
       })}
     </div>
   ) : (
-    <div className="text-sm text-gray-400 italic">
+    <div className="text-sm text-gray-400 dark:text-gray-500 italic">
       No authors found. Click &quot;Extract&quot; to auto-detect.
     </div>
   );
@@ -155,24 +155,24 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
           size="sm"
           variant="default"
           onClick={handleEditMetadata}
-          className="w-fit bg-blue-600 hover:bg-blue-700 text-white"
+          className="w-fit"
           title="Edit paper metadata"
         >
           <Edit2 className="h-4 w-4 mr-1" />
           Edit
         </Button>
-        <h2 className="text-lg font-bold text-gray-900 leading-tight line-clamp-3">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 leading-tight line-clamp-3">
           {paper.title}
         </h2>
         {/* Quick Status Indicator */}
         <div className="flex items-center gap-2">
           {paper.processed ? (
-            <Badge className="text-xs bg-green-100 text-green-800 border-green-300">
+            <Badge className="text-xs bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300 border-green-300 dark:border-green-900">
               <CheckCircle className="h-3 w-3 mr-1" />
               Processed
             </Badge>
           ) : (
-            <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-300">
+            <Badge variant="outline" className="text-xs bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-900">
               <Loader2 className="h-3 w-3 mr-1" />
               Pending
             </Badge>
@@ -191,7 +191,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleToggleFlag}
-            className={`h-7 px-2 ${paper.flagged ? "text-red-600 bg-red-50 hover:bg-red-100" : "text-gray-400 hover:text-red-500 hover:bg-red-50"}`}
+            className={`h-7 px-2 ${paper.flagged ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 hover:bg-red-100 dark:hover:bg-red-900" : "text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950"}`}
             title={paper.flagged ? "Remove flag" : "Flag this paper"}
           >
             <Flag className={`h-4 w-4 ${paper.flagged ? "fill-current" : ""}`} />
@@ -204,7 +204,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
                 className={`p-0.5 transition-colors ${
                   paper.rating && star <= paper.rating
                     ? "text-yellow-400"
-                    : "text-gray-300 hover:text-yellow-300"
+                    : "text-gray-300 dark:text-gray-600 hover:text-yellow-300"
                 }`}
                 title={`Rate ${star} star${star > 1 ? "s" : ""}`}
               >
@@ -214,7 +214,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
             {paper.rating && (
               <button
                 onClick={() => handleSetRating(null)}
-                className="ml-1 text-xs text-gray-400 hover:text-gray-600"
+                className="ml-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                 title="Clear rating"
               >
                 ×
@@ -227,7 +227,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
       {/* Authors with Extract Buttons */}
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             <User className="h-3 w-3" />
             <span>Authors</span>
           </div>
@@ -265,7 +265,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
       {(paper.import_source || paper.import_url) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1 text-xs text-gray-500">
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <Download className="h-3 w-3" />
               <span>Import Source</span>
             </div>
@@ -294,7 +294,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
                     href={paper.import_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline break-all line-clamp-2"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline break-all line-clamp-2"
                     title={paper.import_url}
                   >
                     {paper.import_url}
@@ -308,7 +308,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
                 type="text"
                 value={editedImportUrl}
                 onChange={(e) => setEditedImportUrl(e.target.value)}
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Enter import URL"
               />
               <div className="flex gap-2">
@@ -342,7 +342,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
         {paper.publication_date && (
           <div className="flex items-center gap-2">
             <Calendar className="h-3 w-3 text-gray-500 flex-shrink-0" />
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
               {new Date(paper.publication_date).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
@@ -354,7 +354,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
         {(paper.conference || paper.journal) && (
           <div className="flex items-start gap-2">
             <Building2 className="h-3 w-3 text-gray-500 flex-shrink-0 mt-0.5" />
-            <span className="text-sm text-gray-700 break-words">
+            <span className="text-sm text-gray-700 dark:text-gray-300 break-words">
               {paper.conference || paper.journal}
             </span>
           </div>
@@ -362,7 +362,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
         {paper.page_count > 0 && (
           <div className="flex items-center gap-2">
             <BookOpen className="h-3 w-3 text-gray-500 flex-shrink-0" />
-            <span className="text-gray-700">{paper.page_count} pages</span>
+            <span className="text-gray-700 dark:text-gray-300">{paper.page_count} pages</span>
           </div>
         )}
         {(paper.arxiv_id || paper.doi) && (
@@ -374,7 +374,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
                   href={`https://arxiv.org/abs/${paper.arxiv_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-xs"
+                  className="text-blue-600 dark:text-blue-400 hover:underline text-xs"
                 >
                   arXiv:{paper.arxiv_id}
                 </a>
@@ -387,7 +387,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
                   href={`https://doi.org/${paper.doi}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline text-xs"
+                  className="text-blue-600 dark:text-blue-400 hover:underline text-xs"
                 >
                   DOI:{paper.doi}
                 </a>
@@ -421,14 +421,14 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
       <div className="space-y-2">
         <div className="flex items-center gap-2 mb-2">
           <ExternalLink className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-medium text-gray-700">External Resources</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">External Resources</span>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             variant="outline"
             onClick={() => setShowDBLPModal(true)}
-            className={cn("h-8 px-3 text-xs bg-gray-50 hover:bg-gray-100 border-gray-300", focusRingStyles)}
+            className={cn("h-8 px-3 text-xs bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-300 dark:border-gray-700", focusRingStyles)}
             title="Search on DBLP for BibTeX and download links"
           >
             <Search className="h-3 w-3 mr-1" />
@@ -440,7 +440,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
               variant="outline"
               asChild
               className={cn(
-                "h-8 px-3 text-xs bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-300",
+                "h-8 px-3 text-xs bg-orange-50 dark:bg-orange-950 hover:bg-orange-100 dark:hover:bg-orange-900 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-900",
                 focusRingStyles
               )}
             >
@@ -461,7 +461,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
               variant="outline"
               asChild
               className={cn(
-                "h-8 px-3 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-300",
+                "h-8 px-3 text-xs bg-green-50 dark:bg-green-950 hover:bg-green-100 dark:hover:bg-green-900 text-green-700 dark:text-green-300 border-green-300 dark:border-green-900",
                 focusRingStyles
               )}
             >
@@ -483,7 +483,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
               variant="outline"
               asChild
               className={cn(
-                "h-8 px-3 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300",
+                "h-8 px-3 text-xs bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-900",
                 focusRingStyles
               )}
             >
