@@ -36,17 +36,24 @@ python tweet_collector_service.py   # (collect_tweets.py wurde entfernt)
 ---
 
 ### DEF-004: @sama Tweets - "Already in database" Meldung
-**Status:** Known Issue
+**Status:** Resolved (2026-08-16 — Fehldiagnose, Symptom stammt vom Alt-Collector)
 **Priorität:** Medium
 **Bereich:** Backend - Tweet Collection
 
 **Problem:**
 @sama Tweets zeigen "already in database" obwohl sie neu sind.
 
-**Ursache:**
-Timezone-Mismatch in datetime Objekten.
+**Analyse 2026-08-16:** DB-Prüfung (28.528 Tweets, 1.236 von sama): 0 ID-Duplikate,
+`created_at` durchgehend BSON-Datetime, keine Naive/Aware-Mischung. Die Meldung kam
+vom Vor-Rewrite-Collector (Log 2025-08-11), dessen State nicht fortschritt; der
+heutige since_id-Fluss hat das Problem nicht. Ein Timezone-Fix-Script existiert
+nicht und ist nicht nötig.
 
-**Lösung:** Timezone-Fix Script ausführen (siehe Database Maintenance in CLAUDE.md)
+Was real existierte und behoben wurde: Pagination sortierte nur nach `created_at`
+(973 Timestamp-Kollisionen) → Tweets konnten auf Folgeseiten doppelt ERSCHEINEN.
+Fix: Tie-Break `(created_at, _id)` in browse.py. Zusätzlich wurden 89 Alt-Tweets
+(Idiap_ch) mit ObjectId-`_id` auf Twitter-ID-String migriert, damit sie die
+Duplikaterkennung nicht umgehen.
 
 ---
 

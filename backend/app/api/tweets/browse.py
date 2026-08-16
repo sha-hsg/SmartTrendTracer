@@ -60,7 +60,7 @@ def get_tweets(
         query['media'] = {'$exists': True, '$ne': []}
 
     try:
-        cursor = db.tweets.find(query).sort('created_at', DESCENDING).skip(skip).limit(limit)
+        cursor = db.tweets.find(query).sort([('created_at', DESCENDING), ('_id', DESCENDING)]).skip(skip).limit(limit)
         tweets = list(cursor)
     except Exception as e:
         logger.error(f"Error executing tweet query: {e}")
@@ -151,7 +151,7 @@ def faceted_search(
     total = db.tweets.count_documents(query)
 
     skip = (page - 1) * page_size
-    cursor = db.tweets.find(query).sort('created_at', DESCENDING).skip(skip).limit(page_size)
+    cursor = db.tweets.find(query).sort([('created_at', DESCENDING), ('_id', DESCENDING)]).skip(skip).limit(page_size)
     tweets = list(cursor)
 
     unique_usernames = list(set(t.get('author_username') for t in tweets if t.get('author_username')))

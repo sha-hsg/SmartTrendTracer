@@ -400,7 +400,7 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 ## 7. Known Issues & Open Work
 
 Full defect list with priorities: **`DEFECTS.md`** (currently open: DEF-003 Twitter media
-URL expiry [by design], DEF-004 @sama timezone duplicates, DEF-005 React key warning
+URL expiry [by design], DEF-004 resolved 2026-08 (misdiagnosis; pagination tie-break fixed instead), DEF-005 React key warning
 [won't fix], DEF-006 forwarded-article HTML previews [has fix script], DEF-007 Gary
 Marcus attribution, DEF-008 rate limiting [use collector service]. DEF-001 and DEF-002
 are resolved).
