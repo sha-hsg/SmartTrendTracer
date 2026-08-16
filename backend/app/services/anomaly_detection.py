@@ -31,7 +31,8 @@ class AnomalyDetector:
     def get_baseline_stats(
         self,
         concept_id: str,
-        window_days: int = 30
+        window_days: int = 30,
+        end_date: Optional[datetime] = None
     ) -> Dict[str, float]:
         """
         Calculate baseline statistics for a concept over a time window.
@@ -43,7 +44,12 @@ class AnomalyDetector:
         Returns:
             Dict with mean, std_dev, and daily counts
         """
-        end_date = datetime.now(timezone.utc)
+        if end_date is None:
+            end_date = datetime.now(timezone.utc)
+        # Snap to midnight so every baseline bucket is a FULL day (partial
+        # boundary days deflated the mean and inflated z-scores), and use an
+        # exclusive end so the window has exactly window_days buckets (was 31)
+        end_date = end_date.replace(hour=0, minute=0, second=0, microsecond=0)
         start_date = end_date - timedelta(days=window_days)
 
         # Get daily counts
@@ -52,7 +58,7 @@ class AnomalyDetector:
         # Ensure we have counts for all days
         counts = []
         current_date = start_date
-        while current_date <= end_date:
+        while current_date < end_date:
             day_key = current_date.strftime('%Y-%m-%d')
             counts.append(daily_counts.get(day_key, 0))
             current_date += timedelta(days=1)
@@ -60,22 +66,31 @@ class AnomalyDetector:
         if not counts or all(c == 0 for c in counts):
             return {
                 'mean': 0.0,
-                'std_dev': 0.0,
+                'std_dev': 0.5,  # Poisson-informed floor; a zero baseline is
+                                 # very quiet, not undefined
                 'min': 0,
                 'max': 0,
                 'total': 0,
+                'active_days': 0,
                 'daily_counts': counts
             }
 
-        mean = np.mean(counts)
-        std_dev = np.std(counts) if len(counts) > 1 else 0.0
+        mean = float(np.mean(counts))
+        # Sample std (ddof=1) — this is an estimate of the population sigma.
+        # Floor at the Poisson noise level sqrt(mean) (count data can never be
+        # quieter than Poisson) and at 0.5 for near-zero baselines; the old
+        # flat 1.0 floor was scale-dependent nonsense (a steady 1000/day
+        # concept alarmed on +2.5/day, a 2/day concept on the same +2.5/day).
+        std_dev = float(np.std(counts, ddof=1)) if len(counts) > 1 else 0.0
+        std_dev = max(std_dev, float(np.sqrt(mean)), 0.5)
 
         return {
-            'mean': float(mean),
-            'std_dev': float(std_dev) if std_dev > 0 else 1.0,  # Avoid division by zero
+            'mean': mean,
+            'std_dev': std_dev,
             'min': int(min(counts)),
             'max': int(max(counts)),
             'total': int(sum(counts)),
+            'active_days': int(sum(1 for c in counts if c > 0)),
             'daily_counts': counts
         }
 
@@ -122,6 +137,8 @@ class AnomalyDetector:
             'tweet': ('tweets', 'created_at'),
             'article': ('articles', 'published_at'),
             'paper': ('papers', 'created_at'),
+            'reddit_post': ('reddit_posts', 'created_at'),
+            'book': ('books', 'created_at'),
         }
 
         content_dates: Dict[str, datetime] = {}
@@ -149,7 +166,7 @@ class AnomalyDetector:
             if date_value is not None and date_value.tzinfo is None:
                 # DB datetimes are naive UTC - normalize for aware comparison
                 date_value = date_value.replace(tzinfo=timezone.utc)
-            if date_value and start_date <= date_value <= end_date:
+            if date_value and start_date <= date_value < end_date:
                 day_key = date_value.strftime('%Y-%m-%d')
                 daily_counts[day_key] += 1
 
@@ -173,7 +190,7 @@ class AnomalyDetector:
             Z-score value
         """
         if std_dev <= 0:
-            return 0.0 if value == mean else (3.0 if value > mean else -3.0)
+            return 0.0
         return (value - mean) / std_dev
 
     def detect_spikes(
@@ -193,24 +210,30 @@ class AnomalyDetector:
         Returns:
             Spike info dict or None if no spike
         """
-        # Get baseline stats from last 30 days
-        baseline = self.get_baseline_stats(concept_id, window_days=30)
-
-        # Get recent activity
+        # Recent window first, then a baseline that ENDS where the window
+        # starts — the old code baselined over the last 30 days including the
+        # spike itself, so long spikes suppressed their own z-score (a week of
+        # 10/day after 24 quiet days scored z=1.85: no alarm).
         recent_end = datetime.now(timezone.utc)
         recent_start = recent_end - timedelta(hours=recent_hours)
+
+        baseline = self.get_baseline_stats(concept_id, window_days=30, end_date=recent_start)
 
         recent_counts = self._get_daily_counts(concept_id, recent_start, recent_end)
         recent_total = sum(recent_counts.values())
 
         # Normalize to daily rate
-        recent_daily_rate = recent_total / (recent_hours / 24) if recent_hours > 0 else 0
+        recent_days = recent_hours / 24 if recent_hours > 0 else 1
+        recent_daily_rate = recent_total / recent_days
 
-        # Calculate Z-score
+        # z of a k-day MEAN against single-day sigma must use the standard
+        # error sigma/sqrt(k); without it sensitivity silently dropped with
+        # longer windows (x0.38 at 168h)
+        std_of_mean = baseline['std_dev'] / np.sqrt(max(recent_days, 1))
         z_score = self.calculate_z_score(
             recent_daily_rate,
             baseline['mean'],
-            baseline['std_dev']
+            std_of_mean
         )
 
         if z_score >= threshold:
@@ -252,19 +275,15 @@ class AnomalyDetector:
         recent_end = datetime.now(timezone.utc)
         recent_start = recent_end - timedelta(hours=hours)
 
-        # Aggregate recent tag instances by concept
+        # Aggregate RECENT tag instances by concept. created_at here is the
+        # tagging timestamp (a proxy for recency); the old pipeline had no
+        # date filter at all, so candidates were the 100 most-tagged concepts
+        # of ALL TIME and a newly spiking concept was structurally invisible.
         pipeline = [
             {
-                '$lookup': {
-                    'from': 'tweets',
-                    'localField': 'content_id',
-                    'foreignField': '_id',
-                    'as': 'tweet'
-                }
-            },
-            {
                 '$match': {
-                    'concept_id': {'$ne': None}
+                    'concept_id': {'$ne': None},
+                    'created_at': {'$gte': recent_start - timedelta(days=30)}
                 }
             },
             {
@@ -426,11 +445,17 @@ def get_concept_cooccurrence(
                 content_id = str(inst['content_id'])
                 concept_id = str(inst['concept_id'])
                 content_concepts[f"{content_type}:{content_id}"].add(concept_id)
-                concept_counts[concept_id] += 1
 
     process_content_batch(tweets, 'tweet')
     process_content_batch(articles, 'article')
     process_content_batch(papers, 'paper')
+
+    # Count per DOCUMENT (set semantics) so the Jaccard below divides a
+    # document-level intersection by document-level totals; per-instance
+    # counting deflated the strength whenever a doc carried duplicate tags
+    for concepts in content_concepts.values():
+        for concept_id in concepts:
+            concept_counts[concept_id] += 1
 
     # Get top N concepts by count
     top_concept_ids = [cid for cid, _ in sorted(concept_counts.items(), key=lambda x: x[1], reverse=True)[:top_n]]
@@ -445,8 +470,9 @@ def get_concept_cooccurrence(
     matrix = [[0] * n for _ in range(n)]
     cooccurrence_counts = defaultdict(int)
 
+    top_concept_id_set = set(top_concept_ids)
     for content_key, concepts in content_concepts.items():
-        concept_list = [c for c in concepts if c in top_concept_ids]
+        concept_list = [c for c in concepts if c in top_concept_id_set]
         for i, c1 in enumerate(concept_list):
             for c2 in concept_list[i+1:]:
                 # Order pair consistently
@@ -466,8 +492,8 @@ def get_concept_cooccurrence(
     for (c1, c2), count in cooccurrence_counts.items():
         if count >= min_cooccurrence:
             # Jaccard = intersection / union
-            count_c1 = concept_counts.get(c1, 1)
-            count_c2 = concept_counts.get(c2, 1)
+            count_c1 = concept_counts.get(c1, 0)
+            count_c2 = concept_counts.get(c2, 0)
             jaccard = count / (count_c1 + count_c2 - count) if (count_c1 + count_c2 - count) > 0 else 0
 
             concept_a = concept_map.get(c1, {})

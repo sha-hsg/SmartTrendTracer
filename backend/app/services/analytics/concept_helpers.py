@@ -143,10 +143,12 @@ def calculate_tag_velocity(current_count: int, previous_count: int) -> float:
     """
     if previous_count > 0:
         return ((current_count - previous_count) / previous_count) * 100
-    elif current_count > 0:
-        return 100.0
-    else:
-        return 0.0
+    if current_count >= 3:
+        # New concept (zero baseline): growth relative to a baseline of 1 so
+        # magnitude still ranks — the old flat 100.0 made 0->400 sort BELOW
+        # 1->3 (+200%) and let 0->1 singletons flood the "hot" list.
+        return (current_count - 1) * 100.0
+    return 0.0
 
 
 def determine_trend(velocity: float, rising_threshold: float = 20, declining_threshold: float = -20) -> str:

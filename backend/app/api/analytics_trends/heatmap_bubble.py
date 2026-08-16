@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query
 from datetime import datetime, timedelta, timezone
 from collections import Counter, defaultdict
 
-from app.database.mongodb import safe_object_id
+from app.database.mongodb import safe_object_id, concept_id_query_variants
 
 from .utils import (
     normalize_datetime,
@@ -184,10 +184,14 @@ def get_bubble_chart_data(
         Tweets use their Twitter ID string as `_id`, so the string content_id
         is used directly against db.tweets; articles/papers use ObjectIds.
         """
+        # Sort by tagging time so the sample is the OLDEST 100 instances —
+        # unsorted limit(100) made "first seen" the earliest of an arbitrary
+        # sample, biased late for any concept with >100 instances. Query all
+        # concept_id forms (mixed ObjectId/string storage).
         instances = db.tag_instances.find(
-            {'concept_id': concept_id},
+            {'concept_id': {'$in': concept_id_query_variants(concept_id)}},
             {'content_type': 1, 'content_id': 1}
-        ).limit(100)
+        ).sort('created_at', 1).limit(100)
 
         ids_by_type = defaultdict(list)
         for inst in instances:

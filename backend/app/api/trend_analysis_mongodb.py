@@ -414,7 +414,7 @@ async def get_trend_timeline(
     if granularity == "monthly":
         date_modifier = {'$dateToString': {'format': '%Y-%m', 'date': '$created_at'}}
     elif granularity == "weekly":
-        date_modifier = {'$dateToString': {'format': '%Y-W%V', 'date': '$created_at'}}
+        date_modifier = {'$dateToString': {'format': '%G-W%V', 'date': '$created_at'}}  # %G = ISO year (with %Y, year-end weeks collided into January)
     else:  # daily
         date_modifier = {'$dateToString': {'format': '%Y-%m-%d', 'date': '$created_at'}}
 
@@ -459,15 +459,13 @@ async def get_trend_timeline(
         concepts_timeline[concept_id][date] = item['count']
         dates_set.add(date)
 
-    # Batch-fetch concept details (fixes N+1)
-    all_concept_obj_ids = []
+    # Batch-fetch concept details (fixes N+1). Query BOTH _id forms —
+    # legacy slug-id concepts were silently dropped from the series.
+    all_concept_ids = []
     for concept_id in concepts_timeline.keys():
-        try:
-            all_concept_obj_ids.append(ObjectId(concept_id))
-        except Exception:
-            pass
+        all_concept_ids.extend(concept_id_query_variants(concept_id))
     concept_details = {}
-    for c in db.tag_concepts_v2.find({'_id': {'$in': all_concept_obj_ids}}):
+    for c in db.tag_concepts_v2.find({'_id': {'$in': all_concept_ids}}):
         concept_details[str(c['_id'])] = {
             'display_name': c.get('display_name', c.get('name', '')),
             'slug': c.get('slug', ''),
@@ -501,9 +499,13 @@ async def get_trend_timeline(
 
     # Limit results based on whether specific concepts were requested
     if concept_ids:
-        # When specific concepts are requested, only return those concepts
-        # Filter series to only include requested concept_ids
-        requested_ids = set(concept_ids)
+        # When specific concepts are requested, only return those concepts.
+        # Compare against ALL id variants — the series key is the ObjectId hex,
+        # so a slug/legacy-id request previously matched nothing (empty series
+        # while dates/statistics stayed populated).
+        requested_ids = set()
+        for cid in concept_ids:
+            requested_ids.update(str(v) for v in concept_id_query_variants(cid))
         series = [s for s in series if s['concept_id'] in requested_ids]
     elif len(series) > max_concepts:
         # When no specific concepts requested, limit to top N concepts
