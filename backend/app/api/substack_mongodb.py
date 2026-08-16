@@ -4,6 +4,10 @@ MongoDB-based Substack API - compatible with full MongoDB system
 
 from fastapi import APIRouter, HTTPException, Query
 from app.database.mongodb import get_database
+from app.services.analytics.concept_helpers import (
+    count_tags_for_content, calculate_tag_velocity, determine_trend,
+)
+from app.services.analytics.date_helpers import get_previous_period_range
 from typing import Dict, Any
 from datetime import datetime, timezone, timedelta
 import logging
@@ -94,9 +98,11 @@ async def get_substack_trends(
             author = article.get('author', 'Unknown')
             author_stats[author]["articles"] += 1
             
-            # Estimate word count from content length
-            content = article.get('content', '') or article.get('summary', '') or ''
-            estimated_words = len(content.split()) if content else 0
+            # Use the stored word_count; fall back to counting the markdown
+            # (the old code read 'content', which does not exist — the field
+            # is 'content_markdown' — so it always fell back to the summary)
+            estimated_words = article.get('word_count') or len(
+                (article.get('content_markdown') or article.get('summary') or '').split())
             author_stats[author]["total_words"] += estimated_words
             
             # Add topics for this author
@@ -121,34 +127,99 @@ async def get_substack_trends(
                 "productivity": productivity
             })
         
-        # Tag analysis
-        all_tags = []
-        for article in articles:
-            tags = article.get('tags', [])
-            if isinstance(tags, list):
-                for tag in tags:
-                    if isinstance(tag, str):
-                        all_tags.append(tag)
-                    elif isinstance(tag, dict) and 'tag' in tag:
-                        all_tags.append(tag['tag'])
-        
-        tag_counter = Counter(all_tags)
-        top_tags = [{"tag": tag, "count": count} for tag, count in tag_counter.most_common(10)]
-        
-        # Velocity trends (articles per day)
+        # Tag analysis from tag_instances/concepts — the articles collection
+        # has no 'tags' field, so the old loop always produced an empty list
+        from app.services.concept_only_tag_service import ConceptOnlyTagService
+        concept_service = ConceptOnlyTagService()
+
+        current_counts_raw = count_tags_for_content(db, articles, 'article', date_field='published_at')
+        current_counts = Counter()
+        for cid, cnt in current_counts_raw.items():
+            current_counts[str(cid)] += cnt
+
+        prev_start, prev_end = get_previous_period_range(start_date, days)
+        previous_articles = list(db.articles.find({
+            'published_at': {'$gte': prev_start, '$lt': prev_end}
+        }))
+        previous_counts_raw = count_tags_for_content(db, previous_articles, 'article', date_field='published_at')
+        previous_counts = Counter()
+        for cid, cnt in previous_counts_raw.items():
+            previous_counts[str(cid)] += cnt
+
+        concept_map = concept_service.get_concepts_by_ids(
+            list(set(current_counts) | set(previous_counts)))
+
+        def _name(cid: str) -> str:
+            return concept_map.get(cid, {}).get('display_name', cid)
+
+        top_tags = [
+            {"tag": _name(cid), "count": count}
+            for cid, count in current_counts.most_common(10)
+        ]
+
+        # Real trending-up: growth vs the immediately preceding equal period
+        # (the old value was literally top_topics[:5]; the UI rendered
+        # "+undefined articles")
+        trending_up = sorted(
+            (
+                {
+                    "term": _name(cid),
+                    "growth": count - previous_counts.get(cid, 0),
+                    "current_count": count,
+                }
+                for cid, count in current_counts.items()
+                if count - previous_counts.get(cid, 0) > 0
+            ),
+            key=lambda t: (t["growth"], t["current_count"]),
+            reverse=True,
+        )[:5]
+
+        # Per-topic velocity in the shape the Velocity tab renders
+        # ({topic, velocity, first_period, second_period, trend}); the old
+        # per-day counts produced 30 blank rows in the UI
         velocity_trends = []
-        for i in range(min(days, 30)):  # Last 30 days max for visualization
-            day = start_date + timedelta(days=i)
-            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
-            day_end = day_start + timedelta(days=1)
-            
-            day_articles = [a for a in articles if day_start <= _as_utc(a.get('published_at')) < day_end]
-            
+        for cid, count in current_counts.most_common(15):
+            previous = previous_counts.get(cid, 0)
+            velocity = calculate_tag_velocity(count, previous)
+            trend = determine_trend(velocity)
             velocity_trends.append({
-                "date": day.strftime("%Y-%m-%d"),
-                "articles": len(day_articles),
-                "total_words": sum(len((a.get('content') or a.get('summary') or '').split()) for a in day_articles)
+                "topic": _name(cid),
+                "velocity": round(velocity, 1),
+                "first_period": previous,
+                "second_period": count,
+                "trend": "falling" if trend == "declining" else trend,
             })
+
+        # Emerging themes: concepts absent in the previous period
+        emerging_themes = [
+            {
+                "theme": _name(cid),
+                "type": "new" if previous_counts.get(cid, 0) == 0 else "growing",
+                "occurrences": count,
+                "growth": f"+{count - previous_counts.get(cid, 0)}",
+            }
+            for cid, count in current_counts.most_common(50)
+            if count >= 2 and count > 2 * max(previous_counts.get(cid, 0), 0)
+        ][:8]
+
+        # Tag relationships from the existing co-occurrence service
+        tag_relationships = []
+        try:
+            from app.services.anomaly_detection import get_concept_cooccurrence
+            cooc = get_concept_cooccurrence(db, days=days, min_cooccurrence=2, top_n=25)
+            related_by_tag = defaultdict(list)
+            for pair in cooc.get('pairs', []):
+                related_by_tag[pair['concept_a']].append(
+                    {"tag": pair['concept_b'], "strength": pair['strength']})
+                related_by_tag[pair['concept_b']].append(
+                    {"tag": pair['concept_a'], "strength": pair['strength']})
+            tag_relationships = [
+                {"tag": tag, "related": sorted(rel, key=lambda r: r['strength'], reverse=True)[:6]}
+                for tag, rel in sorted(related_by_tag.items(),
+                                       key=lambda kv: len(kv[1]), reverse=True)[:10]
+            ]
+        except Exception as cooc_err:
+            logger.warning(f"Co-occurrence for substack trends failed: {cooc_err}")
         
         return {
             "period": f"{days} days",
@@ -159,7 +230,7 @@ async def get_substack_trends(
             },
             "topic_trends": {
                 "top_topics": top_topics,
-                "trending_up": top_topics[:5]  # Simple trending up = top topics
+                "trending_up": trending_up
             },
             "author_trends": {
                 "most_active": most_active_authors,
@@ -168,10 +239,8 @@ async def get_substack_trends(
             },
             "tag_trends": {
                 "top_tags": top_tags,
-                # PARTIAL STUB: co-occurrence analysis not implemented; kept empty
-                # because the frontend (substack-trends/TabPanels.tsx) reads this field.
-                "tag_relationships": [],
-                "unique_tags": len(set(all_tags))
+                "tag_relationships": tag_relationships,
+                "unique_tags": len(current_counts)
             },
             # PARTIAL STUB: snippet analysis not implemented; kept empty because
             # the frontend (SubstackTrendsModern.tsx) reads snippet_insights.
@@ -180,7 +249,8 @@ async def get_substack_trends(
                 "important_highlights": [],
                 "total_snippets": 0
             },
-            "velocity_trends": velocity_trends
+            "velocity_trends": velocity_trends,
+            "emerging_themes": emerging_themes
         }
         
     except Exception as e:
