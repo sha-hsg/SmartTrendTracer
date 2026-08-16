@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -23,13 +24,26 @@ def _load_prompt_template(prompt_key: str) -> str:
     return template
 
 
-TREND_KEYWORDS = [
-    'trend', 'trending', 'hot topic', 'popular', 'key trends',
-    'what are people talking about', 'what\'s happening',
-    'current topics', 'latest', 'emerging', 'buzz',
-    'hot', 'what\'s hot', 'popular topics', 'main topics',
-    'key topics', 'biggest', 'most discussed', 'frequently mentioned'
+# Single words are matched on word boundaries (so 'hot' does not fire inside
+# 'photo' or 'hotel'); multi-word phrases are matched as substrings after
+# lowercasing and normalizing curly apostrophes.
+_TREND_WORDS = [
+    # English
+    'trend', 'trends', 'trending', 'popular', 'latest', 'emerging', 'buzz',
+    'hot', 'hottest', 'biggest',
+    # German
+    'angesagt', 'meistdiskutiert', 'beliebt', 'beliebtesten', 'trendthemen',
+    'gesprächsthemen',
 ]
+_TREND_PHRASES = [
+    'what are people talking about', "what's happening", 'most discussed',
+    'frequently mentioned', 'current topics', 'main topics', 'key topics',
+    'wichtigsten themen', 'aktuellen themen', 'aktuelle themen',
+    'heiße themen', 'heisse themen', 'aufkommende themen',
+]
+TREND_KEYWORDS = _TREND_WORDS + _TREND_PHRASES  # kept for external references
+
+_TREND_WORD_RE = re.compile(r'\b(?:' + '|'.join(map(re.escape, _TREND_WORDS)) + r')\b')
 
 
 def is_trend_query(question: str) -> bool:
@@ -42,8 +56,10 @@ def is_trend_query(question: str) -> bool:
     Returns:
         True if the question is trend-related, False otherwise
     """
-    question_lower = question.lower()
-    return any(keyword in question_lower for keyword in TREND_KEYWORDS)
+    question_lower = question.lower().replace('\u2019', "'")
+    if _TREND_WORD_RE.search(question_lower):
+        return True
+    return any(phrase in question_lower for phrase in _TREND_PHRASES)
 
 
 def analyze_trends(search_fn, llm_manager, user_id: str,
@@ -67,10 +83,11 @@ def analyze_trends(search_fn, llm_manager, user_id: str,
     """
     # Determine source type for the prompt
     if content_types:
-        if len(content_types) == 1:
-            source_type = content_types[0] + 's'  # tweet -> tweets
+        plurals = [t + 's' for t in content_types]
+        if len(plurals) == 1:
+            source_type = plurals[0]
         else:
-            source_type = ' and '.join(content_types) + 's'
+            source_type = ', '.join(plurals[:-1]) + ' and ' + plurals[-1]
     else:
         source_type = 'documents'
 

@@ -5,7 +5,7 @@ Replaces rag_simple.py with concept-aware search
 
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import logging
 
 from app.services.rag_service_concepts import ConceptBasedRAGService
@@ -26,7 +26,7 @@ def get_rag_service() -> ConceptBasedRAGService:
 class RAGQuery(BaseModel):
     """Model for RAG query request"""
     question: str
-    k: int = 10
+    k: int = Field(default=10, ge=1, le=100)
     use_concepts: bool = True
     concept_filter: Optional[List[str]] = None
     content_types: Optional[List[str]] = None  # Filter by ['tweet', 'article', 'paper']

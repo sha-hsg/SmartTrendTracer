@@ -123,7 +123,7 @@ def rebuild_index(db, concept_service, use_gemini_embeddings, openai_client, pat
                 'author': tweet.get('author_username', ''),
                 'created_at': tweet.get('created_at'),
                 'concepts': concept_names,
-                'concept_ids': [c['id'] for c in concepts]
+                'concept_ids': sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
             })
             doc_map[doc_id] = doc_text
             doc_id += 1
@@ -156,7 +156,7 @@ def rebuild_index(db, concept_service, use_gemini_embeddings, openai_client, pat
                 'author': article.get('author_name'),
                 'published_at': article.get('published_at'),
                 'concepts': concept_names,
-                'concept_ids': [c['id'] for c in concepts]
+                'concept_ids': sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
             })
             doc_map[doc_id] = doc_text
             doc_id += 1
@@ -213,7 +213,7 @@ def rebuild_index(db, concept_service, use_gemini_embeddings, openai_client, pat
                 'title': paper.get('title', ''),
                 'year': paper.get('year'),
                 'concepts': concept_names,
-                'concept_ids': [c['id'] for c in concepts]
+                'concept_ids': sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
             })
             doc_map[doc_id] = doc_text
             doc_id += 1

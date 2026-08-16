@@ -66,9 +66,10 @@ def search(index, metadata, doc_map, use_gemini_embeddings, openai_client, embed
     # to ensure proportional representation (sparse types like articles shouldn't be drowned out by tweets)
     results_by_type = {'tweet': [], 'article': [], 'paper': [], 'snippet': []}
     filtered_out = {'tweet': 0, 'article': 0, 'paper': 0}
+    concept_filtered = 0
 
     for idx, distance in zip(indices[0], distances[0]):
-        if idx < 0:
+        if idx < 0 or idx >= len(metadata):
             continue
 
         meta = metadata[idx]
@@ -83,7 +84,8 @@ def search(index, metadata, doc_map, use_gemini_embeddings, openai_client, embed
         if concept_filter:
             # Check if any of the document's concepts match the filter
             doc_concept_ids = meta.get('concept_ids', [])
-            if not any(cid in concept_filter for cid in doc_concept_ids):
+            if not any(str(cid) in concept_filter for cid in doc_concept_ids):
+                concept_filtered += 1
                 continue
 
         result = {
@@ -125,6 +127,8 @@ def search(index, metadata, doc_map, use_gemini_embeddings, openai_client, embed
         final_type_counts[rtype] = final_type_counts.get(rtype, 0) + 1
 
     logger.info(f"FILTERED OUT by content_types: tweets={filtered_out.get('tweet', 0)}, articles={filtered_out.get('article', 0)}, papers={filtered_out.get('paper', 0)}")
+    if concept_filter:
+        logger.info(f"FILTERED OUT by concept_filter: {concept_filtered}")
     logger.info(f"FINAL results by type: tweets={final_type_counts.get('tweet', 0)}, articles={final_type_counts.get('article', 0)}, papers={final_type_counts.get('paper', 0)}")
 
     # Show first few articles/papers if any
@@ -139,30 +143,35 @@ def search(index, metadata, doc_map, use_gemini_embeddings, openai_client, embed
 def _blend_results(results_by_type: Dict, content_types: Optional[List[str]], k: int) -> List[Dict]:
     results = []
     if content_types and len(content_types) > 1:
-        # Calculate slots per type (ensure at least some from each available type)
+        # Quota phase: hand out slots round-robin, one per type per round, so a
+        # small k can never starve the last type (the old block-wise allocation
+        # gave e.g. k=5 over 3 types as 3/2/0). For k=10 over 3 types the
+        # outcome is unchanged (3/3/3 + 1 pooled).
         num_types = len(content_types)
         min_per_type = max(3, k // (num_types * 2))  # At least 3, or k/(2*num_types)
+        taken = {ctype: 0 for ctype in content_types}
         remaining_slots = k
 
-        # First, add minimum from each type that has results
-        for ctype in content_types:
-            type_results = results_by_type.get(ctype, [])
-            to_add = min(min_per_type, len(type_results), remaining_slots)
-            results.extend(type_results[:to_add])
-            remaining_slots -= to_add
-            logger.info(f"Added {to_add} {ctype}s (minimum quota)")
+        for _ in range(min_per_type):
+            if remaining_slots <= 0:
+                break
+            for ctype in content_types:
+                if remaining_slots <= 0:
+                    break
+                type_results = results_by_type.get(ctype, [])
+                if taken[ctype] < len(type_results):
+                    results.append(type_results[taken[ctype]])
+                    taken[ctype] += 1
+                    remaining_slots -= 1
 
-        # Then fill remaining slots proportionally from what's left
+        for ctype in content_types:
+            logger.info(f"Added {taken[ctype]} {ctype}s (minimum quota)")
+
+        # Then fill remaining slots by score from what's left
         if remaining_slots > 0:
             all_remaining = []
             for ctype in content_types:
-                type_results = results_by_type.get(ctype, [])
-                # Skip already-added items
-                already_added = min(min_per_type, len(type_results))
-                remaining_of_type = type_results[already_added:]
-                all_remaining.extend(remaining_of_type)
-
-            # Sort by score and add remaining
+                all_remaining.extend(results_by_type.get(ctype, [])[taken[ctype]:])
             all_remaining.sort(key=lambda x: x['score'], reverse=True)
             results.extend(all_remaining[:remaining_slots])
 
