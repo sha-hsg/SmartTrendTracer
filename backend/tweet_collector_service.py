@@ -176,6 +176,19 @@ BASIC_ACCOUNT_MODE = os.getenv("BASIC_ACCOUNT_MODE", "true").lower() == "true"
 
 # Main collection interval (default 30 min for normal, 15 min for Basic)
 COLLECTION_INTERVAL_SECONDS = int(os.getenv("COLLECTION_INTERVAL_SECONDS", "900" if BASIC_ACCOUNT_MODE else "1800"))
+# Backoff when the X API reports depleted credits (402): probe once per this
+# interval instead of hammering every account every cycle (Sep 2026: a week of
+# 402s produced 12k error lines and ~2k pointless requests/day)
+CREDITS_BACKOFF_SECONDS = int(os.getenv("CREDITS_BACKOFF_SECONDS", "3600"))
+
+# Set when any request returns 402 Payment Required; cleared at cycle start.
+credits_depleted = False
+
+
+def is_credits_depleted_error(error_msg: str) -> bool:
+    """Classify an API error as the X credit-exhaustion 402."""
+    msg = str(error_msg)
+    return "402" in msg or "Payment Required" in msg or "credits depleted" in msg.lower()
 # Batch size - how many accounts to collect before longer pause
 BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12" if BASIC_ACCOUNT_MODE else "3"))
 # Delay between accounts in same batch
@@ -825,6 +838,14 @@ def collect_account_tweets_with_retry(client: tweepy.Client, account_id: str,
                         logger.error(f"❌ Max retries reached for @{username}, skipping")
                         break
                         
+                elif is_credits_depleted_error(error_msg):
+                    global credits_depleted
+                    if not credits_depleted:
+                        logger.error("💳 X API credits depleted (402 Payment Required) — "
+                                     "aborting this cycle and backing off. "
+                                     "Top up at https://developer.x.com/en/portal/dashboard")
+                    credits_depleted = True
+                    break
                 elif "401" in error_msg or "Unauthorized" in error_msg:
                     logger.error(f"🔒 Authentication error for @{username}: {error_msg}")
                     break
@@ -858,6 +879,9 @@ def run_collection_cycle():
     """
     Run one complete collection cycle for all accounts with intelligent batching.
     """
+    global credits_depleted
+    credits_depleted = False  # re-probe each cycle; a 402 re-arms the backoff
+
     logger.info("=" * 60)
     logger.info("🚀 Starting collection cycle with improved rate limit handling")
     
@@ -971,6 +995,11 @@ def run_collection_cycle():
                 logger.info("⏳ Waiting 15 minutes for rate limit reset...")
                 time.sleep(900)
                 
+        elif is_credits_depleted_error(str(auth_error)):
+            credits_depleted = True
+            logger.error("💳 X API credits depleted (402) at cycle start — backing off. "
+                         "Top up at https://developer.x.com/en/portal/dashboard")
+            return
         elif "401" in str(auth_error):
             logger.error(f"❌ Authentication failed: {auth_error}")
             return
@@ -1018,6 +1047,9 @@ def run_collection_cycle():
                 total_batches=total_batches
             )
 
+            if credits_depleted:
+                break
+
             try:
                 saved, newest_id = collect_account_tweets_with_retry(client, account_id, username)
                 total_tweets += saved
@@ -1061,6 +1093,11 @@ def run_collection_cycle():
                     error_message=f"Error with @{username}: {str(e)[:100]}"
                 )
         
+        if credits_depleted:
+            logger.warning(f"💳 Skipping remaining accounts this cycle (credits depleted); "
+                           f"{accounts_processed}/{len(accounts)} processed")
+            break
+
         # Longer delay between batches
         if batch_num * BATCH_SIZE < len(accounts) and running:
             logger.info(f"⏸️ Batch {batch_num} complete. Waiting {INTER_BATCH_DELAY_SECONDS}s before next batch...")
@@ -1123,19 +1160,31 @@ def main():
             
             # Calculate next run time with some jitter to avoid synchronized collectors
             jitter = random.uniform(-60, 60)  # +/- 1 minute jitter
-            sleep_seconds = COLLECTION_INTERVAL_SECONDS + jitter
+            if credits_depleted:
+                sleep_seconds = CREDITS_BACKOFF_SECONDS + jitter
+            else:
+                sleep_seconds = COLLECTION_INTERVAL_SECONDS + jitter
             sleep_seconds = max(60, sleep_seconds)  # Minimum 1 minute
 
             next_cycle_at = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
 
-            logger.info(f"💤 Sleeping for {sleep_seconds:.1f} seconds until next cycle...")
-            logger.info(f"   (Press Ctrl+C to stop)")
+            if credits_depleted:
+                logger.warning(f"💳 Credits depleted — backing off {sleep_seconds/60:.0f} min, "
+                               f"next probe at {next_cycle_at.strftime('%H:%M:%S UTC')}")
+                update_live_progress(
+                    status='error',
+                    error_message='X API credits depleted (402) — top up at developer.x.com',
+                    next_cycle_at=next_cycle_at
+                )
+            else:
+                logger.info(f"💤 Sleeping for {sleep_seconds:.1f} seconds until next cycle...")
+                logger.info(f"   (Press Ctrl+C to stop)")
 
-            # Update live progress - sleeping
-            update_live_progress(
-                status='sleeping',
-                next_cycle_at=next_cycle_at
-            )
+                # Update live progress - sleeping
+                update_live_progress(
+                    status='sleeping',
+                    next_cycle_at=next_cycle_at
+                )
 
             # Sleep in small increments to allow for clean shutdown
             sleep_end = time.time() + sleep_seconds
