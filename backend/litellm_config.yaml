@@ -11,8 +11,8 @@ model_list:
 
   - model_name: tag_suggestion
     litellm_params:
-      model: openai/gpt-5.6-sol
-      max_tokens: 1000
+      model: openai/gpt-6-astra
+      max_completion_tokens: 1000
 
   # Tag Reorganization - Gemini 2.5 Pro for massive context
   - model_name: tag_reorganization
@@ -30,18 +30,18 @@ model_list:
   # Trend Analysis - Claude Opus 4 with GPT-5.2 fallback
   - model_name: trend_analysis
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 10000
 
   - model_name: trend_analysis
     litellm_params:
-      model: openai/gpt-5.6-sol
-      max_tokens: 10000
+      model: openai/gpt-6-astra
+      max_completion_tokens: 10000
 
   # Deep Trend Analysis
   - model_name: trend_analysis_deep
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 30000
 
   # Content Classification - Claude Haiku 3 (fastest)
@@ -60,7 +60,7 @@ model_list:
   # Comprehensive Summarization - Claude Opus 4.1
   - model_name: summarization_comprehensive
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 15000
 
   # Ontology Suggestion
@@ -90,31 +90,31 @@ model_list:
 
   - model_name: code_generation
     litellm_params:
-      model: openai/gpt-5.6-terra
-      max_tokens: 10000
+      model: openai/gpt-6-sol
+      max_completion_tokens: 10000
 
   # Complex Reasoning - GPT-5.2
   - model_name: reasoning_complex
     litellm_params:
-      model: openai/gpt-5.6-sol
-      max_tokens: 10000
+      model: openai/gpt-6-astra
+      max_completion_tokens: 10000
 
   # General Chat - Gemini 2.5 Flash with GPT-5-nano fallback
   - model_name: chat_general
     litellm_params:
-      model: gemini/gemini-3.7-flash
+      model: gemini/gemini-3.8-flash
       temperature: 1.0
       max_tokens: 8000
 
   - model_name: chat_general
     litellm_params:
-      model: openai/gpt-5.6-luna
-      max_tokens: 8000
+      model: openai/gpt-6-luna
+      max_completion_tokens: 8000
 
   # Experimental Analysis - Gemini 2.5 Flash
   - model_name: experimental_analysis
     litellm_params:
-      model: gemini/gemini-3.7-flash
+      model: gemini/gemini-3.8-flash
       temperature: 1.0
       max_tokens: 2000
 
@@ -128,7 +128,7 @@ model_list:
   # Research Assistant - Gemini 2.5 Flash
   - model_name: research_assistant
     litellm_params:
-      model: gemini/gemini-3.7-flash
+      model: gemini/gemini-3.8-flash
       temperature: 1.0
       max_tokens: 3000
 
@@ -141,7 +141,7 @@ model_list:
 
   - model_name: rag_answer
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 8000
 
   # Article Summarizer - Claude Sonnet 4
@@ -159,7 +159,7 @@ model_list:
   # Entity Extraction - Claude Opus 4.1
   - model_name: entity_extraction
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 5000
 
   - model_name: entity_extraction_fast
@@ -170,8 +170,8 @@ model_list:
 
   - model_name: entity_extraction_gpt5
     litellm_params:
-      model: openai/gpt-5.6-terra
-      max_tokens: 10000
+      model: openai/gpt-6-sol
+      max_completion_tokens: 10000
 
   - model_name: entity_extraction_gemini
     litellm_params:
@@ -189,7 +189,7 @@ model_list:
   # Tag Reorganization Analysis
   - model_name: tag_reorganization_analysis
     litellm_params:
-      model: gemini/gemini-3.7-flash
+      model: gemini/gemini-3.8-flash
       temperature: 1.0
       max_tokens: 50000
 
@@ -203,13 +203,13 @@ model_list:
   # Orphan Tag Assignment
   - model_name: orphan_tag_assignment
     litellm_params:
-      model: openai/gpt-5.6-sol
-      max_tokens: 30000
+      model: openai/gpt-6-astra
+      max_completion_tokens: 30000
 
   # Concept Organization
   - model_name: concept_organization
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 5000
 
   # Paper Author Extraction
@@ -233,13 +233,13 @@ model_list:
 
   - model_name: paper_analysis
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 8000
 
   # Paper Section Extraction
   - model_name: paper_section_extraction
     litellm_params:
-      model: gemini/gemini-3.7-flash
+      model: gemini/gemini-3.8-flash
       temperature: 1.0
       max_tokens: 20000
 
@@ -259,35 +259,36 @@ model_list:
 
   - model_name: paper_tag_suggestion_gpt5
     litellm_params:
-      model: openai/gpt-5.6-sol
-      max_tokens: 5000
+      model: openai/gpt-6-astra
+      max_completion_tokens: 5000
 
   # ========================================
   # Direct Model Access (User-Selectable Models)
   # ========================================
 
-  # OpenAI GPT-5 Models (current lineup, Aug 2026)
-  # NOTE: gpt-5.6 sol/terra/luna reject non-default temperature - do not add sampling params
-  - model_name: gpt-5.6-sol
+  # OpenAI GPT-6 Models (current lineup, Sep 2026: astra=flagship, sol=mid, luna=nano)
+  # NOTE: gpt-6 astra/sol/luna reject non-default temperature AND max_tokens
+  #       (use max_completion_tokens) - do not add sampling params
+  - model_name: gpt-6-astra
     litellm_params:
-      model: openai/gpt-5.6-sol
-      max_tokens: 10000
+      model: openai/gpt-6-astra
+      max_completion_tokens: 10000
 
-  - model_name: gpt-5.6-terra
+  - model_name: gpt-6-sol
     litellm_params:
-      model: openai/gpt-5.6-terra
-      max_tokens: 10000
+      model: openai/gpt-6-sol
+      max_completion_tokens: 10000
 
-  - model_name: gpt-5.6-luna
+  - model_name: gpt-6-luna
     litellm_params:
-      model: openai/gpt-5.6-luna
-      max_tokens: 5000
+      model: openai/gpt-6-luna
+      max_completion_tokens: 5000
 
-  # Claude Models (current lineup, July 2026)
-  # NOTE: claude-opus-5 / claude-sonnet-5 reject temperature/top_p/top_k (400) - do not add sampling params
-  - model_name: claude-opus-5
+  # Claude Models (current lineup, Sep 2026)
+  # NOTE: claude-opus-5-5 / claude-sonnet-5 reject temperature/top_p/top_k (400) - do not add sampling params
+  - model_name: claude-opus-5-5
     litellm_params:
-      model: claude-opus-5
+      model: claude-opus-5-5
       max_tokens: 32000
 
   - model_name: claude-sonnet-5
@@ -301,7 +302,7 @@ model_list:
       temperature: 0.3
       max_tokens: 8000
 
-  # Gemini Models (current lineup, Aug 2026)
+  # Gemini Models (current lineup, Sep 2026)
   # NOTE: Gemini 3.x models require temperature=1.0 to avoid infinite loops
   - model_name: gemini-3.1-pro-preview
     litellm_params:
@@ -309,9 +310,9 @@ model_list:
       temperature: 1.0
       max_tokens: 100000
 
-  - model_name: gemini-3.7-flash
+  - model_name: gemini-3.8-flash
     litellm_params:
-      model: gemini/gemini-3.7-flash
+      model: gemini/gemini-3.8-flash
       temperature: 1.0
       max_tokens: 100000
 
@@ -321,10 +322,10 @@ model_list:
       temperature: 1.0
       max_tokens: 100000
 
-  # Grok Models (current lineup, Aug 2026)
-  - model_name: grok-4.6
+  # Grok Models (current lineup, Sep 2026)
+  - model_name: grok-4.7
     litellm_params:
-      model: xai/grok-4.6
+      model: xai/grok-4.7
       temperature: 0.5
       max_tokens: 8000
 
@@ -338,25 +339,25 @@ model_list:
     litellm_params:
       model: xai/grok-4.20-0309-non-reasoning
       temperature: 0.5
-      max_tokens: 8000
+      max_completion_tokens: 8000
 
 # Router Settings
 router_settings:
   # Automatic Fallback Chains
   fallbacks:
-    - tag_suggestion: ["gpt-5.6-sol", "claude-sonnet-5"]
-    - trend_analysis: ["gpt-5.6-sol"]
-    - chat_general: ["gpt-5.6-luna", "claude-sonnet-5"]
-    - rag_answer: ["claude-opus-5", "gpt-5.6-terra"]
-    - article_summarizer: ["gpt-5.6-luna"]
+    - tag_suggestion: ["gpt-6-astra", "claude-sonnet-5"]
+    - trend_analysis: ["gpt-6-astra"]
+    - chat_general: ["gpt-6-luna", "claude-sonnet-5"]
+    - rag_answer: ["claude-opus-5-5", "gpt-6-sol"]
+    - article_summarizer: ["gpt-6-luna"]
     - entity_extraction_gpt5: ["entity_extraction_gemini", "entity_extraction_fast"]
-    - paper_analysis: ["claude-opus-5"]
+    - paper_analysis: ["claude-opus-5-5"]
     - paper_tag_suggestion_deep: ["paper_tag_suggestion_gpt5"]
 
   # Context Window Fallbacks
   context_window_fallbacks:
-    - gemini-3.1-pro-preview: ["claude-opus-5"]
-    - claude-opus-5: ["gemini-3.1-pro-preview"]
+    - gemini-3.1-pro-preview: ["claude-opus-5-5"]
+    - claude-opus-5-5: ["gemini-3.1-pro-preview"]
 
   # Retry & Timeout Settings
   num_retries: 3

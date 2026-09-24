@@ -86,8 +86,8 @@ async def create_free_analysis(
     # Include both key formats (with and without gemini/ prefix) for compatibility
     model_mapping = {
         # Claude models
-        "claude-opus-5": "claude-opus-5",
-        "claude-opus-4.5": "claude-opus-5",
+        "claude-opus-5": "claude-opus-5-5",
+        "claude-opus-4.5": "claude-opus-5-5",
         "claude-3.5-sonnet": "claude-sonnet-5",
         "claude-sonnet-4": "claude-sonnet-5",
         # Gemini 3.x models - CORRECT mappings (both key formats)

@@ -8,7 +8,14 @@ interface ModelBadgeProps {
 const ModelBadge: React.FC<ModelBadgeProps> = ({ model, size = 'small', style }) => {
   const getModelDisplay = (modelName: string) => {
     const modelMap: { [key: string]: { name: string, color: string } } = {
-      // Current lineup (Aug 2026, second refresh)
+      // Current lineup (Sep 2026, third refresh)
+      'claude-opus-5-5': { name: 'Claude Opus 5.5', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+      'gemini-3.8-flash': { name: 'Gemini 3.8 Flash', color: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)' },
+      'gpt-6-astra': { name: 'GPT-6 Astra', color: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)' },
+      'gpt-6-sol': { name: 'GPT-6 Sol', color: 'linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%)' },
+      'gpt-6-luna': { name: 'GPT-6 Luna', color: 'linear-gradient(135deg, #10a37f 0%, #74d0bd 100%)' },
+      'grok-4.7': { name: 'Grok 4.7', color: 'linear-gradient(135deg, #333333 0%, #666666 100%)' },
+      // Superseded Aug 2026 lineup (kept for historical llm_usage display)
       'gemini-3.7-flash': { name: 'Gemini 3.7 Flash', color: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)' },
       'gpt-5.6-sol': { name: 'GPT-5.6 Sol', color: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)' },
       'gpt-5.6-terra': { name: 'GPT-5.6 Terra', color: 'linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%)' },

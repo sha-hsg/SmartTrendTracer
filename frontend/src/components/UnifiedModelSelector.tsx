@@ -204,9 +204,14 @@ export default function UnifiedModelSelector({
       case 'openai': return 'bg-green-100 text-green-800 border-green-200'
       case 'google':
       case 'gemini': return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'xai': return 'bg-purple-100 text-purple-800 border-purple-200'
       default: return 'bg-gray-100 text-gray-800 border-gray-200'
     }
   }
+
+  // Display name without the provider prefix — the badge already carries it
+  const displayName = (model: string): string =>
+    model.includes('/') ? model.split('/').slice(1).join('/') : model
 
   // Loading state
   if (loading) {
@@ -251,7 +256,7 @@ export default function UnifiedModelSelector({
               <div className="flex items-center gap-2">
                 {saving && <Loader2 className="h-3 w-3 animate-spin" />}
                 {!saving && userPreference && <CheckCircle2 className="h-3 w-3 text-green-600" />}
-                <span className="font-mono text-sm truncate">{selectedModel}</span>
+                <span className="font-mono text-sm truncate">{displayName(selectedModel)}</span>
               </div>
             </SelectValue>
           </SelectTrigger>
@@ -269,7 +274,7 @@ export default function UnifiedModelSelector({
                       >
                         {model.provider}
                       </Badge>
-                      <span className="font-mono text-xs">{model.model}</span>
+                      <span className="font-mono text-xs">{displayName(model.model)}</span>
                       {isSaved && (
                         <Badge variant="default" className="text-xs bg-green-600">
                           saved

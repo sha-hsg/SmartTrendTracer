@@ -135,10 +135,10 @@ async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dic
             "gpt-4o": "gpt-4o",
             "gpt-4o-mini": "gpt-4o-mini",
             # Claude models
-            "claude-opus-5": "claude-opus-5",
-            "claude-opus-4.5": "claude-opus-5",
+            "claude-opus-5": "claude-opus-5-5",
+            "claude-opus-4.5": "claude-opus-5-5",
             "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-            "claude-opus-4.1": "claude-opus-5",
+            "claude-opus-4.1": "claude-opus-5-5",
             "claude-haiku-4.5": "claude-haiku-4-5-20251001",
             "claude-3.5-sonnet": "claude-sonnet-5",
             # Gemini 3.x models - map to model_name (without gemini/ prefix)

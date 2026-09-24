@@ -335,10 +335,20 @@ class LLMManager:
         return models_by_task
 
     def _extract_provider(self, model_string: str) -> str:
-        """Extract provider from model string (e.g., 'anthropic/claude-4' -> 'anthropic')"""
+        """Extract provider from model string (e.g., 'anthropic/claude-4' -> 'anthropic').
+
+        Unprefixed ids are classified by name — the old blanket 'openai'
+        default put an openai badge on every Claude model in the UI."""
         if '/' in model_string:
             return model_string.split('/')[0]
-        return 'openai'  # Default
+        name = model_string.lower()
+        if name.startswith('claude'):
+            return 'anthropic'
+        if name.startswith('gemini'):
+            return 'gemini'
+        if name.startswith('grok'):
+            return 'xai'
+        return 'openai'
 
     def _resolve_actual_model(self, task_type: str) -> str:
         """
@@ -553,8 +563,8 @@ class LLMManager:
     # If a deprecated value has no entry here, the migration falls back to
     # the task's default model.
     MODEL_MIGRATION_MAP: Dict[str, str] = {
-        'gemini/gemini-3-flash-preview': 'gemini-3.7-flash',
-        'gemini-3-flash-preview': 'gemini-3.7-flash',
+        'gemini/gemini-3-flash-preview': 'gemini-3.8-flash',
+        'gemini-3-flash-preview': 'gemini-3.8-flash',
         'gemini/gemini-3-pro-preview': 'gemini-3.1-pro-preview',
         'gemini-3-pro-preview': 'gemini-3.1-pro-preview',
         'gemini-3.0-pro': 'gemini-3.1-pro-preview',
@@ -562,53 +572,68 @@ class LLMManager:
         # Gemini models superseded (removed from configs Aug 2026)
         'gemini-2.5-pro': 'gemini-3.1-pro-preview',
         'gemini/gemini-2.5-pro': 'gemini-3.1-pro-preview',
-        'gemini-2.5-flash': 'gemini-3.7-flash',
-        'gemini/gemini-2.5-flash': 'gemini-3.7-flash',
-        'gemini-3.5-flash': 'gemini-3.7-flash',
-        'gemini/gemini-3.5-flash': 'gemini-3.7-flash',
+        'gemini-2.5-flash': 'gemini-3.8-flash',
+        'gemini/gemini-2.5-flash': 'gemini-3.8-flash',
+        'gemini-3.5-flash': 'gemini-3.8-flash',
+        'gemini/gemini-3.5-flash': 'gemini-3.8-flash',
         'gemini-3.1-flash-lite': 'gemini-3.5-flash-lite',
         'gemini/gemini-3.1-flash-lite': 'gemini-3.5-flash-lite',
         # Legacy OpenAI/xAI models removed from litellm_config.yaml (July 2026)
-        'gpt-4o': 'gpt-5.6-terra',
-        'openai/gpt-4o': 'gpt-5.6-terra',
-        'gpt-4o-mini': 'gpt-5.6-luna',
-        'openai/gpt-4o-mini': 'gpt-5.6-luna',
-        'grok-2-latest': 'grok-4.6',
-        'xai/grok-2-latest': 'grok-4.6',
+        'gpt-4o': 'gpt-6-sol',
+        'openai/gpt-4o': 'gpt-6-sol',
+        'gpt-4o-mini': 'gpt-6-luna',
+        'openai/gpt-4o-mini': 'gpt-6-luna',
+        'grok-2-latest': 'grok-4.7',
+        'xai/grok-2-latest': 'grok-4.7',
         # OpenAI/xAI models superseded or gone from provider APIs (Aug 2026)
-        'gpt-5.2': 'gpt-5.6-sol',
-        'openai/gpt-5.2': 'gpt-5.6-sol',
-        'gpt-5.1': 'gpt-5.6-terra',
-        'openai/gpt-5.1': 'gpt-5.6-terra',
-        'gpt-5-nano': 'gpt-5.6-luna',
-        'openai/gpt-5-nano': 'gpt-5.6-luna',
-        'grok-4-1-fast': 'grok-4.6',
-        'xai/grok-4-1-fast': 'grok-4.6',
+        'gpt-5.2': 'gpt-6-astra',
+        'openai/gpt-5.2': 'gpt-6-astra',
+        'gpt-5.1': 'gpt-6-sol',
+        'openai/gpt-5.1': 'gpt-6-sol',
+        'gpt-5-nano': 'gpt-6-luna',
+        'openai/gpt-5-nano': 'gpt-6-luna',
+        'grok-4-1-fast': 'grok-4.7',
+        'xai/grok-4-1-fast': 'grok-4.7',
         'grok-4-1-fast-reasoning': 'grok-4.20-0309-reasoning',
         'xai/grok-4-1-fast-reasoning': 'grok-4.20-0309-reasoning',
         'grok-4-1-fast-non-reasoning': 'grok-4.20-0309-non-reasoning',
         'xai/grok-4-1-fast-non-reasoning': 'grok-4.20-0309-non-reasoning',
         # Superseded Aug 2026 (second refresh)
-        'gpt-5.5': 'gpt-5.6-sol',
-        'openai/gpt-5.5': 'gpt-5.6-sol',
-        'gpt-5.4': 'gpt-5.6-terra',
-        'openai/gpt-5.4': 'gpt-5.6-terra',
-        'gpt-5.4-nano': 'gpt-5.6-luna',
-        'openai/gpt-5.4-nano': 'gpt-5.6-luna',
-        'grok-4.5': 'grok-4.6',
-        'xai/grok-4.5': 'grok-4.6',
-        'gemini-3.6-flash': 'gemini-3.7-flash',
-        'gemini/gemini-3.6-flash': 'gemini-3.7-flash',
+        'gpt-5.5': 'gpt-6-astra',
+        'openai/gpt-5.5': 'gpt-6-astra',
+        'gpt-5.4': 'gpt-6-sol',
+        'openai/gpt-5.4': 'gpt-6-sol',
+        'gpt-5.4-nano': 'gpt-6-luna',
+        'openai/gpt-5.4-nano': 'gpt-6-luna',
+        'grok-4.5': 'grok-4.7',
+        'xai/grok-4.5': 'grok-4.7',
+        'gemini-3.6-flash': 'gemini-3.8-flash',
+        'gemini/gemini-3.6-flash': 'gemini-3.8-flash',
         # Anthropic models retired/deprecated (removed from configs July 2026)
         'claude-sonnet-4-20250514': 'claude-sonnet-5',
         'anthropic/claude-sonnet-4-20250514': 'claude-sonnet-5',
-        'claude-opus-4-1-20250805': 'claude-opus-5',
-        'anthropic/claude-opus-4-1-20250805': 'claude-opus-5',
-        'claude-opus-4-20250514': 'claude-opus-5',
-        'claude-opus-4-5-20251101': 'claude-opus-5',
-        'claude-3-opus-20240229': 'claude-opus-5',
+        'claude-opus-4-1-20250805': 'claude-opus-5-5',
+        'anthropic/claude-opus-4-1-20250805': 'claude-opus-5-5',
+        'claude-opus-4-20250514': 'claude-opus-5-5',
+        'claude-opus-4-5-20251101': 'claude-opus-5-5',
+        'claude-3-opus-20240229': 'claude-opus-5-5',
         'claude-3-haiku-20240307': 'claude-haiku-4-5',
         'anthropic/claude-3-haiku-20240307': 'claude-haiku-4-5',
+        # Superseded Sep 2026 (second refresh: gpt-6 astra/sol/luna, opus-5-5,
+        # gemini-3.8-flash, grok-4.7). Tier mapping: 5.6-sol was flagship ->
+        # astra; 5.6-terra mid -> gpt-6-sol; 5.6-luna nano -> gpt-6-luna.
+        'gpt-5.6-sol': 'gpt-6-astra',
+        'openai/gpt-5.6-sol': 'gpt-6-astra',
+        'gpt-5.6-terra': 'gpt-6-sol',
+        'openai/gpt-5.6-terra': 'gpt-6-sol',
+        'gpt-5.6-luna': 'gpt-6-luna',
+        'openai/gpt-5.6-luna': 'gpt-6-luna',
+        'claude-opus-5': 'claude-opus-5-5',
+        'anthropic/claude-opus-5': 'claude-opus-5-5',
+        'gemini-3.7-flash': 'gemini-3.8-flash',
+        'gemini/gemini-3.7-flash': 'gemini-3.8-flash',
+        'grok-4.6': 'grok-4.7',
+        'xai/grok-4.6': 'grok-4.7',
     }
 
     def get_valid_model_names(self) -> set:
