@@ -420,7 +420,7 @@ export default function SummarizationControls({
               <Settings className="h-4 w-4" />
               Data Limits
               <Badge variant="outline" className="text-xs font-normal">
-                {maxTweets} / {maxArticles} / {maxPapers}
+                {maxTweets} tweets · {maxArticles} articles · {maxPapers} papers
               </Badge>
             </div>
             {showSettings ? (
@@ -437,7 +437,7 @@ export default function SummarizationControls({
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-xs">Max Tweets (10-500)</Label>
+                  <Label className="text-xs">Max Tweets (10-1000)</Label>
                   <Input
                     type="number"
                     min={10}
@@ -494,6 +494,16 @@ export default function SummarizationControls({
               </>
             )}
           </Button>
+          {!loading && !includeTweets && !includeArticles && !includePapers && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400" role="status">
+              Select at least one content source to generate a summary.
+            </p>
+          )}
+          {!loading && (includeTweets || includeArticles || includePapers) && (modelLoading || !selectedModel) && (
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400" role="status">
+              Waiting for the AI model to load&hellip;
+            </p>
+          )}
           {loading && (
             <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">
               Estimated: {getEstimatedTime()}

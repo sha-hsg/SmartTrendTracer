@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { toast } from 'sonner'
 import { Card, CardContent } from "@/components/ui/card"
 import { useModelSelector } from '@/hooks/useModelSelector'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Loader2 } from 'lucide-react'
+import { Button } from "@/components/ui/button"
 import SummarizationControls from './SummarizationControls'
 import SummarizationResult from './SummarizationResult'
 
@@ -79,6 +81,7 @@ export default function SummarizationModern() {
   // Elapsed timer
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   // Copy summary to clipboard
   const copyToClipboard = async () => {
@@ -222,8 +225,11 @@ export default function SummarizationModern() {
       // Add model selection
       if (selectedModel) params.append('model', selectedModel)
 
+      abortRef.current = new AbortController()
       const response = await axios.post(
-        `/api/analytics/trends/summarize?${params}`
+        `/api/analytics/trends/summarize?${params}`,
+        undefined,
+        { signal: abortRef.current.signal }
       )
 
       const data = response.data
@@ -233,24 +239,24 @@ export default function SummarizationModern() {
       }
 
       setSummaryData(data)
-    } catch (error) {
+    } catch (error: any) {
+      if (axios.isCancel(error) || error?.code === 'ERR_CANCELED') {
+        // User cancelled — quietly return to the ready state
+        return
+      }
       console.error('Error generating summary:', error)
-      setSummaryData({
-        summary: `Error generating summary: ${error}`,
-        stats: {
-          tweet_count: 0,
-          article_count: 0,
-          paper_count: 0,
-          unique_authors: 0,
-          total_likes: 0,
-          total_retweets: 0,
-          time_range: { start: null, end: null }
-        },
-        filters: { period, tags: selectedTags, author: selectedAuthor }
+      const detail = error?.response?.data?.detail
+      toast.error('Summary generation failed', {
+        description: detail || error?.message || 'Please try again.',
       })
     } finally {
+      abortRef.current = null
       setLoading(false)
     }
+  }
+
+  const cancelGeneration = () => {
+    abortRef.current?.abort()
   }
 
   const addTag = (tag: string) => {
@@ -336,6 +342,23 @@ export default function SummarizationModern() {
         />
       )}
 
+      {/* Generating State */}
+      {loading && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-1">Generating summary&hellip; ({elapsedSeconds}s)</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm" role="status">
+              {selectedModel ? `Using ${selectedModel.includes('/') ? selectedModel.split('/').slice(1).join('/') : selectedModel}` : 'Preparing model'}
+              {' · '}{detailLevel} detail
+            </p>
+            <Button variant="outline" size="sm" onClick={cancelGeneration}>
+              Cancel
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Empty State */}
       {!summaryData && !loading && (
         <Card>
@@ -343,7 +366,7 @@ export default function SummarizationModern() {
             <Sparkles className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Ready to Generate Summary</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-2">
-              Select your filters and click "Generate Summary" to create an AI-powered summary of tweets.
+              Select your filters and click "Generate Summary" to create an AI-powered summary across tweets, articles, and papers.
             </p>
             <p className="text-gray-500 dark:text-gray-500 text-sm">
               You can filter by time period, specific authors, or tag combinations.
