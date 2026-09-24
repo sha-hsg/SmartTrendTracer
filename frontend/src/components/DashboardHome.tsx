@@ -114,7 +114,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900 dark:to-red-900 border-orange-300 dark:border-orange-700 hover:from-orange-100 hover:to-red-100"
+              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
               onClick={() => onNavigate('trend-dashboard')}
             >
               <div className="flex items-center gap-2 w-full">
@@ -128,7 +128,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 bg-white dark:bg-gray-900"
+              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
               onClick={() => onNavigate('twitter-summary')}
             >
               <div className="flex items-center gap-2 w-full">
@@ -142,7 +142,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 bg-white dark:bg-gray-900"
+              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
               onClick={() => onNavigate('analysis-unified')}
             >
               <div className="flex items-center gap-2 w-full">
@@ -156,7 +156,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 bg-white dark:bg-gray-900"
+              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
               onClick={() => onNavigate('analysis-compare')}
             >
               <div className="flex items-center gap-2 w-full">
@@ -170,7 +170,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 bg-white dark:bg-gray-900"
+              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
               onClick={() => onNavigate('analysis-clustering')}
             >
               <div className="flex items-center gap-2 w-full">
@@ -184,7 +184,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
 
             <Button
               variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 bg-white dark:bg-gray-900"
+              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
               onClick={() => onNavigate('topic-explorer')}
             >
               <div className="flex items-center gap-2 w-full">
