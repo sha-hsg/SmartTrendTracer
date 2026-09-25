@@ -365,39 +365,3 @@ async def get_statistics_summary():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/llm/circuit-breaker")
-async def get_circuit_breaker_status():
-    """Get LLM circuit breaker status for all providers"""
-    try:
-        from app.services.llm_service import get_llm_service
-        llm = get_llm_service()
-        return llm.get_circuit_breaker_status()
-    except Exception as e:
-        logger.error(f"Error getting circuit breaker status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/llm/circuit-breaker/{provider}/reset")
-async def reset_circuit_breaker(provider: str):
-    """Manually reset circuit breaker for a specific provider"""
-    try:
-        from app.services.llm_service import get_llm_service
-        llm = get_llm_service()
-
-        valid_providers = ['openai', 'anthropic', 'google', 'xai']
-        if provider not in valid_providers:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid provider. Must be one of: {valid_providers}"
-            )
-
-        success = llm.reset_circuit_breaker(provider)
-        if success:
-            return {"message": f"Circuit breaker for {provider} has been reset", "provider": provider}
-        else:
-            return {"message": f"No circuit state found for {provider}", "provider": provider}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error resetting circuit breaker: {e}")
-        raise HTTPException(status_code=500, detail=str(e))

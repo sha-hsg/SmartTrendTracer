@@ -7,6 +7,7 @@ from app.config import settings
 import os
 import yaml
 import logging
+import json
 from typing import Optional, Dict, List, Any, Union
 from pathlib import Path
 from datetime import datetime, timezone
@@ -644,6 +645,64 @@ class LLMManager:
             for mc in self._config.get('model_list', [])
             if mc.get('model_name')
         }
+
+    def resolve_model_override(self, model: Optional[str]) -> Optional[str]:
+        """Map a model value coming from the UI/API to a routable model_name.
+
+        Accepts bare or provider-prefixed ids ("gemini/gemini-3.1-pro-preview"),
+        follows MODEL_MIGRATION_MAP for superseded ids, and returns None when
+        nothing routable is found — callers then fall back to the task route.
+        Single source of truth replacing per-endpoint alias dicts.
+        """
+        if not model:
+            return None
+        valid = self.get_valid_model_names()
+        candidates = [model]
+        if '/' in model:
+            candidates.append(model.split('/', 1)[1])
+        for cand in list(candidates):
+            migrated = self.MODEL_MIGRATION_MAP.get(cand)
+            if migrated:
+                candidates.append(migrated)
+        for cand in candidates:
+            if cand in valid:
+                return cand
+        logger.warning(f"Model override '{model}' is not routable; using task default")
+        return None
+
+    def get_prompt(self, prompt_key: str) -> Dict[str, str]:
+        """Load a prompt definition (system/user_template) from prompts_config.json."""
+        prompts_path = Path(__file__).resolve().parents[2] / 'prompts_config.json'
+        with open(prompts_path, 'r') as f:
+            prompts = json.load(f)
+        prompt = prompts.get(prompt_key)
+        if not prompt:
+            raise KeyError(f"Prompt '{prompt_key}' not found in {prompts_path}")
+        return prompt
+
+    def complete_text(
+        self,
+        task_type: str,
+        user_prompt: str,
+        system_prompt: Optional[str] = None,
+        model_override: Optional[str] = None,
+        user_id: str = "default",
+    ) -> str:
+        """Convenience wrapper: route a single-turn prompt and return the text."""
+        messages = []
+        if system_prompt:
+            messages.append({'role': 'system', 'content': system_prompt})
+        messages.append({'role': 'user', 'content': user_prompt})
+        routed = self.resolve_model_override(model_override)
+        response = self.completion_sync(
+            task_type, messages, user_id=user_id,
+            override_params={'model': routed} if routed else None,
+        )
+        content = response.choices[0].message.content
+        # Gemini 3 may return content as a list of parts
+        if isinstance(content, list):
+            content = ''.join(p.get('text', '') if isinstance(p, dict) else str(p) for p in content)
+        return content or ''
 
     def _resolve_pref_value(self, pref_value: str, valid_names: set) -> bool:
         """A pref value is valid if it (or its stripped provider form) matches a known model_name."""

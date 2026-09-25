@@ -213,28 +213,9 @@ Return as JSON array with format:
 ]
 """
 
-        # Model mapping (same as tweets)
-        model_mapping = {
-            "gpt-5": "gpt-5-2025-08-07",
-            "gpt-5.1": "gpt-5.1",
-            "gpt-5-mini": "gpt-5-mini",
-            "gpt-5-nano": "gpt-5-nano",
-            "gpt-4o": "gpt-4o",
-            "gpt-4o-mini": "gpt-4o-mini",
-            "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-            "claude-opus-4.1": "claude-opus-5-5",
-            "claude-haiku-4.5": "claude-haiku-4-5-20251001",
-            "claude-3.5-sonnet": "claude-sonnet-5",
-            "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
-            "gemini-3.5-flash": "gemini-3.5-flash",
-            "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
-            "gemini-2.5-pro": "gemini-2.5-pro",
-            "gemini-2.5-flash": "gemini-2.5-flash",
-            "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-        }
-
-        selected_model = model if model else "claude-3.5-sonnet"
-        actual_model = model_mapping.get(selected_model, selected_model)
+        # Frontend model choice -> routable model name (central resolver);
+        # None keeps the tag_suggestion route default
+        actual_model = llm_manager.resolve_model_override(model)
 
         logger.info(f"Article concept suggestion using model: {actual_model}")
 
@@ -244,7 +225,7 @@ Return as JSON array with format:
             task_type='tag_suggestion',
             messages=messages,
             user_id='default',
-            model=actual_model
+            override_params={'model': actual_model} if actual_model else None
         )
 
         response = llm_response.choices[0].message.content

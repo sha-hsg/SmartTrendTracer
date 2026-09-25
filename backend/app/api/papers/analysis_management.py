@@ -53,8 +53,7 @@ async def create_free_analysis(
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
 
-    # Import required modules
-    from app.services.llm_service import LLMService
+    from app.services.llm_manager import get_llm_manager
 
     # Get paper content
     paper_content = paper.get('content', '')
@@ -71,64 +70,22 @@ async def create_free_analysis(
     if existing and not regenerate:
         return existing
 
-    # Load LLM configuration
-    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-    with open(os.path.join(backend_dir, 'llm.json'), 'r') as f:
-        llm_config = json.load(f)
-
-    # Use the chat_general model for free-form analysis
-    model_config = llm_config.get('models', {}).get('chat_general', {})
-
-    # Prefer frontend-provided model, fall back to config
-    model_to_use = model if model else model_config.get('model', 'gemini/gemini-2.5-pro')
-
-    # Map frontend model selections to correct LiteLLM model names
-    # Include both key formats (with and without gemini/ prefix) for compatibility
-    model_mapping = {
-        # Claude models
-        "claude-opus-5": "claude-opus-5-5",
-        "claude-opus-4.5": "claude-opus-5-5",
-        "claude-3.5-sonnet": "claude-sonnet-5",
-        "claude-sonnet-4": "claude-sonnet-5",
-        # Gemini 3.x models - CORRECT mappings (both key formats)
-        "gemini-3.1-pro-preview": "gemini/gemini-3.1-pro-preview",
-        "gemini/gemini-3.1-pro-preview": "gemini/gemini-3.1-pro-preview",
-        "gemini-3.5-flash": "gemini/gemini-3.5-flash",
-        "gemini/gemini-3.5-flash": "gemini/gemini-3.5-flash",
-        "gemini-3.1-flash-lite": "gemini/gemini-3.1-flash-lite",
-        "gemini/gemini-3.1-flash-lite": "gemini/gemini-3.1-flash-lite",
-        # Gemini 2.5 models (both key formats)
-        "gemini-2.5-pro": "gemini/gemini-2.5-pro",
-        "gemini/gemini-2.5-pro": "gemini/gemini-2.5-pro",
-        "gemini-2.5-flash": "gemini/gemini-2.5-flash",
-        "gemini/gemini-2.5-flash": "gemini/gemini-2.5-flash",
-        # GPT models
-        "gpt-5.2-thinking": "openai/gpt-5.2",
-        "gpt-5.2-pro": "openai/gpt-5.1",
-        "gpt-5.2-codex": "openai/gpt-5-nano",
-    }
-    if model_to_use in model_mapping:
-        logger.info(f"Mapped model {model_to_use} → {model_mapping[model_to_use]}")
-        model_to_use = model_mapping[model_to_use]
-    elif model:
-        # User provided a model that's not in mapping - log for debugging
-        logger.info(f"Using model directly (no mapping needed): {model_to_use}")
-
-    # Initialize LLM service
-    llm_service = LLMService()
-
-    # Create the full prompt with system context
-    system_context = "You are an expert at analyzing research papers. Provide detailed, insightful responses to user questions about the paper."
-    full_prompt = f"{system_context}\n\nUser question: {prompt}\n\nPaper content:\n{paper_content}"
+    llm = get_llm_manager()
+    prompt_config = llm.get_prompt('paper_free_analysis')
+    user_prompt = prompt_config['user_template'].format(question=prompt, paper_content=paper_content)
+    # Frontend model choice -> routable model name (central MIGRATION_MAP);
+    # unknown/None falls back to the chat_general route
+    model_to_use = llm.resolve_model_override(model)
 
     # Generate the analysis
     try:
-        response = llm_service.generate_completion(
-            prompt=full_prompt,
-            model=model_to_use,
-            max_tokens=model_config.get('max_tokens', 8000),
-            temperature=model_config.get('temperature', 0.5)
+        response = llm.complete_text(
+            'chat_general',
+            user_prompt,
+            system_prompt=prompt_config.get('system'),
+            model_override=model_to_use,
         )
+        model_to_use = model_to_use or llm._resolve_actual_model('chat_general')
 
         # Create the analysis object
         analysis = {

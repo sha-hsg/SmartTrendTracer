@@ -191,46 +191,14 @@ async def create_analysis(paper_id: str, analysis_type: str = Body(...), regener
 
     # Map frontend model selections to LiteLLM Router model_name (from litellm_config.yaml)
     # IMPORTANT: Values must match model_name in litellm_config.yaml, NOT the full litellm_params.model
-    model_mapping = {
-        # GPT models (model_name matches frontend value)
-        "gpt-5": "gpt-5-2025-08-07",
-        "gpt-5.1": "gpt-5.1",
-        "gpt-5-mini": "gpt-5-mini",
-        "gpt-5-nano": "gpt-5-nano",
-        "gpt-4o": "gpt-4o",
-        "gpt-4o-mini": "gpt-4o-mini",
-        # Claude models
-        "claude-opus-5": "claude-opus-5-5",
-        "claude-opus-4.5": "claude-opus-5-5",
-        "claude-sonnet-4.5": "claude-sonnet-4-5-20250929",
-        "claude-opus-4.1": "claude-opus-5-5",
-        "claude-haiku-4.5": "claude-haiku-4-5-20251001",
-        "claude-3.5-sonnet": "claude-sonnet-5",
-        # Gemini 3.x models - map to model_name (without gemini/ prefix)
-        "gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
-        "gemini/gemini-3.1-pro-preview": "gemini-3.1-pro-preview",
-        "gemini-3.5-flash": "gemini-3.5-flash",
-        "gemini/gemini-3.5-flash": "gemini-3.5-flash",
-        "gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
-        "gemini/gemini-3.1-flash-lite": "gemini-3.1-flash-lite",
-        # Gemini 2.5 models - map to model_name (without gemini/ prefix)
-        "gemini-2.5-pro": "gemini-2.5-pro",
-        "gemini/gemini-2.5-pro": "gemini-2.5-pro",
-        "gemini-2.5-flash": "gemini-2.5-flash",
-        "gemini/gemini-2.5-flash": "gemini-2.5-flash",
-        "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-        "gemini/gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
-    }
-
-    # Prepare override parameters if user selected a specific model
+    # Frontend model choice -> routable model name (central resolver in
+    # llm_manager; replaces a local alias dict that silently ignored every
+    # model not listed in it)
     override_params = None
-    if model and model in model_mapping:
-        litellm_model = model_mapping[model]
+    litellm_model = llm_manager.resolve_model_override(model)
+    if litellm_model:
         override_params = {'model': litellm_model}
         logger.info(f"User selected model: {model} → Router model_name: {litellm_model}")
-    elif model:
-        # User selected a model but it's not in mapping - LOG WARNING
-        logger.warning(f"Model '{model}' not found in model_mapping, falling back to task default")
 
     # Generate the analysis using LiteLLM manager
     # If override_params is set, it will use the user's selected model

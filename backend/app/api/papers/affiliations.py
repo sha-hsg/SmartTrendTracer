@@ -81,46 +81,23 @@ def extract_paper_affiliations(paper_id: str) -> Dict[str, Any]:
     authors_text = '\n'.join(authors_list)
 
     try:
-        from app.services.llm_service import LLMService
+        from app.services.llm_manager import get_llm_manager
         import json
         import logging
 
         logger = logging.getLogger(__name__)
+        llm = get_llm_manager()
 
-        # Initialize LLM service
-        llm_service = LLMService()
-
-        # Use the paper_affiliation_extraction prompt from prompts_config.json
-        # The generate_with_model method is async, but we can use generate_completion directly
-        # First, get the prompt configuration
-        prompt_config = llm_service.prompts.get('paper_affiliation_extraction')
-        if not prompt_config:
-            raise ValueError("paper_affiliation_extraction prompt not found in prompts_config.json")
-
-        # Get model config
-        model_config = llm_service.llm_config['models'].get('paper_affiliation_extraction')
-        if not model_config:
-            raise ValueError("paper_affiliation_extraction model not found in llm.json")
-
-        # Format the prompt
-        system_prompt = prompt_config.get('system', '')
-        user_template = prompt_config.get('user_template', '')
-
-        # Format user prompt with context
-        user_prompt = user_template.format(
+        # Prompt from prompts_config.json, model/params from the task route
+        prompt_config = llm.get_prompt('paper_affiliation_extraction')
+        user_prompt = prompt_config.get('user_template', '').format(
             authors_list=authors_text,
             header_text=header_text
         )
-
-        # Combine system and user prompts
-        full_prompt = f"{system_prompt}\n\n{user_prompt}" if system_prompt else user_prompt
-
-        # Generate response using the configured model
-        prompt_response = llm_service.generate_completion(
-            prompt=full_prompt,
-            model=model_config.get('model'),
-            temperature=model_config.get('temperature', 0.1),
-            max_tokens=model_config.get('max_tokens', 2000)
+        prompt_response = llm.complete_text(
+            'paper_affiliation_extraction',
+            user_prompt,
+            system_prompt=prompt_config.get('system') or None,
         )
 
         logger.info(f"LLM response for affiliation extraction: {prompt_response}")

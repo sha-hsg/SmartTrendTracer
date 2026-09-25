@@ -383,28 +383,21 @@ def extract_paper_sections(paper_id: str) -> Dict[str, Any]:
                 detail="Paper has no content. Please process it with Marker or MinerU first."
             )
 
-        from app.services.llm_service import LLMService
-        llm_service = LLMService()
+        from app.services.llm_manager import get_llm_manager
+        llm = get_llm_manager()
 
         logger.info(f"Extracting sections for paper {paper_id}")
 
-        prompt_config = llm_service.prompts.get('paper_section_extraction')
-        if not prompt_config:
+        try:
+            prompt_config = llm.get_prompt('paper_section_extraction')
+        except KeyError:
             raise HTTPException(status_code=500, detail="paper_section_extraction prompt not configured")
 
-        model_config = llm_service.llm_config['models'].get('paper_section_extraction')
-        if not model_config:
-            raise HTTPException(status_code=500, detail="paper_section_extraction model not configured")
-
-        system_prompt = prompt_config.get('system', '')
         user_prompt = prompt_config['user_template'].replace('{paper_content}', markdown_content)
-        full_prompt = f"{system_prompt}\n\n{user_prompt}" if system_prompt else user_prompt
-
-        extraction_result = llm_service.generate_completion(
-            prompt=full_prompt,
-            model=model_config.get('model'),
-            temperature=model_config.get('temperature', 0.1),
-            max_tokens=model_config.get('max_tokens', 20000),
+        extraction_result = llm.complete_text(
+            'paper_section_extraction',
+            user_prompt,
+            system_prompt=prompt_config.get('system') or None,
         )
 
         if not extraction_result:

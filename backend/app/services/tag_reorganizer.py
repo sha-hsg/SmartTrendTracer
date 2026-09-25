@@ -4,7 +4,6 @@ Merges rule-based (ComprehensiveStrategy) and LLM-powered (LLMStrategy)
 approaches into a single service with strategy pattern.
 """
 
-from app.config import settings
 import re
 import json
 import logging
@@ -259,19 +258,17 @@ class LLMStrategy(ReorganizationStrategy):
     """LLM-powered tag reorganization with GPT-5 primary, Gemini fallback, rule-based last resort."""
 
     def __init__(self, model_override: Optional[str] = None):
-        from app.services.llm_service import LLMService
-        self.llm_service = LLMService()
+        from app.services.llm_manager import get_llm_manager
+        self.llm = get_llm_manager()
         self.model_override = model_override
 
-        with open('prompts_config.json', 'r') as f:
-            self.prompts = json.load(f).get('tag_reorganization', {})
+        self.prompts = self.llm.get_prompt('tag_reorganization')
 
-        with open('llm.json', 'r') as f:
-            llm_config = json.load(f)
-            if model_override == 'gpt5':
-                self.model_config = {"model": "gpt-5-2025-08-07", "provider": "openai", "temperature": 1, "max_tokens": 100000, "is_reasoning": False}
-            else:
-                self.model_config = llm_config['models'].get('tag_reorganization_comprehensive')
+        # 'gpt5' is the legacy UI switch for "OpenAI flagship" -> the
+        # reasoning_complex route; otherwise the dedicated reorganization
+        # route. Models, fallbacks and params come from litellm_config.yaml.
+        self.task_type = 'reasoning_complex' if model_override == 'gpt5' else 'tag_reorganization_comprehensive'
+        self.model_config = {'model': self.llm._resolve_actual_model(self.task_type)}
 
         self.top_level_json = self._load_top_level_json()
         logger.info(f"Initialized LLM reorganizer with model: {self.model_config.get('model')}")
@@ -360,67 +357,19 @@ class LLMStrategy(ReorganizationStrategy):
             return self._fallback(tags_data)
 
     def _call_llm(self, system_prompt: str, user_prompt: str, progress_callback: Optional[Callable], tags_count: int) -> Optional[str]:
-        retry_count = 0
-        max_retries = 5
-
-        while retry_count <= max_retries:
-            try:
-                if retry_count > 0:
-                    msg = f"Retry attempt {retry_count} of {max_retries}"
-                    logger.info(msg)
-                    if progress_callback:
-                        progress_callback(msg)
-
-                from langchain_core.messages import HumanMessage, SystemMessage
-                client = self.llm_service._get_client(self.model_config)
-                if not client:
-                    return None
-
-                messages = [SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)]
-                if progress_callback:
-                    progress_callback(f"Processing {tags_count} concepts with {self.model_config.get('model', 'LLM')} (may take 5-15 minutes)...")
-
-                response = client.invoke(messages)
-                result_text = response.content if hasattr(response, 'content') else str(response)
-                self._save_response(result_text, 'success')
-                return result_text
-
-            except Exception as e:
-                logger.error(f"LLM call attempt {retry_count + 1} failed: {e}")
-                if 'timeout' in str(e).lower():
-                    break  # Skip to Gemini fallback
-                if 'rate' in str(e).lower():
-                    time.sleep(5)
-                retry_count += 1
-                if retry_count > max_retries:
-                    break
-                time.sleep(min(2 ** retry_count, 30))
-
-        # Gemini fallback
-        return self._try_gemini_fallback(system_prompt, user_prompt, progress_callback)
-
-    def _try_gemini_fallback(self, system_prompt: str, user_prompt: str, progress_callback: Optional[Callable]) -> Optional[str]:
-        logger.warning("Primary LLM failed, switching to Gemini 2.5 Pro")
+        """Single routed call; retries and provider fallbacks are handled by
+        the LiteLLM router (num_retries, fallbacks in litellm_config.yaml)."""
         if progress_callback:
-            progress_callback("Primary LLM unavailable, using Gemini 2.5 Pro...")
+            progress_callback(f"Processing {tags_count} concepts with {self.model_config.get('model', 'LLM')} (may take 5-15 minutes)...")
         try:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            from langchain_core.messages import HumanMessage, SystemMessage
-            api_key = settings.google_or_gemini_api_key
-            if not api_key:
-                return None
-            client = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=api_key, temperature=0.15, max_tokens=100000, convert_system_message_to_human=True)
-            if progress_callback:
-                progress_callback("Processing with Gemini 2.5 Pro...")
-            response = client.invoke([SystemMessage(content=system_prompt), HumanMessage(content=user_prompt)])
-            result_text = response.content if hasattr(response, 'content') else str(response)
-            self._save_response(result_text, 'gemini_success')
+            result_text = self.llm.complete_text(self.task_type, user_prompt, system_prompt=system_prompt)
+            self._save_response(result_text, 'success')
             return result_text
         except Exception as e:
-            logger.error(f"Gemini fallback also failed: {e}")
-            self._save_response(str(e), 'gemini_error')
+            logger.error(f"LLM reorganization call failed: {e}")
+            self._save_response(str(e), 'error')
             if progress_callback:
-                progress_callback("Both LLMs failed, using rule-based fallback")
+                progress_callback("LLM unavailable, using rule-based fallback")
             return None
 
     def _fallback(self, tags_data: List[Dict[str, Any]]) -> Dict[str, Any]:
