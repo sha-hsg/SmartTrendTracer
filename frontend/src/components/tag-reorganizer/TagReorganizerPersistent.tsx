@@ -358,7 +358,7 @@ export default function TagReorganizerPersistent() {
                     className="ml-2 px-3 py-1 border rounded-md bg-blue-50"
                   >
                     <option value="gemini">Gemini 2.5 Pro</option>
-                    <option value="gpt5">GPT-5 (2025-08-07)</option>
+                    <option value="gpt5">OpenAI flagship (GPT-6 Astra)</option>
                   </select>
                 )}
               </div>

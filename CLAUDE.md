@@ -480,6 +480,17 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
 
 Details live in `git log` and `docs/`; do not re-expand here.
 
+- **2026-09 — Architecture audit + fixes** (commits d8b3ab7…495d4cf): dead code and the
+  repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
+  (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed
+  (one LLM stack, `resolve_model_override`); `app/repositories/` data layer (API query
+  sites 565 → 387, ratcheted) with one tweet save path; frontend `services/http.ts` seam
+  and feature folders for all 53 flat components; `tests/test_arch_guard.py` enforces it.
+  Same month: model refresh (gpt-6 astra/sol/luna, claude-opus-5-5, gemini-3.8-flash,
+  grok-4.7), X-API 402 credit backoff in the tweet collector, UI/UX kaizen rounds
+  (papers dashboard, paper viewer, summarization, dashboard tiles), functional kaizen
+  (RAG trend detection/blending, concept search, anomaly math, batch annotation,
+  substack trends, newsletter previews/attribution).
 - **2026-07-24 — Function inventory + complete fix pass** (`docs/funktionsinventur.md`;
   commits a28dc269, b4799d3e, a1e17616). ~360 items audited; all P1/P2/P3 findings
   fixed: router shadowing (books/facets, articles/authors, without-author),
@@ -531,4 +542,4 @@ Details live in `git log` and `docs/`; do not re-expand here.
 
 ---
 
-Last updated: July 24, 2026
+Last updated: September 25, 2026

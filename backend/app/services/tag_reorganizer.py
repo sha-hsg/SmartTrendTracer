@@ -4,6 +4,7 @@ Merges rule-based (ComprehensiveStrategy) and LLM-powered (LLMStrategy)
 approaches into a single service with strategy pattern.
 """
 
+from app.paths import DATA_ROOT
 import re
 import json
 import logging
@@ -250,7 +251,7 @@ class ComprehensiveStrategy(ReorganizationStrategy):
 # ──────────────────────────────────────────────────
 
 # Directory for storing LLM responses
-RESPONSE_LOG_DIR = Path('data/gpt5_responses')
+RESPONSE_LOG_DIR = DATA_ROOT / 'gpt5_responses'
 RESPONSE_LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -265,9 +266,9 @@ class LLMStrategy(ReorganizationStrategy):
         self.prompts = self.llm.get_prompt('tag_reorganization')
 
         # 'gpt5' is the legacy UI switch for "OpenAI flagship" -> the
-        # reasoning_complex route; otherwise the dedicated reorganization
+        # tag_reorganization_openai route; otherwise the dedicated reorganization
         # route. Models, fallbacks and params come from litellm_config.yaml.
-        self.task_type = 'reasoning_complex' if model_override == 'gpt5' else 'tag_reorganization_comprehensive'
+        self.task_type = 'tag_reorganization_openai' if model_override == 'gpt5' else 'tag_reorganization_comprehensive'
         self.model_config = {'model': self.llm._resolve_actual_model(self.task_type)}
 
         self.top_level_json = self._load_top_level_json()

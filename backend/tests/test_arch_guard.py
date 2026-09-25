@@ -27,6 +27,7 @@ FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
 # Ratchets — only ever lower these.
 API_DB_CALL_SITES_MAX = 387
 FRONTEND_AXIOS_IMPORT_FILES_MAX = 0
+FRONTEND_RAW_FETCH_SITES_MAX = 52   # legacy fetch() calls bypassing services/http.ts
 
 DB_CALL_RE = re.compile(
     r'\bdb\.[a-z_]+\.(find|find_one|insert_one|insert_many|update_one|update_many|delete_one|'
@@ -227,3 +228,16 @@ def test_no_flat_components():
         return
     flat = [p.name for p in comp.iterdir() if p.is_file() and p.suffix in ('.ts', '.tsx')]
     assert not flat, f'put components into a feature folder, not components/ root: {flat}'
+
+
+def test_frontend_raw_fetch_ratchet():
+    """fetch() to the backend bypasses services/http.ts (base URL, error
+    normalization). Existing sites are ratcheted; migrate them to http.*."""
+    if not FRONTEND_SRC.exists():
+        return
+    pat = re.compile(r"""fetch\(\s*[`'"](/api|\$\{API_BASE)""")
+    n = sum(len(pat.findall(p.read_text(encoding='utf-8', errors='ignore')))
+            for p in list(FRONTEND_SRC.rglob('*.ts')) + list(FRONTEND_SRC.rglob('*.tsx'))
+            if 'services' not in p.relative_to(FRONTEND_SRC).parts)
+    assert n <= FRONTEND_RAW_FETCH_SITES_MAX, (
+        f'{n} raw fetch() calls to the backend (max {FRONTEND_RAW_FETCH_SITES_MAX}): use services/http.ts')

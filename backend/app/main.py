@@ -248,10 +248,12 @@ async def health_check():
 
         # Check Marker and MinerU services (non-blocking, with short timeout)
         services = {}
-        for name, port in [("marker", 8002), ("mineru", 8003)]:
+        from app.services import pdf_service_client
+        for name, health_url in [("marker", pdf_service_client.marker_url("health")),
+                                 ("mineru", pdf_service_client.mineru_url("health"))]:
             try:
                 async with httpx.AsyncClient(timeout=2.0) as client:
-                    resp = await client.get(f"http://localhost:{port}/health")
+                    resp = await client.get(health_url)
                     services[name] = "healthy" if resp.status_code == 200 else "unhealthy"
             except Exception:
                 services[name] = "unavailable"

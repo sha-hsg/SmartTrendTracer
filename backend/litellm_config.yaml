@@ -193,6 +193,13 @@ model_list:
       temperature: 1.0
       max_tokens: 50000
 
+  # Tag Reorganization via OpenAI flagship (UI switch "gpt5"); needs the large
+  # output budget — the result lists every reorganized concept as JSON
+  - model_name: tag_reorganization_openai
+    litellm_params:
+      model: openai/gpt-6-astra
+      max_completion_tokens: 100000
+
   # Tag Reorganization Comprehensive
   - model_name: tag_reorganization_comprehensive
     litellm_params:
