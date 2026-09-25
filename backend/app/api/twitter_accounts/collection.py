@@ -12,6 +12,7 @@ from bson import ObjectId
 from app.database.mongodb import get_database
 from app.services.twitter_lookup_service import get_twitter_lookup_service
 from .models import serialize_account
+from app.repositories import twitter_accounts_collection as repo
 
 logger = logging.getLogger(__name__)
 
@@ -21,26 +22,7 @@ router = APIRouter()
 @router.post("/{account_id}/toggle")
 def toggle_account(account_id: str, db=Depends(get_database)):
     """Toggle the enabled status of an account."""
-    try:
-        account = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid account ID format")
-
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-
-    new_status = not account.get('enabled', True)
-
-    db.twitter_accounts.update_one(
-        {'_id': ObjectId(account_id)},
-        {'$set': {'enabled': new_status, 'updated_at': datetime.now(timezone.utc)}}
-    )
-
-    return {
-        'id': str(account['_id']),
-        'username': account.get('username'),
-        'enabled': new_status
-    }
+    return repo.toggle_account(account_id=account_id)
 
 
 @router.post("/{account_id}/refresh")

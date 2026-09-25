@@ -226,7 +226,7 @@ class MarkdownConverter:
         Returns:
             Clean preview text
         """
-        from app.services.preview_utils import generate_preview
+        from app.utils.preview_utils import generate_preview
         return generate_preview(markdown, length=max_length)
 
     def count_words(self, markdown: str) -> int:

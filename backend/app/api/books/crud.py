@@ -27,13 +27,14 @@ from .utils import (
     BOOKS_REPOSITORY,
     get_book_by_id,
 )
-from .query_builder import (
+from app.repositories.book_queries import (
     build_search_filter,
     build_concept_filter,
     build_multi_value_filter,
     build_year_filter,
     build_special_filters,
 )
+from app.repositories import books_crud as repo
 
 router = APIRouter()
 
@@ -339,38 +340,7 @@ async def upload_book(
 @router.put("/{book_id}")
 def update_book_metadata(book_id: str, metadata: Dict[str, Any] = Body(...)):
     """Update book metadata"""
-    book = get_book_by_id(book_id)
-    if not book:
-        raise HTTPException(status_code=404, detail="Book not found")
-
-    # Prepare update document
-    update_doc = {'updated_at': datetime.now(timezone.utc)}
-
-    # Update allowed fields
-    allowed_fields = [
-        'title', 'authors', 'publisher', 'publication_year', 'isbn',
-        'edition', 'language', 'genre', 'subject_areas', 'page_count',
-        'summary', 'key_themes', 'reading_difficulty'
-    ]
-
-    for field in allowed_fields:
-        if field in metadata:
-            if field in ['authors', 'genre', 'subject_areas', 'key_themes']:
-                # Handle array fields
-                if isinstance(metadata[field], str):
-                    update_doc[field] = [item.strip() for item in metadata[field].split(',')]
-                else:
-                    update_doc[field] = metadata[field]
-            else:
-                update_doc[field] = metadata[field]
-
-    # Update in MongoDB
-    db.books.update_one(
-        {'_id': ObjectId(book_id)},
-        {'$set': update_doc}
-    )
-
-    return {'message': 'Book metadata updated successfully'}
+    return repo.update_book_metadata(book_id=book_id, metadata=metadata)
 
 @router.delete("/{book_id}")
 def delete_book(book_id: str):

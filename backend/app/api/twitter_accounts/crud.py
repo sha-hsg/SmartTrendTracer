@@ -3,7 +3,6 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional, List
 from datetime import datetime, timezone
-from bson import ObjectId
 
 from app.database.mongodb import get_database
 from app.services.twitter_lookup_service import get_twitter_lookup_service
@@ -13,6 +12,7 @@ from .models import (
     TwitterAccountResponse,
     serialize_account,
 )
+from app.repositories import twitter_accounts_crud as repo
 
 logger = logging.getLogger(__name__)
 
@@ -27,23 +27,7 @@ def list_accounts(
     db=Depends(get_database)
 ):
     """List all Twitter accounts with optional filtering."""
-    query = {}
-
-    if enabled_only:
-        query['enabled'] = True
-
-    if tier is not None:
-        query['tier'] = tier
-
-    if category:
-        query['category'] = category
-
-    accounts = list(db.twitter_accounts.find(query).sort([
-        ('tier', 1),
-        ('username', 1)
-    ]))
-
-    return [serialize_account(acc) for acc in accounts]
+    return repo.list_accounts(enabled_only=enabled_only, tier=tier, category=category)
 
 
 @router.get("/lookup")
@@ -139,36 +123,7 @@ def create_account(data: TwitterAccountCreate, db=Depends(get_database)):
 @router.put("/{account_id}", response_model=TwitterAccountResponse)
 def update_account(account_id: str, data: TwitterAccountUpdate, db=Depends(get_database)):
     """Update an existing Twitter account."""
-    try:
-        account = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid account ID format")
-
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-
-    # Build update document
-    update_data = {'updated_at': datetime.now(timezone.utc)}
-
-    if data.display_name is not None:
-        update_data['display_name'] = data.display_name
-    if data.category is not None:
-        update_data['category'] = data.category
-    if data.description is not None:
-        update_data['description'] = data.description
-    if data.tier is not None:
-        update_data['tier'] = data.tier
-    if data.enabled is not None:
-        update_data['enabled'] = data.enabled
-
-    db.twitter_accounts.update_one(
-        {'_id': ObjectId(account_id)},
-        {'$set': update_data}
-    )
-
-    # Fetch updated document
-    updated = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
-    return serialize_account(updated)
+    return repo.update_account(account_id=account_id, data=data)
 
 
 @router.delete("/{account_id}")
@@ -178,26 +133,4 @@ def delete_account(
     db=Depends(get_database)
 ):
     """Delete a Twitter account. Optionally delete all associated tweets."""
-    try:
-        account = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid account ID format")
-
-    if not account:
-        raise HTTPException(status_code=404, detail="Account not found")
-
-    username = account.get('username')
-    tweets_deleted = 0
-
-    # Optionally delete tweets
-    if delete_tweets:
-        result = db.tweets.delete_many({'author_username': username})
-        tweets_deleted = result.deleted_count
-
-    # Delete account
-    db.twitter_accounts.delete_one({'_id': ObjectId(account_id)})
-
-    return {
-        'message': f"Account @{username} deleted successfully",
-        'tweets_deleted': tweets_deleted
-    }
+    return repo.delete_account(account_id=account_id, delete_tweets=delete_tweets)

@@ -22,7 +22,7 @@ pytestmark = pytest.mark.skipif(not _HAS_DB, reason="local MongoDB not available
 
 
 def test_objectid_tagged_content_resolves():
-    from app.services.concept_tag.service import ConceptOnlyTagService
+    from app.repositories.concepts.service import ConceptOnlyTagService
     svc = ConceptOnlyTagService()
     inst = svc.tag_instances.find_one({
         'content_type': 'tweet',
@@ -35,7 +35,7 @@ def test_objectid_tagged_content_resolves():
 
 
 def test_slug_tagged_content_resolves():
-    from app.services.concept_tag.service import ConceptOnlyTagService
+    from app.repositories.concepts.service import ConceptOnlyTagService
     svc = ConceptOnlyTagService()
     inst = svc.tag_instances.find_one({
         'content_type': {'$in': ['tweet', 'article', 'paper']},

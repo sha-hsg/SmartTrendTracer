@@ -14,7 +14,9 @@ from typing import Any, Dict
 from bson import ObjectId
 from fastapi import APIRouter, Body, HTTPException
 
-from .utils import db, logger, find_paper_by_id
+from .utils import db
+from app.repositories import papers_analysis_management as repo
+from app.repositories.papers_analysis_management import _find_paper  # noqa: F401 (moved)
 
 router = APIRouter()
 
@@ -23,16 +25,6 @@ router = APIRouter()
 # Helper
 # ---------------------------------------------------------------------------
 
-def _find_paper(paper_id: str):
-    """Look up a paper by ObjectId or legacy SQLite id."""
-    try:
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-    return paper
 
 
 # ---------------------------------------------------------------------------
@@ -141,55 +133,12 @@ async def update_free_analysis(
     content: str = Body(..., embed=True)
 ) -> Dict[str, Any]:
     """Update the content of a free-form analysis"""
-
-    paper = _find_paper(paper_id)
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Find and update the analysis
-    free_analyses = paper.get('free_analyses', [])
-    updated = False
-
-    for analysis in free_analyses:
-        if analysis.get('id') == analysis_id:
-            analysis['content'] = content
-            analysis['updated_at'] = datetime.now(timezone.utc).isoformat()
-            updated = True
-            break
-
-    if not updated:
-        raise HTTPException(status_code=404, detail="Analysis not found")
-
-    # Save to database
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {'free_analyses': free_analyses}}
-    )
-
-    return {"success": True, "message": "Analysis updated"}
+    return repo.update_free_analysis(paper_id=paper_id, analysis_id=analysis_id, content=content)
 
 @router.delete("/{paper_id}/analyses/free/{analysis_id}")
 async def delete_free_analysis(paper_id: str, analysis_id: str) -> Dict[str, Any]:
     """Delete a free-form analysis"""
-
-    paper = _find_paper(paper_id)
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Filter out the analysis to delete
-    free_analyses = paper.get('free_analyses', [])
-    filtered_analyses = [a for a in free_analyses if a.get('id') != analysis_id]
-
-    if len(filtered_analyses) == len(free_analyses):
-        raise HTTPException(status_code=404, detail="Analysis not found")
-
-    # Save to database
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {'free_analyses': filtered_analyses}}
-    )
-
-    return {"success": True, "message": "Analysis deleted"}
+    return repo.delete_free_analysis(paper_id=paper_id, analysis_id=analysis_id)
 
 
 # ---------------------------------------------------------------------------
@@ -203,81 +152,14 @@ async def update_generated_analysis(
     data: Dict[str, Any] = Body(...)
 ) -> Dict[str, Any]:
     """Update the content of a generated analysis (like mollick_summary)"""
-
-    content = data.get('content', '')
-
-    paper = _find_paper(paper_id)
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Get existing analyses - handle both dict and list formats
-    analyses = paper.get('analyses', {})
-    updated = False
-
-    if isinstance(analyses, dict):
-        # Dict format - used by the generation endpoint
-        if analysis_type not in analyses:
-            raise HTTPException(status_code=404, detail=f"Analysis type '{analysis_type}' not found")
-
-        # Update the content while preserving other fields
-        analyses[analysis_type]['content'] = content
-        analyses[analysis_type]['updated_at'] = datetime.now(timezone.utc).isoformat()
-        updated = True
-
-    elif isinstance(analyses, list):
-        # List format - handle legacy format
-        for analysis in analyses:
-            # Check both 'type' and 'analysis_type' fields
-            if (analysis.get('type') == analysis_type or
-                analysis.get('analysis_type') == analysis_type):
-                analysis['content'] = content
-                analysis['updated_at'] = datetime.now(timezone.utc).isoformat()
-                updated = True
-                break
-
-        if not updated:
-            raise HTTPException(status_code=404, detail=f"Analysis type '{analysis_type}' not found")
-    else:
-        raise HTTPException(status_code=400, detail="Invalid analyses format")
-
-    # Save to database
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {'analyses': analyses}}
-    )
-
-    return {"success": True, "message": f"Analysis '{analysis_type}' updated"}
+    return repo.update_generated_analysis(paper_id=paper_id, analysis_type=analysis_type, data=data)
 
 @router.delete("/{paper_id}/analyses")
 def delete_all_analyses(paper_id: str) -> Dict[str, Any]:
     """Delete all saved analyses for a paper"""
-    paper = find_paper_by_id(paper_id)
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    count = len(paper.get('analyses', []))
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {'analyses': []}}
-    )
-
-    return {"message": f"Deleted {count} analyses", "deleted_count": count}
+    return repo.delete_all_analyses(paper_id=paper_id)
 
 @router.delete("/{paper_id}/analyses/{analysis_type}")
 def delete_analysis(paper_id: str, analysis_type: str) -> Dict[str, str]:
     """Delete a saved analysis"""
-
-    paper = _find_paper(paper_id)
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Remove analysis from paper atomically - check both type and analysis_type fields
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$pull': {'analyses': {'$or': [
-            {'type': analysis_type},
-            {'analysis_type': analysis_type}
-        ]}}}
-    )
-
-    return {"message": "Analysis deleted successfully"}
+    return repo.delete_analysis(paper_id=paper_id, analysis_type=analysis_type)

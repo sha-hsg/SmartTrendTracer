@@ -4,7 +4,15 @@ import re
 from bson import ObjectId
 from pymongo import DESCENDING
 
-from .utils import db, logger, concept_service
+from app.database.mongodb import get_database
+
+db = get_database()
+from app.repositories.concepts import ConceptOnlyTagService
+
+concept_service = ConceptOnlyTagService()
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def build_author_query_conditions(author_id: str) -> list:

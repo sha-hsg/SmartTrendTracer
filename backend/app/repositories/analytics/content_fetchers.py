@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from bson import ObjectId
 
-from app.services.analytics.concept_helpers import get_tagged_content_ids
+from app.repositories.analytics.concept_helpers import get_tagged_content_ids
 
 
 def build_date_filter(

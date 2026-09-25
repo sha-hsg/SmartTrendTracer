@@ -21,6 +21,7 @@ from .utils import (
     db,
     logger,
 )
+from app.repositories import papers_grobid as repo
 
 router = APIRouter()
 
@@ -130,32 +131,7 @@ async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
 @router.get("/{paper_id}/grobid/metadata")
 def get_grobid_metadata(paper_id: str) -> Dict[str, Any]:
     """Get GROBID metadata for a paper"""
-    try:
-        # Get paper from MongoDB
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    grobid_metadata = paper.get('grobid_metadata')
-    if not grobid_metadata:
-        return {"success": False, "message": "No GROBID metadata available"}
-
-    return {
-        "success": True,
-        "grobid_metadata": grobid_metadata,
-        "metadata": grobid_metadata,
-        "metadata_extracted": bool(grobid_metadata.get('metadata')),
-        "references_extracted": len(grobid_metadata.get('references', [])),
-        "sections_extracted": len(grobid_metadata.get('sections', [])),
-        "citations_extracted": len(grobid_metadata.get('citation_contexts', [])),
-        "processed_at": paper.get('grobid_processed_at')
-    }
+    return repo.get_grobid_metadata(paper_id=paper_id)
 
 
 

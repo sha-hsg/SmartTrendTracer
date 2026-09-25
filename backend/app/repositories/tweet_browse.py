@@ -4,7 +4,15 @@ from typing import List, Optional, Dict, Set, Tuple
 from bson import ObjectId
 from bson.errors import InvalidId
 
-from .utils import logger, db, concept_service
+from app.database.mongodb import get_database
+
+db = get_database()
+from app.repositories.concepts import ConceptOnlyTagService
+
+concept_service = ConceptOnlyTagService()
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def build_concept_id_filter(concept_ids: List[str]) -> List:

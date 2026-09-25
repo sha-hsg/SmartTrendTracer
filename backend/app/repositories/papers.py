@@ -1,4 +1,5 @@
 """Paper lookups shared by the papers API package."""
+from app.database.mongodb import safe_object_id
 import logging
 from typing import Any, Dict, Optional
 
@@ -61,3 +62,32 @@ def save_extracted_sections(paper_id: str, sections, abstract: str):
             }
         }
     )
+
+
+def find_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
+    """Find a paper by ObjectId or legacy SQLite ID.
+
+    This helper consolidates the common pattern of:
+    1. Try to find by ObjectId (if 24 chars)
+    2. Fall back to old_sqlite_id (if numeric)
+
+    Returns None if paper not found or ID is invalid.
+    """
+    if not paper_id:
+        return None
+
+    # Try ObjectId first if it looks like one
+    oid = safe_object_id(paper_id)
+    if oid:
+        paper = db.papers.find_one({'_id': oid})
+        if paper:
+            return paper
+
+    # Fall back to old SQLite ID
+    try:
+        sqlite_id = int(paper_id)
+        return db.papers.find_one({'old_sqlite_id': sqlite_id})
+    except (ValueError, TypeError):
+        pass
+
+    return None

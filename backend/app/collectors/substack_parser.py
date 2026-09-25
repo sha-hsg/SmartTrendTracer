@@ -1,6 +1,6 @@
 import re
 
-from app.services.preview_utils import generate_preview
+from app.utils.preview_utils import generate_preview
 import json
 import logging
 from pathlib import Path

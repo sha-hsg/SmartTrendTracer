@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from app.services.analytics.concept_helpers import calculate_tag_velocity
+from app.repositories.analytics.concept_helpers import calculate_tag_velocity
 from app.services.anomaly_detection import AnomalyDetector
 
 

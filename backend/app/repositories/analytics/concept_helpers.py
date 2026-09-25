@@ -10,7 +10,7 @@ from bson import ObjectId
 
 def _concept_service():
     """Lazy accessor for the singleton ConceptOnlyTagService."""
-    from app.services.concept_only_tag_service import ConceptOnlyTagService
+    from app.repositories.concepts import ConceptOnlyTagService
     return ConceptOnlyTagService()
 
 

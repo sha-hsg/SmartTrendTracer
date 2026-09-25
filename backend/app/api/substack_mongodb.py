@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 from collections import Counter, defaultdict
 import re
+from app.repositories import substack as repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -260,16 +261,4 @@ async def get_substack_trends(
 @router.get("/health")
 async def substack_health():
     """Health check for Substack API"""
-    try:
-        article_count = db.articles.count_documents({})
-        return {
-            "status": "healthy",
-            "articles_count": article_count,
-            "database": "MongoDB"
-        }
-    except Exception as e:
-        logger.error(f"Substack health check failed: {e}")
-        return {
-            "status": "error",
-            "error": str(e)
-        }
+    return repo.substack_health()

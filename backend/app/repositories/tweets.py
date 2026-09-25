@@ -98,3 +98,55 @@ def advance_collection_state(key: str, last_run: datetime, last_tweet_id: Option
 
 def get_collection_state(key: str) -> Optional[Dict[str, Any]]:
     return db.collection_state.find_one({'key': key})
+
+
+_profile_image_cache: Dict[str, tuple[Optional[str], float]] = {}  # {username: (url, timestamp)}
+
+
+_PROFILE_IMAGE_CACHE_TTL = 3600  # 1 hour TTL
+
+
+def get_profile_images_for_usernames(usernames: List[str]) -> Dict[str, Optional[str]]:
+    """
+    Batch lookup profile images from twitter_accounts collection.
+    Returns a dict mapping username -> profile_image_url (or None if not found).
+    Uses caching with 1 hour TTL to avoid repeated lookups.
+    """
+    import time
+    current_time = time.time()
+    result = {}
+    usernames_to_lookup = []
+
+    # Check cache first (with TTL validation)
+    for username in usernames:
+        if username in _profile_image_cache:
+            cached_url, cached_time = _profile_image_cache[username]
+            if current_time - cached_time < _PROFILE_IMAGE_CACHE_TTL:
+                result[username] = cached_url
+            else:
+                # Cache expired
+                del _profile_image_cache[username]
+                usernames_to_lookup.append(username)
+        else:
+            usernames_to_lookup.append(username)
+
+    # Lookup remaining usernames from DB
+    if usernames_to_lookup:
+        accounts = list(db.twitter_accounts.find(
+            {'username': {'$in': usernames_to_lookup}},
+            {'username': 1, 'profile_image_url': 1}
+        ))
+
+        for account in accounts:
+            username = account.get('username')
+            profile_url = account.get('profile_image_url')
+            result[username] = profile_url
+            _profile_image_cache[username] = (profile_url, current_time)
+
+        # Cache None for usernames not found
+        for username in usernames_to_lookup:
+            if username not in result:
+                result[username] = None
+                _profile_image_cache[username] = (None, current_time)
+
+    return result

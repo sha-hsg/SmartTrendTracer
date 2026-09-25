@@ -16,7 +16,7 @@ from app.database.mongodb import get_database
 from app.services.author_service import AuthorService
 import logging
 
-from app.services.preview_utils import generate_preview
+from app.utils.preview_utils import generate_preview
 
 logger = logging.getLogger(__name__)
 

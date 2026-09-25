@@ -12,7 +12,9 @@ from typing import Dict, List, Optional
 from bson import ObjectId
 from bson.errors import InvalidId
 
-from .utils import db
+from app.database.mongodb import get_database
+
+db = get_database()
 
 logger = logging.getLogger("app.api.papers")
 

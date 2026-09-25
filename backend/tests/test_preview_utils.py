@@ -7,7 +7,7 @@ taken from the actual dirty data.
 
 import re
 
-from app.services.preview_utils import generate_preview
+from app.utils.preview_utils import generate_preview
 
 DIRTY = re.compile(r'<[a-z]+|substackcdn\.com|\]\(<|href=|!\[', re.I)
 

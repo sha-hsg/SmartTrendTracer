@@ -82,37 +82,11 @@ def safe_object_id(value: Any) -> Optional[ObjectId]:
     return None
 
 
-def find_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
-    """Find a paper by ObjectId or legacy SQLite ID.
-
-    This helper consolidates the common pattern of:
-    1. Try to find by ObjectId (if 24 chars)
-    2. Fall back to old_sqlite_id (if numeric)
-
-    Returns None if paper not found or ID is invalid.
-    """
-    if not paper_id:
-        return None
-
-    # Try ObjectId first if it looks like one
-    oid = safe_object_id(paper_id)
-    if oid:
-        paper = db.papers.find_one({'_id': oid})
-        if paper:
-            return paper
-
-    # Fall back to old SQLite ID
-    try:
-        sqlite_id = int(paper_id)
-        return db.papers.find_one({'old_sqlite_id': sqlite_id})
-    except (ValueError, TypeError):
-        pass
-
-    return None
 
 
 # Moved to the data-access layer; re-exported for the papers package
 from app.repositories.papers import get_paper_by_id  # noqa: E402,F401
+from app.repositories.papers import find_paper_by_id  # noqa: F401 (moved to data layer)
 
 
 def parse_marker_error(error_text: str) -> str:

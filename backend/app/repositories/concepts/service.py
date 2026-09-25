@@ -3,8 +3,8 @@ Concept-only tag service for MongoDB.
 All tags are now concepts with IDs. No more orphan tags or text-based tags.
 """
 
-from app.services.concept_tag.lookup import ConceptLookupMixin
-from app.services.concept_tag.tagging import ConceptTaggingMixin
+from app.repositories.concepts.lookup import ConceptLookupMixin
+from app.repositories.concepts.tagging import ConceptTaggingMixin
 
 
 class ConceptOnlyTagService(ConceptLookupMixin, ConceptTaggingMixin):
