@@ -13,16 +13,5 @@ logger = logging.getLogger(__name__)
 # MongoDB connection
 db = get_database()
 
-CACHE_TTL = timedelta(seconds=60)
-_cache: Dict[str, Dict[str, Any]] = {}
-
-
-def _get_cached(key: str, builder):
-    now = datetime.now(timezone.utc)
-    entry = _cache.get(key)
-    if entry and entry["expires_at"] > now:
-        return entry["value"]
-
-    value = builder()
-    _cache[key] = {"value": value, "expires_at": now + CACHE_TTL}
-    return value
+# Cache lives in the data-access layer; kept under the old name for callers
+from app.repositories.cache import get_cached as _get_cached  # noqa: E402,F401

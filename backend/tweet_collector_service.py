@@ -29,6 +29,8 @@ load_dotenv(find_dotenv(usecwd=True))
 
 from pymongo import MongoClient, ASCENDING, DESCENDING
 from app.config import settings
+from app.database.mongodb import get_database, get_client
+from app.repositories import tweets as tweet_repo
 import tweepy
 from logging.handlers import TimedRotatingFileHandler
 
@@ -40,9 +42,7 @@ TIER_3_INTERVAL = 21600   # 6 hours
 # =========================
 # MongoDB Connection
 # =========================
-MONGODB_URL = settings.mongodb_uri
-mongo_client = MongoClient(MONGODB_URL)
-db = mongo_client.smarttrendtracer
+db = get_database()
 
 
 def load_accounts_from_mongodb(enabled_only: bool = True) -> List[Dict[str, Any]]:
@@ -493,44 +493,12 @@ def signal_handler(signum, frame):
 
 def get_collection_state(key: str) -> Optional[Dict]:
     """Get collection state from MongoDB"""
-    return db.collection_state.find_one({"key": key})
+    return tweet_repo.get_collection_state(key)
 
 def update_collection_state(key: str, last_run: datetime, last_tweet_id: Optional[str] = None,
                           tweets_collected: int = 0):
-    """
-    Update collection state in MongoDB using atomic operations.
-
-    Uses $max for last_tweet_id to prevent race conditions - if two collectors
-    run concurrently, only the highest tweet ID is retained.
-    Tweet IDs are Twitter snowflake IDs where higher = newer.
-    """
-    update_ops = {
-        "$set": {
-            "last_run": last_run,
-            "updated_at": datetime.now(timezone.utc)
-        },
-        "$inc": {
-            "tweets_collected_total": tweets_collected  # Cumulative counter
-        },
-        "$setOnInsert": {
-            "key": key,
-            "created_at": datetime.now(timezone.utc)
-        }
-    }
-
-    # Use $max for last_tweet_id to atomically keep only the highest value
-    # This prevents race conditions where a stale collector overwrites a newer ID
-    if last_tweet_id:
-        update_ops["$max"] = {"last_tweet_id": last_tweet_id}
-
-    # Also track tweets collected in this cycle (overwritten each cycle)
-    update_ops["$set"]["tweets_collected_this_cycle"] = tweets_collected
-
-    db.collection_state.update_one(
-        {"key": key},
-        update_ops,
-        upsert=True
-    )
+    """Record a collection run ($max keeps last_tweet_id monotonic)."""
+    tweet_repo.advance_collection_state(key, last_run, last_tweet_id, tweets_collected)
 
 def process_urls_with_previews(urls: List[Dict]) -> List[Dict]:
     """
@@ -574,55 +542,39 @@ def save_tweets_to_mongodb(tweets_data: List[Dict]) -> tuple[int, bool]:
     
     for tweet_data in tweets_data:
         try:
-            # Check if tweet already exists
-            existing = db.tweets.find_one({"_id": tweet_data["id"]})
-            
-            if existing:
+            if tweet_repo.tweet_exists(tweet_data["id"]):
                 found_existing_count += 1
             else:
-                # Prepare tweet document
-                tweet_doc = {
-                    "_id": tweet_data["id"],  # Use Twitter ID as MongoDB _id
-                    "text": tweet_data.get("text", ""),
-                    "author_id": tweet_data.get("author_id"),
-                    "author_username": tweet_data.get("author", {}).get("username"),
-                    "author_name": tweet_data.get("author", {}).get("name"),
-                    "created_at": datetime.fromisoformat(tweet_data["created_at"].replace("Z", "+00:00")),
-                    "collected_at": datetime.now(timezone.utc),
-                    "processed": False,
-                    "metrics": {
-                        "retweet_count": tweet_data.get("public_metrics", {}).get("retweet_count", 0),
-                        "like_count": tweet_data.get("public_metrics", {}).get("like_count", 0),
-                        "reply_count": tweet_data.get("public_metrics", {}).get("reply_count", 0),
-                        "quote_count": tweet_data.get("public_metrics", {}).get("quote_count", 0)
-                    },
-                    "hashtags": tweet_data.get("entities", {}).get("hashtags", []),
-                    "mentions": tweet_data.get("entities", {}).get("mentions", []),
-                    "urls": process_urls_with_previews(tweet_data.get("entities", {}).get("urls", [])),
-                    "referenced_tweets": tweet_data.get("referenced_tweets", []),
-                    "media": [],  # Will be added if media exists
-                    "media_count": 0,  # Track number of media items
-                    "concept_ids": []  # Empty initially, will be populated by tagging service
-                }
-                
-                # Add media if present
-                if "media" in tweet_data:
-                    for media in tweet_data["media"]:
-                        tweet_doc["media"].append({
-                            "media_key": media.get("media_key"),
-                            "type": media.get("type"),
-                            "url": media.get("url"),
-                            "preview_image_url": media.get("preview_image_url"),
-                            "alt_text": media.get("alt_text"),
-                            "width": media.get("width"),
-                            "height": media.get("height"),
-                            "duration_ms": media.get("duration_ms")
-                        })
-                    tweet_doc["media_count"] = len(tweet_doc["media"])
-                
-                # Insert tweet
-                db.tweets.insert_one(tweet_doc)
-                saved_count += 1
+                media = []
+                for media_item in tweet_data.get("media", []):
+                    media.append({
+                        "media_key": media_item.get("media_key"),
+                        "type": media_item.get("type"),
+                        "url": media_item.get("url"),
+                        "preview_image_url": media_item.get("preview_image_url"),
+                        "alt_text": media_item.get("alt_text"),
+                        "width": media_item.get("width"),
+                        "height": media_item.get("height"),
+                        "duration_ms": media_item.get("duration_ms")
+                    })
+                tweet_doc = tweet_repo.build_tweet_document(
+                    tweet_id=tweet_data["id"],
+                    text=tweet_data.get("text", ""),
+                    author_id=tweet_data.get("author_id"),
+                    author_username=tweet_data.get("author", {}).get("username"),
+                    author_name=tweet_data.get("author", {}).get("name"),
+                    created_at=tweet_data["created_at"],
+                    public_metrics=tweet_data.get("public_metrics"),
+                    entities=tweet_data.get("entities"),
+                    urls=process_urls_with_previews(tweet_data.get("entities", {}).get("urls", [])),
+                    referenced_tweets=tweet_data.get("referenced_tweets", []),
+                    media=media,
+                )
+
+                if tweet_repo.insert_tweet_if_new(tweet_doc):
+                    saved_count += 1
+                else:
+                    found_existing_count += 1
                 
         except Exception as e:
             logger.error(f"Error saving tweet {tweet_data.get('id')}: {e}")
@@ -1223,7 +1175,7 @@ def main():
     # Cleanup
     logger.info("🧹 Cleaning up resources...")
     try:
-        mongo_client.close()
+        get_client().close()
         logger.info("📁 MongoDB connection closed")
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")

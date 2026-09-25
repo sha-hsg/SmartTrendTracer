@@ -1,0 +1,220 @@
+"""
+Architecture guard (arch-audit 2026-09).
+
+Enforces the layering rules the audit established and ratchets the remaining
+debt so it can only go down:
+
+* no upward imports (data -> service/api, service -> api)
+* no import cycles between modules
+* no imports of another package's internal submodules
+* environment variables are read only in app/config.py
+* repositories never import FastAPI
+* MongoDB query call sites in app/api/ may not grow (ratchet); when you move
+  queries into app/repositories/, LOWER the constant below.
+* frontend files importing axios directly may not grow (ratchet).
+
+Pure static analysis — no DB, no network.
+"""
+import ast
+import os
+import re
+from collections import defaultdict
+from pathlib import Path
+
+BACKEND = Path(__file__).resolve().parents[1]
+FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
+
+# Ratchets — only ever lower these.
+API_DB_CALL_SITES_MAX = 387
+FRONTEND_AXIOS_IMPORT_FILES_MAX = 67
+
+DB_CALL_RE = re.compile(
+    r'\bdb\.[a-z_]+\.(find|find_one|insert_one|insert_many|update_one|update_many|delete_one|'
+    r'delete_many|aggregate|count_documents|distinct|replace_one|bulk_write)\('
+    r'|\bdb\[[\'"][a-z_]+[\'"]\]\.'
+)
+
+
+def _python_files():
+    for base in [BACKEND / 'app']:
+        for p in base.rglob('*.py'):
+            if '__pycache__' not in p.parts:
+                yield p
+    for p in BACKEND.glob('*.py'):
+        yield p
+
+
+def _modname(path: Path) -> str:
+    rel = path.relative_to(BACKEND).with_suffix('')
+    parts = list(rel.parts)
+    if parts[-1] == '__init__':
+        parts = parts[:-1]
+    return '.'.join(parts)
+
+
+MODULES = {_modname(p): p for p in _python_files()}
+
+
+def _layer(mod: str) -> str:
+    p = mod.split('.')
+    if p[0] != 'app' or len(p) < 2:
+        return 'other'
+    return {'api': 'api', 'services': 'service', 'collectors': 'service',
+            'repositories': 'data', 'database': 'data'}.get(p[1], 'other')
+
+
+RANK = {'api': 3, 'service': 2, 'data': 1}
+
+
+def _resolve(cur: str, is_pkg: bool, node: ast.ImportFrom):
+    if node.level == 0:
+        return node.module
+    base = cur.split('.') if is_pkg else cur.split('.')[:-1]
+    if node.level > 1:
+        base = base[:-(node.level - 1)]
+    return '.'.join(base + ([node.module] if node.module else []))
+
+
+def _known(target: str):
+    while target and target not in MODULES:
+        if '.' not in target:
+            return None
+        target = target.rsplit('.', 1)[0]
+    return target
+
+
+def _edges():
+    edges = []
+    for mod, path in MODULES.items():
+        tree = ast.parse(path.read_text(encoding='utf-8', errors='ignore'))
+        is_pkg = path.name == '__init__.py'
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                tgt = _resolve(mod, is_pkg, node)
+                if not tgt or not (tgt.startswith('app') or tgt in MODULES):
+                    continue
+                for alias in node.names:
+                    cand = f'{tgt}.{alias.name}'
+                    k = _known(cand if cand in MODULES else tgt)
+                    if k and k != mod:
+                        edges.append((mod, k, node.lineno))
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.startswith('app'):
+                        k = _known(alias.name)
+                        if k and k != mod:
+                            edges.append((mod, k, node.lineno))
+    return edges
+
+
+EDGES = _edges()
+
+
+def test_no_upward_imports():
+    bad = [f'{MODULES[a].relative_to(BACKEND)}:{ln} -> {b}'
+           for a, b, ln in EDGES
+           if _layer(a) in RANK and _layer(b) in RANK and RANK[_layer(a)] < RANK[_layer(b)]]
+    assert not bad, 'lower layer imports higher layer:\n' + '\n'.join(bad)
+
+
+def test_no_import_cycles():
+    graph = defaultdict(set)
+    for a, b, _ in EDGES:
+        graph[a].add(b)
+    index, low, stack, on, sccs, counter = {}, {}, [], set(), [], [0]
+
+    def strong(v):
+        index[v] = low[v] = counter[0]; counter[0] += 1
+        stack.append(v); on.add(v)
+        for w in graph[v]:
+            if w not in index:
+                strong(w); low[v] = min(low[v], low[w])
+            elif w in on:
+                low[v] = min(low[v], index[w])
+        if low[v] == index[v]:
+            comp = []
+            while True:
+                w = stack.pop(); on.discard(w); comp.append(w)
+                if w == v:
+                    break
+            # a package importing its own submodules (via __init__) is not a cycle
+            if len(comp) > 1 and not all(c.startswith(min(comp, key=len)) for c in comp):
+                sccs.append(sorted(comp))
+
+    import sys
+    sys.setrecursionlimit(10000)
+    for v in list(graph):
+        if v not in index:
+            strong(v)
+    assert not sccs, f'import cycles: {sccs}'
+
+
+def test_no_reaching_into_package_internals():
+    packages = {m for m, p in MODULES.items() if p.name == '__init__.py' and m.count('.') >= 2}
+    bad = []
+    for a, b, ln in EDGES:
+        for pkg in packages:
+            if b.startswith(pkg + '.') and not (a == pkg or a.startswith(pkg + '.')):
+                bad.append(f'{MODULES[a].relative_to(BACKEND)}:{ln} -> {b} (use {pkg})')
+    assert not bad, 'imports bypass a package interface:\n' + '\n'.join(bad)
+
+
+def test_env_reads_only_in_config():
+    bad = []
+    for mod, path in MODULES.items():
+        if mod == 'app.config':
+            continue
+        tree = ast.parse(path.read_text(encoding='utf-8', errors='ignore'))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                f = node.func
+                name = ''
+                if isinstance(f.value, ast.Name):
+                    name = f'{f.value.id}.{f.attr}'
+                elif isinstance(f.value, ast.Attribute) and isinstance(f.value.value, ast.Name):
+                    name = f'{f.value.value.id}.{f.value.attr}.{f.attr}'
+                if name in ('os.getenv', 'os.environ.get'):
+                    bad.append(f'{path.relative_to(BACKEND)}:{node.lineno}')
+            # os.environ['X'] reads (assignments are process setup and allowed)
+            if isinstance(node, ast.Subscript) and isinstance(node.ctx, ast.Load) \
+               and isinstance(node.value, ast.Attribute) and isinstance(node.value.value, ast.Name) \
+               and node.value.value.id == 'os' and node.value.attr == 'environ':
+                bad.append(f'{path.relative_to(BACKEND)}:{node.lineno}')
+    assert not bad, 'read env via app.config.settings instead:\n' + '\n'.join(bad)
+
+
+def test_repositories_do_not_import_fastapi():
+    bad = []
+    for mod, path in MODULES.items():
+        if not mod.startswith('app.repositories'):
+            continue
+        src = path.read_text()
+        if re.search(r'^\s*(from|import) (fastapi|starlette)', src, re.M):
+            bad.append(str(path.relative_to(BACKEND)))
+    assert not bad, f'repositories must raise app.repositories.errors, not HTTP types: {bad}'
+
+
+def test_api_db_call_sites_ratchet():
+    count = 0
+    for mod, path in MODULES.items():
+        if mod.startswith('app.api'):
+            count += sum(len(DB_CALL_RE.findall(line)) > 0 for line in path.read_text().splitlines())
+    assert count <= API_DB_CALL_SITES_MAX, (
+        f'{count} MongoDB call sites in app/api (max {API_DB_CALL_SITES_MAX}): '
+        f'put new queries in app/repositories/')
+    if count < API_DB_CALL_SITES_MAX:
+        print(f'NOTE: api db call sites down to {count} — lower API_DB_CALL_SITES_MAX')
+
+
+def test_frontend_axios_ratchet():
+    if not FRONTEND_SRC.exists():
+        return
+    n = 0
+    for p in list(FRONTEND_SRC.rglob('*.ts')) + list(FRONTEND_SRC.rglob('*.tsx')):
+        if 'services' in p.relative_to(FRONTEND_SRC).parts:
+            continue
+        if re.search(r"from ['\"]axios['\"]", p.read_text(encoding='utf-8', errors='ignore')):
+            n += 1
+    assert n <= FRONTEND_AXIOS_IMPORT_FILES_MAX, (
+        f'{n} frontend files import axios directly (max {FRONTEND_AXIOS_IMPORT_FILES_MAX}): '
+        f'use an API client in src/services/')

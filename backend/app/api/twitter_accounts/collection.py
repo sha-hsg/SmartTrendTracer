@@ -1,4 +1,5 @@
 from app.config import settings
+from app.repositories import tweets as tweet_repo
 import logging
 import os
 
@@ -194,8 +195,7 @@ def _collect_tweets_sync(db, account: Dict, account_id: str, max_tweets: int, re
             if not newest_id or int(tweet_id) > int(newest_id):
                 newest_id = tweet_id
 
-            # Duplicate check via _id (Twitter ID string), matching collector storage
-            if db.tweets.find_one({'_id': tweet_id}):
+            if tweet_repo.tweet_exists(tweet_id):
                 continue
 
             text = tweet_data.get('text', '')
@@ -218,55 +218,30 @@ def _collect_tweets_sync(db, account: Dict, account_id: str, max_tweets: int, re
                 for key in media_keys if key in media_lookup
             ]
 
-            created_at = tweet_data.get('created_at')
-            if isinstance(created_at, str):
-                created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-
             entities = tweet_data.get('entities') or {}
-            public_metrics = tweet_data.get('public_metrics') or {}
+            tweet_doc = tweet_repo.build_tweet_document(
+                tweet_id=tweet_id,
+                text=text,
+                author_id=tweet_data.get('author_id') or twitter_id,
+                author_username=username,
+                author_name=account.get('display_name', username),
+                created_at=tweet_data.get('created_at'),
+                public_metrics=tweet_data.get('public_metrics'),
+                entities=entities,
+                urls=_process_url_entities(entities.get('urls', [])),
+                referenced_tweets=tweet_data.get('referenced_tweets', []),
+                media=media,
+                collected_at=now,
+            )
 
-            # Document schema identical to tweet_collector_service.save_tweets_to_mongodb
-            tweet_doc = {
-                '_id': tweet_id,  # Use Twitter ID as MongoDB _id
-                'text': text,
-                'author_id': tweet_data.get('author_id') or twitter_id,
-                'author_username': username,
-                'author_name': account.get('display_name', username),
-                'created_at': created_at,
-                'collected_at': now,
-                'processed': False,
-                'metrics': {
-                    'retweet_count': public_metrics.get('retweet_count', 0),
-                    'like_count': public_metrics.get('like_count', 0),
-                    'reply_count': public_metrics.get('reply_count', 0),
-                    'quote_count': public_metrics.get('quote_count', 0)
-                },
-                'hashtags': entities.get('hashtags', []),
-                'mentions': entities.get('mentions', []),
-                'urls': _process_url_entities(entities.get('urls', [])),
-                'referenced_tweets': tweet_data.get('referenced_tweets', []),
-                'media': media,
-                'media_count': len(media),
-                'concept_ids': []
-            }
+            if tweet_repo.insert_tweet_if_new(tweet_doc):
+                tweets_collected += 1
 
-            db.tweets.insert_one(tweet_doc)
-            tweets_collected += 1
-
-        # Update collection state
+        # Update collection state (last_tweet_id only moves forward)
         if newest_id:
-            db.collection_state.update_one(
-                {'key': f'twitter_{username}'},
-                {
-                    '$set': {
-                        'last_run': now,
-                        'last_tweet_id': newest_id,
-                        'tweets_collected': tweets_collected,
-                        'updated_at': now
-                    },
-                    '$setOnInsert': {'created_at': now}
-                },
-                upsert=True
+            tweet_repo.advance_collection_state(
+                f'twitter_{username}', last_run=now,
+                last_tweet_id=newest_id, tweets_collected=tweets_collected,
             )
 
         # Update account stats

@@ -4,6 +4,7 @@ All data operations use MongoDB - no SQLite dependencies
 """
 
 from app.config import settings
+from app.repositories.errors import RepositoryError
 import time
 
 from fastapi import FastAPI, Request
@@ -155,6 +156,14 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         status_code=exc.status_code,
         content={"detail": exc.detail},
     )
+
+@app.exception_handler(RepositoryError)
+async def repository_error_handler(request: Request, exc: RepositoryError):
+    """Map data-layer domain errors to HTTP exactly like HTTPException."""
+    if exc.status_code >= 500:
+        logger.error(f"Server error on {request.method} {request.url.path}: {exc.detail}")
+        return JSONResponse(status_code=exc.status_code, content={"detail": "Internal server error"})
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
