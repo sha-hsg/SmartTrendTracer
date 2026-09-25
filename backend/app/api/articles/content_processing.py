@@ -3,11 +3,11 @@
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List
 from datetime import datetime, timezone
-from bson import ObjectId
 import json
 import re
 
-from .utils import db, logger, concept_service
+from .utils import logger, concept_service
+from app.repositories import articles as article_repo
 
 router = APIRouter()
 
@@ -16,13 +16,7 @@ router = APIRouter()
 def extract_metadata_from_content(article_id: str, model: str | None = Query(None)):
     """Extract author and published date from article content using LLM"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = article_repo.find_article_by_any_id(article_id)
 
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -91,10 +85,7 @@ JSON output:"""
                 logger.warning(f"Could not parse date: {metadata['date']}")
 
         if update_fields:
-            db.articles.update_one(
-                {'_id': article['_id']},
-                {'$set': update_fields}
-            )
+            article_repo.set_article_fields(article['_id'], update_fields)
 
         return {
             "success": True,
@@ -116,13 +107,7 @@ async def suggest_tags_for_article(article_id: str, request: dict = Body({})):
     logger.info(f"Tag suggestion requested for article {article_id} with model: {model}")
 
     # Get article
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = article_repo.find_article_by_any_id(article_id)
 
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -131,13 +116,7 @@ async def suggest_tags_for_article(article_id: str, request: dict = Body({})):
     article_id_str = str(article['_id'])
     sqlite_id_str = str(article.get('old_sqlite_id', ''))
 
-    existing_tags = list(db.tag_instances.find({
-        'content_type': 'article',
-        '$or': [
-            {'content_id': article_id_str},
-            {'content_id': sqlite_id_str}
-        ]
-    }))
+    existing_tags = article_repo.find_article_tag_instances(article_id_str, sqlite_id_str)
 
     existing_concept_ids = [ti['concept_id'] for ti in existing_tags if ti.get('concept_id')]
 
@@ -296,13 +275,7 @@ async def apply_concepts_to_article(article_id: str, concepts: List[Dict[str, st
     Batch-apply selected concepts to an article.
     Expects array of objects with display_name and slug.
     """
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = article_repo.find_article_by_any_id(article_id)
 
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -322,10 +295,7 @@ async def apply_concepts_to_article(article_id: str, concepts: List[Dict[str, st
                 # Keep articles.concept_ids in sync (parity with
                 # POST /{article_id}/concepts in content.py) so the
                 # concept_id filter in GET / finds tagged articles.
-                db.articles.update_one(
-                    {'_id': article['_id']},
-                    {'$addToSet': {'concept_ids': concept_id}}
-                )
+                article_repo.add_article_concept_id(article['_id'], concept_id)
                 success_count += 1
             else:
                 fail_count += 1
@@ -345,13 +315,7 @@ async def apply_concepts_to_article(article_id: str, concepts: List[Dict[str, st
 def summarize_article(article_id: str, model: str | None = Query(None)):
     """Generate a summary for an article"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = article_repo.find_article_by_any_id(article_id)
 
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -392,11 +356,9 @@ def summarize_article(article_id: str, model: str | None = Query(None)):
     if not author_name or author_name == 'Unknown':
         if article.get('author_id'):
             try:
-                author_doc = db.substack_authors.find_one({'_id': article['author_id']})
-                if not author_doc:
-                    author_doc = db.substack_authors.find_one({'sqlite_id': article['author_id']})
-                if author_doc:
-                    author_name = author_doc.get('name', 'Unknown')
+                found_name = article_repo.find_author_name(article['author_id'])
+                if found_name is not None:
+                    author_name = found_name
             except Exception:
                 pass
 
@@ -426,18 +388,13 @@ def summarize_article(article_id: str, model: str | None = Query(None)):
         model_used = summary_result.get('model_used', 'unknown')
 
         # Save the summary to the database
-        db.articles.update_one(
-            {'_id': article['_id']},
-            {
-                '$set': {
-                    'summary': summary_text,
-                    'key_points': key_points,
-                    'summarized': True,
-                    'summarized_at': datetime.now(timezone.utc),
-                    'summary_model': model_used
-                }
-            }
-        )
+        article_repo.set_article_fields(article['_id'], {
+            'summary': summary_text,
+            'key_points': key_points,
+            'summarized': True,
+            'summarized_at': datetime.now(timezone.utc),
+            'summary_model': model_used
+        })
 
         return {
             "summary": summary_text,
@@ -458,13 +415,7 @@ async def recollect_article(article_id: str):
     when you want to refresh the content.
     """
     # Find the article
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = article_repo.find_article_by_any_id(article_id)
 
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
@@ -509,10 +460,7 @@ async def recollect_article(article_id: str):
             if result.get('author') and not article.get('author_name'):
                 update_doc['author_name'] = result.get('author')
 
-            db.articles.update_one(
-                {'_id': article['_id']},
-                {'$set': update_doc}
-            )
+            article_repo.set_article_fields(article['_id'], update_doc)
 
             return {
                 'success': True,

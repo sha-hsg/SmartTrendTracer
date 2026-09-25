@@ -11,6 +11,7 @@ from pymongo import DESCENDING
 import re
 
 from app.database.mongodb import get_database
+from app.repositories.articles import find_article_by_any_id
 
 db = get_database()
 
@@ -20,13 +21,7 @@ db = get_database()
 def add_concept_to_article(article_id, text, concept_service):
     """Add a concept to an article"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = find_article_by_any_id(article_id)
 
     if not article:
         raise NotFoundError("Article not found")
@@ -61,13 +56,7 @@ def add_concept_to_article(article_id, text, concept_service):
 def remove_concept_from_article(article_id, concept_id, concept_service):
     """Remove a concept from an article"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = find_article_by_any_id(article_id)
 
     if not article:
         raise NotFoundError("Article not found")
@@ -91,13 +80,7 @@ def remove_concept_from_article(article_id, concept_id, concept_service):
 def remove_tag_from_article(article_id, tag_name, concept_service):
     """Remove a tag from an article by tag name (display_name)"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = find_article_by_any_id(article_id)
 
     if not article:
         raise NotFoundError("Article not found")
@@ -139,13 +122,7 @@ def remove_tag_from_article(article_id, tag_name, concept_service):
 def add_snippet(article_id, snippet):
     """Add a snippet to an article"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = find_article_by_any_id(article_id)
 
     if not article:
         raise NotFoundError("Article not found")
@@ -171,13 +148,7 @@ def add_snippet(article_id, snippet):
 def remove_snippet(article_id, snippet_id):
     """Remove a snippet from an article"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = find_article_by_any_id(article_id)
 
     if not article:
         raise NotFoundError("Article not found")
@@ -195,13 +166,7 @@ def remove_snippet(article_id, snippet_id):
 def update_article(article_id, updates):
     """Update article fields (title, content, url, date, etc.)"""
 
-    try:
-        if len(article_id) == 24:
-            article = db.articles.find_one({'_id': ObjectId(article_id)})
-        else:
-            article = db.articles.find_one({'old_sqlite_id': int(article_id)})
-    except Exception:
-        article = None
+    article = find_article_by_any_id(article_id)
 
     if not article:
         raise NotFoundError("Article not found")
