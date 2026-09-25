@@ -9,6 +9,7 @@ from typing import Dict, Any
 from datetime import datetime, timezone
 
 from .utils import db, concept_service, logger, find_paper_by_id
+from app.repositories import papers_bulk_ops_queries as queries
 
 router = APIRouter()
 
@@ -77,10 +78,7 @@ def bulk_action_entities(paper_id: str, action_data: Dict[str, Any]) -> Dict[str
                     )
                     if success and tagged_concept_id:
                         concept_id = str(tagged_concept_id)
-                        db.papers.update_one(
-                            {'_id': paper['_id']},
-                            {'$addToSet': {'concept_ids': tagged_concept_id}}
-                        )
+                        queries.papers_update_one__bulk_action_entities_2(paper, tagged_concept_id)
 
                     processed_entities.append({
                         'entity_name': entity_name,
@@ -123,13 +121,7 @@ def bulk_action_entities(paper_id: str, action_data: Dict[str, Any]) -> Dict[str
                         'status': 'rejected'
                     })
 
-            db.papers.update_one(
-                {'_id': paper['_id']},
-                {
-                    '$addToSet': {'rejected_entities': {'$each': rejected_items}},
-                    '$set': {'rejected_entities_updated_at': datetime.now(timezone.utc)}
-                }
-            )
+            queries.papers_update_one__bulk_action_entities(paper, rejected_items)
 
         return {
             "message": f"Bulk {action} completed",

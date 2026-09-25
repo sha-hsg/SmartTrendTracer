@@ -16,6 +16,7 @@ from .utils import (
     db,
     logger,
 )
+from app.repositories import papers_content_media_queries as queries
 
 router = APIRouter()
 
@@ -37,7 +38,7 @@ def get_paper_image(
         # Try to convert to ObjectId if it's a valid format (24 hex chars)
         if len(paper_id) == 24:
             try:
-                paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+                paper = queries.papers_find_one__get_paper_image(paper_id)
                 logger.info(f"Found paper by ObjectId: {paper is not None}")
             except Exception:
                 # Not a valid ObjectId, try as old SQLite ID
@@ -46,7 +47,7 @@ def get_paper_image(
         # If not found by ObjectId, try as old SQLite ID (integer)
         if paper is None:
             try:
-                paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+                paper = queries.papers_find_one__get_paper_image_2(paper_id)
                 logger.info(f"Found paper by SQLite ID {paper_id}: {paper is not None}")
             except Exception:
                 logger.warning(f"Could not parse {paper_id} as integer for SQLite ID")
@@ -61,12 +62,12 @@ def get_paper_image(
             logger.info(f"Searching for paper with converted ID {paper_id}")
 
             # Get all papers and check their converted IDs
-            for p in db.papers.find({}, {'_id': 1, 'title': 1, 'processor_used': 1}):
+            for p in queries.papers_find__get_paper_image():
                 mongo_id = str(p['_id'])
                 converted_id = int(mongo_id[-8:], 16)
                 if converted_id == int(paper_id):
                     logger.info(f"Found paper by converted ID! MongoDB ID: {mongo_id}, converted: {converted_id}")
-                    paper = db.papers.find_one({'_id': p['_id']})
+                    paper = queries.papers_find_one__get_paper_image_3(p)
                     break
 
     except Exception as e:

@@ -17,6 +17,7 @@ from .utils import (
     logger, db, concept_service, llm_manager,
     batch_annotation_tasks, BatchAnnotateRequest,
 )
+from app.repositories import tweets_annotation_queries as queries
 
 router = APIRouter()
 
@@ -146,7 +147,7 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
         result = None
 
         try:
-            tweet = db.tweets.find_one({"_id": tweet_id})
+            tweet = queries.tweets_find_one__annotate_one(tweet_id)
             if not tweet:
                 result = {"error": "not_found"}
                 local_error = 1
@@ -192,18 +193,7 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
                     # AND the tweet had none before AND nothing failed — a tweet whose
                     # add_tag calls all failed must stay in the unannotated pool.
                     if not new_concepts and not existing_concepts and add_failures == 0:
-                        db.tag_instances.update_one(
-                            {'content_type': 'tweet', 'content_id': str(tweet_id), 'concept_id': None},
-                            {'$setOnInsert': {
-                                'content_type': 'tweet',
-                                'content_id': str(tweet_id),
-                                'concept_id': None,
-                                'display_name': '_no_concepts',
-                                'created_at': datetime.now(timezone.utc),
-                                'source': 'auto_annotation',
-                            }},
-                            upsert=True
-                        )
+                        queries.tag_instances_update_one__annotate_one(tweet_id)
 
                     result = {"status": "success", "new_concepts": new_concepts, "skipped": skipped}
                     local_new = len(new_concepts)
@@ -359,7 +349,7 @@ async def batch_annotate_all_unannotated(
         {'$group': {'_id': '$content_id'}},
         {'$project': {'content_id': '$_id', '_id': 0}}
     ]
-    annotated_results = list(db.tag_instances.aggregate(annotated_pipeline))
+    annotated_results = list(queries.tag_instances_aggregate__batch_annotate_all_unannotated(annotated_pipeline))
     annotated_ids = set()
     for r in annotated_results:
         tid = r['content_id']
@@ -372,7 +362,7 @@ async def batch_annotate_all_unannotated(
                 pass
 
     # Get all tweet IDs that are NOT annotated
-    all_tweet_ids = db.tweets.distinct('_id')
+    all_tweet_ids = queries.tweets_distinct__batch_annotate_all_unannotated()
     unannotated_ids = [tid for tid in all_tweet_ids if tid not in annotated_ids and str(tid) not in annotated_ids]
 
     if not unannotated_ids:

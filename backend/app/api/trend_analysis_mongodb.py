@@ -9,6 +9,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 import logging
 from app.repositories import trend_analysis as repo
+from app.repositories import trend_analysis_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -83,33 +84,13 @@ async def get_trend_overview(
     cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Content type distribution
-    content_distribution = list(db.tag_instances.aggregate([
-        {'$match': {'created_at': {'$gte': cutoff_date}}},
-        {'$group': {
-            '_id': '$content_type',
-            'count': {'$sum': 1}
-        }}
-    ]))
+    content_distribution = list(queries.tag_instances_aggregate__get_trend_overview(cutoff_date))
 
     # Daily activity — created_at is native datetime after migration
-    daily_activity = list(db.tag_instances.aggregate([
-        {'$match': {'created_at': {'$gte': cutoff_date}}},
-        {'$addFields': {
-            'date': {'$dateToString': {
-                'format': '%Y-%m-%d',
-                'date': '$created_at'
-            }}
-        }},
-        {'$group': {
-            '_id': '$date',
-            'count': {'$sum': 1}
-        }},
-        {'$sort': {'_id': 1}}
-    ]))
+    daily_activity = list(queries.tag_instances_aggregate__get_trend_overview_2(cutoff_date))
 
     # Get unique concepts
-    unique_concept_ids = db.tag_instances.distinct('concept_id',
-        {'created_at': {'$gte': cutoff_date}})
+    unique_concept_ids = queries.tag_instances_distinct__get_trend_overview(cutoff_date)
     unique_concepts_count = len(unique_concept_ids) if unique_concept_ids else 0
 
     return {

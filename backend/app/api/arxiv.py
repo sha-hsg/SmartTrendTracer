@@ -10,9 +10,8 @@ import logging
 
 from ..services.arxiv_import_service import get_arxiv_service
 from ..services.pdf_processor_service import get_pdf_processor_service
-from app.database.mongodb import get_database
-from bson import ObjectId
-from datetime import datetime, timezone
+from app.repositories import arxiv_queries as queries
+from app.repositories import papers as papers_repo
 
 logger = logging.getLogger(__name__)
 
@@ -98,47 +97,12 @@ async def import_arxiv_paper(
         # Add to database first if requested (so we have paper_id for image extraction)
         paper_id = None
         if request.add_to_database:
-            db = get_database()
 
             try:
-                # Check if paper already exists
-                existing = db.papers.find_one({
-                    'arxiv_id': result['arxiv_id']
-                })
-                
-                if existing:
-                    paper_id = str(existing['_id'])
-                    response.paper_id = paper_id
-                    logger.info(f"Paper already exists in database: {paper_id}")
-                else:
-                    # Create new paper entry with PDF path immediately
-                    paper_data = {
-                        'title': result['metadata']['title'],
-                        'authors': ', '.join(result['metadata']['authors']),
-                        'authors_detailed': [{'name': author, 'affiliation': '', 'email': ''} for author in result['metadata']['authors']],
-                        'abstract': result['metadata']['abstract'],
-                        'arxiv_id': result['arxiv_id'],
-                        'pdf_url': result['metadata']['pdf_url'],
-                        'publication_date': result['metadata'].get('published'),
-                        'categories': result['metadata'].get('categories', []),
-                        'content': '',  # Will be filled after processing
-                        'pdf_path': result['pdf_path'],  # PDF is immediately available
-                        'processed': False,  # Not processed yet
-                        'processor_used': None,
-                        'created_at': datetime.now(timezone.utc),
-                        'source': 'arxiv',
-                        'url': f"https://arxiv.org/abs/{result['arxiv_id']}",
-                        'import_source': 'arxiv',  # Track import source type
-                        'import_url': f"https://arxiv.org/abs/{result['arxiv_id']}",  # Store original import URL
-                        'paper_type': 'research',
-                    }
-                    
-                    # Insert into MongoDB
-                    insert_result = db.papers.insert_one(paper_data)
-                    paper_id = str(insert_result.inserted_id)
-                    response.paper_id = paper_id
-                    logger.info(f"Added paper to MongoDB: {paper_id}")
-                    
+                paper_id = papers_repo.save_arxiv_import(result)
+                response.paper_id = paper_id
+                logger.info(f"Paper stored in MongoDB: {paper_id}")
+
             except Exception as e:
                 logger.error(f"Failed to add paper to database: {e}")
         
@@ -156,18 +120,9 @@ async def import_arxiv_paper(
                 
                 # Update paper with processed content if we have paper_id
                 if paper_id:
-                    db = get_database()
                     try:
                         # Update paper with processed content
-                        update_result = db.papers.update_one(
-                            {'_id': ObjectId(paper_id)},
-                            {'$set': {
-                                'content': process_result['markdown'],
-                                'processed': True,
-                                'processor_used': process_result.get('method_used', 'unknown'),
-                                'processed_at': datetime.now(timezone.utc)
-                            }}
-                        )
+                        update_result = queries.papers_update_one__import_arxiv_paper(paper_id, process_result)
                         if update_result.modified_count > 0:
                             logger.info(f"Updated paper {paper_id} with processed content")
                         else:

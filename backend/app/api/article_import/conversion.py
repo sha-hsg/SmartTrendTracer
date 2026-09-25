@@ -7,6 +7,7 @@ from typing import Dict, Any
 from datetime import datetime, timezone
 from app.database.mongodb import get_database
 import logging
+from app.repositories import article_import_conversion_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ async def service_import_url_playwright(url: str) -> Dict[str, Any]:
             }
 
         # Check if article already exists
-        existing = db.articles.find_one({'url': url})
+        existing = queries.articles_find_one__service_import_url_playwright(url)
         if existing:
             return {
                 'success': True,
@@ -198,7 +199,7 @@ async def service_import_url_playwright(url: str) -> Dict[str, Any]:
             'created_at': datetime.now(timezone.utc),
         }
 
-        insert_result = db.articles.insert_one(doc)
+        insert_result = queries.articles_insert_one__service_import_url_playwright(doc)
 
         return {
             'success': True,

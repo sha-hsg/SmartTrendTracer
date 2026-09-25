@@ -19,6 +19,7 @@ from .processing_helpers import (
     process_with_marker_background,
     process_with_mineru_background,
 )
+from app.repositories import papers_processing_queries as queries
 
 router = APIRouter()
 
@@ -60,11 +61,11 @@ async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundT
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__process_paper_with_marker(paper_id)
             logger.info(f"Found paper by ObjectId")
         else:
             # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__process_paper_with_marker_2(paper_id)
             logger.info(f"Found paper by old SQLite ID")
     except Exception as e:
         logger.error(f"Error finding paper: {e}")
@@ -148,13 +149,7 @@ async def cancel_processing(paper_id: str) -> Dict[str, Any]:
 
     # Update status to cancelled (background tasks check this before their
     # final DB write and will not overwrite it)
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {
-            'processing_status': 'cancelled',
-            'processing_cancelled_at': datetime.now(timezone.utc)
-        }}
-    )
+    queries.papers_update_one__cancel_processing(paper)
 
     # Kill the orphaned marker_single subprocess (same pattern as the
     # timeout handling in processing_helpers.py)
@@ -324,10 +319,7 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) ->
             if result['metadata'].get('images_extracted'):
                 update_data['images_extracted'] = result['metadata']['images_extracted']
 
-        db.papers.update_one(
-            {'_id': paper['_id']},
-            {'$set': update_data}
-        )
+        queries.papers_update_one__process_paper_pdf(update_data, paper)
 
         return {
             'success': True,
@@ -355,7 +347,7 @@ async def receive_marker_progress(
         logger.info(f"Progress update for paper {paper_id}: {progress_data}")
 
         # Update paper with progress information
-        paper = db.papers.find_one({'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id})
+        paper = queries.papers_find_one__receive_marker_progress(paper_id)
 
         if not paper:
             raise HTTPException(status_code=404, detail="Paper not found")
@@ -373,10 +365,7 @@ async def receive_marker_progress(
             progress_update['marker_process_health'] = health_data
             logger.info(f"Stored process health data: PID={health_data.get('pid')}, CPU={health_data.get('cpu_percent')}%, RAM={health_data.get('memory_mb')}MB")
 
-        db.papers.update_one(
-            {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
-            {'$set': progress_update}
-        )
+        queries.papers_update_one__receive_marker_progress(progress_update, paper_id)
 
         return {'success': True, 'message': 'Progress updated'}
 
@@ -396,10 +385,10 @@ async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundT
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__process_paper_with_mineru(paper_id)
         else:
             # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__process_paper_with_mineru_2(paper_id)
     except Exception:
         paper = None
 
@@ -432,13 +421,7 @@ async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundT
     logger.info(f"Starting MinerU processing for paper {paper_id}")
 
     # Set initial processing status
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {
-            'processing_status': 'processing_with_mineru',
-            'processing_started_at': datetime.now(timezone.utc)
-        }}
-    )
+    queries.papers_update_one__process_paper_with_mineru(paper)
 
     # Add background task for MinerU processing
     background_tasks.add_task(process_with_mineru_background, paper_id, str(pdf_file))

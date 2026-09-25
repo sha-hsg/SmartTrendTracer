@@ -14,6 +14,7 @@ from fastapi import APIRouter, Body, HTTPException
 
 from .utils import db, logger
 from app.repositories import papers_analysis as repo
+from app.repositories import papers_analysis_queries as queries
 
 router = APIRouter()
 
@@ -82,10 +83,10 @@ async def create_analysis(paper_id: str, analysis_type: str = Body(...), regener
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__create_analysis(paper_id)
         else:
             # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__create_analysis_2(paper_id)
     except Exception:
         paper = None
 
@@ -205,19 +206,10 @@ async def create_analysis(paper_id: str, analysis_type: str = Body(...), regener
     # Using $push instead of $set to prevent race conditions when generating multiple analyses
     if existing and regenerate:
         # First remove the existing analysis of this type atomically
-        db.papers.update_one(
-            {'_id': paper['_id']},
-            {'$pull': {'analyses': {'$or': [
-                {'type': analysis_type},
-                {'analysis_type': analysis_type}
-            ]}}}
-        )
+        queries.papers_update_one__create_analysis_2(paper, analysis_type)
 
     # Then push the new analysis atomically
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$push': {'analyses': analysis}}
-    )
+    queries.papers_update_one__create_analysis(paper, analysis)
 
     return analysis
 

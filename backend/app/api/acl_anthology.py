@@ -13,6 +13,7 @@ from bson import ObjectId
 
 from app.services.acl_anthology_service import acl_anthology_service
 from app.services.pdf_processor_service import get_pdf_processor_service
+from app.repositories import acl_anthology_queries as queries
 
 # MongoDB connection
 db = get_database()
@@ -107,7 +108,7 @@ async def import_acl_anthology_paper(
         if acl_id_candidate:
             dup_conditions.append({'acl_anthology_id': f"acl:{acl_id_candidate}"})
 
-        existing = db.papers.find_one({'$or': dup_conditions})
+        existing = queries.papers_find_one__import_acl_anthology_paper(dup_conditions)
 
         if existing:
             return {
@@ -182,7 +183,7 @@ async def import_acl_anthology_paper(
         logger.info(f"Paper authors before save: {paper_doc.get('authors', 'NOT FOUND')}")
         
         # Insert paper into MongoDB
-        result = db.papers.insert_one(paper_doc)
+        result = queries.papers_insert_one__import_acl_anthology_paper(paper_doc)
         paper_id = str(result.inserted_id)
         
         # Debug logging after save
@@ -200,7 +201,7 @@ async def import_acl_anthology_paper(
                     'created_at': datetime.now(timezone.utc)
                 })
             if tag_instances:
-                db.tag_instances.insert_many(tag_instances)
+                queries.tag_instances_insert_many__import_acl_anthology_paper(tag_instances)
                 logger.info(f"Added {len(tag_instances)} tags to paper {paper_id}")
         
         # Process PDF in background if requested

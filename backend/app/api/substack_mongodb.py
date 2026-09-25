@@ -14,6 +14,7 @@ import logging
 from collections import Counter, defaultdict
 import re
 from app.repositories import substack as repo
+from app.repositories import substack_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -46,12 +47,7 @@ async def get_substack_trends(
         start_date = end_date - timedelta(days=days)
         
         # Get articles from MongoDB within the date range
-        articles_cursor = db.articles.find({
-            "published_at": {
-                "$gte": start_date,
-                "$lte": end_date
-            }
-        })
+        articles_cursor = queries.articles_find__get_substack_trends(start_date, end_date)
         articles = list(articles_cursor)
         
         if not articles:
@@ -139,9 +135,7 @@ async def get_substack_trends(
             current_counts[str(cid)] += cnt
 
         prev_start, prev_end = get_previous_period_range(start_date, days)
-        previous_articles = list(db.articles.find({
-            'published_at': {'$gte': prev_start, '$lt': prev_end}
-        }))
+        previous_articles = list(queries.articles_find__get_substack_trends_2(prev_start, prev_end))
         previous_counts_raw = count_tags_for_content(db, previous_articles, 'article', date_field='published_at')
         previous_counts = Counter()
         for cid, cnt in previous_counts_raw.items():

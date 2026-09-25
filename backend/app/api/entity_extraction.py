@@ -9,6 +9,7 @@ from bson import ObjectId
 
 from app.services.entity_extraction_service import EntityExtractionService, EntityExtraction
 from app.database.mongodb import get_database
+from app.repositories import entity_extraction_queries as queries
 
 router = APIRouter()
 
@@ -62,8 +63,8 @@ def _find_article(db, article_id: str):
     """Look up an article by ObjectId or legacy SQLite id."""
     try:
         if len(article_id) == 24:
-            return db.articles.find_one({'_id': ObjectId(article_id)})
-        return db.articles.find_one({'old_sqlite_id': int(article_id)})
+            return queries.articles_find_one___find_article_2(article_id)
+        return queries.articles_find_one___find_article(article_id)
     except Exception:
         return None
 
@@ -85,9 +86,9 @@ def extract_entities(
         article = None
         try:
             if len(request.article_id) == 24:
-                article = db.articles.find_one({'_id': ObjectId(request.article_id)})
+                article = queries.articles_find_one__extract_entities(request)
             else:
-                article = db.articles.find_one({'old_sqlite_id': int(request.article_id)})
+                article = queries.articles_find_one__extract_entities_2(request)
         except Exception:
             pass
 
@@ -100,7 +101,7 @@ def extract_entities(
 
     elif request.tweet_id:
         # MongoDB query for tweet (tweets store the Twitter ID as _id)
-        tweet = db.tweets.find_one({'_id': request.tweet_id})
+        tweet = queries.tweets_find_one__extract_entities(request)
         if not tweet:
             raise HTTPException(status_code=404, detail="Tweet not found")
         text = tweet.get('text', '')
@@ -201,7 +202,7 @@ def review_entity(
 
         if not concept:
             review_doc['status'] = 'failed'
-            db.entity_reviews.insert_one(review_doc)
+            queries.entity_reviews_insert_one__review_entity_3(review_doc)
             return {
                 "status": "failed",
                 "entity_id": request.entity_id,
@@ -215,25 +216,12 @@ def review_entity(
         if request.article_id:
             article = _find_article(db, request.article_id)
             if article:
-                existing_instance = db.tag_instances.find_one({
-                    'content_type': 'article',
-                    'content_id': str(article['_id']),
-                    'concept_id': concept_id
-                })
+                existing_instance = queries.tag_instances_find_one__review_entity(concept_id, article)
                 if not existing_instance:
-                    db.tag_instances.insert_one({
-                        'concept_id': concept_id,
-                        'content_type': 'article',
-                        'content_id': str(article['_id']),
-                        'tag_slug': concept.get('slug', request.new_text.lower().replace(' ', '-')),
-                        'display_name': concept.get('display_name', request.new_text),
-                        'tag_type': 'entity',
-                        'created_at': datetime.now(timezone.utc),
-                        'created_by': user
-                    })
+                    queries.tag_instances_insert_one__review_entity(concept_id, user, article, concept, request)
 
         review_doc['status'] = 'accepted'
-        db.entity_reviews.insert_one(review_doc)
+        queries.entity_reviews_insert_one__review_entity_2(review_doc)
         return {
             "status": "accepted",
             "entity_id": request.entity_id,
@@ -242,7 +230,7 @@ def review_entity(
         }
 
     # reject / modify: persist the decision only
-    db.entity_reviews.insert_one(review_doc)
+    queries.entity_reviews_insert_one__review_entity(review_doc)
 
     if request.action == "reject":
         return {
@@ -291,9 +279,9 @@ def bulk_entity_action(
             try:
                 if len(article_id) == 24:
                     article_object_id = ObjectId(article_id)
-                    article = db.articles.find_one({'_id': article_object_id})
+                    article = queries.articles_find_one__bulk_entity_action(article_object_id)
                 else:
-                    article = db.articles.find_one({'old_sqlite_id': int(article_id)})
+                    article = queries.articles_find_one__bulk_entity_action_2(article_id)
                     if article:
                         article_object_id = article['_id']
             except Exception:
@@ -336,11 +324,7 @@ def bulk_entity_action(
 
                         # Check if tag instance already exists (case-insensitive)
                         # Use content_type/content_id to match faceted-search queries
-                        existing_instance = db.tag_instances.find_one({
-                            'content_type': 'article',
-                            'content_id': str(article_object_id),
-                            'concept_id': concept_id
-                        })
+                        existing_instance = queries.tag_instances_find_one__bulk_entity_action(concept_id, article_object_id)
 
                         if not existing_instance:
                             # Create new tag instance with correct field names
@@ -354,7 +338,7 @@ def bulk_entity_action(
                                 'created_at': datetime.now(timezone.utc),
                                 'created_by': user
                             }
-                            db.tag_instances.insert_one(tag_instance)
+                            queries.tag_instances_insert_one__bulk_entity_action(tag_instance)
                             print(f"Added tag '{display_name}' to article {article_id}")
                             processed_count += 1
                         else:

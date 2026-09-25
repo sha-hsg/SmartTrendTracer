@@ -25,7 +25,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
 
 # Ratchets — only ever lower these.
-API_DB_CALL_SITES_MAX = 139
+API_DB_CALL_SITES_MAX = 0
 FRONTEND_AXIOS_IMPORT_FILES_MAX = 0
 FRONTEND_RAW_FETCH_SITES_MAX = 52   # legacy fetch() calls bypassing services/http.ts
 

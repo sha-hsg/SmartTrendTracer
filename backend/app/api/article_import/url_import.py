@@ -17,6 +17,7 @@ from app.services.author_service import AuthorService
 import logging
 
 from app.utils.preview_utils import generate_preview
+from app.repositories import article_import_url_import_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -313,21 +314,14 @@ async def import_article_from_url(request: URLImportRequest):
         }
 
         # Check if article already exists
-        existing = db.articles.find_one({'url': url})
+        existing = queries.articles_find_one__import_article_from_url(url)
         if existing:
             # Update existing article
-            db.articles.update_one(
-                {'_id': existing['_id']},
-                {'$set': {
-                    'content_markdown': markdown_content,
-                    'word_count': word_count,
-                    'updated_at': datetime.now(timezone.utc)
-                }}
-            )
+            queries.articles_update_one__import_article_from_url(existing, markdown_content, word_count)
             article_id = str(existing['_id'])
         else:
             # Insert new article
-            result = db.articles.insert_one(article_doc)
+            result = queries.articles_insert_one__import_article_from_url(article_doc)
             article_id = str(result.inserted_id)
 
             # Update author statistics
@@ -489,22 +483,14 @@ def import_article_enhanced(request: EnhancedImportRequest):
         }
 
         # Check if article already exists
-        existing = db.articles.find_one({'url': url})
+        existing = queries.articles_find_one__import_article_enhanced(url)
         if existing:
             # Update existing article
-            db.articles.update_one(
-                {'_id': existing['_id']},
-                {'$set': {
-                    'content_markdown': markdown_content,
-                    'word_count': word_count,
-                    'updated_at': datetime.now(timezone.utc),
-                    'authenticated': bool(cookies)
-                }}
-            )
+            queries.articles_update_one__import_article_enhanced(existing, markdown_content, word_count, cookies)
             article_id = str(existing['_id'])
         else:
             # Insert new article
-            result = db.articles.insert_one(article_doc)
+            result = queries.articles_insert_one__import_article_enhanced(article_doc)
             article_id = str(result.inserted_id)
 
             # Update author statistics

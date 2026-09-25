@@ -9,6 +9,7 @@ from typing import Optional, Dict, Any
 from bson import ObjectId
 
 from .utils import db, concept_service, logger
+from app.repositories import papers_tag_suggestions_queries as queries
 
 router = APIRouter()
 
@@ -24,10 +25,10 @@ async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dic
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__get_tag_suggestions(paper_id)
         else:
             # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__get_tag_suggestions_2(paper_id)
     except Exception:
         paper = None
 
@@ -38,13 +39,7 @@ async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dic
     paper_id_str = str(paper['_id'])
     sqlite_id_str = str(paper.get('old_sqlite_id', ''))
 
-    existing_tags = list(db.tag_instances.find({
-        'content_type': 'paper',
-        '$or': [
-            {'content_id': paper_id_str},
-            {'content_id': sqlite_id_str}
-        ]
-    }))
+    existing_tags = list(queries.tag_instances_find__get_tag_suggestions(paper_id_str, sqlite_id_str))
 
     existing_concept_ids = [ti['concept_id'] for ti in existing_tags if ti.get('concept_id')]
 

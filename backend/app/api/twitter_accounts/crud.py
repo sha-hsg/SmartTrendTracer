@@ -13,6 +13,7 @@ from .models import (
     serialize_account,
 )
 from app.repositories import twitter_accounts_crud as repo
+from app.repositories import twitter_accounts_crud_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ def create_account(data: TwitterAccountCreate, db=Depends(get_database)):
     username = data.username.lstrip('@')
 
     # Check if already exists
-    existing = db.twitter_accounts.find_one({'username': {'$regex': f'^{username}$', '$options': 'i'}})
+    existing = queries.twitter_accounts_find_one__create_account(username)
     if existing:
         raise HTTPException(
             status_code=409,
@@ -114,7 +115,7 @@ def create_account(data: TwitterAccountCreate, db=Depends(get_database)):
         'tweets_collected': 0
     }
 
-    result = db.twitter_accounts.insert_one(document)
+    result = queries.twitter_accounts_insert_one__create_account(document)
     document['_id'] = result.inserted_id
 
     return serialize_account(document)

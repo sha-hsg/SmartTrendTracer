@@ -35,6 +35,7 @@ from app.repositories.book_queries import (
     build_special_filters,
 )
 from app.repositories import books_crud as repo
+from app.repositories import books_crud_queries as queries
 
 router = APIRouter()
 
@@ -101,10 +102,10 @@ def get_books(
     )
 
     skip = (page - 1) * page_size
-    total = db.books.count_documents(query)
+    total = queries.books_count_documents__get_books(query)
 
     books = list(
-        db.books.find(query)
+        queries.books_find__get_books(query)
         .sort('uploaded_at', DESCENDING)
         .skip(skip)
         .limit(page_size)
@@ -126,7 +127,7 @@ def get_books(
             'content_type': 'book',
             'content_id': {'$in': book_id_strings + legacy_ids}
         }
-        for instance in db.tag_instances.find(instances_query):
+        for instance in queries.tag_instances_find__get_books(instances_query):
             content_id = instance.get('content_id')
             if not content_id:
                 continue
@@ -155,7 +156,7 @@ def get_books(
             concept_query['$or'].append({'id': {'$in': string_ids}})
 
         if concept_query['$or']:
-            for doc in db.tag_concepts_v2.find(concept_query):
+            for doc in queries.tag_concepts_v2_find__get_books(concept_query):
                 doc['_id'] = str(doc['_id'])
                 concept_map[doc['_id']] = doc
                 if doc.get('id'):
@@ -261,10 +262,7 @@ def get_book_details(book_id: str):
                 concept_object_ids.append(ObjectId(cid))
             except Exception:
                 pass  # Skip non-ObjectId concept ids (legacy string ids)
-        concepts = list(db.tag_concepts_v2.find(
-            {'_id': {'$in': concept_object_ids}},
-            {'name': 1, 'description': 1, 'entity_type': 1}
-        ))
+        concepts = list(queries.tag_concepts_v2_find__get_book_details(concept_object_ids))
         for concept in concepts:
             concept['_id'] = str(concept['_id'])
         book['concepts'] = concepts
@@ -328,7 +326,7 @@ async def upload_book(
     }
 
     # Insert into MongoDB
-    db.books.insert_one(book_doc)
+    queries.books_insert_one__upload_book(book_doc)
 
     return {
         'book_id': str(book_id),
@@ -355,7 +353,7 @@ def delete_book(book_id: str):
         shutil.rmtree(book_dir)
 
     # Remove from MongoDB
-    db.books.delete_one({'_id': ObjectId(book_id)})
+    queries.books_delete_one__delete_book(book_id)
 
     # Remove associated concept instances
     concept_service.remove_all_concepts_from_content(book_id, 'book')

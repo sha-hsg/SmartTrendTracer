@@ -12,6 +12,7 @@ import re
 from bson import ObjectId
 
 from app.services.concept_only_tag_service import ConceptOnlyTagService
+from app.repositories import reddit_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -79,7 +80,7 @@ def _build_reddit_query(
             concept_filter = concept_id
 
         # Find tag instances for this concept
-        tag_instances = list(db.tag_instances.find({"concept_id": concept_filter}))
+        tag_instances = list(queries.tag_instances_find___build_reddit_query(concept_filter))
 
         # Extract Reddit post IDs
         reddit_post_ids = []

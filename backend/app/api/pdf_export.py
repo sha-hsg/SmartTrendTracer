@@ -7,6 +7,7 @@ from bson import ObjectId
 
 from app.services.pdf_export_service import PDFExportService
 from app.database.mongodb import get_database
+from app.repositories import pdf_export_queries as queries
 
 router = APIRouter()
 
@@ -26,9 +27,9 @@ def export_article_pdf(
         article = None
         try:
             if len(article_id) == 24:
-                article = db.articles.find_one({'_id': ObjectId(article_id)})
+                article = queries.articles_find_one__export_article_pdf(article_id)
             else:
-                article = db.articles.find_one({'old_sqlite_id': int(article_id)})
+                article = queries.articles_find_one__export_article_pdf_2(article_id)
         except Exception:
             pass
 

@@ -13,6 +13,7 @@ from app.database.mongodb import get_database
 
 from app.services.openreview_service import OpenReviewService
 from app.services.pdf_processor_service import PDFProcessorService
+from app.repositories import openreview_import_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/openreview")
@@ -75,7 +76,7 @@ async def import_openreview_paper(
             raise HTTPException(status_code=400, detail="Invalid OpenReview URL")
         
         # Check if paper already exists
-        existing_paper = db.papers.find_one({"openreview_id": forum_id})
+        existing_paper = queries.papers_find_one__import_openreview_paper(forum_id)
         if existing_paper:
             return {
                 "success": False,
@@ -165,7 +166,7 @@ async def import_openreview_paper(
         paper_doc["bibtex"] = metadata["bibtex"]
         
         # Insert paper into database
-        result = db.papers.insert_one(paper_doc)
+        result = queries.papers_insert_one__import_openreview_paper(paper_doc)
         paper_id = str(result.inserted_id)
         
         logger.info(f"Successfully imported OpenReview paper with ID: {paper_id}")
@@ -173,12 +174,7 @@ async def import_openreview_paper(
         # Add tags if provided
         if request.add_tags:
             for tag in request.add_tags:
-                db.tag_instances.insert_one({
-                    "tag": tag,
-                    "content_type": "paper",
-                    "content_id": paper_id,
-                    "created_at": datetime.now(timezone.utc)
-                })
+                queries.tag_instances_insert_one__import_openreview_paper(tag, paper_id)
         
         # Process PDF in background if requested and PDF exists
         if request.process_pdf and paper_doc.get("pdf_path"):
@@ -248,10 +244,7 @@ def process_pdf_background(paper_id: str, pdf_path: str):
                 "updated_at": datetime.now(timezone.utc)
             }
 
-            db.papers.update_one(
-                {"_id": ObjectId(paper_id)},
-                {"$set": update_data}
-            )
+            queries.papers_update_one__process_pdf_background(update_data, paper_id)
 
             logger.info(f"PDF processing completed for paper {paper_id}")
         else:

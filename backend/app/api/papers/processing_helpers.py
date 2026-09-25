@@ -1,3 +1,4 @@
+from app.repositories.papers import paper_filter as _paper_filter
 from app.services import pdf_service_client
 import os
 import re
@@ -15,11 +16,9 @@ from .utils import (
     parse_marker_error,
     readability_service,
 )
+from app.repositories import papers_processing_helpers_queries as queries
 
 
-def _paper_filter(paper_id: str) -> Dict[str, Any]:
-    """Build the MongoDB filter for a paper id (ObjectId or legacy string)."""
-    return {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id}
 
 
 def _processing_cancelled(paper_id: str) -> bool:
@@ -29,7 +28,7 @@ def _processing_cancelled(paper_id: str) -> bool:
     'cancelled' status set via POST /{paper_id}/cancel-processing is not
     overwritten with 'completed' or 'failed'.
     """
-    doc = db.papers.find_one(_paper_filter(paper_id), {'processing_status': 1})
+    doc = queries.papers_find_one___processing_cancelled(paper_id)
     return bool(doc and doc.get('processing_status') == 'cancelled')
 
 
@@ -44,13 +43,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
     logger.info(f"PDF Path: {pdf_path}")
 
     # Update status to processing
-    db.papers.update_one(
-        {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
-        {'$set': {
-            'processing_status': 'processing_with_marker',
-            'processing_started_at': datetime.now(timezone.utc)
-        }}
-    )
+    queries.papers_update_one__process_with_marker_background(paper_id)
     logger.info(f"Updated paper status to 'processing_with_marker'")
 
     pdf_file = Path(pdf_path)
@@ -62,13 +55,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
     if not pdf_file.exists():
         error_msg = f"PDF file not found: {pdf_file}"
         logger.error(error_msg)
-        db.papers.update_one(
-            {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
-            {'$set': {
-                'processing_status': 'failed',
-                'processing_error': error_msg
-            }}
-        )
+        queries.papers_update_one__process_with_marker_background_2(paper_id, error_msg)
         return
 
     logger.info(f"PDF file exists: {pdf_file} (size: {pdf_file.stat().st_size} bytes)")
@@ -185,10 +172,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
                         logger.info(f"Processing was cancelled for paper {paper_id}; skipping final update")
                         return
 
-                    db.papers.update_one(
-                        _paper_filter(paper_id),
-                        {'$set': update_data}
-                    )
+                    queries.papers_update_one__process_with_marker_background_6(paper_id, update_data)
                     logger.info(f"=== SUCCESSFULLY UPDATED PAPER {paper_id} ===")
                 else:
                     error_text = response.text
@@ -203,25 +187,13 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
                         logger.info(f"Processing was cancelled for paper {paper_id}; keeping 'cancelled' status")
                         return
 
-                    db.papers.update_one(
-                        _paper_filter(paper_id),
-                        {'$set': {
-                            'processing_status': 'failed',
-                            'processing_error': user_error
-                        }}
-                    )
+                    queries.papers_update_one__process_with_marker_background_7(paper_id, user_error)
     except httpx.TimeoutException as e:
         error_msg = f"Marker service timeout after 3 hours"
         logger.error(f"=== MARKER TIMEOUT ===")
         logger.error(error_msg)
         if not _processing_cancelled(paper_id):
-            db.papers.update_one(
-                _paper_filter(paper_id),
-                {'$set': {
-                    'processing_status': 'failed',
-                    'processing_error': error_msg
-                }}
-            )
+            queries.papers_update_one__process_with_marker_background_3(paper_id, error_msg)
         # Kill orphaned marker_single subprocess
         pdf_service_client.kill_marker_job()
     except httpx.RequestError as e:
@@ -229,26 +201,14 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
         logger.error(f"=== MARKER CONNECTION ERROR ===")
         logger.error(error_msg)
         if not _processing_cancelled(paper_id):
-            db.papers.update_one(
-                _paper_filter(paper_id),
-                {'$set': {
-                    'processing_status': 'failed',
-                    'processing_error': error_msg
-                }}
-            )
+            queries.papers_update_one__process_with_marker_background_4(paper_id, error_msg)
     except Exception as e:
         error_msg = f"Unexpected error: {str(e)}"
         logger.error(f"=== MARKER UNEXPECTED ERROR ===")
         logger.error(error_msg)
         logger.error(f"Traceback: {traceback.format_exc()}")
         if not _processing_cancelled(paper_id):
-            db.papers.update_one(
-                _paper_filter(paper_id),
-                {'$set': {
-                    'processing_status': 'failed',
-                    'processing_error': error_msg
-                }}
-            )
+            queries.papers_update_one__process_with_marker_background_5(paper_id, error_msg)
 
 
 async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
@@ -259,13 +219,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
 
     try:
         # Update paper with current timestamp
-        db.papers.update_one(
-            {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
-            {'$set': {
-                'processing_status': 'processing_with_mineru',
-                'processing_started_at': datetime.now(timezone.utc)
-            }}
-        )
+        queries.papers_update_one__process_with_mineru_background(paper_id)
         logger.info("Updated paper status to 'processing_with_mineru'")
 
         # Convert MongoDB ObjectId to integer for MinerU image saving
@@ -330,10 +284,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
                 logger.info(f"Processing was cancelled for paper {paper_id}; skipping final update")
                 return
 
-            db.papers.update_one(
-                _paper_filter(paper_id),
-                {'$set': update_data}
-            )
+            queries.papers_update_one__process_with_mineru_background_2(paper_id, update_data)
             logger.info(f"=== SUCCESSFULLY UPDATED PAPER {paper_id} ===")
         else:
             error_msg = result.get('error', 'MinerU processing failed')
@@ -344,22 +295,10 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
                 logger.info(f"Processing was cancelled for paper {paper_id}; keeping 'cancelled' status")
                 return
 
-            db.papers.update_one(
-                _paper_filter(paper_id),
-                {'$set': {
-                    'processing_status': 'failed',
-                    'processing_error': f"MinerU processing error: {error_msg}"
-                }}
-            )
+            queries.papers_update_one__process_with_mineru_background_3(paper_id, error_msg)
     except Exception as e:
         error_msg = f"MinerU service error: {str(e)}"
         logger.error(f"=== MINERU EXCEPTION ===")
         logger.error(error_msg)
         if not _processing_cancelled(paper_id):
-            db.papers.update_one(
-                _paper_filter(paper_id),
-                {'$set': {
-                    'processing_status': 'failed',
-                    'processing_error': error_msg
-                }}
-            )
+            queries.papers_update_one__process_with_mineru_background_4(paper_id, error_msg)

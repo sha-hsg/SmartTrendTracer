@@ -22,6 +22,7 @@ from .utils import (
     logger,
 )
 from app.repositories import papers_grobid as repo
+from app.repositories import papers_grobid_queries as queries
 
 router = APIRouter()
 
@@ -32,9 +33,9 @@ async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
     try:
         # Get paper from MongoDB
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__process_with_grobid(paper_id)
         else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__process_with_grobid_2(paper_id)
     except Exception:
         paper = None
 
@@ -107,10 +108,7 @@ async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
         if result.get('citation_contexts'):
             update_data['citation_contexts'] = result['citation_contexts']
 
-        db.papers.update_one(
-            {'_id': paper['_id']},
-            {'$set': update_data}
-        )
+        queries.papers_update_one__process_with_grobid(update_data, paper)
 
         # Format response for frontend
         response = {

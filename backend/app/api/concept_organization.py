@@ -10,6 +10,7 @@ from bson import ObjectId
 import logging
 
 from app.services.concept_organization_service import ConceptOrganizationService
+from app.repositories import concept_organization_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -68,10 +69,7 @@ async def get_unorganized_concepts(limit: int = 50) -> Dict:
                     id_variants.append(ObjectId(cid))
 
             counts = {}
-            for row in service.db.tag_instances.aggregate([
-                {"$match": {"concept_id": {"$in": id_variants}}},
-                {"$group": {"_id": "$concept_id", "count": {"$sum": 1}}}
-            ]):
+            for row in queries.count_tag_instances_by_concept(id_variants):
                 key = str(row["_id"])
                 counts[key] = counts.get(key, 0) + row["count"]
 
@@ -223,10 +221,10 @@ async def get_organization_stats() -> Dict:
         )
         
         # Count aliases
-        aliases = service.db.tag_aliases_v2.count_documents({})
+        aliases = queries.count_aliases()
         
         # Count orphan tags (instances without concepts)
-        orphans = service.db.tag_instances.count_documents({"concept_id": None})
+        orphans = queries.count_orphan_tag_instances()
         
         return {
             "success": True,

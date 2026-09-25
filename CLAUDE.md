@@ -465,10 +465,11 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    books-analysis) are placeholders.
 7. **Semantic concept search is lexical** (text + alias matching with relevance tiers);
    an embedding-based search would reuse the existing FAISS stack.
-8. **Architecture debt, ratcheted** (arch audit 2026-09): 387 MongoDB call sites remain
-   in `app/api/` (was 565; hotspots `authors_management`, `papers/content`,
-   `articles/content` next) — move them into `app/repositories/` and lower
-   `API_DB_CALL_SITES_MAX`. Frontend domain API modules can grow on `services/http.ts`.
+8. **No inline MongoDB queries in `app/api/`** (arch audit 2026-09, ratchet at 0): routers
+   call `app/repositories/`. Many repositories are verbatim extractions (`*_queries.py`
+   hold one function per former call site, named `<coll>_<op>__<route>`); consolidating
+   them into intent-named functions is the natural next cleanup. Frontend: 52 raw
+   `fetch()` calls still bypass `services/http.ts` (ratcheted).
 9. **Nondeterministic top-N lists** in `/api/papers/facets` (authors, concepts,
    institutions) and `/api/papers/stats/overview` (top_concepts, top_conferences):
    truncated without a stable tie-break, so repeated calls return different sets.
@@ -484,7 +485,7 @@ Details live in `git log` and `docs/`; do not re-expand here.
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed
   (one LLM stack, `resolve_model_override`); `app/repositories/` data layer (API query
-  sites 565 → 387, ratcheted) with one tweet save path; frontend `services/http.ts` seam
+  sites 565 → 0) with one tweet save path, concepts/analytics query layers moved into it; frontend `services/http.ts` seam
   and feature folders for all 53 flat components; `tests/test_arch_guard.py` enforces it.
   Same month: model refresh (gpt-6 astra/sol/luna, claude-opus-5-5, gemini-3.8-flash,
   grok-4.7), X-API 402 credit backoff in the tweet collector, UI/UX kaizen rounds

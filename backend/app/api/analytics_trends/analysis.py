@@ -30,6 +30,7 @@ from .utils import (
     build_summarization_prompt,
     build_fallback_summary,
 )
+from app.repositories import analytics_trends_analysis_queries as queries
 
 router = APIRouter()
 
@@ -149,9 +150,9 @@ def generate_summary(
         article_filter['_id'] = {'$in': article_ids} if article_ids else {'$in': []}
         paper_filter['_id'] = {'$in': paper_ids} if paper_ids else {'$in': []}
 
-    total_tweets_available = db.tweets.count_documents(tweet_filter) if include_tweets else 0
-    total_articles_available = db.articles.count_documents(article_filter) if include_articles else 0
-    total_papers_available = db.papers.count_documents(paper_filter) if include_papers else 0
+    total_tweets_available = queries.tweets_count_documents__generate_summary(tweet_filter) if include_tweets else 0
+    total_articles_available = queries.articles_count_documents__generate_summary(article_filter) if include_articles else 0
+    total_papers_available = queries.papers_count_documents__generate_summary(paper_filter) if include_papers else 0
 
     # Fetch content using helpers
     content = fetch_all_content_in_range(
@@ -208,19 +209,19 @@ def generate_summary(
             k: v for k, v in paper_filter.items() if k != '$or'
         }
 
-        total_tweets_anytime = db.tweets.count_documents(any_tweet_filter) if include_tweets else 0
-        total_articles_anytime = db.articles.count_documents(any_article_filter) if include_articles else 0
-        total_papers_anytime = db.papers.count_documents(any_paper_filter) if include_papers else 0
+        total_tweets_anytime = queries.tweets_count_documents__generate_summary_2(any_tweet_filter) if include_tweets else 0
+        total_articles_anytime = queries.articles_count_documents__generate_summary_2(any_article_filter) if include_articles else 0
+        total_papers_anytime = queries.papers_count_documents__generate_summary_2(any_paper_filter) if include_papers else 0
 
         if (total_tweets_anytime + total_articles_anytime + total_papers_anytime) > 0:
             # Find the single most-recent item across the enabled sources
             most_recent_date = None
             if total_tweets_anytime > 0:
-                latest = db.tweets.find(any_tweet_filter, {'created_at': 1}).sort('created_at', -1).limit(1)
+                latest = queries.tweets_find__generate_summary(any_tweet_filter).sort('created_at', -1).limit(1)
                 for t in latest:
                     most_recent_date = t.get('created_at')
             if total_articles_anytime > 0:
-                latest = db.articles.find(any_article_filter, {'published_at': 1}).sort('published_at', -1).limit(1)
+                latest = queries.articles_find__generate_summary(any_article_filter).sort('published_at', -1).limit(1)
                 for a in latest:
                     pub = a.get('published_at')
                     if pub and (most_recent_date is None or pub > most_recent_date):
@@ -474,7 +475,7 @@ def get_trends_at_a_glance(
             {'$match': {'content_type': content_type, 'content_id': {'$in': content_ids}}},
             {'$group': {'_id': '$concept_id', 'content_ids': {'$addToSet': '$content_id'}}}
         ]
-        for row in db.tag_instances.aggregate(pipeline):
+        for row in queries.tag_instances_aggregate__get_trends_at_a_glance(pipeline):
             if row['_id'] is not None:
                 breakdown_map[row['_id']][key] += len(row['content_ids'])
 

@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from .utils import HTTPException, ObjectId, datetime, timezone, logger, db, get_book_by_id
 from app.repositories import books_processing as repo
+from app.repositories import books_processing_queries as queries
 
 router = APIRouter()
 
@@ -38,14 +39,7 @@ async def process_book_direct(
         raise HTTPException(status_code=400, detail="Book is already being processed")
 
     # Update status to processing
-    db.books.update_one(
-        {'_id': ObjectId(book_id)},
-        {'$set': {
-            'processing_status': 'processing',
-            'processing_job_id': None,
-            'updated_at': datetime.now(timezone.utc)
-        }}
-    )
+    queries.books_update_one__process_book_direct(book_id)
 
     try:
         # Import and use BookProcessorService
@@ -93,10 +87,7 @@ async def process_book_direct(
                 update_data["reading_difficulty"] = metadata["reading_difficulty"]
 
             # Update the book document
-            db.books.update_one(
-                {"_id": ObjectId(book_id)},
-                {"$set": update_data}
-            )
+            queries.books_update_one__process_book_direct_2(update_data, book_id)
 
             logger.info(f"Book {book_id} processed successfully with {result['method_used']}")
 
@@ -114,17 +105,7 @@ async def process_book_direct(
             }
         else:
             # Update book with error status
-            db.books.update_one(
-                {"_id": ObjectId(book_id)},
-                {"$set": {
-                    "processing_status": "failed",
-                    "processing_error": result.get("error", "Processing failed"),
-                    "processing_method": result.get("method_used"),
-                    "processed_at": datetime.now(timezone.utc),
-                    "updated_at": datetime.now(timezone.utc),
-                    "processing_job_id": None
-                }}
-            )
+            queries.books_update_one__process_book_direct_3(book_id, result)
 
             logger.error(f"Book {book_id} processing failed: {result.get('error')}")
 
@@ -136,14 +117,5 @@ async def process_book_direct(
     except Exception as e:
         logger.error(f"Error processing book {book_id}: {e}")
         # Update book with error status
-        db.books.update_one(
-            {'_id': ObjectId(book_id)},
-            {'$set': {
-                'processing_status': 'failed',
-                'processing_error': str(e),
-                'processed_at': datetime.now(timezone.utc),
-                'updated_at': datetime.now(timezone.utc),
-                'processing_job_id': None
-            }}
-        )
+        queries.books_update_one__process_book_direct_4(book_id, e)
         raise HTTPException(status_code=500, detail=str(e))

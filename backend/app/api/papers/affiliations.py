@@ -11,6 +11,7 @@ import logging
 
 from .utils import db
 from app.repositories import papers_affiliations as repo
+from app.repositories import papers_affiliations_queries as queries
 
 router = APIRouter()
 
@@ -23,10 +24,10 @@ def extract_paper_affiliations(paper_id: str) -> Dict[str, Any]:
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__extract_paper_affiliations(paper_id)
         else:
             # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__extract_paper_affiliations_2(paper_id)
     except Exception:
         paper = None
 

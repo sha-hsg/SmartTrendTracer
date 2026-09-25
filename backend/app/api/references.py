@@ -6,6 +6,9 @@ from typing import Optional
 from app.database.mongodb import get_database
 import logging
 from app.repositories import references as repo
+from app.repositories import papers as papers_repo
+from app.paths import ARXIV_PAPERS_DIR_REL
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -57,23 +60,33 @@ async def import_reference_as_paper(reference_id: str):
     # Determine import method
     if ref.get('arxiv_id'):
         # Import from ArXiv
-        from app.services.arxiv_import_service import ArxivImportService
-        service = ArxivImportService()
+        from app.services.arxiv_import_service import get_arxiv_service
+        service = get_arxiv_service()
         
         try:
-            result = await service.import_paper(ref['arxiv_id'])
-            
-            if result.get('paper_id'):
-                # Mark reference as in system + create citation links
-                repo.mark_reference_imported(ref, result['paper_id'])
-                
-                return {
-                    'success': True,
-                    'paper_id': result['paper_id'],
-                    'message': f"Successfully imported from ArXiv: {ref['arxiv_id']}"
-                }
+            # import_paper is synchronous (downloads the PDF) — run it off the
+            # event loop. It only downloads; the paper is stored separately.
+            result = await asyncio.to_thread(
+                service.import_paper, ref['arxiv_id'], download_dir=str(ARXIV_PAPERS_DIR_REL)
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to import from ArXiv: {str(e)}")
+
+        if not result.get('success'):
+            raise HTTPException(
+                status_code=502,
+                detail=f"Failed to import from ArXiv: {result.get('error', 'unknown error')}"
+            )
+
+        paper_id = papers_repo.save_arxiv_import(result)
+        # Mark reference as in system + create citation links
+        repo.mark_reference_imported(ref, paper_id)
+
+        return {
+            'success': True,
+            'paper_id': paper_id,
+            'message': f"Successfully imported from ArXiv: {ref['arxiv_id']}"
+        }
     
     elif ref.get('doi'):
         # TODO: Implement DOI import (CrossRef, Unpaywall, etc.)

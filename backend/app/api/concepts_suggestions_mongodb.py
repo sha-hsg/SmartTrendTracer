@@ -14,6 +14,7 @@ from bson import ObjectId
 from app.services.concept_only_tag_service import ConceptOnlyTagService
 from app.services.llm_manager import get_llm_manager
 from app.repositories import concepts_suggestions as repo
+from app.repositories import concepts_suggestions_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -37,7 +38,7 @@ async def suggest_concepts_for_tweet(tweet_id: str, request: ConceptSuggestionRe
     """
     
     # Get the tweet from MongoDB
-    tweet = db.tweets.find_one({"_id": tweet_id})
+    tweet = queries.tweets_find_one__suggest_concepts_for_tweet(tweet_id)
     if not tweet:
         raise HTTPException(status_code=404, detail="Tweet not found")
     
@@ -175,9 +176,9 @@ async def suggest_concepts_for_reddit(post_id: str, request: ConceptSuggestionRe
     """
     # Get the Reddit post from MongoDB
     try:
-        post = db.reddit_posts.find_one({"_id": ObjectId(post_id)})
+        post = queries.reddit_posts_find_one__suggest_concepts_for_reddit(post_id)
     except Exception:
-        post = db.reddit_posts.find_one({"_id": post_id})
+        post = queries.reddit_posts_find_one__suggest_concepts_for_reddit_2(post_id)
 
     if not post:
         raise HTTPException(status_code=404, detail="Reddit post not found")
@@ -383,7 +384,7 @@ async def search_concepts_semantic(
         # e.g. "LLM" finds "Large Language Model"
         alias_map: dict = {}
         try:
-            for alias_doc in db.tag_aliases_v2.find({}, {'alias_text': 1, 'concept_id': 1}):
+            for alias_doc in queries.tag_aliases_v2_find__search_concepts_semantic():
                 if alias_doc.get('alias_text') and alias_doc.get('concept_id') is not None:
                     alias_map.setdefault(str(alias_doc['concept_id']), []).append(alias_doc['alias_text'])
         except Exception as alias_err:

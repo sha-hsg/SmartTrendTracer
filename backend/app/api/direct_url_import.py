@@ -15,6 +15,7 @@ import hashlib
 import os
 import requests
 from urllib.parse import urlparse, unquote
+from app.repositories import direct_url_import_queries as queries
 
 # MongoDB connection
 db = get_database()
@@ -83,7 +84,7 @@ async def import_paper_from_url(
         url = str(request.url)
         
         # Check if paper already exists by URL
-        existing = db.papers.find_one({'pdf_url': url})
+        existing = queries.papers_find_one__import_paper_from_url(url)
         
         if existing:
             return {
@@ -150,7 +151,7 @@ async def import_paper_from_url(
             ]
         
         # Insert paper into MongoDB
-        result = db.papers.insert_one(paper_doc)
+        result = queries.papers_insert_one__import_paper_from_url(paper_doc)
         paper_id = str(result.inserted_id)
         
         logger.info(f"Paper saved with ID: {paper_id}")
@@ -174,10 +175,7 @@ async def import_paper_from_url(
                     )
                     if success:
                         added_count += 1
-                        db.papers.update_one(
-                            {'_id': result.inserted_id},
-                            {'$addToSet': {'concept_ids': concept_id}}
-                        )
+                        queries.papers_update_one__import_paper_from_url(result, concept_id)
                 except Exception as tag_err:
                     logger.warning(f"Failed to add tag '{tag_name}' to paper {paper_id}: {tag_err}")
 

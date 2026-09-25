@@ -8,6 +8,7 @@ import os
 
 from app.paths import RAG_INDEX_PATH, VECTOR_STORE_PATH
 from .utils import db, logger
+from app.repositories import system_stats_system_and_llm_queries as queries
 
 router = APIRouter(
     prefix="/api/system",
@@ -97,19 +98,12 @@ async def get_system_statistics():
 
         # Processing queue status
         processing_stats = {
-            "unprocessed_tweets": db.tweets.count_documents({"processed": False}),
-            "untagged_tweets": db.tweets.count_documents({"concept_ids": []}),
-            "unsummarized_articles": db.articles.count_documents({
-                "$or": [
-                    {"summary": {"$exists": False}},
-                    {"summary": ""}
-                ]
-            }),
+            "unprocessed_tweets": queries.tweets_count_documents__get_system_statistics(),
+            "untagged_tweets": queries.tweets_count_documents__get_system_statistics_2(),
+            "unsummarized_articles": queries.articles_count_documents__get_system_statistics(),
             # Papers track processing via 'processed' / 'processing_status'
             # (grobid_processed/marker_processed are legacy fields)
-            "unprocessed_papers": db.papers.count_documents({
-                "processed": {"$ne": True}
-            })
+            "unprocessed_papers": queries.papers_count_documents__get_system_statistics()
         }
 
         return {
@@ -286,10 +280,7 @@ async def get_statistics_summary():
         }
 
         # Get recently added concepts
-        recent_concepts = list(db.tag_concepts_v2.find(
-            {"created_at": {"$exists": True}},
-            {"display_name": 1, "created_at": 1, "entity_type": 1}
-        ).sort("created_at", -1).limit(10))
+        recent_concepts = list(queries.tag_concepts_v2_find__get_statistics_summary().sort("created_at", -1).limit(10))
         recently_added_tags = [
             {
                 "id": str(c["_id"]),
@@ -306,9 +297,7 @@ async def get_statistics_summary():
         for i in range(4):
             week_end = now - timedelta(weeks=i)
             week_start = week_end - timedelta(weeks=1)
-            count = db.articles.count_documents({
-                "created_at": {"$gte": week_start, "$lt": week_end}
-            })
+            count = queries.articles_count_documents__get_statistics_summary(week_start, week_end)
             articles_per_week.append({
                 "week": f"Week {i+1}",
                 "start": week_start.strftime("%Y-%m-%d"),
@@ -316,8 +305,8 @@ async def get_statistics_summary():
             })
 
         # Get last collection timestamps
-        last_tweet = db.tweets.find_one(sort=[("created_at", -1)])
-        last_article = db.articles.find_one(sort=[("created_at", -1)])
+        last_tweet = queries.tweets_find_one__get_statistics_summary()
+        last_article = queries.articles_find_one__get_statistics_summary()
         last_tweet_time = last_tweet.get("created_at").isoformat() if last_tweet and last_tweet.get("created_at") else None
         last_article_time = last_article.get("created_at").isoformat() if last_article and last_article.get("created_at") else None
 

@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from app.database.mongodb import get_database
 from bson import ObjectId
 from app.services.dblp_service import DBLPService
+from app.repositories import dblp_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -123,9 +124,9 @@ async def attach_dblp_metadata(
         paper = None
         try:
             if len(paper_id) == 24:
-                paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+                paper = queries.papers_find_one__attach_dblp_metadata(paper_id)
             else:
-                paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+                paper = queries.papers_find_one__attach_dblp_metadata_2(paper_id)
         except Exception:
             pass
             
@@ -202,10 +203,7 @@ async def attach_dblp_metadata(
         
         # Update the paper in MongoDB
         if update_data:
-            result = db.papers.update_one(
-                {'_id': paper['_id']},
-                {'$set': update_data}
-            )
+            result = queries.papers_update_one__attach_dblp_metadata(update_data, paper)
             
             if result.modified_count > 0:
                 logger.info(f"Successfully attached DBLP metadata to paper {paper_id}")

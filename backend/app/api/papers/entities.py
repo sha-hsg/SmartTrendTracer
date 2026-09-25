@@ -12,6 +12,7 @@ from typing import Optional, Dict, Any
 from bson import ObjectId
 
 from .utils import db, logger
+from app.repositories import papers_entities_queries as queries
 
 router = APIRouter()
 
@@ -22,10 +23,10 @@ def extract_paper_entities(paper_id: str, use_fast_model: bool = False, model_ch
     try:
         # Try to convert to ObjectId if it's a valid format
         if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
+            paper = queries.papers_find_one__extract_paper_entities(paper_id)
         else:
             # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
+            paper = queries.papers_find_one__extract_paper_entities_2(paper_id)
     except Exception:
         paper = None
 

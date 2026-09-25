@@ -91,3 +91,42 @@ def find_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
         pass
 
     return None
+
+
+def paper_filter(paper_id: str) -> Dict[str, Any]:
+    """Build the MongoDB filter for a paper id (ObjectId or legacy string)."""
+    return {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id}
+
+
+def save_arxiv_import(result: Dict[str, Any]) -> str:
+    """Persist an ArxivImportService.import_paper() result as a paper.
+
+    Shared by POST /api/arxiv/import and POST /api/references/{id}/import so
+    both write the same document. Returns the paper id; an existing paper
+    with the same arxiv_id is reused instead of duplicated.
+    """
+    from datetime import datetime, timezone
+    existing = db.papers.find_one({'arxiv_id': result['arxiv_id']})
+    if existing:
+        return str(existing['_id'])
+    paper_data = {
+        'title': result['metadata']['title'],
+        'authors': ', '.join(result['metadata']['authors']),
+        'authors_detailed': [{'name': author, 'affiliation': '', 'email': ''} for author in result['metadata']['authors']],
+        'abstract': result['metadata']['abstract'],
+        'arxiv_id': result['arxiv_id'],
+        'pdf_url': result['metadata']['pdf_url'],
+        'publication_date': result['metadata'].get('published'),
+        'categories': result['metadata'].get('categories', []),
+        'content': '',  # Will be filled after processing
+        'pdf_path': result['pdf_path'],  # PDF is immediately available
+        'processed': False,  # Not processed yet
+        'processor_used': None,
+        'created_at': datetime.now(timezone.utc),
+        'source': 'arxiv',
+        'url': f"https://arxiv.org/abs/{result['arxiv_id']}",
+        'import_source': 'arxiv',  # Track import source type
+        'import_url': f"https://arxiv.org/abs/{result['arxiv_id']}",  # Store original import URL
+        'paper_type': 'research',
+    }
+    return str(db.papers.insert_one(paper_data).inserted_id)

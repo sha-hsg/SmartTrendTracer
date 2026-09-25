@@ -17,6 +17,7 @@ from fastapi import APIRouter, Body, HTTPException
 from .utils import db
 from app.repositories import papers_analysis_management as repo
 from app.repositories.papers_analysis_management import _find_paper  # noqa: F401 (moved)
+from app.repositories import papers_analysis_management_queries as queries
 
 router = APIRouter()
 
@@ -91,15 +92,9 @@ async def create_free_analysis(
         # Save atomically to avoid the same race condition that was fixed for
         # the `analyses` array: $pull the stale copy on regenerate, then $push.
         if existing and regenerate:
-            db.papers.update_one(
-                {'_id': paper['_id']},
-                {'$pull': {'free_analyses': {'prompt': prompt}}}
-            )
+            queries.papers_update_one__create_free_analysis_2(paper, prompt)
 
-        db.papers.update_one(
-            {'_id': paper['_id']},
-            {'$push': {'free_analyses': analysis}}
-        )
+        queries.papers_update_one__create_free_analysis(paper, analysis)
 
         return analysis
 

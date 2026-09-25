@@ -12,6 +12,7 @@ from pydantic import BaseModel, HttpUrl
 
 from app.database.mongodb import get_database
 from app.services.jair_service import jair_service
+from app.repositories import jair_import_queries as queries
 
 db = get_database()
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ async def import_jair_paper(request: JAIRImportRequest) -> Dict[str, Any]:
         dup_query = {'$or': [{'import_url': url}]}
         if doi:
             dup_query['$or'].append({'doi': doi})
-        existing = db.papers.find_one(dup_query)
+        existing = queries.papers_find_one__import_jair_paper(dup_query)
 
         if existing:
             return {
@@ -126,7 +127,7 @@ async def import_jair_paper(request: JAIRImportRequest) -> Dict[str, Any]:
             'paper_type': 'research',
         }
 
-        result = db.papers.insert_one(paper_doc)
+        result = queries.papers_insert_one__import_jair_paper(paper_doc)
         paper_id = str(result.inserted_id)
 
         logger.info(f"Imported JAIR paper '{metadata.get('title')}' with ID {paper_id}")

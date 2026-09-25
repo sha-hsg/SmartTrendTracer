@@ -8,6 +8,7 @@ from pymongo.database import Database
 from app.database.mongodb import get_database
 
 from app.services.article_clustering_service import ArticleClusteringService
+from app.repositories import article_clustering_queries as queries
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -44,10 +45,7 @@ def prepare_article_data(articles: List[Dict]) -> List[Dict[str, Any]]:
 
 def _get_tagged_articles(limit: int = 2000) -> List[Dict]:
     """Fetch articles that have tags, with a reasonable limit."""
-    return list(db.articles.find(
-        {'tags': {'$exists': True, '$ne': []}},
-        {'title': 1, 'author': 1, 'tags': 1, 'url': 1, 'published_at': 1, 'summary': 1}
-    ).limit(limit))
+    return list(queries.articles_find___get_tagged_articles().limit(limit))
 
 @router.get("/cluster/kmeans")
 async def cluster_articles_kmeans(
@@ -205,7 +203,7 @@ async def find_similar_articles(
             obj_id = article_id
             
         # Check if article exists
-        target_article = db.articles.find_one({'_id': obj_id})
+        target_article = queries.articles_find_one__find_similar_articles(obj_id)
         if not target_article:
             raise HTTPException(status_code=404, detail=f"Article {article_id} not found")
             

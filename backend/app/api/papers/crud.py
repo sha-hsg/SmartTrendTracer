@@ -35,6 +35,7 @@ from app.repositories.paper_queries import (
 )
 from app.repositories import papers_crud as repo
 from app.repositories.papers_crud import _format_paper_list_item, _resolve_concepts_for_papers  # noqa: F401 (moved)
+from app.repositories import papers_crud_queries as queries
 
 router = APIRouter()
 
@@ -95,13 +96,7 @@ def get_paper(paper_id: str) -> Dict[str, Any]:
     paper_id = str(paper['_id'])
     sqlite_id = str(paper.get('old_sqlite_id', ''))
 
-    tag_instances = list(db.tag_instances.find({
-        'content_type': 'paper',
-        '$or': [
-            {'content_id': paper_id},
-            {'content_id': sqlite_id}
-        ]
-    }))
+    tag_instances = list(queries.tag_instances_find__get_paper(paper_id, sqlite_id))
 
     concept_ids = list(set(ti['concept_id'] for ti in tag_instances))
     concepts_lookup = concept_service.get_concepts_by_ids(concept_ids)
@@ -219,7 +214,7 @@ async def upload_paper(
             "doi": ""
         }
 
-        result = db.papers.insert_one(paper_doc)
+        result = queries.papers_insert_one__upload_paper(paper_doc)
         paper_id = str(result.inserted_id)
 
         logger.info(f"Paper uploaded successfully: {paper_id} - {title}")

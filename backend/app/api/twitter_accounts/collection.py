@@ -13,6 +13,7 @@ from app.database.mongodb import get_database
 from app.services.twitter_lookup_service import get_twitter_lookup_service
 from .models import serialize_account
 from app.repositories import twitter_accounts_collection as repo
+from app.repositories import twitter_accounts_collection_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def toggle_account(account_id: str, db=Depends(get_database)):
 def refresh_account_info(account_id: str, db=Depends(get_database)):
     """Refresh account info from Twitter API."""
     try:
-        account = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
+        account = queries.twitter_accounts_find_one__refresh_account_info_2(account_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid account ID format")
 
@@ -62,12 +63,9 @@ def refresh_account_info(account_id: str, db=Depends(get_database)):
         'updated_at': datetime.now(timezone.utc)
     }
 
-    db.twitter_accounts.update_one(
-        {'_id': ObjectId(account_id)},
-        {'$set': update_data}
-    )
+    queries.twitter_accounts_update_one__refresh_account_info(update_data, account_id)
 
-    updated = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
+    updated = queries.twitter_accounts_find_one__refresh_account_info(account_id)
     return serialize_account(updated)
 
 
@@ -133,7 +131,7 @@ def _collect_tweets_sync(db, account: Dict, account_id: str, max_tweets: int, re
         client = tweepy.Client(bearer_token=bearer_token, wait_on_rate_limit=False)
 
         # Get collection state
-        state = db.collection_state.find_one({'key': f'twitter_{username}'})
+        state = queries.collection_state_find_one___collect_tweets_sync(username)
         since_id = state.get('last_tweet_id') if state else None
 
         # Fetch tweets (same fields/expansions as the collector service)
@@ -227,13 +225,7 @@ def _collect_tweets_sync(db, account: Dict, account_id: str, max_tweets: int, re
             )
 
         # Update account stats
-        db.twitter_accounts.update_one(
-            {'_id': ObjectId(account_id)},
-            {
-                '$set': {'last_collected_at': now},
-                '$inc': {'tweets_collected': tweets_collected}
-            }
-        )
+        queries.twitter_accounts_update_one___collect_tweets_sync(account_id, now, tweets_collected)
 
         total_fetched = len(tweets_response.data)
         logger.info(f"Manual collection for @{username}: {tweets_collected}/{total_fetched} new tweets stored")
@@ -279,7 +271,7 @@ async def trigger_collection(
     Respects the monthly tweet budget (Basic Account Mode).
     """
     try:
-        account = db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
+        account = queries.twitter_accounts_find_one__trigger_collection(account_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid account ID format")
 
@@ -298,7 +290,7 @@ async def trigger_collection(
     # Check usage limits
     now = datetime.now(timezone.utc)
     month_start = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
-    monthly_count = db.tweets.count_documents({'collected_at': {'$gte': month_start}})
+    monthly_count = queries.tweets_count_documents__trigger_collection(month_start)
 
     if monthly_count >= 10000:
         raise HTTPException(
