@@ -111,27 +111,8 @@ def find_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def get_paper_by_id(paper_id: str) -> Optional[Dict[str, Any]]:
-    """Get paper by MongoDB ObjectId only - pure MongoDB standard.
-
-    Returns the paper document with ``_id`` converted to a string so that
-    it can be safely serialised to JSON.
-    """
-    try:
-        if len(paper_id) == 24:
-            # Try as MongoDB ObjectId
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-            if paper:
-                # Convert ObjectId to string to prevent serialization errors
-                paper['_id'] = str(paper['_id'])
-                return paper
-            return None
-        else:
-            # Invalid ID format
-            return None
-    except (InvalidId, TypeError, ValueError) as e:
-        logger.debug(f"Failed to get paper by ID '{paper_id}': {e}")
-        return None
+# Moved to the data-access layer; re-exported for the papers package
+from app.repositories.papers import get_paper_by_id  # noqa: E402,F401
 
 
 def parse_marker_error(error_text: str) -> str:

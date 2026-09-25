@@ -9,19 +9,18 @@ Image serving is in content_media.py.
 
 import json
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-from bson import ObjectId
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import FileResponse, Response
 
 from .utils import (
-    db,
     logger,
     get_paper_by_id,
 )
+from app.repositories import paper_content as repo
+from app.repositories import papers as paper_repo
 
 router = APIRouter()
 
@@ -29,210 +28,41 @@ router = APIRouter()
 @router.get("/{paper_id}/snippets")
 def get_paper_snippets(paper_id: str) -> List[Dict[str, Any]]:
     """Get paper snippets from MongoDB"""
-
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Return snippets (if stored in MongoDB) with ObjectId conversion for safety
-    snippets = paper.get('snippets', [])
-
-    # Convert any ObjectIds to strings in snippets
-    for snippet in snippets:
-        if isinstance(snippet, dict):
-            for key, value in snippet.items():
-                if isinstance(value, ObjectId):
-                    snippet[key] = str(value)
-
-    return snippets
+    return repo.get_paper_snippets(paper_id=paper_id)
 
 @router.post("/{paper_id}/snippets")
 def add_paper_snippet(paper_id: str, snippet: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Add a snippet to a paper (analog to the article snippet endpoint)"""
-
-    try:
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Create snippet document matching the structure the GET endpoint returns
-    # and the frontend expects (usePaperActions.ts: content/annotation/category/page_number)
-    new_snippet = {
-        'id': str(ObjectId()),
-        'content': snippet.get('content', ''),
-        'annotation': snippet.get('annotation', ''),
-        'category': snippet.get('category', ''),
-        'page_number': snippet.get('page_number'),
-        'created_at': datetime.now(timezone.utc).isoformat()
-    }
-
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$push': {'snippets': new_snippet}}
-    )
-
-    # Frontend appends the response body directly to its snippet list
-    return new_snippet
+    return repo.add_paper_snippet(paper_id=paper_id, snippet=snippet)
 
 @router.delete("/{paper_id}/snippets/{snippet_id}")
 def remove_paper_snippet(paper_id: str, snippet_id: str) -> Dict[str, str]:
     """Remove a snippet from a paper"""
-
-    try:
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$pull': {'snippets': {'id': snippet_id}}}
-    )
-
-    return {"message": "Snippet removed successfully"}
+    return repo.remove_paper_snippet(paper_id=paper_id, snippet_id=snippet_id)
 
 @router.get("/{paper_id}/sections")
 def get_paper_sections(paper_id: str) -> List[Dict[str, Any]]:
     """Get paper sections from MongoDB"""
-
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    # Return sections with ObjectId conversion for safety
-    sections = paper.get('sections', [])
-
-    # Convert any ObjectIds to strings in sections
-    for section in sections:
-        if isinstance(section, dict):
-            for key, value in section.items():
-                if isinstance(value, ObjectId):
-                    section[key] = str(value)
-
-    return sections
+    return repo.get_paper_sections(paper_id=paper_id)
 
 @router.put("/{paper_id}/sections/{section_id}")
 def update_paper_section(paper_id: str, section_id: int, request: Dict[str, Any]) -> Dict[str, Any]:
     """Update a paper section's title or content"""
-
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    sections = paper.get('sections', [])
-    section_found = False
-
-    # Update the specific section
-    for i, section in enumerate(sections):
-        if section.get('id') == section_id:
-            if 'title' in request:
-                # Clean up the title - remove leading numbers
-                import re
-                clean_title = re.sub(r'^\d+\.?\s*', '', request['title'])
-                sections[i]['title'] = clean_title
-            if 'content' in request:
-                sections[i]['content'] = request['content']
-            section_found = True
-            break
-
-    if not section_found:
-        raise HTTPException(status_code=404, detail="Section not found")
-
-    # Update the paper with the modified sections
-    db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': {'sections': sections}}
-    )
-
-    return {"success": True, "message": "Section updated successfully"}
+    return repo.update_paper_section(paper_id=paper_id, section_id=section_id, request=request)
 
 @router.get("/{paper_id}/references")
 def get_paper_references(paper_id: str) -> Dict[str, Any]:
     """Get extracted references for a paper from MongoDB"""
-
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
-
-    if not paper:
-        raise HTTPException(status_code=404, detail="Paper not found")
-
-    references = paper.get('references', [])
-
-    # Convert any ObjectIds to strings in references for safety
-    for ref in references:
-        if isinstance(ref, dict):
-            for key, value in ref.items():
-                if isinstance(value, ObjectId):
-                    ref[key] = str(value)
-
-    return {
-        'paper_id': paper_id,
-        'paper_title': paper.get('title', ''),
-        'total_references': len(references),
-        'references': references
-    }
+    return repo.get_paper_references(paper_id=paper_id)
 
 @router.get("/{paper_id}/tei")
 def get_paper_tei_xml(paper_id: str) -> Response:
     """Get the TEI XML for a paper from GROBID processing"""
 
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-            if paper:
-                # For old SQLite IDs, look for TEI with the original ID
-                paper_id = str(paper.get('old_sqlite_id', paper_id))
-    except Exception:
-        paper = None
+    paper = paper_repo.find_paper_by_any_id(paper_id)
+    if paper and len(paper_id) != 24:
+        # For old SQLite IDs, look for TEI with the original ID
+        paper_id = str(paper.get('old_sqlite_id', paper_id))
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -330,15 +160,7 @@ def get_paper_tei_xml(paper_id: str) -> Response:
 def get_paper_pdf(paper_id: str) -> FileResponse:
     """Serve PDF file for a paper"""
 
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = db.papers.find_one({'_id': ObjectId(paper_id)})
-        else:
-            # Try old SQLite ID
-            paper = db.papers.find_one({'old_sqlite_id': int(paper_id)})
-    except Exception:
-        paper = None
+    paper = paper_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -444,16 +266,9 @@ def extract_paper_sections(paper_id: str) -> Dict[str, Any]:
             })
 
         # Update the paper with extracted sections
-        update_result = db.papers.update_one(
-            {'_id': ObjectId(paper_id)},
-            {
-                '$set': {
-                    'sections': sections_to_save,
-                    'sections_extracted': True,
-                    'sections_extracted_at': datetime.now(timezone.utc),
-                    'abstract': sections_data.get('abstract', paper.get('abstract', ''))
-                }
-            }
+        update_result = paper_repo.save_extracted_sections(
+            paper_id, sections_to_save,
+            abstract=sections_data.get('abstract', paper.get('abstract', '')),
         )
 
         if update_result.modified_count == 0:
