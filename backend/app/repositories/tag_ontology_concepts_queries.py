@@ -2,22 +2,11 @@
 MongoDB queries of app.api.tag_ontology.concepts, moved verbatim out of the router
 (one function per former inline call site).
 """
-from bson import ObjectId
 from datetime import datetime
 from datetime import timezone
 from app.database.mongodb import get_database
 
 db = get_database()
-
-
-def tag_aliases_v2_find__get_all_concepts():
-    """tag_aliases_v2.find from tag_ontology.concepts.get_all_concepts()"""
-    return db.tag_aliases_v2.find({})
-
-
-def tag_concepts_v2_find_one__get_concept_detail(concept_id):
-    """tag_concepts_v2.find_one from tag_ontology.concepts.get_concept_detail()"""
-    return db.tag_concepts_v2.find_one({"id": concept_id})
 
 
 def tag_instances_aggregate__get_concept_detail(id_variants):
@@ -51,32 +40,6 @@ def tag_concepts_v2_update_one__delete_concept(concept):
     )
 
 
-def tag_concepts_v2_update_many__delete_concept(id_variants):
-    """tag_concepts_v2.update_many from tag_ontology.concepts.delete_concept()"""
-    return db.tag_concepts_v2.update_many(
-        {"children": {"$in": id_variants}},
-        {"$pull": {"children": {"$in": id_variants}}}
-    )
-
-
-def tag_concepts_v2_update_many__delete_concept_2(id_variants):
-    """tag_concepts_v2.update_many from tag_ontology.concepts.delete_concept()"""
-    return db.tag_concepts_v2.update_many(
-        {"parents": {"$in": id_variants}},
-        {"$pull": {"parents": {"$in": id_variants}}}
-    )
-
-
-def tag_instances_delete_many__delete_concept(id_variants):
-    """tag_instances.delete_many from tag_ontology.concepts.delete_concept()"""
-    return db.tag_instances.delete_many({"concept_id": {"$in": id_variants}})
-
-
-def tag_concepts_v2_find__get_all_concepts():
-    """tag_concepts_v2.find from tag_ontology.concepts.get_all_concepts()"""
-    return db.tag_concepts_v2.find({"status": {"$ne": "deprecated"}})
-
-
 def tag_aliases_v2_find__get_concept_detail(id_variants):
     """tag_aliases_v2.find from tag_ontology.concepts.get_concept_detail()"""
     return db.tag_aliases_v2.find({"concept_id": {"$in": id_variants}})
@@ -90,16 +53,6 @@ def tag_concepts_v2_update_one__create_concept(parent, new_oid):
     )
 
 
-def tag_concepts_v2_find__get_tree():
-    """tag_concepts_v2.find from tag_ontology.concepts.get_tree()"""
-    return db.tag_concepts_v2.find({"status": {"$ne": "deprecated"}})
-
-
-def tag_aliases_v2_find__get_tree():
-    """tag_aliases_v2.find from tag_ontology.concepts.get_tree()"""
-    return db.tag_aliases_v2.find({})
-
-
 def tag_concepts_v2_find__get_concept_detail(parent_ids):
     """tag_concepts_v2.find from tag_ontology.concepts.get_concept_detail()"""
     return db.tag_concepts_v2.find({"_id": {"$in": parent_ids}})
@@ -110,6 +63,6 @@ def tag_concepts_v2_find__get_concept_detail_2(child_ids):
     return db.tag_concepts_v2.find({"_id": {"$in": child_ids}})
 
 
-def tag_concepts_v2_find_one__get_concept_detail_2(concept_id):
-    """tag_concepts_v2.find_one from tag_ontology.concepts.get_concept_detail()"""
-    return db.tag_concepts_v2.find_one({"_id": ObjectId(concept_id)})
+def find_active_concepts():
+    """Cursor over all non-deprecated concepts."""
+    return db.tag_concepts_v2.find({'status': {'$ne': 'deprecated'}})

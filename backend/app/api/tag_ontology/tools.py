@@ -7,6 +7,7 @@ from bson import ObjectId
 import logging
 
 from app.repositories import tag_ontology_tools_queries as queries
+from app.repositories import ontology as ontology_repo
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def get_stats():
 
     return {
         "concepts": {
-            "total": queries.tag_concepts_v2_count_documents__get_stats(),
+            "total": ontology_repo.count_concepts(),
             "active": queries.tag_concepts_v2_count_documents__get_stats_2(),
             "root": queries.tag_concepts_v2_count_documents__get_stats_3(),
             "with_children": queries.tag_concepts_v2_count_documents__get_stats_4()
@@ -100,7 +101,7 @@ async def get_ontology_graph(include_synonyms: bool = False):
     try:
 
         # Get all concepts
-        concepts = list(queries.tag_concepts_v2_find__get_ontology_graph())
+        concepts = list(queries.find_all_concepts())
 
         # Usage counts in ONE aggregation (tag_instances stores concept_id as
         # ObjectId with a small legacy remainder as strings - merge by str key)
@@ -149,7 +150,7 @@ async def get_ontology_graph(include_synonyms: bool = False):
 
         # Add synonym nodes if requested
         if include_synonyms:
-            aliases = list(queries.tag_aliases_v2_find__get_ontology_graph())
+            aliases = list(ontology_repo.find_all_aliases())
             for idx, alias in enumerate(aliases):
                 alias_id = f"a_{idx}"
                 concept_id = str(alias["concept_id"])
@@ -218,7 +219,7 @@ async def export_ontology():
     try:
 
         # Get all concepts
-        concepts = list(queries.tag_concepts_v2_find__export_ontology())
+        concepts = list(queries.find_all_concepts())
 
         # Convert ObjectIds to strings
         for concept in concepts:
@@ -229,7 +230,7 @@ async def export_ontology():
                 concept["children"] = [str(c) for c in concept["children"]]
 
         # Get all aliases
-        aliases = list(queries.tag_aliases_v2_find__export_ontology())
+        aliases = list(ontology_repo.find_all_aliases())
         for alias in aliases:
             alias["_id"] = str(alias["_id"])
             alias["concept_id"] = str(alias["concept_id"])

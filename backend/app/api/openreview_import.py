@@ -13,6 +13,7 @@ from bson import ObjectId
 from app.services.openreview_service import OpenReviewService
 from app.services.pdf_processor_service import PDFProcessorService
 from app.repositories import openreview_import_queries as queries
+from app.repositories import papers as papers_repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/openreview")
@@ -163,7 +164,7 @@ async def import_openreview_paper(
         paper_doc["bibtex"] = metadata["bibtex"]
         
         # Insert paper into database
-        result = queries.papers_insert_one__import_openreview_paper(paper_doc)
+        result = papers_repo.insert_paper(paper_doc)
         paper_id = str(result.inserted_id)
         
         logger.info(f"Successfully imported OpenReview paper with ID: {paper_id}")

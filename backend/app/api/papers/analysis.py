@@ -15,6 +15,7 @@ from fastapi import APIRouter, Body, HTTPException
 from .utils import db, logger
 from app.repositories import papers_analysis as repo
 from app.repositories import papers_analysis_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -80,15 +81,7 @@ def get_saved_analyses(paper_id: str) -> Dict[str, Any]:
 async def create_analysis(paper_id: str, analysis_type: str = Body(...), regenerate: bool = Body(False), model: Optional[str] = None) -> Dict[str, Any]:
     """Create a new analysis for a paper using prompts_config.json and llm.json"""
 
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__create_analysis(paper_id)
-        else:
-            # Try old SQLite ID
-            paper = queries.papers_find_one__create_analysis_2(paper_id)
-    except Exception:
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")

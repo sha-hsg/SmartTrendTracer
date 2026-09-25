@@ -37,11 +37,6 @@ def tag_instances_update_one__rebuild_mappings(orphan, concept_id):
     )
 
 
-def tag_concepts_v2_count_documents__get_stats():
-    """tag_concepts_v2.count_documents from tag_ontology.tools.get_stats()"""
-    return db.tag_concepts_v2.count_documents({})
-
-
 def tag_concepts_v2_count_documents__get_stats_2():
     """tag_concepts_v2.count_documents from tag_ontology.tools.get_stats()"""
     return db.tag_concepts_v2.count_documents({"status": "active"})
@@ -92,26 +87,11 @@ def tag_instances_count_documents__get_stats_6():
     return db.tag_instances.count_documents({"concept_id": None})
 
 
-def tag_concepts_v2_find__get_ontology_graph():
-    """tag_concepts_v2.find from tag_ontology.tools.get_ontology_graph()"""
-    return db.tag_concepts_v2.find({})
-
-
-def tag_concepts_v2_find__export_ontology():
-    """tag_concepts_v2.find from tag_ontology.tools.export_ontology()"""
-    return db.tag_concepts_v2.find({})
-
-
-def tag_aliases_v2_find__export_ontology():
-    """tag_aliases_v2.find from tag_ontology.tools.export_ontology()"""
-    return db.tag_aliases_v2.find({})
-
-
 def tag_aliases_v2_distinct__get_stats():
     """tag_aliases_v2.distinct from tag_ontology.tools.get_stats()"""
     return db.tag_aliases_v2.distinct("concept_id")
 
 
-def tag_aliases_v2_find__get_ontology_graph():
-    """tag_aliases_v2.find from tag_ontology.tools.get_ontology_graph()"""
-    return db.tag_aliases_v2.find({})
+def find_all_concepts():
+    """Cursor over all concepts."""
+    return db.tag_concepts_v2.find({})

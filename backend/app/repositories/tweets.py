@@ -150,3 +150,8 @@ def get_profile_images_for_usernames(usernames: List[str]) -> Dict[str, Optional
                 _profile_image_cache[username] = (None, current_time)
 
     return result
+
+
+def find_tweet(tweet_id):
+    """Tweet by Twitter id string (tweets._id)."""
+    return db.tweets.find_one({'_id': tweet_id})

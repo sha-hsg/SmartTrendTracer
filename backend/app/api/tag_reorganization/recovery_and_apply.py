@@ -62,7 +62,7 @@ async def apply_recovered_task(task_id: str):
     """Apply the results from a recovered completed task"""
 
     # Load task from MongoDB
-    task_doc = queries.tag_reorganization_tasks_find_one__apply_recovered_task(task_id)
+    task_doc = queries.find_task(task_id)
 
     if not task_doc:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -99,7 +99,7 @@ async def apply_task_result(task_id: str, result_data: dict = None):
     """Apply the reorganization results for a task (can accept result data in body)"""
 
     # First check if task exists and get its result
-    task_doc = queries.tag_reorganization_tasks_find_one__apply_task_result(task_id)
+    task_doc = queries.find_task(task_id)
 
     if not task_doc:
         # If no task in MongoDB, check in-memory tasks

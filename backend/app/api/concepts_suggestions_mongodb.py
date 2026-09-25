@@ -14,6 +14,7 @@ from app.services.concept_only_tag_service import ConceptOnlyTagService
 from app.services.llm_manager import get_llm_manager
 from app.repositories import concepts_suggestions as repo
 from app.repositories import concepts_suggestions_queries as queries
+from app.repositories import tweets as tweets_repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -35,7 +36,7 @@ async def suggest_concepts_for_tweet(tweet_id: str, request: ConceptSuggestionRe
     """
     
     # Get the tweet from MongoDB
-    tweet = queries.tweets_find_one__suggest_concepts_for_tweet(tweet_id)
+    tweet = tweets_repo.find_tweet(tweet_id)
     if not tweet:
         raise HTTPException(status_code=404, detail="Tweet not found")
     

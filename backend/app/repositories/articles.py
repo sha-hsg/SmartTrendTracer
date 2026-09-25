@@ -43,3 +43,13 @@ def find_author_name(author_id) -> Optional[str]:
     if not author_doc:
         author_doc = db.substack_authors.find_one({'sqlite_id': author_id})
     return author_doc.get('name', 'Unknown') if author_doc else None
+
+
+def find_article_by_url(url):
+    """Article with exactly this URL, or None."""
+    return db.articles.find_one({'url': url})
+
+
+def insert_article(article_doc):
+    """Insert a new article document; returns the InsertOneResult."""
+    return db.articles.insert_one(article_doc)

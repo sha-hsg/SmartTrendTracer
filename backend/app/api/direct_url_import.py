@@ -15,6 +15,7 @@ import os
 import requests
 from urllib.parse import urlparse, unquote
 from app.repositories import direct_url_import_queries as queries
+from app.repositories import papers as papers_repo
 
 
 logger = logging.getLogger(__name__)
@@ -148,7 +149,7 @@ async def import_paper_from_url(
             ]
         
         # Insert paper into MongoDB
-        result = queries.papers_insert_one__import_paper_from_url(paper_doc)
+        result = papers_repo.insert_paper(paper_doc)
         paper_id = str(result.inserted_id)
         
         logger.info(f"Paper saved with ID: {paper_id}")

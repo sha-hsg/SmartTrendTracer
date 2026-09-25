@@ -12,6 +12,7 @@ from pydantic import BaseModel, HttpUrl
 
 from app.services.jair_service import jair_service
 from app.repositories import jair_import_queries as queries
+from app.repositories import papers as papers_repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -125,7 +126,7 @@ async def import_jair_paper(request: JAIRImportRequest) -> Dict[str, Any]:
             'paper_type': 'research',
         }
 
-        result = queries.papers_insert_one__import_jair_paper(paper_doc)
+        result = papers_repo.insert_paper(paper_doc)
         paper_id = str(result.inserted_id)
 
         logger.info(f"Imported JAIR paper '{metadata.get('title')}' with ID {paper_id}")

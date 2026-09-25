@@ -78,12 +78,6 @@ def reddit_posts_count_documents__get_reddit_facets_9():
     return db.reddit_posts.count_documents({"is_video": True})
 
 
-def reddit_posts_count_documents__get_reddit_facets_10():
-    """reddit_posts.count_documents from reddit_mongodb.get_reddit_facets()"""
+def count_reddit_posts():
+    """Total number of Reddit posts."""
     return db.reddit_posts.count_documents({})
-
-
-def reddit_posts_count_documents__get_reddit_collection_stats():
-    """reddit_posts.count_documents from reddit_mongodb.get_reddit_collection_stats()"""
-    return db.reddit_posts.count_documents({})
-

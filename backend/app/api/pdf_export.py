@@ -7,7 +7,7 @@ from bson import ObjectId
 
 from app.services.pdf_export_service import PDFExportService
 from app.database.mongodb import get_database
-from app.repositories import pdf_export_queries as queries
+from app.repositories import articles as articles_repo
 
 router = APIRouter()
 
@@ -25,13 +25,7 @@ def export_article_pdf(
 
         # Get article for filename
         article = None
-        try:
-            if len(article_id) == 24:
-                article = queries.articles_find_one__export_article_pdf(article_id)
-            else:
-                article = queries.articles_find_one__export_article_pdf_2(article_id)
-        except Exception:
-            pass
+        article = articles_repo.find_article_by_any_id(article_id)
 
         if article and article.get('title'):
             # Create safe filename

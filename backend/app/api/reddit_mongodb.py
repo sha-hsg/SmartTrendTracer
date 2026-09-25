@@ -264,7 +264,7 @@ def get_reddit_facets():
         "time_ranges": time_facets,
         "score_ranges": score_facets,
         "post_types": type_facets,
-        "total_posts": queries.reddit_posts_count_documents__get_reddit_facets_10()
+        "total_posts": queries.count_reddit_posts()
     }
 
 @router.get("/stats/collection")
@@ -278,7 +278,7 @@ def get_reddit_collection_stats():
     except Exception as e:
         logger.error(f"Error getting collection stats: {e}")
         # Fallback to basic stats
-        total_posts = queries.reddit_posts_count_documents__get_reddit_collection_stats()
+        total_posts = queries.count_reddit_posts()
         return {
             "total_posts": total_posts,
             "error": "Could not load full statistics"

@@ -12,6 +12,7 @@ from .utils import (
     concept_id_variants,
 )
 from app.repositories import tag_ontology_concepts_ontology_queries as queries
+from app.repositories import ontology as ontology_repo
 
 logger = logging.getLogger(__name__)
 
@@ -77,24 +78,11 @@ async def update_concept_ontology(concept_id: str, concept_data: Dict[str, Any])
     """Update an existing concept in the ontology"""
     try:
 
-        # Try to parse as ObjectId first
-        try:
-            if len(concept_id) == 24:
-                oid = ObjectId(concept_id)
-            else:
-                # It might be a custom ID like c_1234
-                concept = queries.tag_concepts_v2_find_one__update_concept_ontology(concept_id)
-                if concept:
-                    oid = concept["_id"]
-                else:
-                    raise HTTPException(status_code=404, detail="Concept not found")
-        except Exception:
-            # Try to find by custom ID
-            concept = queries.tag_concepts_v2_find_one__update_concept_ontology_2(concept_id)
-            if concept:
-                oid = concept["_id"]
-            else:
-                raise HTTPException(status_code=404, detail="Concept not found")
+        # Custom id ("c_...") or ObjectId string
+        concept = ontology_repo.find_concept_by_any_id(concept_id)
+        if not concept:
+            raise HTTPException(status_code=404, detail="Concept not found")
+        oid = concept["_id"]
 
         # Update the concept
         update_data = {}
@@ -129,24 +117,11 @@ async def delete_concept_ontology(concept_id: str):
     """Delete a concept from the ontology"""
     try:
 
-        # Try to parse as ObjectId first
-        try:
-            if len(concept_id) == 24:
-                oid = ObjectId(concept_id)
-            else:
-                # It might be a custom ID like c_1234
-                concept = queries.tag_concepts_v2_find_one__delete_concept_ontology_2(concept_id)
-                if concept:
-                    oid = concept["_id"]
-                else:
-                    raise HTTPException(status_code=404, detail="Concept not found")
-        except Exception:
-            # Try to find by custom ID
-            concept = queries.tag_concepts_v2_find_one__delete_concept_ontology_3(concept_id)
-            if concept:
-                oid = concept["_id"]
-            else:
-                raise HTTPException(status_code=404, detail="Concept not found")
+        # Custom id ("c_...") or ObjectId string
+        concept = ontology_repo.find_concept_by_any_id(concept_id)
+        if not concept:
+            raise HTTPException(status_code=404, detail="Concept not found")
+        oid = concept["_id"]
 
         # Get the concept to find its parents
         concept = queries.tag_concepts_v2_find_one__delete_concept_ontology(oid)
@@ -156,13 +131,13 @@ async def delete_concept_ontology(concept_id: str):
         id_variants = concept_id_variants(concept)
 
         # Remove from parents' children arrays (refs may be ObjectId or legacy string)
-        queries.tag_concepts_v2_update_many__delete_concept_ontology(id_variants)
+        ontology_repo.remove_from_children(id_variants)
 
         # Remove this concept from its children's parents arrays
-        queries.tag_concepts_v2_update_many__delete_concept_ontology_2(id_variants)
+        ontology_repo.remove_from_parents(id_variants)
 
         # Delete tag instances referencing this concept
-        queries.tag_instances_delete_many__delete_concept_ontology(id_variants)
+        ontology_repo.delete_concept_instances(id_variants)
 
         # Delete the concept
         result = queries.tag_concepts_v2_delete_one__delete_concept_ontology(oid)

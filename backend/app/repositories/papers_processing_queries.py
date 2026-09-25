@@ -32,14 +32,6 @@ def papers_update_one__process_paper_with_mineru(paper):
     )
 
 
-def papers_update_one__process_paper_pdf(update_data, paper):
-    """papers.update_one from papers.processing.process_paper_pdf()"""
-    return db.papers.update_one(
-        {'_id': paper['_id']},
-        {'$set': update_data}
-    )
-
-
 def papers_find_one__receive_marker_progress(paper_id):
     """papers.find_one from papers.processing.receive_marker_progress()"""
     return db.papers.find_one({'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id})
@@ -51,23 +43,3 @@ def papers_update_one__receive_marker_progress(progress_update, paper_id):
         {'_id': ObjectId(paper_id) if len(paper_id) == 24 else paper_id},
         {'$set': progress_update}
     )
-
-
-def papers_find_one__process_paper_with_marker(paper_id):
-    """papers.find_one from papers.processing.process_paper_with_marker()"""
-    return db.papers.find_one({'_id': ObjectId(paper_id)})
-
-
-def papers_find_one__process_paper_with_marker_2(paper_id):
-    """papers.find_one from papers.processing.process_paper_with_marker()"""
-    return db.papers.find_one({'old_sqlite_id': int(paper_id)})
-
-
-def papers_find_one__process_paper_with_mineru(paper_id):
-    """papers.find_one from papers.processing.process_paper_with_mineru()"""
-    return db.papers.find_one({'_id': ObjectId(paper_id)})
-
-
-def papers_find_one__process_paper_with_mineru_2(paper_id):
-    """papers.find_one from papers.processing.process_paper_with_mineru()"""
-    return db.papers.find_one({'old_sqlite_id': int(paper_id)})

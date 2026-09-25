@@ -10,11 +10,6 @@ from app.database.mongodb import get_database
 db = get_database()
 
 
-def papers_insert_one__import_acm_paper(paper_doc):
-    """papers.insert_one from acm_import.import_acm_paper()"""
-    return db.papers.insert_one(paper_doc)
-
-
 def papers_update_one__process_pdf_background(paper_id, result):
     """papers.update_one from acm_import.process_pdf_background()"""
     return db.papers.update_one(
@@ -27,4 +22,3 @@ def papers_update_one__process_pdf_background(paper_id, result):
             'processed_at': datetime.now(timezone.utc)
         }}
     )
-

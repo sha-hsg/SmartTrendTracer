@@ -10,6 +10,7 @@ from bson import ObjectId
 
 from .utils import db, concept_service, logger
 from app.repositories import papers_tag_suggestions_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -22,15 +23,7 @@ async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dic
 
     logger.info(f"Getting tag suggestions for paper {paper_id} with model: {model}")
 
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__get_tag_suggestions(paper_id)
-        else:
-            # Try old SQLite ID
-            paper = queries.papers_find_one__get_tag_suggestions_2(paper_id)
-    except Exception:
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")

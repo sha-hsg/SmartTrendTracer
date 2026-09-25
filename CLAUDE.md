@@ -472,9 +472,12 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    an embedding-based search would reuse the existing FAISS stack.
 8. **No inline MongoDB queries in `app/api/`** (arch audit 2026-09, AST guard at 0; 12 API
    modules still wire a `get_database()` handle into services — ratcheted): routers
-   call `app/repositories/`. Many repositories are verbatim extractions (`*_queries.py`
-   hold one function per former call site, named `<coll>_<op>__<route>`); consolidating
-   them into intent-named functions is the natural next cleanup. Frontend: 52 raw
+   call `app/repositories/`. 163 functions in `*_queries.py` are still verbatim
+   extractions named `<coll>_<op>__<route>` (ratcheted in the guard, was 239); duplicates
+   were consolidated into intent-named functions in the domain modules (`papers`,
+   `articles`, `tweets`, `ontology`). Id lookups: `papers.find_paper_by_any_id`,
+   `articles.find_article_by_any_id`, `ontology.find_concept_by_any_id` — never re-inline
+   the `len(id) == 24` / `old_sqlite_id` two-step in a router. Frontend: 52 raw
    `fetch()` calls still bypass `services/http.ts` (ratcheted).
 9. **Nondeterministic top-N lists** in `/api/papers/facets` (authors, concepts,
    institutions) and `/api/papers/stats/overview` (top_concepts, top_conferences):

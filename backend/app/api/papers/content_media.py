@@ -17,6 +17,7 @@ from .utils import (
     logger,
 )
 from app.repositories import papers_content_media_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -35,23 +36,9 @@ def get_paper_image(
     # Get the paper to find its processor and image directory
     paper = None  # Initialize paper variable first
     try:
-        # Try to convert to ObjectId if it's a valid format (24 hex chars)
-        if len(paper_id) == 24:
-            try:
-                paper = queries.papers_find_one__get_paper_image(paper_id)
-                logger.info(f"Found paper by ObjectId: {paper is not None}")
-            except Exception:
-                # Not a valid ObjectId, try as old SQLite ID
-                paper = None
-
-        # If not found by ObjectId, try as old SQLite ID (integer)
-        if paper is None:
-            try:
-                paper = queries.papers_find_one__get_paper_image_2(paper_id)
-                logger.info(f"Found paper by SQLite ID {paper_id}: {paper is not None}")
-            except Exception:
-                logger.warning(f"Could not parse {paper_id} as integer for SQLite ID")
-                paper = None
+        # ObjectId first, then legacy old_sqlite_id
+        paper = papers_repo.find_paper_by_id(paper_id)
+        logger.info(f"Found paper by id {paper_id}: {paper is not None}")
 
         # If still not found, this might be a converted MongoDB ID (like 4245617128)
         # Search for papers where this could be the converted ID

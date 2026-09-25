@@ -30,7 +30,7 @@ def toggle_account(account_id: str, db=Depends(get_database)):
 def refresh_account_info(account_id: str, db=Depends(get_database)):
     """Refresh account info from Twitter API."""
     try:
-        account = queries.twitter_accounts_find_one__refresh_account_info_2(account_id)
+        account = queries.find_account(account_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid account ID format")
 
@@ -65,7 +65,7 @@ def refresh_account_info(account_id: str, db=Depends(get_database)):
 
     queries.twitter_accounts_update_one__refresh_account_info(update_data, account_id)
 
-    updated = queries.twitter_accounts_find_one__refresh_account_info(account_id)
+    updated = queries.find_account(account_id)
     return serialize_account(updated)
 
 
@@ -271,7 +271,7 @@ async def trigger_collection(
     Respects the monthly tweet budget (Basic Account Mode).
     """
     try:
-        account = queries.twitter_accounts_find_one__trigger_collection(account_id)
+        account = queries.find_account(account_id)
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid account ID format")
 

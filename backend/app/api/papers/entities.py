@@ -12,7 +12,7 @@ from typing import Optional, Dict, Any
 from bson import ObjectId
 
 from .utils import db, logger
-from app.repositories import papers_entities_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -20,15 +20,7 @@ router = APIRouter()
 @router.post("/{paper_id}/entities/extract")
 def extract_paper_entities(paper_id: str, use_fast_model: bool = False, model_choice: Optional[str] = None) -> Dict[str, Any]:
     """Extract entities from paper content using AI"""
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__extract_paper_entities(paper_id)
-        else:
-            # Try old SQLite ID
-            paper = queries.papers_find_one__extract_paper_entities_2(paper_id)
-    except Exception:
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")

@@ -22,7 +22,7 @@ from .utils import (
     logger,
 )
 from app.repositories import papers_grobid as repo
-from app.repositories import papers_grobid_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -30,14 +30,7 @@ router = APIRouter()
 @router.post("/{paper_id}/grobid/process")
 async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
     """Process paper with GROBID service"""
-    try:
-        # Get paper from MongoDB
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__process_with_grobid(paper_id)
-        else:
-            paper = queries.papers_find_one__process_with_grobid_2(paper_id)
-    except Exception:
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -108,7 +101,7 @@ async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
         if result.get('citation_contexts'):
             update_data['citation_contexts'] = result['citation_contexts']
 
-        queries.papers_update_one__process_with_grobid(update_data, paper)
+        papers_repo.set_fields_on_paper(update_data, paper)
 
         # Format response for frontend
         response = {

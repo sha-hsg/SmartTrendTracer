@@ -10,8 +10,8 @@ import logging
 from .utils import (
     concept_id_variants,
 )
-from app.repositories.tag_ontology_utils_queries import find_concept_by_any_id
 from app.repositories import tag_ontology_concepts_queries as queries
+from app.repositories import ontology as ontology_repo
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +24,11 @@ def get_tree():
     try:
 
         # Get all concepts
-        all_concepts = list(queries.tag_concepts_v2_find__get_tree())
+        all_concepts = list(queries.find_active_concepts())
 
         # Get all aliases in one query, keyed by the string form of concept_id
         # (aliases store concept_id as ObjectId; legacy rows may hold "c_..." strings)
-        all_aliases = list(queries.tag_aliases_v2_find__get_tree())
+        all_aliases = list(ontology_repo.find_all_aliases())
         aliases_by_concept = {}
         for alias in all_aliases:
             key = str(alias.get("concept_id"))
@@ -104,12 +104,12 @@ def get_all_concepts(include_aliases: bool = Query(False)):
     """Get all concepts from MongoDB"""
 
     # Get all active concepts
-    concepts = list(queries.tag_concepts_v2_find__get_all_concepts())
+    concepts = list(queries.find_active_concepts())
 
     # Fetch all aliases in ONE query and group them by the string form of
     # concept_id (aliases store ObjectId; legacy rows may hold custom "c_..." ids)
     aliases_by_concept = {}
-    for alias in queries.tag_aliases_v2_find__get_all_concepts():
+    for alias in ontology_repo.find_all_aliases():
         key = str(alias.get("concept_id"))
         aliases_by_concept.setdefault(key, []).append(alias)
 
@@ -162,14 +162,7 @@ def get_concept_detail(concept_id: str):
     """Get detailed information about a specific concept"""
 
     # Get concept - try both id field and _id (ObjectId)
-    concept = queries.tag_concepts_v2_find_one__get_concept_detail(concept_id)
-    if not concept:
-        # Try with ObjectId if it looks like one
-        try:
-            if len(concept_id) == 24:  # ObjectId is 24 hex chars
-                concept = queries.tag_concepts_v2_find_one__get_concept_detail_2(concept_id)
-        except Exception:
-            pass
+    concept = ontology_repo.find_concept_by_any_id(concept_id)
 
     if not concept:
         raise HTTPException(status_code=404, detail="Concept not found")
@@ -352,7 +345,7 @@ def create_concept(concept_data: dict):
     # Resolve parent (custom id or ObjectId string) and calculate level
     parent = None
     if concept_data.get("parent_id"):
-        parent = find_concept_by_any_id(str(concept_data["parent_id"]))
+        parent = ontology_repo.find_concept_by_any_id(str(concept_data["parent_id"]))
         if parent:
             concept["parents"] = [parent["_id"]]
             concept["level"] = parent.get("level", 0) + 1
@@ -372,7 +365,7 @@ def update_concept(concept_id: str, update_data: dict):
     """Update a concept in MongoDB - only explicitly provided fields are set"""
 
     # Lookup via custom id field or ObjectId fallback
-    concept = find_concept_by_any_id(concept_id)
+    concept = ontology_repo.find_concept_by_any_id(concept_id)
     if not concept:
         raise HTTPException(status_code=404, detail="Concept not found")
 
@@ -394,7 +387,7 @@ def delete_concept(concept_id: str):
     """Delete a concept (soft delete) and clean up all references"""
 
     # Lookup via custom id field or ObjectId fallback
-    concept = find_concept_by_any_id(concept_id)
+    concept = ontology_repo.find_concept_by_any_id(concept_id)
     if not concept:
         raise HTTPException(status_code=404, detail="Concept not found")
 
@@ -404,12 +397,12 @@ def delete_concept(concept_id: str):
     queries.tag_concepts_v2_update_one__delete_concept(concept)
 
     # Remove from parents' children arrays (refs may be ObjectId or legacy string)
-    queries.tag_concepts_v2_update_many__delete_concept(id_variants)
+    ontology_repo.remove_from_children(id_variants)
 
     # Remove this concept from its children's parents arrays
-    queries.tag_concepts_v2_update_many__delete_concept_2(id_variants)
+    ontology_repo.remove_from_parents(id_variants)
 
     # Delete tag instances referencing this concept
-    queries.tag_instances_delete_many__delete_concept(id_variants)
+    ontology_repo.delete_concept_instances(id_variants)
 
     return {"message": "Concept deleted successfully"}

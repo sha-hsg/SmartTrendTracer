@@ -10,7 +10,7 @@ import logging
 from .utils import (
     concept_id_variants,
 )
-from app.repositories.tag_ontology_utils_queries import find_concept_by_any_id
+from app.repositories import ontology as ontology_repo
 from app.repositories import tag_ontology_aliases_and_search_queries as queries
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def add_alias(concept_id: str, alias_data: dict):
     """Add an alias to a concept"""
 
     # Check if concept exists (custom id or ObjectId string)
-    concept = find_concept_by_any_id(concept_id)
+    concept = ontology_repo.find_concept_by_any_id(concept_id)
     if not concept:
         raise HTTPException(status_code=404, detail="Concept not found")
 
@@ -55,7 +55,7 @@ def delete_alias(alias_text: str, concept_id: str = Query(...)):
     concept_ids = [concept_id]
     if ObjectId.is_valid(concept_id):
         concept_ids.append(ObjectId(concept_id))
-    concept = find_concept_by_any_id(concept_id)
+    concept = ontology_repo.find_concept_by_any_id(concept_id)
     if concept:
         for variant in concept_id_variants(concept):
             if variant not in concept_ids:
@@ -86,7 +86,7 @@ async def find_concept_by_name(tag_name: str):
                     concept = queries.tag_concepts_v2_find_one__find_concept_by_name_2(cid)
                 else:
                     # Legacy rows may store the custom "c_..." id as string
-                    concept = find_concept_by_any_id(str(cid))
+                    concept = ontology_repo.find_concept_by_any_id(str(cid))
 
         if not concept:
             raise HTTPException(status_code=404, detail=f"Concept not found for tag: {tag_name}")

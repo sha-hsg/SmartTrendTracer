@@ -19,11 +19,6 @@ def tag_instances_aggregate__batch_annotate_all_unannotated(annotated_pipeline):
     return db.tag_instances.aggregate(annotated_pipeline)
 
 
-def tweets_find_one__annotate_one(tweet_id):
-    """tweets.find_one from tweets.annotation.annotate_one()"""
-    return db.tweets.find_one({"_id": tweet_id})
-
-
 def tag_instances_update_one__annotate_one(tweet_id):
     """tag_instances.update_one from tweets.annotation.annotate_one()"""
     return db.tag_instances.update_one(

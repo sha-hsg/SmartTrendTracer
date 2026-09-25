@@ -18,6 +18,7 @@ from .utils import (
     batch_annotation_tasks, BatchAnnotateRequest,
 )
 from app.repositories import tweets_annotation_queries as queries
+from app.repositories import tweets as tweets_repo
 
 router = APIRouter()
 
@@ -147,7 +148,7 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
         result = None
 
         try:
-            tweet = queries.tweets_find_one__annotate_one(tweet_id)
+            tweet = tweets_repo.find_tweet(tweet_id)
             if not tweet:
                 result = {"error": "not_found"}
                 local_error = 1

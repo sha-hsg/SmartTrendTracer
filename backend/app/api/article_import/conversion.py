@@ -7,6 +7,7 @@ from typing import Dict, Any
 from datetime import datetime, timezone
 import logging
 from app.repositories import article_import_conversion_queries as queries
+from app.repositories import articles as articles_repo
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +166,7 @@ async def service_import_url_playwright(url: str) -> Dict[str, Any]:
             }
 
         # Check if article already exists
-        existing = queries.articles_find_one__service_import_url_playwright(url)
+        existing = articles_repo.find_article_by_url(url)
         if existing:
             return {
                 'success': True,

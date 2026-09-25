@@ -18,6 +18,7 @@ import logging
 
 from app.utils.preview_utils import generate_preview
 from app.repositories import article_import_url_import_queries as queries
+from app.repositories import articles as articles_repo
 
 logger = logging.getLogger(__name__)
 
@@ -314,14 +315,14 @@ async def import_article_from_url(request: URLImportRequest):
         }
 
         # Check if article already exists
-        existing = queries.articles_find_one__import_article_from_url(url)
+        existing = articles_repo.find_article_by_url(url)
         if existing:
             # Update existing article
             queries.articles_update_one__import_article_from_url(existing, markdown_content, word_count)
             article_id = str(existing['_id'])
         else:
             # Insert new article
-            result = queries.articles_insert_one__import_article_from_url(article_doc)
+            result = articles_repo.insert_article(article_doc)
             article_id = str(result.inserted_id)
 
             # Update author statistics
@@ -483,14 +484,14 @@ def import_article_enhanced(request: EnhancedImportRequest):
         }
 
         # Check if article already exists
-        existing = queries.articles_find_one__import_article_enhanced(url)
+        existing = articles_repo.find_article_by_url(url)
         if existing:
             # Update existing article
             queries.articles_update_one__import_article_enhanced(existing, markdown_content, word_count, cookies)
             article_id = str(existing['_id'])
         else:
             # Insert new article
-            result = queries.articles_insert_one__import_article_enhanced(article_doc)
+            result = articles_repo.insert_article(article_doc)
             article_id = str(result.inserted_id)
 
             # Update author statistics

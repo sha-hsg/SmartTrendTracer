@@ -49,14 +49,6 @@ def papers_update_one__process_with_mineru_background(paper_id):
     )
 
 
-def papers_update_one__process_with_mineru_background_2(paper_id, update_data):
-    """papers.update_one from papers.processing_helpers.process_with_mineru_background()"""
-    return db.papers.update_one(
-        _paper_filter(paper_id),
-        {'$set': update_data}
-    )
-
-
 def papers_update_one__process_with_mineru_background_3(paper_id, error_msg):
     """papers.update_one from papers.processing_helpers.process_with_mineru_background()"""
     return db.papers.update_one(
@@ -65,58 +57,6 @@ def papers_update_one__process_with_mineru_background_3(paper_id, error_msg):
             'processing_status': 'failed',
             'processing_error': f"MinerU processing error: {error_msg}"
         }}
-    )
-
-
-def papers_update_one__process_with_marker_background_3(paper_id, error_msg):
-    """papers.update_one from papers.processing_helpers.process_with_marker_background()"""
-    return db.papers.update_one(
-        _paper_filter(paper_id),
-        {'$set': {
-            'processing_status': 'failed',
-            'processing_error': error_msg
-        }}
-    )
-
-
-def papers_update_one__process_with_marker_background_4(paper_id, error_msg):
-    """papers.update_one from papers.processing_helpers.process_with_marker_background()"""
-    return db.papers.update_one(
-        _paper_filter(paper_id),
-        {'$set': {
-            'processing_status': 'failed',
-            'processing_error': error_msg
-        }}
-    )
-
-
-def papers_update_one__process_with_marker_background_5(paper_id, error_msg):
-    """papers.update_one from papers.processing_helpers.process_with_marker_background()"""
-    return db.papers.update_one(
-        _paper_filter(paper_id),
-        {'$set': {
-            'processing_status': 'failed',
-            'processing_error': error_msg
-        }}
-    )
-
-
-def papers_update_one__process_with_mineru_background_4(paper_id, error_msg):
-    """papers.update_one from papers.processing_helpers.process_with_mineru_background()"""
-    return db.papers.update_one(
-        _paper_filter(paper_id),
-        {'$set': {
-            'processing_status': 'failed',
-            'processing_error': error_msg
-        }}
-    )
-
-
-def papers_update_one__process_with_marker_background_6(paper_id, update_data):
-    """papers.update_one from papers.processing_helpers.process_with_marker_background()"""
-    return db.papers.update_one(
-        _paper_filter(paper_id),
-        {'$set': update_data}
     )
 
 
@@ -129,3 +69,13 @@ def papers_update_one__process_with_marker_background_7(paper_id, user_error):
             'processing_error': user_error
         }}
     )
+
+
+def mark_processing_failed(paper_id, error_msg):
+    """Set processing_status=failed with the error message."""
+    return db.papers.update_one(_paper_filter(paper_id), {'$set': {'processing_status': 'failed', 'processing_error': error_msg}})
+
+
+def update_paper_fields(paper_id, update_data):
+    """Set fields on a paper by id (ObjectId or legacy id)."""
+    return db.papers.update_one(_paper_filter(paper_id), {'$set': update_data})

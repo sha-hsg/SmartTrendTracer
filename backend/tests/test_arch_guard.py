@@ -29,6 +29,7 @@ FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
 
 # Ratchets — only ever lower these.
 API_DB_CALL_SITES_MAX = 0
+REPO_GENERATED_QUERY_FNS_MAX = 163  # verbatim-moved `<coll>_<op>__<route>` functions
 API_DB_HANDLE_MODULES_MAX = 12      # api modules wiring get_database() into services
 FRONTEND_AXIOS_IMPORT_FILES_MAX = 0
 FRONTEND_RAW_FETCH_SITES_MAX = 52   # legacy fetch() calls bypassing services/http.ts
@@ -269,6 +270,16 @@ def test_api_db_handle_modules_ratchet():
                       p.read_text(), re.M))
     assert len(mods) <= API_DB_HANDLE_MODULES_MAX, (
         f'{len(mods)} api modules take a database handle (max {API_DB_HANDLE_MODULES_MAX}): {mods}')
+
+
+def test_repo_generated_query_names_ratchet():
+    """Generated call-site names must be replaced by intent-named functions, not added."""
+    n = sum(len(re.findall(r'^def [a-z0-9_]+__[a-z0-9_]+\(', p.read_text(), re.M))
+            for p in (BACKEND / 'app' / 'repositories').glob('*_queries.py'))
+    assert n <= REPO_GENERATED_QUERY_FNS_MAX, (
+        f'{n} generated query functions (max {REPO_GENERATED_QUERY_FNS_MAX}): give new queries intent names')
+    if n < REPO_GENERATED_QUERY_FNS_MAX:
+        print(f'NOTE: generated query functions down to {n} — lower REPO_GENERATED_QUERY_FNS_MAX')
 
 
 def test_frontend_axios_ratchet():

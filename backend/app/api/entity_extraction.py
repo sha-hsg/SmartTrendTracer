@@ -10,6 +10,7 @@ from bson import ObjectId
 from app.services.entity_extraction_service import EntityExtractionService, EntityExtraction
 from app.database.mongodb import get_database
 from app.repositories import entity_extraction_queries as queries
+from app.repositories import articles as articles_repo
 
 router = APIRouter()
 
@@ -58,15 +59,6 @@ def _normalize_concept_id(concept_id):
         return ObjectId(concept_id)
     return concept_id
 
-
-def _find_article(db, article_id: str):
-    """Look up an article by ObjectId or legacy SQLite id."""
-    try:
-        if len(article_id) == 24:
-            return queries.articles_find_one___find_article_2(article_id)
-        return queries.articles_find_one___find_article(article_id)
-    except Exception:
-        return None
 
 @router.post("/extract", response_model=EntityExtractionResponse)
 def extract_entities(
@@ -201,7 +193,7 @@ def review_entity(
 
         if not concept:
             review_doc['status'] = 'failed'
-            queries.entity_reviews_insert_one__review_entity_3(review_doc)
+            queries.insert_entity_review(review_doc)
             return {
                 "status": "failed",
                 "entity_id": request.entity_id,
@@ -213,14 +205,14 @@ def review_entity(
 
         # Optionally tag the article (same mechanism as bulk-action)
         if request.article_id:
-            article = _find_article(db, request.article_id)
+            article = articles_repo.find_article_by_any_id(request.article_id)
             if article:
                 existing_instance = queries.tag_instances_find_one__review_entity(concept_id, article)
                 if not existing_instance:
                     queries.tag_instances_insert_one__review_entity(concept_id, user, article, concept, request)
 
         review_doc['status'] = 'accepted'
-        queries.entity_reviews_insert_one__review_entity_2(review_doc)
+        queries.insert_entity_review(review_doc)
         return {
             "status": "accepted",
             "entity_id": request.entity_id,
@@ -229,7 +221,7 @@ def review_entity(
         }
 
     # reject / modify: persist the decision only
-    queries.entity_reviews_insert_one__review_entity(review_doc)
+    queries.insert_entity_review(review_doc)
 
     if request.action == "reject":
         return {

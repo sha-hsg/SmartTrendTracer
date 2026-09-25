@@ -12,6 +12,7 @@ import logging
 from app.services.acm_service import acm_service
 from app.services.pdf_processor_service import get_pdf_processor_service
 from app.repositories import acm_import_queries as queries
+from app.repositories import papers as papers_repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/acm", tags=["acm"])
@@ -90,7 +91,7 @@ async def import_acm_paper(request: ACMImportRequest, background_tasks: Backgrou
         }
         
         # Insert into MongoDB
-        result = queries.papers_insert_one__import_acm_paper(paper_doc)
+        result = papers_repo.insert_paper(paper_doc)
         paper_id = str(result.inserted_id)
         
         logger.info(f"Successfully imported ACM paper with ID: {paper_id}")

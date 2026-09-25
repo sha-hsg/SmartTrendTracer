@@ -16,8 +16,3 @@ def tag_instances_find__get_paper(paper_id, sqlite_id):
                 {'content_id': sqlite_id}
             ]
         })
-
-
-def papers_insert_one__upload_paper(paper_doc):
-    """papers.insert_one from papers.crud.upload_paper()"""
-    return db.papers.insert_one(paper_doc)

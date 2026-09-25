@@ -20,6 +20,7 @@ from .processing_helpers import (
     process_with_mineru_background,
 )
 from app.repositories import papers_processing_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -58,18 +59,7 @@ async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundT
     logger.info(f"=== PROCESS WITH MARKER ENDPOINT CALLED ===")
     logger.info(f"Paper ID: {paper_id}")
 
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__process_paper_with_marker(paper_id)
-            logger.info(f"Found paper by ObjectId")
-        else:
-            # Try old SQLite ID
-            paper = queries.papers_find_one__process_paper_with_marker_2(paper_id)
-            logger.info(f"Found paper by old SQLite ID")
-    except Exception as e:
-        logger.error(f"Error finding paper: {e}")
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         logger.error(f"Paper not found: {paper_id}")
@@ -319,7 +309,7 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) ->
             if result['metadata'].get('images_extracted'):
                 update_data['images_extracted'] = result['metadata']['images_extracted']
 
-        queries.papers_update_one__process_paper_pdf(update_data, paper)
+        papers_repo.set_fields_on_paper(update_data, paper)
 
         return {
             'success': True,
@@ -384,15 +374,7 @@ async def receive_marker_progress(
 async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:
     """Start async processing of paper's PDF using MinerU service"""
 
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__process_paper_with_mineru(paper_id)
-        else:
-            # Try old SQLite ID
-            paper = queries.papers_find_one__process_paper_with_mineru_2(paper_id)
-    except Exception:
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")

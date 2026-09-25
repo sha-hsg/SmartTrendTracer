@@ -8,11 +8,6 @@ from app.database.mongodb import get_database
 db = get_database()
 
 
-def tweets_find_one__suggest_concepts_for_tweet(tweet_id):
-    """tweets.find_one from concepts_suggestions_mongodb.suggest_concepts_for_tweet()"""
-    return db.tweets.find_one({"_id": tweet_id})
-
-
 def reddit_posts_find_one__suggest_concepts_for_reddit(post_id):
     """reddit_posts.find_one from concepts_suggestions_mongodb.suggest_concepts_for_reddit()"""
     return db.reddit_posts.find_one({"_id": ObjectId(post_id)})

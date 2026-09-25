@@ -10,34 +10,9 @@ from app.database.mongodb import get_database
 db = get_database()
 
 
-def entity_reviews_insert_one__review_entity(review_doc):
-    """entity_reviews.insert_one from entity_extraction.review_entity()"""
-    return db.entity_reviews.insert_one(review_doc)
-
-
-def articles_find_one___find_article(article_id):
-    """articles.find_one from entity_extraction._find_article()"""
-    return db.articles.find_one({'old_sqlite_id': int(article_id)})
-
-
-def entity_reviews_insert_one__review_entity_2(review_doc):
-    """entity_reviews.insert_one from entity_extraction.review_entity()"""
-    return db.entity_reviews.insert_one(review_doc)
-
-
-def articles_find_one___find_article_2(article_id):
-    """articles.find_one from entity_extraction._find_article()"""
-    return db.articles.find_one({'_id': ObjectId(article_id)})
-
-
 def tweets_find_one__extract_entities(request):
     """tweets.find_one from entity_extraction.extract_entities()"""
     return db.tweets.find_one({'_id': request.tweet_id})
-
-
-def entity_reviews_insert_one__review_entity_3(review_doc):
-    """entity_reviews.insert_one from entity_extraction.review_entity()"""
-    return db.entity_reviews.insert_one(review_doc)
 
 
 def articles_find_one__extract_entities(request):
@@ -95,3 +70,8 @@ def tag_instances_find_one__bulk_entity_action(concept_id, article_object_id):
 def tag_instances_insert_one__bulk_entity_action(tag_instance):
     """tag_instances.insert_one from entity_extraction.bulk_entity_action()"""
     return db.tag_instances.insert_one(tag_instance)
+
+
+def insert_entity_review(review_doc):
+    """Persist one entity review decision."""
+    return db.entity_reviews.insert_one(review_doc)

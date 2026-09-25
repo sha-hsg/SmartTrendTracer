@@ -13,6 +13,7 @@ from bson import ObjectId
 from app.services.acl_anthology_service import acl_anthology_service
 from app.services.pdf_processor_service import get_pdf_processor_service
 from app.repositories import acl_anthology_queries as queries
+from app.repositories import papers as papers_repo
 
 
 logger = logging.getLogger(__name__)
@@ -180,7 +181,7 @@ async def import_acl_anthology_paper(
         logger.info(f"Paper authors before save: {paper_doc.get('authors', 'NOT FOUND')}")
         
         # Insert paper into MongoDB
-        result = queries.papers_insert_one__import_acl_anthology_paper(paper_doc)
+        result = papers_repo.insert_paper(paper_doc)
         paper_id = str(result.inserted_id)
         
         # Debug logging after save

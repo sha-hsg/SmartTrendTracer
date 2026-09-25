@@ -130,3 +130,13 @@ def save_arxiv_import(result: Dict[str, Any]) -> str:
         'paper_type': 'research',
     }
     return str(db.papers.insert_one(paper_data).inserted_id)
+
+
+def insert_paper(paper_doc):
+    """Insert a new paper document; returns the InsertOneResult."""
+    return db.papers.insert_one(paper_doc)
+
+
+def set_fields_on_paper(update_data, paper):
+    """Set fields on an already loaded paper document."""
+    return db.papers.update_one({'_id': paper['_id']}, {'$set': update_data})

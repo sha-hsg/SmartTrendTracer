@@ -11,6 +11,7 @@ import logging
 
 from app.services.concept_organization_service import ConceptOrganizationService
 from app.repositories import concept_organization_queries as queries
+from app.repositories import ontology as ontology_repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -211,7 +212,7 @@ async def get_organization_stats() -> Dict:
         service = ConceptOrganizationService()
         
         # Count different states
-        total = queries.tag_concepts_v2_count_documents__get_organization_stats()
+        total = ontology_repo.count_concepts()
         organized = queries.tag_concepts_v2_count_documents__get_organization_stats_2()
         unorganized = queries.tag_concepts_v2_count_documents__get_organization_stats_3()
         

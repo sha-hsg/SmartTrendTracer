@@ -16,19 +16,9 @@ def twitter_accounts_update_one__refresh_account_info(update_data, account_id):
     )
 
 
-def twitter_accounts_find_one__refresh_account_info(account_id):
-    """twitter_accounts.find_one from twitter_accounts.collection.refresh_account_info()"""
-    return db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
-
-
 def tweets_count_documents__trigger_collection(month_start):
     """tweets.count_documents from twitter_accounts.collection.trigger_collection()"""
     return db.tweets.count_documents({'collected_at': {'$gte': month_start}})
-
-
-def twitter_accounts_find_one__refresh_account_info_2(account_id):
-    """twitter_accounts.find_one from twitter_accounts.collection.refresh_account_info()"""
-    return db.twitter_accounts.find_one({'_id': ObjectId(account_id)})
 
 
 def collection_state_find_one___collect_tweets_sync(username):
@@ -47,6 +37,6 @@ def twitter_accounts_update_one___collect_tweets_sync(account_id, now, tweets_co
     )
 
 
-def twitter_accounts_find_one__trigger_collection(account_id):
-    """twitter_accounts.find_one from twitter_accounts.collection.trigger_collection()"""
+def find_account(account_id):
+    """Twitter account by ObjectId string."""
     return db.twitter_accounts.find_one({'_id': ObjectId(account_id)})

@@ -1,6 +1,6 @@
 """
 Shared utilities for the tag_ontology package (logger, id helpers).
-Concept lookups live in app.repositories.tag_ontology_utils_queries.
+Concept lookups live in app.repositories.ontology.
 """
 import logging
 

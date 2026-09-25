@@ -36,6 +36,7 @@ from app.repositories.paper_queries import (
 from app.repositories import papers_crud as repo
 from app.repositories.papers_crud import _format_paper_list_item, _resolve_concepts_for_papers  # noqa: F401 (moved)
 from app.repositories import papers_crud_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -214,7 +215,7 @@ async def upload_paper(
             "doi": ""
         }
 
-        result = queries.papers_insert_one__upload_paper(paper_doc)
+        result = papers_repo.insert_paper(paper_doc)
         paper_id = str(result.inserted_id)
 
         logger.info(f"Paper uploaded successfully: {paper_id} - {title}")

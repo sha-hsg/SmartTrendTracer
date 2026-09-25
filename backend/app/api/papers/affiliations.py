@@ -11,7 +11,7 @@ import logging
 
 from .utils import db
 from app.repositories import papers_affiliations as repo
-from app.repositories import papers_affiliations_queries as queries
+from app.repositories import papers as papers_repo
 
 router = APIRouter()
 
@@ -21,15 +21,7 @@ logger = logging.getLogger(__name__)
 @router.post("/{paper_id}/extract-affiliations")
 def extract_paper_affiliations(paper_id: str) -> Dict[str, Any]:
     """Extract author affiliations from paper header using LLM"""
-    try:
-        # Try to convert to ObjectId if it's a valid format
-        if len(paper_id) == 24:
-            paper = queries.papers_find_one__extract_paper_affiliations(paper_id)
-        else:
-            # Try old SQLite ID
-            paper = queries.papers_find_one__extract_paper_affiliations_2(paper_id)
-    except Exception:
-        paper = None
+    paper = papers_repo.find_paper_by_any_id(paper_id)
 
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")

@@ -14,16 +14,6 @@ def tag_reorganization_tasks_find_one__recover_task(task_id):
     return db.tag_reorganization_tasks.find_one({'task_id': task_id}, {'_id': 0})
 
 
-def tag_reorganization_tasks_find_one__apply_recovered_task(task_id):
-    """tag_reorganization_tasks.find_one from tag_reorganization.recovery_and_apply.apply_recovered_task()"""
-    return db.tag_reorganization_tasks.find_one({'task_id': task_id})
-
-
-def tag_reorganization_tasks_find_one__apply_task_result(task_id):
-    """tag_reorganization_tasks.find_one from tag_reorganization.recovery_and_apply.apply_task_result()"""
-    return db.tag_reorganization_tasks.find_one({'task_id': task_id})
-
-
 def tag_reorganization_tasks_update_one__recover_task(task_id):
     """tag_reorganization_tasks.update_one from tag_reorganization.recovery_and_apply.recover_task()"""
     return db.tag_reorganization_tasks.update_one(
@@ -58,3 +48,8 @@ def tag_reorganization_tasks_update_one__apply_task_result(task_id):
             'updated_at': datetime.now(timezone.utc)
         }}
     )
+
+
+def find_task(task_id):
+    """Persisted reorganization task by task_id."""
+    return db.tag_reorganization_tasks.find_one({'task_id': task_id})

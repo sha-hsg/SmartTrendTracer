@@ -172,7 +172,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
                         logger.info(f"Processing was cancelled for paper {paper_id}; skipping final update")
                         return
 
-                    queries.papers_update_one__process_with_marker_background_6(paper_id, update_data)
+                    queries.update_paper_fields(paper_id, update_data)
                     logger.info(f"=== SUCCESSFULLY UPDATED PAPER {paper_id} ===")
                 else:
                     error_text = response.text
@@ -193,7 +193,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
         logger.error(f"=== MARKER TIMEOUT ===")
         logger.error(error_msg)
         if not _processing_cancelled(paper_id):
-            queries.papers_update_one__process_with_marker_background_3(paper_id, error_msg)
+            queries.mark_processing_failed(paper_id, error_msg)
         # Kill orphaned marker_single subprocess
         pdf_service_client.kill_marker_job()
     except httpx.RequestError as e:
@@ -201,14 +201,14 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
         logger.error(f"=== MARKER CONNECTION ERROR ===")
         logger.error(error_msg)
         if not _processing_cancelled(paper_id):
-            queries.papers_update_one__process_with_marker_background_4(paper_id, error_msg)
+            queries.mark_processing_failed(paper_id, error_msg)
     except Exception as e:
         error_msg = f"Unexpected error: {str(e)}"
         logger.error(f"=== MARKER UNEXPECTED ERROR ===")
         logger.error(error_msg)
         logger.error(f"Traceback: {traceback.format_exc()}")
         if not _processing_cancelled(paper_id):
-            queries.papers_update_one__process_with_marker_background_5(paper_id, error_msg)
+            queries.mark_processing_failed(paper_id, error_msg)
 
 
 async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
@@ -284,7 +284,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
                 logger.info(f"Processing was cancelled for paper {paper_id}; skipping final update")
                 return
 
-            queries.papers_update_one__process_with_mineru_background_2(paper_id, update_data)
+            queries.update_paper_fields(paper_id, update_data)
             logger.info(f"=== SUCCESSFULLY UPDATED PAPER {paper_id} ===")
         else:
             error_msg = result.get('error', 'MinerU processing failed')
@@ -301,4 +301,4 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
         logger.error(f"=== MINERU EXCEPTION ===")
         logger.error(error_msg)
         if not _processing_cancelled(paper_id):
-            queries.papers_update_one__process_with_mineru_background_4(paper_id, error_msg)
+            queries.mark_processing_failed(paper_id, error_msg)
