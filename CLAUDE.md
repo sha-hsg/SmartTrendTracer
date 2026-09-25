@@ -1,5 +1,27 @@
 # SmartTrendTracer - Claude Assistant Documentation
 
+<!-- smooth-switch-current:start -->
+## Smooth Switch — current implementation (2026-09-07)
+
+This section is the current handoff contract; earlier dated session notes below describe historical behavior. General standard: [smooth_switch.md](../../smooth_switch.md); commands and limitations: [runtime README](../../smooth-switch/README.md). Run commands from the project root.
+
+- `./smooth-switch doctor` / `status` are read-only inventory checks, not application health tests. `setup` prints a plan; `setup --apply` installs local dependencies without importing data or starting services.
+- `smooth-switch.json` defines transferable assets. The project wrapper uses the vendored runtime; update the central implementation and run its `vendor.py` when changing shared behavior.
+- Stop all project writers before `prepare --to DEVICE --writers-stopped`. Review `receive PACKAGE` (first transfer: `--initial`), then apply the identical plan with its token and `--writers-stopped`. Use `rollback` for reviewed recovery. Data packages do not transfer source code; synchronize the matching code separately.
+- `guard` blocks starts in released/importing/failed states. `guard --export` additionally blocks exports where initial import is required but incomplete. An outstanding first import alone does not block normal starts or imports. This is cooperative single-writer handoff, not a distributed lock.
+- Local state/backups: `~/.local/state/smooth-switch/smarttrendtracer/`; transfer outbox defaults to `~/SmoothSwitch/smarttrendtracer/`. Keep secrets (`~/.env`), native environments, PIDs, caches and service registrations local. Include `smooth-switch.ignore` at the actual Syncthing root; do not sync raw active databases or native environments.
+- A complete Mac → Linux → Mac acceptance test is still outstanding. Do not infer application readiness from an installed adapter or successful import.
+
+Imported `dump_DenkZentrale_20260906_214843.tar.gz` into `smarttrendtracer`: 23 collections / 236,975 documents, verified against the Mac archive. Local handoff state is initialized/received. The initial export restriction is cleared here; do not repeat the import merely to start the app. Backend/frontend, collectors, OCR/ML services and external integrations have NOT yet been exercised in this Linux test session. Samanta's successful application test does not certify STT.
+
+Pause backend/frontend, collectors, cron jobs, converters and book workers before handoff; shared MongoDB stays running. Existing `start_stt.sh`/`stop_stt.sh` retain legacy service-management behavior and still require a separate runtime audit; do not use MongoDB-stop options for an individual app. Provision Python 3.12/backend and frontend dependencies locally via the adapter; optional Marker/MinerU environments need their own setup. Review media, documents and `accounts.json` separately.
+
+Shared database operations: see [MongoDB service](../../infrastructure/mongodb/README.md) and [verified import status](../../infrastructure/mongodb/IMPORT_STATUS.md). Linux uses shared `development-mongodb` (MongoDB 8.3.8, loopback :27017); database for this app is `smarttrendtracer`. Keep application/database/import lifecycle separate; never set one global database name for all apps. The Compose rseq setting is local infrastructure, not a host-kernel change. Logical dumps preserve modern `prelude.json` metadata; empty-target rollback was tested separately.
+
+Legacy `scripts/sync-in.sh` now delegates to `legacy-receive` and requires an explicit archive/SHA-256 and reviewed apply token. `sync-out.sh` requires destination and writer-pause acknowledgement. No automatic latest-dump selection, backup bypass or unattended hourly export is supported by these wrappers. Existing schedulers were not enabled by these changes.
+
+<!-- smooth-switch-current:end -->
+
 ## 1. Project Overview
 
 SmartTrendTracer (STT) is a comprehensive AI content monitoring system that collects and
@@ -104,10 +126,15 @@ SmartTrendTracer/
 │   │   │   │                       #   (tweets/, papers/, books/, articles/, article_import/,
 │   │   │   │                       #    twitter_accounts/, statistics/, system_stats/,
 │   │   │   │                       #    analytics_trends/, tag_ontology/, tag_reorganization/)
+│   │   ├── config.py               # Settings singleton — the ONLY place env vars are read
+│   │   ├── paths.py                # data paths (+ *_REL forms as persisted in MongoDB)
 │   │   ├── collectors/             # gmail_substack_collector, reddit_collector, playwright
-│   │   ├── database/mongodb.py     # client singleton + _ensure_indexes (central)
-│   │   └── services/               # llm_manager, rag/ (index_manager, search, trend_analysis),
-│   │                               # analytics/, anomaly_detection, per-import services, …
+│   │   ├── database/mongodb.py     # client singleton + _ensure_indexes, concept_id_query_variants
+│   │   ├── repositories/           # data-access layer: queries + their rules (tweets save path,
+│   │   │                           # facets, stats, authors); raise repositories.errors, never HTTP
+│   │   └── services/               # llm_manager (the only LLM stack), pdf_service_client
+│   │                               # (Marker/MinerU), rag/, analytics/, anomaly_detection, …
+│   ├── tests/                      # pytest: regression tests + test_arch_guard.py (layer rules)
 │   ├── tweet_collector_service.py  # standalone Twitter collector
 │   ├── book_processing_worker.py   # consumes book_processing_jobs queue
 │   ├── llm.json / prompts_config.json / litellm_config.yaml
@@ -115,7 +142,8 @@ SmartTrendTracer/
 │   ├── mineru_service/  (+ mineru_env)   # MinerU PDF service, port 8003
 │   └── data/                       # papers, paper_repository, book_repository,
 │                                   # rag_index_concepts (FAISS), media, tei_xml, …
-└── frontend/                       # React/TS/Vite app (src/components, src/config)
+└── frontend/                       # React/TS/Vite app: src/components/<feature>/ (no flat
+                                    # files), src/services/http.ts (only axios importer), src/config
 ```
 
 ### Port Allocation
@@ -172,18 +200,7 @@ platforms.
 
 ### 3.3 MongoDB Cross-Machine Synchronization
 
-Each machine runs its own local MongoDB. Sync with the scripts in `scripts/`
-(config in `.db-sync-config`; dumps in `db-sync/dumps/` are synced by Syncthing,
-`db-sync/backups/` stays local):
-
-```bash
-./scripts/sync-out.sh      # END of session: export (compressed dump + SHA-256 checksum)
-./scripts/sync-status.sh   # START of session: check what's available
-./scripts/sync-in.sh       # import (verifies checksum, backs up, imports with --drop)
-```
-
-Only sync when switching machines, not during daily work. Indexes are recreated on
-import (30-60s first startup).
+Use the current Smooth Switch contract above. Shared MongoDB stays running while this project's writers are paused. Review explicit snapshots rather than choosing the latest dump by time. This Linux device has already received the verified Mac dump; application testing is still pending.
 
 ### 3.4 Environment Variables — API keys in `~/.env`, never in the project
 
@@ -192,6 +209,11 @@ import (30-60s first startup).
 plus `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`. Do **not** use `backend/.env`.
 `start_stt.sh` auto-loads it with `set -a; source "$HOME/.env"; set +a`
 (works with or without `export` prefixes).
+
+**Code reads configuration only via `from app.config import settings`** (pydantic
+Settings). No `os.getenv` anywhere else — enforced by `tests/test_arch_guard.py`.
+Marker/MinerU URLs and the progress-callback URL come from
+`app.services.pdf_service_client`; data paths from `app.paths`.
 
 ### 3.5 Service Startup Timeouts
 
@@ -205,6 +227,8 @@ All startup scripts create timestamped logs (`logs/startup_YYYYmmdd_HHMMSS.log`)
 startup timing, Python/venv paths, MongoDB connection status.
 
 ### 3.7 Platform Detection
+
+> Legacy service-management behavior below still needs a runtime audit; do not stop shared MongoDB for STT handoff.
 
 Scripts detect the platform via `$OSTYPE` and use the appropriate commands:
 
@@ -220,7 +244,11 @@ Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if
 - **NEVER hardcode prompts or LLM model access.** Models/temperatures come from
   `backend/llm.json` (per task type), prompts from `backend/prompts_config.json`,
   the LiteLLM router from `backend/litellm_config.yaml`. All LLM calls go through the
-  central `llm_manager`.
+  central `llm_manager` (the former parallel `llm_service` stack was removed 2026-09):
+  `llm.get_prompt(key)` for prompts, `llm.complete_text(task_type, ...)` for single-turn
+  calls, and `llm.resolve_model_override(ui_value)` to map a UI model choice to a
+  routable model_name. Never write per-endpoint model alias dicts — they silently
+  ignored every model not listed in them. Retries/fallbacks belong in the router config.
 - **Deprecated models must not appear in any selection list** (backend defaults,
   litellm_config model lists, `frontend/src/config/models.ts`). Removed models are
   mapped to successors via `MODEL_MIGRATION_MAP`
@@ -244,7 +272,18 @@ Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if
   `app.api.tag_ontology.utils.concept_id_variants(concept)` (document in hand)
   with `{'concept_id': {'$in': variants}}`. A single-form query silently drops rows.
 - **`tweets._id` is the Twitter ID string** — never insert tweets with an auto ObjectId
-  `_id` or a separate `tweet_id` field; reuse the collector's save logic.
+  `_id` or a separate `tweet_id` field. All writers use `app.repositories.tweets`
+  (`build_tweet_document`, `insert_tweet_if_new`, `advance_collection_state` — the
+  latter keeps `last_tweet_id` monotonic via `$max`).
+- **Layering (enforced by `tests/test_arch_guard.py`):** api → services → repositories/
+  database, never upward; no import cycles; import packages via their `__init__`, not
+  their internal submodules. New MongoDB queries go into `app/repositories/`, not into
+  routers — the guard ratchets the remaining API-layer query count (lower it when you
+  move queries). Repositories raise `app.repositories.errors.*` (mapped to HTTP in
+  `app/main.py`); a repository that needs a service gets it injected as a parameter.
+- **Frontend:** HTTP only via `src/services/http.ts` (plus `apiErrorMessage`); components
+  live in `src/components/<feature>/` — the guard fails on direct axios imports or new
+  flat files in `components/`.
 - **`tag_concepts_v2._id` is ObjectId** — wrap incoming string IDs with `ObjectId()`.
 - **MongoDB filters: use `{'$nin': [None, '']}`**, never `{'$ne': None, '$ne': ''}` —
   Python dict deduplication silently drops the first key.
@@ -270,7 +309,7 @@ Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if
                         # Also: resets stale processing_* statuses to 'pending',
                         # runs paper_type migration, loads ~/.env, validates venvs.
 ./stop_stt.sh           # interactive (asks about MongoDB)
-./stop_stt.sh -y        # stop MongoDB too (--mongo-yes)
+# Do not use -y/--mongo-yes with shared MongoDB.
 ./stop_stt.sh -n        # keep MongoDB running (--mongo-no)
 ```
 
@@ -340,7 +379,7 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/v2/articles` | `article_import/` | URL import: smart dispatch, cookies, Playwright, batch |
 | `/api/article-preview` | `article_preview` | regenerate / beautify previews |
 | `/api/article-clustering` | `article_clustering_mongodb` | k-means/topic clustering |
-| `/api/substack` | `substack_mongodb` | legacy remainder: `/trends` (partial stub), `/health` |
+| `/api/substack` | `substack_mongodb` | `/trends` (concept-based tags/growth/velocity), `/health` |
 | `/api/reddit` | `reddit_mongodb` | faceted-search, facets, tags, collect, stats |
 | `/api/twitter-accounts` | `api/twitter_accounts/` | account CRUD, lookup, stats/dashboard/usage (10k budget), collector-status, toggle/refresh/collect |
 | `/api/authors` | `authors_management` | author merge/analytics endpoints — **UI not built yet** (see AUTHOR_UI_DESIGN.md) |
@@ -403,18 +442,16 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 ## 7. Known Issues & Open Work
 
 Full defect list with priorities: **`DEFECTS.md`** (currently open: DEF-003 Twitter media
-URL expiry [by design], DEF-004 resolved 2026-08 (misdiagnosis; pagination tie-break fixed instead), DEF-005 React key warning
-[won't fix], DEF-006 forwarded-article HTML previews [has fix script], DEF-007 Gary
-Marcus attribution, DEF-008 rate limiting [use collector service]. DEF-001 and DEF-002
-are resolved).
+URL expiry [by design], DEF-005 React key warning [won't fix — floods the console in
+Concept Graph/Management], DEF-007 Gary Marcus attribution [fixed in code, latent],
+DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are resolved).
 
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **No automated test suite** (most important gap, H-Q1). No pytest, no frontend tests.
-   Recommended: pytest + httpx TestClient for the ~30 actively used core endpoints
-   (faceted-search per content type, tagging roundtrip, import flows, batch annotation)
-   plus one regression test per P1 fix.
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 58 pytest tests (regression tests
+   for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
+   frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
    progress reporting; MinerU processing shows no live progress (deliberately not built,
    docs corrected instead).
@@ -426,13 +463,15 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    trigger and stats endpoints are kept but have no UI.
 6. **"Coming Soon" views** in navigation (author-analytics, author-merge, reddit-trends,
    books-analysis) are placeholders.
-7. **`/api/substack/trends` is a partial stub** (some fields empty, "would need complex
-   analysis").
-8. **Semantic concept search is plain string matching** despite its name
-   (ontology `search-concepts`, "for now" in code).
-9. **`marker_env` / `mineru_env` venvs are wrongly tracked in git** (~40k files) —
-   should be removed from the index and gitignored (they must be rebuilt per platform
-   anyway).
+7. **Semantic concept search is lexical** (text + alias matching with relevance tiers);
+   an embedding-based search would reuse the existing FAISS stack.
+8. **Architecture debt, ratcheted** (arch audit 2026-09): 387 MongoDB call sites remain
+   in `app/api/` (was 565; hotspots `authors_management`, `papers/content`,
+   `articles/content` next) — move them into `app/repositories/` and lower
+   `API_DB_CALL_SITES_MAX`. Frontend domain API modules can grow on `services/http.ts`.
+9. **Nondeterministic top-N lists** in `/api/papers/facets` (authors, concepts,
+   institutions) and `/api/papers/stats/overview` (top_concepts, top_conferences):
+   truncated without a stable tie-break, so repeated calls return different sets.
 10. Pre-existing frontend `tsc` error count: 18 (non-blocking, build is green).
 
 ---
