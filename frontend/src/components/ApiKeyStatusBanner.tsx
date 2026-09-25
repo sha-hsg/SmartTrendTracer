@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
-import axios from 'axios'
+import http from '@/services/http'
 
 interface ApiKeyStatus {
   status: string
@@ -19,11 +19,11 @@ export default function ApiKeyStatusBanner() {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const response = await axios.get(`/api/llm/status`)
+        const response = await http.get(`/api/llm/status`)
         setStatus(response.data)
         setError(null)
       } catch (err) {
-        if (axios.isAxiosError(err) && err.code === 'ERR_NETWORK') {
+        if (http.isAxiosError(err) && err.code === 'ERR_NETWORK') {
           setError('Backend server not running')
         } else {
           setError('Failed to check API key status')

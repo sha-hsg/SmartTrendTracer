@@ -3,7 +3,7 @@
  * Handles fetching, caching, and concept operations
  */
 
-import axios from 'axios';
+import http from '@/services/http'
 import { Concept, ConceptWithCount } from '@/types/concept';
 
 class ConceptService {
@@ -20,7 +20,7 @@ class ConceptService {
     }
 
     try {
-      const response = await axios.get(`/api/concepts/${conceptId}`);
+      const response = await http.get(`/api/concepts/${conceptId}`);
       const concept = response.data;
       this.cacheContent(concept);
       return concept;
@@ -49,7 +49,7 @@ class ConceptService {
     // Fetch missing concepts
     if (missingIds.length > 0) {
       try {
-        const response = await axios.post(`/api/concepts/batch`, {
+        const response = await http.post(`/api/concepts/batch`, {
           concept_ids: missingIds
         });
         
@@ -70,7 +70,7 @@ class ConceptService {
    */
   async searchConcepts(query: string, limit: number = 10): Promise<Concept[]> {
     try {
-      const response = await axios.get(`/api/concepts/suggestions/search-concepts`, {
+      const response = await http.get(`/api/concepts/suggestions/search-concepts`, {
         params: { query, limit }
       });
 
@@ -95,7 +95,7 @@ class ConceptService {
   async getConceptStats(contentType?: 'tweet' | 'paper' | 'article'): Promise<ConceptWithCount[]> {
     try {
       const params = contentType ? { content_type: contentType } : {};
-      const response = await axios.get(`/api/concepts/stats`, { params });
+      const response = await http.get(`/api/concepts/stats`, { params });
       
       const concepts = response.data.top_concepts || [];
       concepts.forEach((c: ConceptWithCount) => this.cacheContent(c));
@@ -111,7 +111,7 @@ class ConceptService {
    */
   async createConceptFromText(text: string): Promise<Concept | null> {
     try {
-      const response = await axios.post(`/api/concepts`, {
+      const response = await http.post(`/api/concepts`, {
         text: text
       });
       
@@ -136,7 +136,7 @@ class ConceptService {
   ): Promise<Concept | null> {
     try {
       const endpoint = `/api/${contentType}s/${contentId}/concepts`;
-      const response = await axios.post(endpoint, null, {
+      const response = await http.post(endpoint, null, {
         params: { text }
       });
       
@@ -161,7 +161,7 @@ class ConceptService {
   ): Promise<boolean> {
     try {
       const endpoint = `/api/${contentType}s/${contentId}/concepts/${conceptId}`;
-      await axios.delete(endpoint);
+      await http.delete(endpoint);
       return true;
     } catch (error) {
       console.error('Failed to remove concept:', error);

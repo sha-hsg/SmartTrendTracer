@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -49,7 +49,7 @@ export default function SubstackTrendsModern() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.get(`/api/substack/trends?days=${days}`)
+      const response = await http.get(`/api/substack/trends?days=${days}`)
       setTrends(response.data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')

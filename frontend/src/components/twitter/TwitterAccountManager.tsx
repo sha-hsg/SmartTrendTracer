@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, RefreshCw, Users, BarChart3, CheckCircle, XCircle } from 'lucide-react';
-import axios from 'axios';
+import http from '@/services/http'
 import { AccountFormModal } from '../TwitterAccountManager/AccountFormModal';
 import { CollectionDashboard } from './CollectionDashboard';
 import { AccountListTable } from './AccountListTable';
@@ -75,12 +75,12 @@ export default function TwitterAccountManager() {
     try {
       setLoading(true);
       const [accountsRes, statsRes, dashboardRes, historyRes, statusRes, usageRes] = await Promise.all([
-        axios.get<TwitterAccount[]>(API_BASE),
-        axios.get<AccountStats>(`${API_BASE}/stats`),
-        axios.get<DashboardData>(`${API_BASE}/dashboard`),
-        axios.get<CollectionHistory>(`${API_BASE}/collection-history?days=30`),
-        axios.get<CollectorStatus>(`${API_BASE}/collector-status`),
-        axios.get<UsageStats>(`${API_BASE}/usage`)
+        http.get<TwitterAccount[]>(API_BASE),
+        http.get<AccountStats>(`${API_BASE}/stats`),
+        http.get<DashboardData>(`${API_BASE}/dashboard`),
+        http.get<CollectionHistory>(`${API_BASE}/collection-history?days=30`),
+        http.get<CollectorStatus>(`${API_BASE}/collector-status`),
+        http.get<UsageStats>(`${API_BASE}/usage`)
       ]);
       setAccounts(accountsRes.data);
       setStats(statsRes.data);
@@ -99,7 +99,7 @@ export default function TwitterAccountManager() {
 
   const fetchCollectorStatus = useCallback(async () => {
     try {
-      const res = await axios.get<CollectorStatus>(`${API_BASE}/collector-status`);
+      const res = await http.get<CollectorStatus>(`${API_BASE}/collector-status`);
       setCollectorStatus(res.data);
     } catch (err) {
       console.error('Failed to fetch collector status:', err);
@@ -108,7 +108,7 @@ export default function TwitterAccountManager() {
 
   const fetchLiveProgress = useCallback(async () => {
     try {
-      const res = await axios.get<LiveProgress>(`${API_BASE}/live-progress`);
+      const res = await http.get<LiveProgress>(`${API_BASE}/live-progress`);
       setLiveProgress(res.data);
     } catch (err) {
       console.error('Failed to fetch live progress:', err);
@@ -141,7 +141,7 @@ export default function TwitterAccountManager() {
 
     setLookingUp(true);
     try {
-      const res = await axios.get<TwitterUserLookup>(`${API_BASE}/lookup`, {
+      const res = await http.get<TwitterUserLookup>(`${API_BASE}/lookup`, {
         params: { username: newAccountData.username.replace('@', '') }
       });
       setLookupResult(res.data);
@@ -153,7 +153,7 @@ export default function TwitterAccountManager() {
         }));
       }
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
+      if (http.isAxiosError(err)) {
         setLookupResult({ exists: false, error: err.response?.data?.detail || 'Lookup failed' });
       }
     } finally {
@@ -164,7 +164,7 @@ export default function TwitterAccountManager() {
   const addAccount = async () => {
     setSubmitting(true);
     try {
-      await axios.post(API_BASE, {
+      await http.post(API_BASE, {
         username: newAccountData.username.replace('@', ''),
         display_name: newAccountData.display_name || null,
         category: newAccountData.category,
@@ -184,7 +184,7 @@ export default function TwitterAccountManager() {
       setLookupResult(null);
       fetchAccounts();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
+      if (http.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Failed to add account');
       }
     } finally {
@@ -197,7 +197,7 @@ export default function TwitterAccountManager() {
 
     setSubmitting(true);
     try {
-      await axios.put(`${API_BASE}/${editingAccount.id}`, {
+      await http.put(`${API_BASE}/${editingAccount.id}`, {
         display_name: editingAccount.display_name,
         category: editingAccount.category,
         description: editingAccount.description,
@@ -208,7 +208,7 @@ export default function TwitterAccountManager() {
       setEditingAccount(null);
       fetchAccounts();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
+      if (http.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Failed to update account');
       }
     } finally {
@@ -218,7 +218,7 @@ export default function TwitterAccountManager() {
 
   const toggleAccount = async (account: TwitterAccount) => {
     try {
-      await axios.post(`${API_BASE}/${account.id}/toggle`);
+      await http.post(`${API_BASE}/${account.id}/toggle`);
       fetchAccounts();
     } catch (err) {
       console.error('Failed to toggle account:', err);
@@ -231,7 +231,7 @@ export default function TwitterAccountManager() {
     }
 
     try {
-      await axios.delete(`${API_BASE}/${account.id}`);
+      await http.delete(`${API_BASE}/${account.id}`);
       fetchAccounts();
     } catch (err) {
       console.error('Failed to delete account:', err);
@@ -240,10 +240,10 @@ export default function TwitterAccountManager() {
 
   const refreshAccountInfo = async (account: TwitterAccount) => {
     try {
-      await axios.post(`${API_BASE}/${account.id}/refresh`);
+      await http.post(`${API_BASE}/${account.id}/refresh`);
       fetchAccounts();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
+      if (http.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Failed to refresh account');
       }
     }
@@ -253,7 +253,7 @@ export default function TwitterAccountManager() {
     setCollectingAccount(account.id);
     setCollectionResult(null);
     try {
-      const res = await axios.post(`${API_BASE}/${account.id}/collect?max_tweets=${maxTweets}`);
+      const res = await http.post(`${API_BASE}/${account.id}/collect?max_tweets=${maxTweets}`);
       setCollectionResult({
         success: true,
         account: account.username,
@@ -263,7 +263,7 @@ export default function TwitterAccountManager() {
       });
       fetchAccounts();
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
+      if (http.isAxiosError(err)) {
         setCollectionResult({
           success: false,
           account: account.username,

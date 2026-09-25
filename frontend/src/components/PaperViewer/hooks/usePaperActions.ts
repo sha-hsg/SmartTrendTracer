@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import http from '@/services/http'
 import type { Paper } from "../types";
 import { useSectionActions } from "./useSectionActions";
 import type { UseSectionActionsReturn } from "./useSectionActions";
@@ -99,7 +99,7 @@ export function usePaperActions(
 
     setCreatingSnippet(true);
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/snippets`,
         {
           content: selectedText,
@@ -130,7 +130,7 @@ export function usePaperActions(
   const handleSaveMarkdown = async () => {
     setSavingMarkdown(true);
     try {
-      await axios.put(`/api/papers/${paperId}/content`, {
+      await http.put(`/api/papers/${paperId}/content`, {
         content: editedMarkdown,
       });
       setPaper((prev) =>
@@ -157,7 +157,7 @@ export function usePaperActions(
 
     setExtractingAuthors(true);
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/extract-authors`,
         {
           use_full_content: false,
@@ -197,7 +197,7 @@ export function usePaperActions(
     setSelectedAffiliations(new Set());
 
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/extract-affiliations`
       );
 
@@ -232,7 +232,7 @@ export function usePaperActions(
       }));
 
     try {
-      const response = await axios.put(
+      const response = await http.put(
         `/api/papers/${paperId}/apply-affiliations`,
         {
           affiliations: affiliationsToApply,
@@ -271,7 +271,7 @@ export function usePaperActions(
 
     const newFlagged = !paper.flagged;
     try {
-      await axios.put(`/api/papers/${paperId}/metadata`, {
+      await http.put(`/api/papers/${paperId}/metadata`, {
         flagged: newFlagged
       });
       setPaper({ ...paper, flagged: newFlagged });
@@ -285,7 +285,7 @@ export function usePaperActions(
 
     const newRating = paper.rating === rating ? null : rating;
     try {
-      await axios.put(`/api/papers/${paperId}/metadata`, {
+      await http.put(`/api/papers/${paperId}/metadata`, {
         rating: newRating
       });
       setPaper({ ...paper, rating: newRating });
@@ -344,7 +344,7 @@ export function usePaperActions(
     if (!paper || !editedMetadata) return;
 
     try {
-      const response = await axios.put(
+      const response = await http.put(
         `/api/papers/${paperId}/metadata`,
         editedMetadata,
       );
@@ -370,7 +370,7 @@ export function usePaperActions(
   const handleSaveImportUrl = async () => {
     setSavingImportUrl(true);
     try {
-      await axios.patch(`/api/papers/${paperId}`, {
+      await http.patch(`/api/papers/${paperId}`, {
         import_url: editedImportUrl,
       });
       setPaper((prev) =>

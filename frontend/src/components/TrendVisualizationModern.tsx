@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -87,7 +87,7 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
       
       if (contentType === 'articles') {
         // For articles, use the substack trends endpoint
-        const trendResponse = await axios.get(
+        const trendResponse = await http.get(
           `/api/substack/trends?days=${timeRange}`
         )
         // Transform the data to match the expected format
@@ -115,13 +115,13 @@ export default function TrendVisualizationModern({ contentType = 'tweets' }: Pro
         }
       } else {
         // For tweets, use the regular analytics endpoints
-        const trendResponse = await axios.get(
+        const trendResponse = await http.get(
           `/api/analytics/trends/timeline?days=${timeRange}`
         )
         trendsData = trendResponse.data
         if (trendsData) setTrendData(trendsData)
 
-        const tagResponse = await axios.get(
+        const tagResponse = await http.get(
           `/api/analytics/trends/tags?days=${timeRange}`
         )
         tagsData = tagResponse.data

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   BookOpen,
   Filter,
@@ -116,7 +116,7 @@ const FacetedBooksDashboard: React.FC = () => {
       selectedYears.forEach(year => params.append('years', year.toString()))
       selectedConceptIds.forEach(id => params.append('concept_ids', id))
 
-      const response = await axios.get<BooksResponse>(`/api/books/?${params}`)
+      const response = await http.get<BooksResponse>(`/api/books/?${params}`)
       setBooks(response.data.books)
       setCurrentPage(response.data.pagination.page)
       setTotalPages(response.data.pagination.total_pages)
@@ -152,7 +152,7 @@ const FacetedBooksDashboard: React.FC = () => {
       selectedConceptIds.forEach(id => params.append('concept_ids', id))
       if (specialFilter) params.append('special_filter', specialFilter)
 
-      const response = await axios.get<BooksStats>(`/api/books/facets?${params}`)
+      const response = await http.get<BooksStats>(`/api/books/facets?${params}`)
       setStats(response.data)
     } catch (err) {
       console.error('Error loading book stats:', err)

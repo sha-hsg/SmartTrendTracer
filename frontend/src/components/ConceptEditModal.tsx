@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   Dialog,
   DialogContent,
@@ -68,7 +68,7 @@ export default function ConceptEditModal({
     setError(null)
     try {
       // First try to find concept by slug/name
-      const response = await axios.get(
+      const response = await http.get(
         `/api/ontology/find-by-name/${encodeURIComponent(tagName)}`
       )
       
@@ -111,7 +111,7 @@ export default function ConceptEditModal({
       
       // Use the concept's ID for updating
       const conceptId = concept.id || concept._id
-      await axios.put(
+      await http.put(
         `/api/ontology/concepts/${conceptId}`,
         updateData
       )

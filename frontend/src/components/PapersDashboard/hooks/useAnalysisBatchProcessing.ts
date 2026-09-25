@@ -9,7 +9,7 @@
  *   - togglePaperSelection / toggleSelectAllPapers helpers
  */
 import { useState, useRef } from "react";
-import axios from "axios";
+import http from '@/services/http'
 
 interface Paper {
   id: number;
@@ -181,7 +181,7 @@ export function useAnalysisBatchProcessing({
               };
             }
             try {
-              const response = await axios.post(
+              const response = await http.post(
                 `/api/papers/${paper.id}/analyses/generate`,
                 {
                   analysis_type: analysisType.id,

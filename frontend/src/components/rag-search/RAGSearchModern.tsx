@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import ReactMarkdown from 'react-markdown'
 import { toast } from 'sonner'
 import { Button } from "@/components/ui/button"
@@ -121,7 +121,7 @@ export default function RAGSearchModern() {
 
   const loadSampleQuestions = async () => {
     try {
-      const response = await axios.get('/api/rag/sample-questions')
+      const response = await http.get('/api/rag/sample-questions')
 
       if (Array.isArray(response.data)) {
         const questions = response.data
@@ -178,7 +178,7 @@ export default function RAGSearchModern() {
 
   const loadIndexStats = async () => {
     try {
-      const response = await axios.get('/api/rag/stats')
+      const response = await http.get('/api/rag/stats')
       setIndexStats(response.data)
     } catch (error) {
       console.error('Error loading index stats:', error)
@@ -198,7 +198,7 @@ export default function RAGSearchModern() {
     if (includePapers) contentTypes.push('paper')
 
     try {
-      const result = await axios.post('/api/rag/ask', {
+      const result = await http.post('/api/rag/ask', {
         question: queryText,
         k: 10,
         content_types: contentTypes.length > 0 ? contentTypes : null,
@@ -232,7 +232,7 @@ export default function RAGSearchModern() {
 
   const rebuildIndex = async () => {
     setRebuildingIndex(true)
-    const rebuild = axios.post('/api/rag/rebuild').finally(() => {
+    const rebuild = http.post('/api/rag/rebuild').finally(() => {
       setRebuildingIndex(false)
       loadIndexStats()
     })

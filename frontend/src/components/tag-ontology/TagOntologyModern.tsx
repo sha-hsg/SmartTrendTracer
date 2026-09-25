@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -76,7 +76,7 @@ export default function TagOntologyModern() {
 
   const fetchOntologyTree = async () => {
     try {
-      const response = await axios.get(`/api/ontology/tree`)
+      const response = await http.get(`/api/ontology/tree`)
       setTree(response.data)
       setLoading(false)
     } catch (error) {
@@ -88,7 +88,7 @@ export default function TagOntologyModern() {
 
   const fetchConceptDetails = async (conceptId: string) => {
     try {
-      const response = await axios.get(`/api/ontology/concept/${conceptId}`)
+      const response = await http.get(`/api/ontology/concept/${conceptId}`)
       setSelectedConcept({
         ...response.data,
         tag: response.data.tag || '',
@@ -110,7 +110,7 @@ export default function TagOntologyModern() {
         ...newConceptForm,
         parent_id: newConceptForm.parent_id || null
       }
-      await axios.post(`/api/ontology/concept`, conceptData)
+      await http.post(`/api/ontology/concept`, conceptData)
       fetchOntologyTree()
       setNewConceptForm({
         tag: '',
@@ -131,7 +131,7 @@ export default function TagOntologyModern() {
 
     setActionLoading(true)
     try {
-      await axios.put(`/api/ontology/concept/${selectedConcept.id}`, {
+      await http.put(`/api/ontology/concept/${selectedConcept.id}`, {
         display_name: selectedConcept.display_name,
         description: selectedConcept.description
       })
@@ -150,7 +150,7 @@ export default function TagOntologyModern() {
 
     setActionLoading(true)
     try {
-      await axios.delete(`/api/ontology/concept/${conceptId}`)
+      await http.delete(`/api/ontology/concept/${conceptId}`)
       fetchOntologyTree()
       setSelectedConcept(null)
       setSuccessMessage('Concept deleted successfully!')
@@ -166,7 +166,7 @@ export default function TagOntologyModern() {
 
     setActionLoading(true)
     try {
-      await axios.post(`/api/ontology/concept/${selectedConcept.id}/alias`, {
+      await http.post(`/api/ontology/concept/${selectedConcept.id}/alias`, {
         alias_text: synonym,
         alias_type: 'synonym'
       })
@@ -191,7 +191,7 @@ export default function TagOntologyModern() {
 
   const exportOntology = async () => {
     try {
-      const response = await axios.get(`/api/ontology/export`)
+      const response = await http.get(`/api/ontology/export`)
 
       const blob = new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
@@ -213,7 +213,7 @@ export default function TagOntologyModern() {
   const rebuildMappings = async () => {
     setActionLoading(true)
     try {
-      await axios.post(`/api/ontology/rebuild-mappings`)
+      await http.post(`/api/ontology/rebuild-mappings`)
       setSuccessMessage('Tag mappings rebuilt successfully!')
     } catch (error) {
       console.error('Error rebuilding mappings:', error)

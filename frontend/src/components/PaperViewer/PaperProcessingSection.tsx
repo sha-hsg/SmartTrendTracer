@@ -1,5 +1,5 @@
 import React from "react";
-import axios from "axios";
+import http from '@/services/http'
 import {
   Loader2,
   PlayCircle,
@@ -66,7 +66,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
           paperId={paperId}
           onCheckStatus={async () => {
             try {
-              const response = await axios.get(`/api/papers/${paperId}`);
+              const response = await http.get(`/api/papers/${paperId}`);
               return response.data.processed || !!response.data.processing_error;
             } catch (error: any) {
               if (error.response?.status === 404) return true;
@@ -75,7 +75,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
           }}
           onCancel={async () => {
             try {
-              const response = await axios.post(
+              const response = await http.post(
                 `/api/papers/${paperId}/cancel-processing`
               );
               if (response.data.success) {
@@ -126,7 +126,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                       variant="outline"
                       onClick={async () => {
                         try {
-                          const response = await axios.post(
+                          const response = await http.post(
                             `/api/papers/${paperId}/process-with-mineru`
                           );
                           if (response.data.success) {
@@ -169,7 +169,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                     onClick={async () => {
                       setProcessingError(null);
                       try {
-                        const response = await axios.post(
+                        const response = await http.post(
                           `/api/papers/${paperId}/process-with-marker`
                         );
                         if (response.data.success) {
@@ -206,7 +206,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                     onClick={async () => {
                       setProcessingError(null);
                       try {
-                        const response = await axios.post(
+                        const response = await http.post(
                           `/api/papers/${paperId}/process-with-mineru`
                         );
                         if (response.data.success) {
@@ -245,7 +245,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                       try {
                         setIsProcessing(true);
                         setProcessingStartTime(new Date());
-                        const response = await axios.post(
+                        const response = await http.post(
                           `/api/papers/${paperId}/process`
                         );
                         if (response.data.success) {
@@ -293,7 +293,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                   variant="outline"
                   onClick={async () => {
                     try {
-                      const response = await axios.post(
+                      const response = await http.post(
                         `/api/papers/${paperId}/process-with-marker`
                       );
                       if (response.data.success) {
@@ -315,7 +315,7 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
                   variant="outline"
                   onClick={async () => {
                     try {
-                      const response = await axios.post(
+                      const response = await http.post(
                         `/api/papers/${paperId}/process-with-mineru`
                       );
                       if (response.data.success) {

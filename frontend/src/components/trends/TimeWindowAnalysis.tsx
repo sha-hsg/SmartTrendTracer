@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import axios from 'axios';
+import http from '@/services/http'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
@@ -186,7 +186,7 @@ const TimeWindowAnalysis: React.FC<TimeWindowAnalysisProps> = ({ onConceptClick 
 
         // Fetch from multiple endpoints in parallel
         const [tweetsRes, articlesRes, papersRes] = await Promise.allSettled([
-          axios.get(`/api/tweets`, {
+          http.get(`/api/tweets`, {
             params: {
               concept: selectedConcept.concept_id,
               start_date: startDate,
@@ -194,13 +194,13 @@ const TimeWindowAnalysis: React.FC<TimeWindowAnalysisProps> = ({ onConceptClick 
               limit: 20
             }
           }),
-          axios.get(`/api/articles`, {
+          http.get(`/api/articles`, {
             params: {
               concept_id: selectedConcept.concept_id,
               page_size: 20
             }
           }),
-          axios.get(`/api/papers`, {
+          http.get(`/api/papers`, {
             params: {
               concept_id: selectedConcept.concept_id,
               limit: 20

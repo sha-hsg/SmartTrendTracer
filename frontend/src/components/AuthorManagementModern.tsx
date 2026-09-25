@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -100,7 +100,7 @@ const AuthorManagementModern: React.FC = () => {
         params.append('search', searchQuery.trim())
       }
 
-      const response = await axios.get<AuthorListResponse>(
+      const response = await http.get<AuthorListResponse>(
         `/api/authors/?${params.toString()}`
       )
 
@@ -138,7 +138,7 @@ const AuthorManagementModern: React.FC = () => {
     setIsLoadingDetails(true)
 
     try {
-      const response = await axios.get<AuthorDetails>(
+      const response = await http.get<AuthorDetails>(
         `/api/authors/${author.id}`
       )
       setAuthorDetails(response.data)

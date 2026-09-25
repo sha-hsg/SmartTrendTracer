@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import JSZip from 'jszip'
 import { useBookPagination } from '../BookViewer/hooks/useBookPagination'
 import BookMetadataPanel from './BookMetadataPanel'
@@ -72,7 +72,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
 
   const refreshBookDetails = useCallback(async (retryCount = 0) => {
     try {
-      const response = await axios.get(`/api/books/${book._id}`)
+      const response = await http.get(`/api/books/${book._id}`)
       const updated: Book = response.data
       setProcessingStatus(updated.processing_status || 'uploaded')
       setProcessorUsed(updated.processing_method || updated.processor)
@@ -154,7 +154,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
     try {
       setLoadingContent(true)
       setContentError(null)
-      const response = await axios.get(`/api/books/${book._id}/content`)
+      const response = await http.get(`/api/books/${book._id}/content`)
       setBookContent(response.data.content)
     } catch (error) {
       console.error('Error loading book content:', error)
@@ -174,8 +174,8 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
     if (!maybeRelativeUrl) return ''
 
     try {
-      const base = axios.defaults.baseURL
-        ? new URL(axios.defaults.baseURL, window.location.origin).toString()
+      const base = http.defaults.baseURL
+        ? new URL(http.defaults.baseURL, window.location.origin).toString()
         : window.location.origin
       return new URL(maybeRelativeUrl, base).toString()
     } catch (error) {
@@ -217,7 +217,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
               continue
             }
 
-            const response = await axios.get(imageUrl, {
+            const response = await http.get(imageUrl, {
               responseType: 'blob',
               withCredentials: true
             })
@@ -261,7 +261,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
       setIsProcessingAction(true)
       setProcessingError(null)
       setProcessingMessage(null)
-      await axios.post(`/api/books/${book._id}/process`, {
+      await http.post(`/api/books/${book._id}/process`, {
         preferred_processor: method
       })
       setProcessingStatus('queued')
@@ -281,7 +281,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
       setIsProcessingAction(true)
       setProcessingError(null)
       setProcessingMessage('Processing started...')
-      await axios.post(`/api/books/${book._id}/process-direct`, null, {
+      await http.post(`/api/books/${book._id}/process-direct`, null, {
         params: { preferred_processor: method }
       })
       setProcessingStatus('processing')
@@ -305,7 +305,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
     try {
       setConceptError(null)
       setAddingConcept(true)
-      await axios.post(`/api/books/${book._id}/concepts`, {
+      await http.post(`/api/books/${book._id}/concepts`, {
         concept_name: text
       })
       setNewConceptText('')
@@ -320,7 +320,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
 
   const handleRemoveConcept = async (conceptId: string) => {
     try {
-      await axios.delete(`/api/books/${book._id}/concepts/${conceptId}`)
+      await http.delete(`/api/books/${book._id}/concepts/${conceptId}`)
       await refreshBookDetails()
     } catch (error) {
       console.error('Failed to remove concept', error)

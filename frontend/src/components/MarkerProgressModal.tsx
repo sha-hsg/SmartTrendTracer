@@ -20,7 +20,7 @@ import {
   Clock,
   RotateCcw,
 } from 'lucide-react';
-import axios from 'axios';
+import http from '@/services/http'
 
 interface MarkerProgressModalProps {
   isOpen: boolean;
@@ -69,7 +69,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
     if (status === 'processing' && paperId) {
       const interval = setInterval(async () => {
         try {
-          const response = await axios.get(
+          const response = await http.get(
             `/api/papers/${paperId}`
           );
           
@@ -140,7 +140,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
 
     try {
       // Start the Marker processing
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/process-with-marker`
       );
 

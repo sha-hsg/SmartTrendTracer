@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   BookOpen, 
   ExternalLink, 
@@ -44,7 +44,7 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
     setError(null)
     
     try {
-      const response = await axios.get(
+      const response = await http.get(
         `/api/papers/${paperId}/references`
       )
       setReferences(response.data.references || [])
@@ -65,7 +65,7 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
     setError(null)
     
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/grobid/process`
       )
       

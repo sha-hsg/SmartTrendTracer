@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   FileText,
   Upload,
@@ -448,7 +448,7 @@ const FacetedPapersDashboard: React.FC<FacetedPapersDashboardProps> = ({ paperTy
                 onClose={() => dashboard.setSelectedPaperId(null)}
                 onMetadataUpdate={async () => {
                   try {
-                    const response = await axios.get(`/api/papers/${dashboard.selectedPaperId}`)
+                    const response = await http.get(`/api/papers/${dashboard.selectedPaperId}`)
                     const updatedPaper = response.data
                     dashboard.setPapers((prevPapers: any[]) =>
                       prevPapers.map(p =>

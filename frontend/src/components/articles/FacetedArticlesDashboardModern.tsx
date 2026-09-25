@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { cn } from '@/lib/utils'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -97,7 +97,7 @@ export default function FacetedArticlesDashboardModern() {
       selectedAuthors.forEach(author => params.append('authors', author))
       selectedConcepts.forEach(conceptId => params.append('concept_ids', conceptId))
 
-      const response = await axios.get<FacetedSearchResponse>(
+      const response = await http.get<FacetedSearchResponse>(
         `/api/articles/faceted-search?${params}`
       )
 
@@ -113,7 +113,7 @@ export default function FacetedArticlesDashboardModern() {
 
   const fetchHierarchy = async () => {
     try {
-      const response = await axios.get(`/api/articles/concepts/hierarchy`)
+      const response = await http.get(`/api/articles/concepts/hierarchy`)
       setHierarchyFacets(response.data)
     } catch (error) {
       console.error('Error fetching concept hierarchy:', error)
@@ -189,7 +189,7 @@ export default function FacetedArticlesDashboardModern() {
     }
 
     try {
-      await axios.delete(`/api/articles/${articleId}`)
+      await http.delete(`/api/articles/${articleId}`)
       fetchArticles()
     } catch (error) {
       console.error('Error deleting article:', error)
@@ -202,7 +202,7 @@ export default function FacetedArticlesDashboardModern() {
     setRegeneratingPreviews(prev => new Set(prev).add(numericId))
 
     try {
-      const response = await axios.post(`/api/article-preview/regenerate/${articleId}`)
+      const response = await http.post(`/api/article-preview/regenerate/${articleId}`)
 
       if (response.data.success) {
         setArticles(prev => prev.map(article =>
@@ -272,7 +272,7 @@ export default function FacetedArticlesDashboardModern() {
 
       try {
         // Get suggestions
-        const suggestRes = await axios.post(`/api/articles/${article.id}/tags/suggest`, {})
+        const suggestRes = await http.post(`/api/articles/${article.id}/tags/suggest`, {})
         const suggestions = suggestRes.data
 
         // Collect all suggestions (existing + new)
@@ -288,7 +288,7 @@ export default function FacetedArticlesDashboardModern() {
             slug: c.slug
           }))
 
-          await axios.post(`/api/articles/${article.id}/apply-concepts`, conceptsToApply)
+          await http.post(`/api/articles/${article.id}/apply-concepts`, conceptsToApply)
           completed++
         } else {
           completed++ // Count as completed even with no suggestions

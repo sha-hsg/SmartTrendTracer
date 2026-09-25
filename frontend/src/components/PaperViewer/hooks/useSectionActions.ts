@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import http from '@/services/http'
 import type { Paper, PaperSection } from "../types";
 
 export interface UseSectionActionsReturn {
@@ -62,7 +62,7 @@ export function useSectionActions(
     if (!paper || savingSection || !editedSectionTitle.trim()) return;
     setSavingSection(true);
     try {
-      const response = await axios.put(
+      const response = await http.put(
         `/api/papers/${paperId}/sections/${sectionId}`,
         {
           title: editedSectionTitle.trim(),
@@ -97,7 +97,7 @@ export function useSectionActions(
 
     setSavingSection(true);
     try {
-      const response = await axios.put(
+      const response = await http.put(
         `/api/papers/${paperId}/sections/${sectionId}`,
         {
           content: editedSectionContent,
@@ -158,7 +158,7 @@ export function useSectionActions(
 
     setExtractingSections(true);
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/extract-sections`
       );
 

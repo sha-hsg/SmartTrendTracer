@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import MetadataImportDialog from './MetadataImportDialog'
 import { 
   FileText, 
@@ -76,7 +76,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
     setMetadata(null)
     
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/grobid/process`
       )
       
@@ -101,7 +101,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
     setError(null)
     
     try {
-      const response = await axios.get(
+      const response = await http.get(
         `/api/papers/${paperId}/grobid/metadata`
       )
       
@@ -122,7 +122,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
     
     try {
       // Use PUT endpoint for metadata update
-      await axios.put(
+      await http.put(
         `/api/papers/${paperId}/metadata`,
         selectedFields
       )

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import http from '@/services/http'
 interface Author {
   id: string;
   name: string;
@@ -47,7 +47,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
   const fetchAuthors = async () => {
     try {
-      const response = await axios.get(`/api/articles/authors/all`);
+      const response = await http.get(`/api/articles/authors/all`);
       setAuthors(response.data);
     } catch (err) {
       console.error('Error fetching authors:', err);
@@ -57,7 +57,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
   const fetchArticlesWithoutAuthor = async () => {
     try {
-      const response = await axios.get(`/api/articles/without-author`);
+      const response = await http.get(`/api/articles/without-author`);
       setArticlesWithoutAuthor(response.data.articles || response.data);
     } catch (err) {
       console.error('Error fetching articles:', err);
@@ -71,7 +71,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     setError(null);
     
     try {
-      await axios.put(
+      await http.put(
         `/api/articles/authors/${editingAuthor.id}`,
         {
           name: editingAuthor.name,
@@ -100,7 +100,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     setError(null);
     
     try {
-      await axios.delete(
+      await http.delete(
         `/api/articles/authors/${authorId}?delete_articles=${deleteArticles}`
       );
       
@@ -128,7 +128,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     setError(null);
     
     try {
-      await axios.post(`/api/articles/authors`, newAuthor);
+      await http.post(`/api/articles/authors`, newAuthor);
       
       await fetchAuthors();
       setNewAuthor({ name: '', email: '', subdomain: '' });
@@ -151,7 +151,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
     setError(null);
     
     try {
-      await axios.post(
+      await http.post(
         `/api/articles/authors/${selectedAuthor.id}/assign-articles`,
         selectedArticles
       );

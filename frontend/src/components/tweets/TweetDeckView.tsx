@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -175,7 +175,7 @@ function TweetDeckColumn({
         full_content: 'true',
       })
       if (summaryModel) params.append('model', summaryModel)
-      const response = await axios.post(
+      const response = await http.post(
         `/api/analytics/trends/summarize?${params}`,
         null,
         { timeout: 120000 }
@@ -234,7 +234,7 @@ function TweetDeckColumn({
         })
         params.append('authors', username)
 
-        const response = await axios.get(
+        const response = await http.get(
           `/api/tweets/faceted-search?${params.toString()}`
         )
 
@@ -534,7 +534,7 @@ export default function TweetDeckView() {
 
   const fetchAnnotationFacets = useCallback(async () => {
     try {
-      const response = await axios.get('/api/tweets/faceted-search?page=1&page_size=1')
+      const response = await http.get('/api/tweets/faceted-search?page=1&page_size=1')
       setAnnotationFacets(response.data.facets?.annotation_status || [])
     } catch {
       // ignore
@@ -579,7 +579,7 @@ export default function TweetDeckView() {
       // 1. Fetch accounts (used both for the picker and for validation/logging).
       let accs: TwitterAccount[] = []
       try {
-        const res = await axios.get('/api/twitter-accounts/')
+        const res = await http.get('/api/twitter-accounts/')
         accs = res.data.accounts || res.data || []
       } catch (err) {
         console.error('Error fetching accounts:', err)
@@ -590,7 +590,7 @@ export default function TweetDeckView() {
       // 2. Try backend first (survives browser/origin/machine changes).
       let savedColumns: string[] | null = null
       try {
-        const res = await axios.get(`/api/user-settings/${SETTINGS_KEY}`)
+        const res = await http.get(`/api/user-settings/${SETTINGS_KEY}`)
         if (res.data?.exists && Array.isArray(res.data.value)) {
           savedColumns = res.data.value as string[]
         }
@@ -652,7 +652,7 @@ export default function TweetDeckView() {
     } catch {
       // localStorage full — ignore
     }
-    axios
+    http
       .put(`/api/user-settings/${SETTINGS_KEY}`, { value: columns })
       .catch(err => console.warn('Failed to persist TweetDeck columns to backend:', err))
   }, [columns])
@@ -676,7 +676,7 @@ export default function TweetDeckView() {
     // Refresh the tweet in the specific column
     if (selectedTweet) {
       try {
-        const response = await axios.get(`/api/tweets/${selectedTweet.id}`)
+        const response = await http.get(`/api/tweets/${selectedTweet.id}`)
         const updatedTweet = transformTweet(response.data)
         // Dispatch a custom event that the column can listen to
         window.dispatchEvent(

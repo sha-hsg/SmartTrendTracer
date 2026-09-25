@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import axios from 'axios';
+import http from '@/services/http'
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -170,7 +170,7 @@ const OntologyGraph: React.FC = () => {
     setError(null);
 
     try {
-      const response = await axios.get(`/api/ontology-graph/data`, {
+      const response = await http.get(`/api/ontology-graph/data`, {
         params: {
           include_orphans: showOrphans,
           min_usage: minUsage

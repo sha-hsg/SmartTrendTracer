@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -83,7 +83,7 @@ export default function TrendAnalysisModern() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.get(`/api/trends/analysis?days=${timeRange}`)
+      const response = await http.get(`/api/trends/analysis?days=${timeRange}`)
       setTrendData(response.data)
     } catch (error) {
       console.error('Error fetching trends:', error)

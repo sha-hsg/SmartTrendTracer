@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import http from '@/services/http'
 import type { Paper } from "../types";
 
 export interface UsePaperFetchReturn {
@@ -60,7 +60,7 @@ export function usePaperFetch(
     setError(null);
 
     try {
-      const paperResponse = await axios.get(
+      const paperResponse = await http.get(
         `/api/papers/${paperId}`,
       );
 
@@ -71,7 +71,7 @@ export function usePaperFetch(
       let pdfPath = paperResponse.data?.pdf_path;
 
       try {
-        const contentResponse = await axios.get(
+        const contentResponse = await http.get(
           `/api/papers/${paperId}/content`,
         );
         Object.assign(combinedData, contentResponse.data);
@@ -85,7 +85,7 @@ export function usePaperFetch(
       }
 
       try {
-        const snippetsResponse = await axios.get(
+        const snippetsResponse = await http.get(
           `/api/papers/${paperId}/snippets`,
         );
         combinedData.snippets = snippetsResponse.data;
@@ -98,7 +98,7 @@ export function usePaperFetch(
       }
 
       try {
-        const sectionsResponse = await axios.get(
+        const sectionsResponse = await http.get(
           `/api/papers/${paperId}/sections`,
         );
         combinedData.sections = sectionsResponse.data || [];
@@ -142,7 +142,7 @@ export function usePaperFetch(
   const pollProcessingStatus = async () => {
     const pollInterval = setInterval(async () => {
       try {
-        const response = await axios.get(
+        const response = await http.get(
           `/api/papers/${paperId}`,
         );
         if (response.data.processed || response.data.processing_error) {
@@ -150,7 +150,7 @@ export function usePaperFetch(
           setPaper(response.data);
           clearInterval(pollInterval);
 
-          const contentResponse = await axios.get(
+          const contentResponse = await http.get(
             `/api/papers/${paperId}/content`,
           );
           setPaper((prev) =>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { X, BookOpen, AlertCircle, CheckCircle, Loader2, FileText, ExternalLink, Tag, Users, Calendar, Globe } from 'lucide-react'
 
 interface OpenReviewImportModalProps {
@@ -59,7 +59,7 @@ const OpenReviewImportModal: React.FC<OpenReviewImportModalProps> = ({
 
     try {
       // Validate URL format
-      const response = await axios.post('/api/openreview/validate-url', { url })
+      const response = await http.post('/api/openreview/validate-url', { url })
       
       if (response.data.valid) {
         setValidatedUrl(response.data.normalized_url)
@@ -67,7 +67,7 @@ const OpenReviewImportModal: React.FC<OpenReviewImportModalProps> = ({
         // Fetch metadata
         setFetchingMetadata(true)
         try {
-          const metadataResponse = await axios.get(
+          const metadataResponse = await http.get(
             `/api/openreview/metadata/${response.data.forum_id}`
           )
           setMetadata(metadataResponse.data)
@@ -99,7 +99,7 @@ const OpenReviewImportModal: React.FC<OpenReviewImportModalProps> = ({
     try {
       const tagList = tags.split(',').map(t => t.trim()).filter(t => t)
       
-      const response = await axios.post('/api/openreview/import', {
+      const response = await http.post('/api/openreview/import', {
         url: validatedUrl || url,
         add_tags: tagList.length > 0 ? tagList : undefined,
         process_pdf: true

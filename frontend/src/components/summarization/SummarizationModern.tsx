@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { toast } from 'sonner'
 import { Card, CardContent } from "@/components/ui/card"
 import { useModelSelector } from '@/hooks/useModelSelector'
@@ -142,7 +142,7 @@ export default function SummarizationModern() {
   const fetchTwitterAuthors = async () => {
     try {
       // Fetch authors from tweets faceted-search endpoint
-      const response = await axios.get(`/api/tweets/faceted-search?page=1&page_size=1`)
+      const response = await http.get(`/api/tweets/faceted-search?page=1&page_size=1`)
       const authors = response.data.facets?.authors || []
       // Sort by count (most tweets first)
       const sortedAuthors = authors
@@ -158,7 +158,7 @@ export default function SummarizationModern() {
   const fetchArticleAuthors = async () => {
     try {
       // Fetch authors from articles faceted-search endpoint
-      const response = await axios.get(`/api/articles/faceted-search?page=1&page_size=1`)
+      const response = await http.get(`/api/articles/faceted-search?page=1&page_size=1`)
       const authors = response.data.facets?.authors || []
       // Sort by count (most articles first)
       const sortedAuthors = authors
@@ -173,7 +173,7 @@ export default function SummarizationModern() {
 
   const fetchAvailableTags = async () => {
     try {
-      const response = await axios.get(`/api/statistics/concepts/detailed`)
+      const response = await http.get(`/api/statistics/concepts/detailed`)
       // Extract concept names from the response
       const concepts = response.data.concepts || []
       // Sort by usage and take top 50 most used concepts for the dropdown
@@ -226,7 +226,7 @@ export default function SummarizationModern() {
       if (selectedModel) params.append('model', selectedModel)
 
       abortRef.current = new AbortController()
-      const response = await axios.post(
+      const response = await http.post(
         `/api/analytics/trends/summarize?${params}`,
         undefined,
         { signal: abortRef.current.signal }
@@ -240,7 +240,7 @@ export default function SummarizationModern() {
 
       setSummaryData(data)
     } catch (error: any) {
-      if (axios.isCancel(error) || error?.code === 'ERR_CANCELED') {
+      if (http.isCancel(error) || error?.code === 'ERR_CANCELED') {
         // User cancelled — quietly return to the ready state
         return
       }

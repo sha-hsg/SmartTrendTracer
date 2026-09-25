@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -45,15 +45,15 @@ export default function TrendAnalysisOverview() {
       const days = parseInt(selectedPeriod)
 
       // Load overview
-      const overviewRes = await axios.get(`/api/trends/analysis/overview?days=${days}`)
+      const overviewRes = await http.get(`/api/trends/analysis/overview?days=${days}`)
       setOverview(overviewRes.data)
 
       // Load detailed data for each view
       const [topRes, velocityRes, risingRes, decliningRes] = await Promise.all([
-        axios.get(`/api/trends/analysis/top-concepts?days=${days}&limit=20`),
-        axios.get(`/api/trends/analysis/velocity-leaders?days=${days}&limit=20`),
-        axios.get(`/api/trends/analysis/rising?days=${days}&limit=20`),
-        axios.get(`/api/trends/analysis/declining?days=${days}&limit=20`)
+        http.get(`/api/trends/analysis/top-concepts?days=${days}&limit=20`),
+        http.get(`/api/trends/analysis/velocity-leaders?days=${days}&limit=20`),
+        http.get(`/api/trends/analysis/rising?days=${days}&limit=20`),
+        http.get(`/api/trends/analysis/declining?days=${days}&limit=20`)
       ])
 
       setTopConcepts(topRes.data.concepts)
@@ -83,13 +83,13 @@ export default function TrendAnalysisOverview() {
         params.append('days', days.toString())
         params.append('granularity', timelineGranularity)
 
-        const timelineRes = await axios.get(
+        const timelineRes = await http.get(
           `/api/trends/analysis/timeline?${params.toString()}`
         )
         setTimeline(timelineRes.data.timeline || [])
       } else {
         // Load top concepts overall (limited by backend)
-        const timelineRes = await axios.get(`/api/trends/analysis/timeline`, {
+        const timelineRes = await http.get(`/api/trends/analysis/timeline`, {
           params: {
             days: days,
             granularity: timelineGranularity,

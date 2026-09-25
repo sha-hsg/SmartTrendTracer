@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   Dialog,
   DialogContent,
@@ -114,7 +114,7 @@ export default function TagSuggestionModalModern({
     setAbortController(controller)
 
     try {
-      const response = await axios.post<ConceptSuggestionResponse>(
+      const response = await http.post<ConceptSuggestionResponse>(
         suggestEndpoint,
         {
           model: model || selectedModel
@@ -130,7 +130,7 @@ export default function TagSuggestionModalModern({
       setAbortController(null)
     } catch (error: any) {
       console.error('Error fetching suggestions:', error)
-      if (axios.isCancel(error)) {
+      if (http.isCancel(error)) {
         setError('Concept generation was cancelled.')
       } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         setError('Concept generation timed out after 2 minutes. The model may be overloaded. Please try again.')
@@ -181,7 +181,7 @@ export default function TagSuggestionModalModern({
     }))
     
     try {
-      const response = await axios.post(
+      const response = await http.post(
         applyEndpoint,
         conceptsToApply
       )

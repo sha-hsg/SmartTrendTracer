@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { X, Upload, AlertCircle, CheckCircle, Loader2, BookOpen, FileText, Users, Calendar, Link } from 'lucide-react'
 
 interface ACLAnthologyImportModalProps {
@@ -49,7 +49,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
     setMetadata(null)
 
     try {
-      const response = await axios.post('/api/acl-anthology/parse', { url })
+      const response = await http.post('/api/acl-anthology/parse', { url })
       if (response.data.success) {
         setMetadata(response.data.metadata)
       } else {
@@ -71,7 +71,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
     try {
       const tagList = tags.split(',').map(t => t.trim()).filter(t => t)
       
-      const response = await axios.post('/api/acl-anthology/import', {
+      const response = await http.post('/api/acl-anthology/import', {
         url,
         process_pdf: false,
         add_tags: tagList.length > 0 ? tagList : undefined

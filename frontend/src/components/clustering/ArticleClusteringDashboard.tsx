@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -81,7 +81,7 @@ const ArticleClusteringDashboard: React.FC = () => {
 
   const loadSummary = async () => {
     try {
-      const response = await axios.get(`/api/article-clustering/summary`)
+      const response = await http.get(`/api/article-clustering/summary`)
       if (response.data.success) {
         setSummary(response.data.summary)
       }
@@ -114,13 +114,13 @@ const ArticleClusteringDashboard: React.FC = () => {
           break
       }
 
-      const response = await axios.get(`${endpoint}`, { params })
+      const response = await http.get(`${endpoint}`, { params })
 
       if (response.data.success) {
         setClusteringResult(response.data.clustering_results)
 
         // Load visualization data
-        const vizResponse = await axios.get(`/api/article-clustering/visualization-data`)
+        const vizResponse = await http.get(`/api/article-clustering/visualization-data`)
         if (vizResponse.data.success) {
           setVisualizationData(vizResponse.data.visualization)
         }
@@ -135,7 +135,7 @@ const ArticleClusteringDashboard: React.FC = () => {
   const loadCooccurrence = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`/api/article-clustering/tag-cooccurrence`)
+      const response = await http.get(`/api/article-clustering/tag-cooccurrence`)
       if (response.data.success) {
         setCooccurrence(response.data.cooccurrence_analysis)
       }
@@ -148,7 +148,7 @@ const ArticleClusteringDashboard: React.FC = () => {
 
   const findSimilarArticles = async (articleId: number) => {
     try {
-      const response = await axios.get(`/api/article-clustering/similar/${articleId}`)
+      const response = await http.get(`/api/article-clustering/similar/${articleId}`)
       if (response.data.success) {
         setSimilarArticles(response.data.similar_articles)
       }

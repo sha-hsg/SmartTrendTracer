@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   Dialog,
   DialogContent,
@@ -83,7 +83,7 @@ export default function PaperTagSuggestionModal({
 
   const loadExistingTags = async () => {
     try {
-      const response = await axios.get(`/api/papers/${paper.id}`)
+      const response = await http.get(`/api/papers/${paper.id}`)
       setExistingTags(response.data.tags || [])
     } catch (error) {
       console.error('Error loading existing tags:', error)
@@ -100,7 +100,7 @@ export default function PaperTagSuggestionModal({
     setAbortController(controller)
     
     try {
-      const response = await axios.post<TagSuggestionResponse>(
+      const response = await http.post<TagSuggestionResponse>(
         `/api/papers/${paper.id}/tags/suggest`,
         {
           model: model || selectedModel
@@ -138,7 +138,7 @@ export default function PaperTagSuggestionModal({
       setAbortController(null)
     } catch (error: any) {
       console.error('Error fetching suggestions:', error)
-      if (axios.isCancel(error)) {
+      if (http.isCancel(error)) {
         setError('Tag generation was cancelled.')
       } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
         setError('Tag generation timed out after 2 minutes. The model may be overloaded. Please try again.')
@@ -192,7 +192,7 @@ export default function PaperTagSuggestionModal({
     }))
 
     try {
-      await axios.post(
+      await http.post(
         `/api/papers/${paper.id}/apply-concepts`,
         conceptsToApply,
         { timeout: 60000 }

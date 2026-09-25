@@ -1,7 +1,7 @@
 import type { SystemStats } from './types'
 export type { SystemStats } from './types'
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -26,12 +26,12 @@ export default function StatisticsDashboard() {
       setError(null)
 
       const [summaryRes, contentRes, authorsRes, trendsRes, crossRes, llmRes] = await Promise.all([
-        axios.get('/api/system/statistics/summary'),
-        axios.get('/api/system/statistics/content'),
-        axios.get('/api/system/statistics/authors'),
-        axios.get('/api/system/statistics/trends'),
-        axios.get('/api/system/statistics/cross-source'),
-        axios.get('/api/system/statistics/llm')
+        http.get('/api/system/statistics/summary'),
+        http.get('/api/system/statistics/content'),
+        http.get('/api/system/statistics/authors'),
+        http.get('/api/system/statistics/trends'),
+        http.get('/api/system/statistics/cross-source'),
+        http.get('/api/system/statistics/llm')
       ])
 
       const summary = summaryRes.data

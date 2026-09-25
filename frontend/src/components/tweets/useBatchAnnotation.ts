@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 
 export interface BatchResult {
   status: 'idle' | 'running' | 'completed' | 'error'
@@ -73,7 +73,7 @@ export function useBatchAnnotation(onRefresh: () => void): UseBatchAnnotationRet
 
     annotateAllPollingRef.current = setInterval(async () => {
       try {
-        const response = await axios.get(`/api/tweets/batch-annotate/${taskId}/status`)
+        const response = await http.get(`/api/tweets/batch-annotate/${taskId}/status`)
         const status = response.data
 
         setAnnotateAllProgress({
@@ -128,7 +128,7 @@ export function useBatchAnnotation(onRefresh: () => void): UseBatchAnnotationRet
 
     batchPollingRef.current = setInterval(async () => {
       try {
-        const response = await axios.get(`/api/tweets/batch-annotate/${taskId}/status`)
+        const response = await http.get(`/api/tweets/batch-annotate/${taskId}/status`)
         const status = response.data
 
         setBatchProgress(status.progress)
@@ -229,7 +229,7 @@ export function useBatchAnnotation(onRefresh: () => void): UseBatchAnnotationRet
     setBatchResult({ status: 'running' })
 
     try {
-      const response = await axios.post(`/api/tweets/batch-annotate`, {
+      const response = await http.post(`/api/tweets/batch-annotate`, {
         tweet_ids: tweetIds,
         model: batchModel
       })
@@ -259,7 +259,7 @@ export function useBatchAnnotation(onRefresh: () => void): UseBatchAnnotationRet
     setAnnotateAllResult({ status: 'running' })
 
     try {
-      const response = await axios.post(`/api/tweets/batch-annotate-all`, {
+      const response = await http.post(`/api/tweets/batch-annotate-all`, {
         model: batchModel
       })
 
@@ -299,7 +299,7 @@ export function useBatchAnnotation(onRefresh: () => void): UseBatchAnnotationRet
   const handleCancelAnnotateAll = useCallback(async () => {
     if (!annotateAllTaskId) return
     try {
-      await axios.post(`/api/tweets/batch-annotate/${annotateAllTaskId}/cancel`)
+      await http.post(`/api/tweets/batch-annotate/${annotateAllTaskId}/cancel`)
     } catch (error) {
       console.error('Error cancelling annotation:', error)
     }

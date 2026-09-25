@@ -87,8 +87,8 @@ export const AnalysisGenerationControls: React.FC<AnalysisGenerationControlsProp
             onClick={async () => {
               if (!confirm(`Delete all ${Object.keys(generatedAnalyses).length} analyses? This cannot be undone.`)) return
               try {
-                const axios = (await import('axios')).default
-                await axios.delete(`/api/papers/${paperId}/analyses`)
+                const { default: http } = await import('@/services/http')
+                await http.delete(`/api/papers/${paperId}/analyses`)
                 onSetGeneratedAnalyses({})
                 onSetExpandedAnalyses(new Set())
               } catch (err) {

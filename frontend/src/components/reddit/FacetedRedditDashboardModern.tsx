@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -68,13 +68,13 @@ const FacetedRedditDashboardModern: React.FC = () => {
       if (selectedConcept) params.concept_id = selectedConcept.id
 
       // Get posts with faceted search
-      const postsResponse = await axios.get('/api/reddit/faceted-search', { params })
+      const postsResponse = await http.get('/api/reddit/faceted-search', { params })
       setPosts(postsResponse.data.posts)
       setPagination(postsResponse.data.pagination)
 
       // Load facets if first load
       if (page === 1) {
-        const facetsResponse = await axios.get('/api/reddit/facets')
+        const facetsResponse = await http.get('/api/reddit/facets')
         setFacets(facetsResponse.data)
       }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -51,7 +51,7 @@ export default function UserTrendAnalysisModern() {
   const fetchUserTrends = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`/api/user-trends/per-user?hours=${timeframe}`)
+      const response = await http.get(`/api/user-trends/per-user?hours=${timeframe}`)
       setUserTrends(response.data)
       // Auto-select first user if none selected
       if (!selectedUser && response.data.users.length > 0) {
@@ -67,7 +67,7 @@ export default function UserTrendAnalysisModern() {
   const fetchUserDetails = async (username: string) => {
     setLoadingDetails(true)
     try {
-      const response = await axios.get(`/api/user-trends/user/${username}?days=${Math.floor(timeframe / 24)}`)
+      const response = await http.get(`/api/user-trends/user/${username}?days=${Math.floor(timeframe / 24)}`)
       setUserDetails(response.data)
     } catch (error) {
       console.error('Error fetching user details:', error)

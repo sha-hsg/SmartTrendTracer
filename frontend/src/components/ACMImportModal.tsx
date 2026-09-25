@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   Dialog, 
   DialogContent, 
@@ -39,7 +39,7 @@ export const ACMImportModal: React.FC<ACMImportModalProps> = ({
     }
 
     try {
-      const response = await axios.get('/api/acm/validate-url', {
+      const response = await http.get('/api/acm/validate-url', {
         params: { url: inputUrl }
       })
       
@@ -73,7 +73,7 @@ export const ACMImportModal: React.FC<ACMImportModalProps> = ({
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0)
 
-      const response = await axios.post('/api/acm/import', {
+      const response = await http.post('/api/acm/import', {
         url,
         add_tags: tagList.length > 0 ? tagList : undefined,
         process_pdf: false

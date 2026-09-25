@@ -9,7 +9,7 @@
  * Plus handlers: handleBatchProcess, waitForProcessingComplete
  */
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import http from '@/services/http'
 import { toast } from "sonner";
 export interface BatchProgress {
   isProcessing: boolean;
@@ -125,7 +125,7 @@ export function useBatchProcessing({
           }
 
           try {
-            const statusResponse = await axios.get(
+            const statusResponse = await http.get(
               `/api/papers/${paperId}/processing-status`
             );
             const currentStatus = statusResponse.data?.status;
@@ -166,7 +166,7 @@ export function useBatchProcessing({
             }
           }
 
-          await axios.post(
+          await http.post(
             `/api/papers/${paperId}/process-with-marker`
           );
           await waitForProcessingComplete(paperId);
@@ -213,7 +213,7 @@ export function useBatchProcessing({
     const maxAttempts = 360; // 60 minutes max (10s intervals)
     for (let i = 0; i < maxAttempts; i++) {
       try {
-        const status = await axios.get(
+        const status = await http.get(
           `/api/papers/${paperId}/processing-status`
         );
 
@@ -251,7 +251,7 @@ export function useBatchProcessing({
       const fetchPageSize = 100;
 
       while (true) {
-        const response = await axios.get("/api/papers/", {
+        const response = await http.get("/api/papers/", {
           params: {
             no_processor: true,
             page: page,
@@ -311,7 +311,7 @@ export function useBatchProcessing({
           }
 
           try {
-            const statusResponse = await axios.get(
+            const statusResponse = await http.get(
               `/api/papers/${paperId}/processing-status`
             );
             const currentStatus = statusResponse.data?.status;
@@ -339,7 +339,7 @@ export function useBatchProcessing({
             }
           }
 
-          await axios.post(
+          await http.post(
             `/api/papers/${paperId}/process-with-marker`
           );
           await waitForProcessingComplete(paperId);

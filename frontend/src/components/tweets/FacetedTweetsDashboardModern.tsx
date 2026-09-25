@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -110,7 +110,7 @@ export default function FacetedTweetsDashboardModern() {
         params.append('annotation_status', selectedAnnotationStatus[0])
       }
 
-      const response = await axios.get<FacetedSearchResponse>(
+      const response = await http.get<FacetedSearchResponse>(
         `/api/tweets/faceted-search?${params.toString()}`
       )
 
@@ -161,7 +161,7 @@ export default function FacetedTweetsDashboardModern() {
 
   const fetchHierarchyFacets = async () => {
     try {
-      const response = await axios.get<any>(
+      const response = await http.get<any>(
         '/api/tweets/hierarchy-facets'
       )
       setHierarchyFacets(response.data.hierarchy || [])
@@ -237,7 +237,7 @@ export default function FacetedTweetsDashboardModern() {
   const handleTagsUpdated = async () => {
     if (selectedTweet) {
       try {
-        const response = await axios.get(`/api/tweets/${selectedTweet.id}`)
+        const response = await http.get(`/api/tweets/${selectedTweet.id}`)
         const updatedTweet = response.data
         setTweets(prev => prev.map(tweet =>
           tweet.id === selectedTweet.id

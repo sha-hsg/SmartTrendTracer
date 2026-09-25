@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import http from '@/services/http'
 import {
   AtAGlanceData,
   HeatmapData,
@@ -50,7 +50,7 @@ function useFetch<T>(
       });
 
       const url = `${API_BASE}${endpoint}${queryParams.toString() ? `?${queryParams}` : ''}`;
-      const response = await axios.get<T>(url);
+      const response = await http.get<T>(url);
       setData(response.data);
     } catch (err: any) {
       // Properly extract error message from Pydantic validation errors

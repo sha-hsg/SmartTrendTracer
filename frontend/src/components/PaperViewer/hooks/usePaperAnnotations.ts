@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import axios from "axios";
+import http from '@/services/http'
 import type { Paper } from "../types";
 
 export interface UsePaperAnnotationsReturn {
@@ -78,7 +78,7 @@ export function usePaperAnnotations(
     if (!paper) return;
 
     try {
-      await axios.post(`/api/papers/${paper.id}/tags`, {
+      await http.post(`/api/papers/${paper.id}/tags`, {
         tag: tagText,
         tag_type: "manual",
       });
@@ -102,7 +102,7 @@ export function usePaperAnnotations(
 
     setAddingTag(true);
     try {
-      await axios.post(`/api/papers/${paperId}/tags`, {
+      await http.post(`/api/papers/${paperId}/tags`, {
         tag: newTag.trim(),
       });
 
@@ -122,7 +122,7 @@ export function usePaperAnnotations(
     if (!paper) return;
 
     try {
-      await axios.delete(
+      await http.delete(
         `/api/papers/${paperId}/tags/${encodeURIComponent(tag)}`,
       );
 
@@ -189,7 +189,7 @@ export function usePaperAnnotations(
 
     setCreatingMarkdownTag(true);
     try {
-      await axios.post(`/api/papers/${paper.id}/tags`, {
+      await http.post(`/api/papers/${paper.id}/tags`, {
         tag: markdownTagText.trim(),
         tag_type: "manual",
       });

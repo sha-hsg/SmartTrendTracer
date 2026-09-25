@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { AlertTriangle, X, Wand2, Loader2 } from 'lucide-react'
-import axios from 'axios'
+import http from '@/services/http'
 
 interface DeprecatedEntry {
   task_type: string
@@ -23,7 +23,7 @@ export default function DeprecatedPreferencesBanner() {
 
   const fetchHealth = useCallback(async () => {
     try {
-      const res = await axios.get<HealthResponse>('/api/llm/preferences/health')
+      const res = await http.get<HealthResponse>('/api/llm/preferences/health')
       setHealth(res.data)
     } catch {
       // Silent — ApiKeyStatusBanner already warns when the backend is down.
@@ -37,7 +37,7 @@ export default function DeprecatedPreferencesBanner() {
   const migrate = async () => {
     setMigrating(true)
     try {
-      await axios.post('/api/llm/preferences/migrate')
+      await http.post('/api/llm/preferences/migrate')
       await fetchHealth()
     } finally {
       setMigrating(false)

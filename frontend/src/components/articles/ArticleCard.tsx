@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -234,7 +234,7 @@ export default function ArticleCard({
                         if (!selectedTextForConcept) return
 
                         try {
-                          const response = await axios.post(
+                          const response = await http.post(
                             `/api/articles/${article.id}/concepts?text=${encodeURIComponent(selectedTextForConcept.text)}`
                           )
                           if (response.data.success) {

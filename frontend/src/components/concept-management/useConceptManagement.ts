@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import type { ConceptTreeNode } from './ConceptTreePanel'
 import type { Concept, UnorganizedConcept, OrganizationSuggestion, OntologyStats } from './types'
 
@@ -47,7 +47,7 @@ export default function useConceptManagement() {
   const fetchTreeData = async () => {
     setLoading(true)
     try {
-      const response = await axios.get('/api/ontology/tree')
+      const response = await http.get('/api/ontology/tree')
       setTreeData(response.data)
     } catch (err: any) {
       setError('Failed to load concept hierarchy')
@@ -59,7 +59,7 @@ export default function useConceptManagement() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('/api/ontology/stats')
+      const response = await http.get('/api/ontology/stats')
       setStats(response.data)
     } catch (err) {
       console.error('Failed to load stats:', err)
@@ -69,7 +69,7 @@ export default function useConceptManagement() {
   const fetchUnorganizedConcepts = async () => {
     setLoading(true)
     try {
-      const response = await axios.get('/api/concepts/organization/unorganized?limit=50')
+      const response = await http.get('/api/concepts/organization/unorganized?limit=50')
       setUnorganizedConcepts(response.data.concepts || [])
     } catch (err) {
       console.error('Failed to load unorganized concepts:', err)
@@ -80,7 +80,7 @@ export default function useConceptManagement() {
 
   const fetchOrganizationStats = async () => {
     try {
-      const response = await axios.get('/api/concepts/organization/stats')
+      const response = await http.get('/api/concepts/organization/stats')
       setOrganizationStats(response.data.stats)
     } catch (err) {
       console.error('Failed to load organization stats:', err)
@@ -89,7 +89,7 @@ export default function useConceptManagement() {
 
   const fetchConceptDetails = async (conceptId: string) => {
     try {
-      const response = await axios.get(`/api/ontology/concept/${conceptId}`)
+      const response = await http.get(`/api/ontology/concept/${conceptId}`)
       setSelectedConcept(response.data)
     } catch (err) {
       console.error('Failed to load concept details:', err)
@@ -99,7 +99,7 @@ export default function useConceptManagement() {
   const fetchOrganizationSuggestion = async (conceptId: string) => {
     setLoading(true)
     try {
-      const response = await axios.post('/api/concepts/organization/organize', {
+      const response = await http.post('/api/concepts/organization/organize', {
         concept_id: conceptId,
         auto_apply: false
       })
@@ -142,7 +142,7 @@ export default function useConceptManagement() {
   // CRUD operations
   const handleCreateConcept = async () => {
     try {
-      await axios.post('/api/ontology/concepts', formData)
+      await http.post('/api/ontology/concepts', formData)
       setSuccess('Concept created successfully')
       setCreateDialogOpen(false)
       fetchTreeData()
@@ -155,7 +155,7 @@ export default function useConceptManagement() {
   const handleUpdateConcept = async () => {
     if (!selectedConcept) return
     try {
-      await axios.put(`/api/ontology/concepts/${selectedConcept.id}`, formData)
+      await http.put(`/api/ontology/concepts/${selectedConcept.id}`, formData)
       setSuccess('Concept updated successfully')
       setEditDialogOpen(false)
       fetchTreeData()
@@ -168,7 +168,7 @@ export default function useConceptManagement() {
   const handleDeleteConcept = async () => {
     if (!selectedConcept) return
     try {
-      await axios.delete(`/api/ontology/concepts/${selectedConcept.id}`)
+      await http.delete(`/api/ontology/concepts/${selectedConcept.id}`)
       setSuccess('Concept deleted successfully')
       setDeleteDialogOpen(false)
       setSelectedConcept(null)
@@ -183,7 +183,7 @@ export default function useConceptManagement() {
     if (!selectedUnorganized || !organizationSuggestion) return
 
     try {
-      await axios.post(
+      await http.post(
         `/api/concepts/organization/apply-organization/${selectedUnorganized._id}`,
         organizationSuggestion
       )
@@ -200,7 +200,7 @@ export default function useConceptManagement() {
 
   const handleExportOntology = async () => {
     try {
-      const response = await axios.get('/api/ontology/export', {
+      const response = await http.get('/api/ontology/export', {
         responseType: 'blob'
       })
       const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -219,7 +219,7 @@ export default function useConceptManagement() {
   const handleBatchReorganize = async (limit: number, autoApply: boolean) => {
     setLoading(true)
     try {
-      const response = await axios.post('/api/concepts/organization/organize-batch', {
+      const response = await http.post('/api/concepts/organization/organize-batch', {
         limit,
         auto_apply: autoApply
       })

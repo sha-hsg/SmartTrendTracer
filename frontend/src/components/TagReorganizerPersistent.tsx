@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import axios from 'axios'
+import http from '@/services/http'
 import { API_BASE_URL } from '@/config/api'
 import {
   Play,
@@ -87,7 +87,7 @@ export default function TagReorganizerPersistent() {
 
   const fetchTagCount = async () => {
     try {
-      const response = await axios.get(`/api/tags/reorganize/debug/current-concepts`)
+      const response = await http.get(`/api/tags/reorganize/debug/current-concepts`)
       const total = response.data.total_concepts || 0
       setTotalTags(total)
       setEstimatedMinutes(calculateEstimatedTime(total, mode))
@@ -98,7 +98,7 @@ export default function TagReorganizerPersistent() {
 
   const loadTaskHistory = async () => {
     try {
-      const response = await axios.get(`/api/tags/reorganize/history`)
+      const response = await http.get(`/api/tags/reorganize/history`)
       setTaskHistory(response.data.tasks)
     } catch (err) {
       console.error('Failed to load task history:', err)
@@ -107,7 +107,7 @@ export default function TagReorganizerPersistent() {
 
   const recoverTask = async (recoveryTaskId: string) => {
     try {
-      const response = await axios.get(`/api/tags/reorganize/recover/${recoveryTaskId}`)
+      const response = await http.get(`/api/tags/reorganize/recover/${recoveryTaskId}`)
 
       if (response.data.status === 'active') {
         const task = response.data.task
@@ -177,7 +177,7 @@ export default function TagReorganizerPersistent() {
     setEstimatedMinutes(calculateEstimatedTime(totalTags, mode))
 
     try {
-      const response = await axios.post(`/api/tags/reorganize/start`, null, {
+      const response = await http.post(`/api/tags/reorganize/start`, null, {
         params: {
           mode,
           model: mode === 'gpt5' ? selectedModel : undefined
@@ -233,7 +233,7 @@ export default function TagReorganizerPersistent() {
     if (!taskId) return
 
     try {
-      await axios.post(`/api/tags/reorganize/cancel/${taskId}`)
+      await http.post(`/api/tags/reorganize/cancel/${taskId}`)
 
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
@@ -253,7 +253,7 @@ export default function TagReorganizerPersistent() {
 
   const fetchResult = async (id: string) => {
     try {
-      const response = await axios.get(`/api/tags/reorganize/result/${id}`)
+      const response = await http.get(`/api/tags/reorganize/result/${id}`)
       setResult(response.data.result)
       setShowResult(true)
     } catch (err) {
@@ -271,7 +271,7 @@ export default function TagReorganizerPersistent() {
         : `/api/tags/reorganize/apply/${targetTaskId}`
 
       const payload = applyTaskId ? {} : (result || selectedHistoryTask?.result)
-      const response = await axios.post(`${endpoint}`, payload)
+      const response = await http.post(`${endpoint}`, payload)
 
       if (response.data.success) {
         const stats = response.data.stats || {}

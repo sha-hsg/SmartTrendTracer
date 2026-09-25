@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -131,7 +131,7 @@ export default function SemanticConceptSearch({
         params.append('content_types', type)
       })
 
-      const response = await axios.get(
+      const response = await http.get(
         `/api/concepts/suggestions/search-concepts?${params}`
       )
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   Dialog,
   DialogContent,
@@ -65,7 +65,7 @@ export default function MetadataImportDialog({
   const loadCurrentPaper = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`/api/papers/${paperId}`)
+      const response = await http.get(`/api/papers/${paperId}`)
       setCurrentPaper(response.data)
       compareMetadata(response.data)
     } catch (error) {

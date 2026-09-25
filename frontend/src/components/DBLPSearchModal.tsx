@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { 
   Dialog, 
   DialogContent, 
@@ -64,7 +64,7 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
     setBibtex('')
 
     try {
-      const response = await axios.get(`/api/papers/dblp/search`, {
+      const response = await http.get(`/api/papers/dblp/search`, {
         params: { title: searchQuery, max_results: 20 }
       })
 
@@ -90,7 +90,7 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
     try {
       // Fetch complete metadata using SPARQL
       if (result.dblp_key) {
-        const response = await axios.get(`/api/dblp/metadata/${result.dblp_key}`)
+        const response = await http.get(`/api/dblp/metadata/${result.dblp_key}`)
         
         if (response.data.bibtex) {
           setBibtex(response.data.bibtex)
@@ -103,7 +103,7 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
         }
       } else if (result.dblp_url) {
         // Fallback to old method if no key but URL exists
-        const response = await axios.get(`/api/dblp/bibtex`, {
+        const response = await http.get(`/api/dblp/bibtex`, {
           params: { dblp_url: result.dblp_url }
         })
         
@@ -162,7 +162,7 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
     setMetadataAttached(false)
 
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/dblp/attach-metadata/${paperId}`,
         null,
         { params: { 

@@ -4,7 +4,7 @@
  * edit/view toggle, ZIP download, and ReactMarkdown rendering with custom components.
  */
 import React from "react";
-import axios from "axios";
+import http from '@/services/http'
 import { API_BASE_URL } from '@/config/api';
 import JSZip from "jszip";
 import {
@@ -350,7 +350,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                           variant="outline"
                           onClick={async () => {
                             try {
-                              await axios.post(
+                              await http.post(
                                 `${API_BASE_URL}/api/papers/${paperId}/process-with-marker`,
                               );
                               setIsProcessing(true);

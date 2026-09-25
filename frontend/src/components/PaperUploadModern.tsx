@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -78,7 +78,7 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
       formData.append('file', file)
       
       try {
-        const response = await axios.post(`/api/papers/upload?paper_type=${paperType}`, formData, {
+        const response = await http.post(`/api/papers/upload?paper_type=${paperType}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           },

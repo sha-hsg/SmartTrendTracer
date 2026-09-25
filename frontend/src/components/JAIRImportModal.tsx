@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { X, AlertCircle, CheckCircle, Loader2, BookOpen, FileText, Users, Calendar, Link, Tag } from 'lucide-react'
 
 interface JAIRImportModalProps {
@@ -48,7 +48,7 @@ export default function JAIRImportModal({ isOpen, onClose, onImportSuccess }: JA
     setMetadata(null)
 
     try {
-      const response = await axios.post('/api/jair/parse', { url })
+      const response = await http.post('/api/jair/parse', { url })
       if (response.data.success) {
         setMetadata(response.data.metadata)
       } else {
@@ -68,7 +68,7 @@ export default function JAIRImportModal({ isOpen, onClose, onImportSuccess }: JA
     setError(null)
 
     try {
-      const response = await axios.post('/api/jair/import', { url })
+      const response = await http.post('/api/jair/import', { url })
 
       if (response.data.success) {
         setSuccess(true)

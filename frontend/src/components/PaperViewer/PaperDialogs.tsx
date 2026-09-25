@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import axios from "axios";
+import http from '@/services/http'
 import {
   Tag as TagIcon,
   X,
@@ -289,7 +289,7 @@ export function PaperDialogs({
                 paperId={paper.id}
                 onComplete={() => {
                   setShowEntityModal(false);
-                  axios
+                  http
                     .get(`/api/papers/${paper.id}`)
                     .then((response) => {
                       setPaper((prev) =>

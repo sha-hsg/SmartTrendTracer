@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import {
   Link as LinkIcon,
   Loader2,
@@ -71,7 +71,7 @@ export default function ReferenceManager() {
 
   const loadStatistics = async () => {
     try {
-      const response = await axios.get(`/api/references/statistics`)
+      const response = await http.get(`/api/references/statistics`)
       setStatistics(response.data)
     } catch (error) {
       console.error('Failed to load statistics:', error)
@@ -88,7 +88,7 @@ export default function ReferenceManager() {
       if (inSystemFilter !== null) params.in_system = inSystemFilter
       if (minCitations > 0) params.min_citations = minCitations
 
-      const response = await axios.get(`/api/references/`, { params })
+      const response = await http.get(`/api/references/`, { params })
       setReferences(response.data.references)
       setTotal(response.data.total)
     } catch (error) {
@@ -101,7 +101,7 @@ export default function ReferenceManager() {
   const loadTopCited = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`/api/references/top-cited`, {
+      const response = await http.get(`/api/references/top-cited`, {
         params: { limit: 50 }
       })
       setTopCited(response.data)
@@ -115,7 +115,7 @@ export default function ReferenceManager() {
   const loadImportable = async () => {
     setLoading(true)
     try {
-      const response = await axios.get(`/api/references/importable`, {
+      const response = await http.get(`/api/references/importable`, {
         params: { limit: 100 }
       })
       setImportableRefs(response.data)
@@ -156,7 +156,7 @@ export default function ReferenceManager() {
 
   const generateBibtex = async (ref: Reference) => {
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/references/${ref._id}/generate-bibtex`
       )
       return response.data.bibtex
@@ -206,7 +206,7 @@ export default function ReferenceManager() {
 
   const importReference = async (ref: Reference) => {
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/references/${ref._id}/import`
       )
 

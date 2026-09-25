@@ -9,7 +9,7 @@
  *   - Summary editing state
  */
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import type { Paper, PapersStats, Facets } from './types'
 
 export function usePapersDashboard(paperType: string = 'research') {
@@ -114,7 +114,7 @@ export function usePapersDashboard(paperType: string = 'research') {
       selectedProcessors.forEach(proc => params.append('processors', proc))
 
       params.append('paper_type', paperType)
-      const response = await axios.get(`/api/papers/facets?${params}`)
+      const response = await http.get(`/api/papers/facets?${params}`)
       const facetsData = response.data
       setFacets({
         authors: facetsData.authors?.map((f: any) => ({ value: f.name, count: f.count, label: f.name })) || [],
@@ -184,7 +184,7 @@ export function usePapersDashboard(paperType: string = 'research') {
       params.append('sort_by', sortBy)
       params.append('sort_order', sortOrder)
 
-      const response = await axios.get(`/api/papers/?${params}`)
+      const response = await http.get(`/api/papers/?${params}`)
       const papersData = Array.isArray(response.data) ? response.data : (response.data.papers || [])
       setPapers(papersData)
       setTotalPapers(response.data.total || papersData.length)
@@ -197,7 +197,7 @@ export function usePapersDashboard(paperType: string = 'research') {
 
   const loadStats = useCallback(async () => {
     try {
-      const response = await axios.get(`/api/papers/stats/overview?paper_type=${paperType}`)
+      const response = await http.get(`/api/papers/stats/overview?paper_type=${paperType}`)
       setStats(response.data)
     } catch (err: any) {
       console.error('Failed to load stats:', err)
@@ -312,7 +312,7 @@ export function usePapersDashboard(paperType: string = 'research') {
     const paper = papers.find(p => p.id === paperId)
     if (!paper) return
     try {
-      const response = await axios.post(`/api/papers/${paperId}/flag`, {
+      const response = await http.post(`/api/papers/${paperId}/flag`, {
         is_flagged: !paper.is_flagged
       })
       setPapers(papers.map(p =>
@@ -328,7 +328,7 @@ export function usePapersDashboard(paperType: string = 'research') {
   const handleRatePaper = async (paperId: number | string, rating: number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
     try {
-      await axios.patch(`/api/papers/${paperId}/rating`, null, {
+      await http.patch(`/api/papers/${paperId}/rating`, null, {
         params: { rating }
       })
       setPapers(papers.map(p =>
@@ -348,7 +348,7 @@ export function usePapersDashboard(paperType: string = 'research') {
       return
     }
     try {
-      await axios.delete(`/api/papers/${paperId}`)
+      await http.delete(`/api/papers/${paperId}`)
       loadPapers()
       loadStats()
       loadFacets()
@@ -367,7 +367,7 @@ export function usePapersDashboard(paperType: string = 'research') {
       const endpoint = processor === 'mineru'
         ? `/api/papers/${paperId}/process-mineru`
         : `/api/papers/${paperId}/process`
-      const response = await axios.post(endpoint)
+      const response = await http.post(endpoint)
       if (response.data.success) {
         setProcessingMessage(`Successfully started processing paper ${paperId}`)
         await loadPapers()
@@ -436,7 +436,7 @@ export function usePapersDashboard(paperType: string = 'research') {
 
     setSavingSummaries(prev => new Set(prev).add(paperId))
     try {
-      await axios.put(
+      await http.put(
         `/api/papers/${paperId}/analyses/generated/mollick_summary`,
         { content }
       )

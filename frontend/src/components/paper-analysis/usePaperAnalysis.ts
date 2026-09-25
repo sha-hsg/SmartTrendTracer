@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import type { AnalysisType, GeneratedAnalysis, BatchProgress } from './constants'
 import {
   generateMultipleAnalyses as batchGenerateMultiple,
@@ -150,7 +150,7 @@ export function usePaperAnalysis({
       if (onTagCreate) {
         await onTagCreate(tagText.trim())
       } else {
-        await axios.post(`/api/papers/${paperId}/tags`, {
+        await http.post(`/api/papers/${paperId}/tags`, {
           tag: tagText.trim(),
           tag_type: 'manual'
         })
@@ -181,7 +181,7 @@ export function usePaperAnalysis({
 
   const loadAvailableAnalyses = async () => {
     try {
-      const response = await axios.get(`/api/papers/${paperId}/analyses/available`)
+      const response = await http.get(`/api/papers/${paperId}/analyses/available`)
       setAvailableAnalyses(response.data.by_category || {})
       const categories = Object.keys(response.data.by_category || {})
       if (categories.length > 0) {
@@ -194,7 +194,7 @@ export function usePaperAnalysis({
 
   const loadSavedAnalyses = async () => {
     try {
-      const response = await axios.get(`/api/papers/${paperId}/analyses/saved`)
+      const response = await http.get(`/api/papers/${paperId}/analyses/saved`)
       if (response.data.analyses) {
         setGeneratedAnalyses(response.data.analyses)
         const expandedSet = new Set<string>()
@@ -218,7 +218,7 @@ export function usePaperAnalysis({
     setLoadingAnalyses(prev => new Set(prev).add(analysisType))
 
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/analyses/generate`,
         { analysis_type: analysisType, regenerate, model: selectedModel }
       )
@@ -264,7 +264,7 @@ export function usePaperAnalysis({
   // Free-form analysis functions
   const loadFreeAnalyses = async () => {
     try {
-      const response = await axios.get(`/api/papers/${paperId}/analyses/free`)
+      const response = await http.get(`/api/papers/${paperId}/analyses/free`)
       if (response.data.analyses) {
         setFreeAnalyses(response.data.analyses)
         setExpandedFreeAnalyses(new Set())
@@ -281,7 +281,7 @@ export function usePaperAnalysis({
     }
     setLoadingFreeAnalysis(true)
     try {
-      const response = await axios.post(
+      const response = await http.post(
         `/api/papers/${paperId}/analyses/free`,
         { prompt: currentPrompt, model: selectedModel }
       )
@@ -301,7 +301,7 @@ export function usePaperAnalysis({
   const deleteFreeAnalysis = async (analysisId: string) => {
     if (!confirm('Are you sure you want to delete this analysis?')) return
     try {
-      await axios.delete(`/api/papers/${paperId}/analyses/free/${analysisId}`)
+      await http.delete(`/api/papers/${paperId}/analyses/free/${analysisId}`)
       setFreeAnalyses(prev => prev.filter(a => a.id !== analysisId))
     } catch (err) {
       console.error('Failed to delete analysis:', err)
@@ -313,7 +313,7 @@ export function usePaperAnalysis({
     const content = editedFreeContent[analysisId]
     if (!content) return
     try {
-      await axios.put(
+      await http.put(
         `/api/papers/${paperId}/analyses/free/${analysisId}`,
         { content }
       )
@@ -373,7 +373,7 @@ export function usePaperAnalysis({
     const newContent = editedContent[analysisType]
     if (newContent !== undefined) {
       try {
-        await axios.put(
+        await http.put(
           `/api/papers/${paperId}/analyses/generated/${analysisType}`,
           { content: newContent }
         )

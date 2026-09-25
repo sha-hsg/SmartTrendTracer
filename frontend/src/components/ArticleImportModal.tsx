@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -78,7 +78,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     setAuthenticatingSite(siteKey)
     setError(null)
     try {
-      const response = await axios.post(`/api/v2/articles/start-auth/${siteKey}`)
+      const response = await http.post(`/api/v2/articles/start-auth/${siteKey}`)
       if (response.data.success) {
         await loadAuthSites()
       } else {
@@ -100,7 +100,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
   const loadAuthSites = async () => {
     setLoadingAuthSites(true)
     try {
-      const response = await axios.get(`/api/v2/articles/auth-sites`)
+      const response = await http.get(`/api/v2/articles/auth-sites`)
       setAuthSites(response.data.sites || [])
       setPlaywrightInstalled(response.data.playwright_installed ?? true)
     } catch (err) {
@@ -114,14 +114,14 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (!authUrl.trim()) { setError('Please enter a URL'); return }
     setIsImporting(true); setError(null); setImportResult(null); setAuthInstructions(null)
     try {
-      const response = await axios.post(`/api/v2/articles/import-url-playwright`, { url: authUrl })
+      const response = await http.post(`/api/v2/articles/import-url-playwright`, { url: authUrl })
       if (response.data.success) {
         setImportResult(response.data)
         onImportSuccess()
         setTimeout(() => { setAuthUrl(''); setImportResult(null) }, 3000)
       } else if (response.data.requires_auth) {
         const site = response.data.site
-        const instrResponse = await axios.post(`/api/v2/articles/start-auth/${site}`)
+        const instrResponse = await http.post(`/api/v2/articles/start-auth/${site}`)
         setAuthInstructions(instrResponse.data)
         setError(`Authentication required for ${site}`)
       } else {
@@ -136,7 +136,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
 
   const handleClearSession = async (site: string) => {
     try {
-      await axios.delete(`/api/v2/articles/auth/${site}`)
+      await http.delete(`/api/v2/articles/auth/${site}`)
       loadAuthSites()
     } catch (err) {
       console.error('Failed to clear session:', err)
@@ -147,7 +147,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (!singleUrl.trim()) { setError('Please enter a URL'); return }
     setIsImporting(true); setError(null); setImportResult(null); setAuthRequiredHint(null)
     try {
-      const response = await axios.post(`/api/v2/articles/import-url`, { url: singleUrl })
+      const response = await http.post(`/api/v2/articles/import-url`, { url: singleUrl })
       if (response.data.success) {
         setImportResult(response.data)
         onImportSuccess()
@@ -179,7 +179,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (urls.length === 0) { setError('Please enter at least one URL'); return }
     setIsImporting(true); setError(null); setBatchResults([])
     try {
-      const response = await axios.post(`/api/v2/articles/import-batch`, urls)
+      const response = await http.post(`/api/v2/articles/import-batch`, urls)
       setBatchResults(response.data.results)
       onImportSuccess()
     } catch (err: any) {
@@ -193,7 +193,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (!cookieUrl.trim()) { setError('Please enter a URL'); return }
     setIsCheckingPaywall(true); setError(null); setPaywallStatus(null)
     try {
-      const response = await axios.post(`/api/v2/articles/enhanced/check-paywall`, null, { params: { url: cookieUrl } })
+      const response = await http.post(`/api/v2/articles/enhanced/check-paywall`, null, { params: { url: cookieUrl } })
       setPaywallStatus(response.data)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to check article')
@@ -206,7 +206,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (!cookieUrl.trim() || !cookieString.trim()) { setError('Please enter both URL and cookies'); return }
     setIsImporting(true); setError(null); setImportResult(null)
     try {
-      const response = await axios.post(`/api/v2/articles/enhanced/import-with-cookie-string`, { url: cookieUrl, cookies: cookieString })
+      const response = await http.post(`/api/v2/articles/enhanced/import-with-cookie-string`, { url: cookieUrl, cookies: cookieString })
       setImportResult(response.data)
       if (response.data.success) {
         onImportSuccess()
@@ -230,7 +230,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (!importUrl) { setError('Could not find URL in cURL command'); return }
     setIsImporting(true); setError(null); setImportResult(null)
     try {
-      const response = await axios.post(`/api/v2/articles/enhanced/import-with-cookies`, { url: importUrl, curl_command: curlCommand })
+      const response = await http.post(`/api/v2/articles/enhanced/import-with-cookies`, { url: importUrl, curl_command: curlCommand })
       setImportResult(response.data)
       if (response.data.success) {
         onImportSuccess()
@@ -249,7 +249,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
     if (!cookieUrl.trim() || !cookieJson.trim()) { setError('Please enter both URL and JSON cookies'); return }
     setIsImporting(true); setError(null); setImportResult(null)
     try {
-      const response = await axios.post(`/api/v2/articles/enhanced/import-with-cookies`, { url: cookieUrl, cookie_json: cookieJson })
+      const response = await http.post(`/api/v2/articles/enhanced/import-with-cookies`, { url: cookieUrl, cookie_json: cookieJson })
       setImportResult(response.data)
       if (response.data.success) {
         onImportSuccess()

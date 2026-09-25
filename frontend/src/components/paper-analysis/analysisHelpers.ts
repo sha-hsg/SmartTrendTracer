@@ -1,4 +1,4 @@
-import axios from 'axios'
+import http from '@/services/http'
 import { extractTextContent } from './constants'
 import type { AnalysisType, GeneratedAnalysis, BatchProgress } from './constants'
 
@@ -64,7 +64,7 @@ export async function generateMultipleAnalyses(
       }))
 
       try {
-        const response = await axios.post(
+        const response = await http.post(
           `/api/papers/${paperId}/analyses/generate`,
           {
             analysis_type: analysisType,
@@ -171,7 +171,7 @@ export async function generateAllAnalyses(deps: BatchGenerationDeps) {
       }))
 
       try {
-        const response = await axios.post(
+        const response = await http.post(
           `/api/papers/${paperId}/analyses/generate`,
           { analysis_type: analysisType, regenerate: false, model: selectedModel }
         )

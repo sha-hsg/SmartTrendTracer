@@ -26,7 +26,7 @@ FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
 
 # Ratchets — only ever lower these.
 API_DB_CALL_SITES_MAX = 387
-FRONTEND_AXIOS_IMPORT_FILES_MAX = 67
+FRONTEND_AXIOS_IMPORT_FILES_MAX = 0
 
 DB_CALL_RE = re.compile(
     r'\bdb\.[a-z_]+\.(find|find_one|insert_one|insert_many|update_one|update_many|delete_one|'

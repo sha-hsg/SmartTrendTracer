@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
-import axios from 'axios';
+import http from '@/services/http'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,7 +80,7 @@ export default function ConceptGraph() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('/api/ontology/graph', {
+      const response = await http.get('/api/ontology/graph', {
         params: { include_synonyms: showSynonyms }
       });
       

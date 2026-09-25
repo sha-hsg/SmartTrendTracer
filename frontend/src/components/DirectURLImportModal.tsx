@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { X, Globe, AlertCircle, CheckCircle, Loader2, FileText, Download } from 'lucide-react'
 
 interface DirectURLImportModalProps {
@@ -56,7 +56,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
       const tagList = tags.split(',').map(t => t.trim()).filter(t => t)
       const authorList = authors.split(',').map(a => a.trim()).filter(a => a)
       
-      const response = await axios.post(`/api/papers/import-url`, {
+      const response = await http.post(`/api/papers/import-url`, {
         url,
         title: title.trim(),
         authors: authorList.join(', '),

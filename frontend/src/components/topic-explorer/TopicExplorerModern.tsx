@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -60,7 +60,7 @@ export default function TopicExplorerModern() {
   const loadPopularTopics = async () => {
     setTopicsLoading(true)
     try {
-      const response = await axios.get<{ topics: Topic[] }>('/api/topics/popular', {
+      const response = await http.get<{ topics: Topic[] }>('/api/topics/popular', {
         params: { source_types: 'tweet,article,paper', days: 365, limit: 100 }
       })
       setAvailableTopics(response.data.topics)
@@ -86,7 +86,7 @@ export default function TopicExplorerModern() {
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - parseInt(datePreset))
 
-      const response = await axios.get<FrequencyResponse>('/api/topics/frequency', {
+      const response = await http.get<FrequencyResponse>('/api/topics/frequency', {
         params: {
           concept_ids: selectedTopics.map(t => t.id).join(','),
           source_types: sourceTypes,
@@ -113,7 +113,7 @@ export default function TopicExplorerModern() {
       const startDate = new Date()
       startDate.setDate(startDate.getDate() - parseInt(datePreset))
 
-      const response = await axios.get<CorrelationResponse>('/api/topics/correlation', {
+      const response = await http.get<CorrelationResponse>('/api/topics/correlation', {
         params: {
           source_types: sourceTypes,
           min_count: 5,

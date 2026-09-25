@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
@@ -68,7 +68,7 @@ export default function TwitterMediaGalleryModern() {
       if (tag) params.append('tag', tag)
       if (search) params.append('search', search)
 
-      const response = await axios.get(
+      const response = await http.get(
         `/api/media-gallery/gallery?${params}`
       )
 
@@ -84,7 +84,7 @@ export default function TwitterMediaGalleryModern() {
 
   const loadStats = async () => {
     try {
-      const response = await axios.get(
+      const response = await http.get(
         `/api/media-gallery/stats?days=${days}`
       )
       setStats(response.data)
@@ -95,7 +95,7 @@ export default function TwitterMediaGalleryModern() {
 
   const loadAuthors = async () => {
     try {
-      const response = await axios.get(
+      const response = await http.get(
         `/api/media-gallery/authors?days=${days}`
       )
       setAuthors(response.data)
@@ -106,7 +106,7 @@ export default function TwitterMediaGalleryModern() {
 
   const loadMediaTypes = async () => {
     try {
-      const response = await axios.get(
+      const response = await http.get(
         `/api/media-gallery/types`
       )
       setMediaTypes(response.data)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import http from '@/services/http'
 import { FileCode, Download, Copy, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,7 +24,7 @@ export default function TEIViewer({ paperId, paperTitle: _paperTitle }: TEIViewe
     setError(null)
     
     try {
-      const response = await axios.get(
+      const response = await http.get(
         `/api/papers/${paperId}/tei`,
         { responseType: 'text' }
       )
