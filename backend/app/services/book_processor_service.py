@@ -7,6 +7,7 @@ Extended from async_pdf_processor with book-specific optimizations:
 - EPUB native processing support
 """
 
+from app.config import settings
 import os
 import asyncio
 import logging
@@ -21,8 +22,8 @@ logger = logging.getLogger(__name__)
 class BookProcessorService:
     def __init__(self):
         """Initialize book processor with extended configuration"""
-        self.marker_service_url = os.getenv("MARKER_SERVICE_URL", "http://localhost:8002")
-        self.mineru_service_url = os.getenv("MINERU_SERVICE_URL", "http://localhost:8003")
+        self.marker_service_url = settings.marker_service_url
+        self.mineru_service_url = settings.mineru_service_url
 
         # Extended timeouts for book processing
         self.marker_timeout = 21600  # 6 hours for large books

@@ -1,6 +1,7 @@
 """
 ACL Anthology import API endpoints
 """
+from app.paths import PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, Dict, Any
@@ -117,7 +118,7 @@ async def import_acl_anthology_paper(
             }
         
         # Set up save directory
-        save_dir = Path("data/papers")
+        save_dir = PAPERS_DIR_REL
         save_dir.mkdir(parents=True, exist_ok=True)
         
         # Import the paper

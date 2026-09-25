@@ -1,3 +1,4 @@
+from app.paths import ARTICLE_IMAGES
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import FileResponse
 from typing import List, Optional, Dict
@@ -171,7 +172,7 @@ def faceted_search(
 @router.get("/{article_id}/images/{filename}")
 def get_article_image(article_id: str, filename: str):
     # Construct the image path
-    image_path = Path(f"data/article_images/{filename}")
+    image_path = ARTICLE_IMAGES / filename
 
     # Security check: ensure the filename contains the article_id
     if not filename.startswith(f"{article_id}_"):

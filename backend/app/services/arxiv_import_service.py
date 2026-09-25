@@ -3,6 +3,7 @@ ArXiv Import Service
 Handles importing papers directly from ArXiv URLs
 """
 
+from app.paths import PAPERS_DIR_REL
 import re
 import os
 import logging
@@ -210,7 +211,7 @@ class ArXivImportService:
                 output_path = Path(output_dir)
             else:
                 # Use permanent data/papers directory instead of temp
-                output_path = Path("data/papers")
+                output_path = PAPERS_DIR_REL
             
             output_path.mkdir(parents=True, exist_ok=True)
             

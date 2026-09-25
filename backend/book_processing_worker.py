@@ -17,8 +17,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("book_worker")
 
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017/")
-POLL_INTERVAL_SECONDS = float(os.getenv("BOOK_WORKER_IDLE_SECONDS", "5"))
+from app.config import settings  # noqa: E402
+
+MONGODB_URL = settings.mongodb_uri
+POLL_INTERVAL_SECONDS = float(settings.book_worker_idle_seconds)
 
 
 class BookProcessingWorker:

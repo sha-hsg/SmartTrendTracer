@@ -2,6 +2,7 @@
 Twitter Lookup Service - Provides user lookup functionality using Twitter API v2.
 Uses Tweepy to retrieve user information by username.
 """
+from app.config import settings
 import os
 import tweepy
 from typing import Optional
@@ -28,7 +29,7 @@ class TwitterLookupService:
 
     def __init__(self):
         """Initialize the Twitter lookup service with API credentials."""
-        self.bearer_token = os.environ.get('TWITTER_BEARER_TOKEN')
+        self.bearer_token = settings.twitter_bearer_token
         self.client = None
         self._initialized = False
 
@@ -136,7 +137,7 @@ class TwitterLookupService:
 
     def is_configured(self) -> bool:
         """Check if the service is properly configured with API credentials."""
-        return bool(os.environ.get('TWITTER_BEARER_TOKEN'))
+        return bool(settings.twitter_bearer_token)
 
 
 # Singleton instance

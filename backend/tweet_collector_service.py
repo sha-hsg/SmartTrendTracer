@@ -28,6 +28,7 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv(usecwd=True))
 
 from pymongo import MongoClient, ASCENDING, DESCENDING
+from app.config import settings
 import tweepy
 from logging.handlers import TimedRotatingFileHandler
 
@@ -39,7 +40,7 @@ TIER_3_INTERVAL = 21600   # 6 hours
 # =========================
 # MongoDB Connection
 # =========================
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017/")
+MONGODB_URL = settings.mongodb_uri
 mongo_client = MongoClient(MONGODB_URL)
 db = mongo_client.smarttrendtracer
 
@@ -172,14 +173,14 @@ def update_live_progress(
 # Configuration via ENV
 # =========================
 # Enable Basic Account Mode optimizations (DEFAULT: true for $100/month plan)
-BASIC_ACCOUNT_MODE = os.getenv("BASIC_ACCOUNT_MODE", "true").lower() == "true"
+BASIC_ACCOUNT_MODE = settings.basic_account_mode
 
 # Main collection interval (default 30 min for normal, 15 min for Basic)
-COLLECTION_INTERVAL_SECONDS = int(os.getenv("COLLECTION_INTERVAL_SECONDS", "900" if BASIC_ACCOUNT_MODE else "1800"))
+COLLECTION_INTERVAL_SECONDS = int(settings.collector_value("collection_interval_seconds"))
 # Backoff when the X API reports depleted credits (402): probe once per this
 # interval instead of hammering every account every cycle (Sep 2026: a week of
 # 402s produced 12k error lines and ~2k pointless requests/day)
-CREDITS_BACKOFF_SECONDS = int(os.getenv("CREDITS_BACKOFF_SECONDS", "3600"))
+CREDITS_BACKOFF_SECONDS = settings.credits_backoff_seconds
 
 # Set when any request returns 402 Payment Required; cleared at cycle start.
 credits_depleted = False
@@ -190,21 +191,21 @@ def is_credits_depleted_error(error_msg: str) -> bool:
     msg = str(error_msg)
     return "402" in msg or "Payment Required" in msg or "credits depleted" in msg.lower()
 # Batch size - how many accounts to collect before longer pause
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", "12" if BASIC_ACCOUNT_MODE else "3"))
+BATCH_SIZE = int(settings.collector_value("batch_size"))
 # Delay between accounts in same batch
-INTRA_BATCH_DELAY_SECONDS = float(os.getenv("INTRA_BATCH_DELAY_SECONDS", "2" if BASIC_ACCOUNT_MODE else "5"))
+INTRA_BATCH_DELAY_SECONDS = float(settings.collector_value("intra_batch_delay_seconds"))
 # Delay between batches (longer pause)
-INTER_BATCH_DELAY_SECONDS = float(os.getenv("INTER_BATCH_DELAY_SECONDS", "30" if BASIC_ACCOUNT_MODE else "60"))
+INTER_BATCH_DELAY_SECONDS = float(settings.collector_value("inter_batch_delay_seconds"))
 # Initial backoff time when rate limited (seconds)
-INITIAL_BACKOFF_SECONDS = float(os.getenv("INITIAL_BACKOFF_SECONDS", "900" if BASIC_ACCOUNT_MODE else "60"))
+INITIAL_BACKOFF_SECONDS = float(settings.collector_value("initial_backoff_seconds"))
 # Maximum backoff time (seconds)
-MAX_BACKOFF_SECONDS = float(os.getenv("MAX_BACKOFF_SECONDS", "900"))  # 15 minutes
+MAX_BACKOFF_SECONDS = float(settings.max_backoff_seconds)  # 15 minutes
 # Max tweets per page (most APIs allow up to 100)
-PER_PAGE_MAX_RESULTS = int(os.getenv("PER_PAGE_MAX_RESULTS", "100"))
+PER_PAGE_MAX_RESULTS = settings.per_page_max_results
 # Maximum pages per account to prevent excessive API usage
-MAX_PAGES_PER_ACCOUNT = int(os.getenv('MAX_PAGES_PER_ACCOUNT', '1' if BASIC_ACCOUNT_MODE else '5'))
+MAX_PAGES_PER_ACCOUNT = int(settings.collector_value("max_pages_per_account"))
 # Maximum retry attempts for rate limited requests
-MAX_RETRY_ATTEMPTS = int(os.getenv("MAX_RETRY_ATTEMPTS", "3"))
+MAX_RETRY_ATTEMPTS = settings.max_retry_attempts
 
 # Basic Account Limits
 if BASIC_ACCOUNT_MODE:
@@ -213,8 +214,8 @@ if BASIC_ACCOUNT_MODE:
     MAX_REQUESTS_PER_WINDOW = 12       # Leave buffer of 3 for timeline
     MONTHLY_TWEET_LIMIT = 10000
     DAILY_TWEET_BUDGET = 1000
-    USE_TIERED_PRIORITY = os.getenv("USE_TIERED_PRIORITY", "true").lower() == "true"
-    USE_SEARCH_FALLBACK = os.getenv("USE_SEARCH_FALLBACK", "true").lower() == "true"
+    USE_TIERED_PRIORITY = settings.use_tiered_priority
+    USE_SEARCH_FALLBACK = settings.use_search_fallback
 else:
     # Standard/Pro account defaults
     TIMELINE_REQUESTS_PER_WINDOW = 300
@@ -927,7 +928,7 @@ def run_collection_cycle():
     )
     
     # Initialize Tweepy client
-    bearer_token = os.getenv('TWITTER_BEARER_TOKEN')
+    bearer_token = settings.twitter_bearer_token
     if not bearer_token:
         logger.error("❌ TWITTER_BEARER_TOKEN not found in environment variables")
         logger.error("Please set your Twitter Bearer Token: export TWITTER_BEARER_TOKEN='your_token_here'")
@@ -1240,7 +1241,7 @@ if __name__ == "__main__":
         logger.info("📊 Checking Twitter API Rate Limit Status")
         logger.info("=" * 50)
         
-        bearer_token = os.getenv('TWITTER_BEARER_TOKEN')
+        bearer_token = settings.twitter_bearer_token
         if not bearer_token:
             logger.error("❌ TWITTER_BEARER_TOKEN not found")
             sys.exit(1)

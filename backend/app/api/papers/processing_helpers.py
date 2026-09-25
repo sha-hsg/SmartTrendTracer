@@ -1,3 +1,4 @@
+from app.services import pdf_service_client
 import os
 import re
 import traceback
@@ -72,7 +73,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
 
     logger.info(f"PDF file exists: {pdf_file} (size: {pdf_file.stat().st_size} bytes)")
 
-    marker_url = "http://localhost:8002/convert"
+    marker_url = pdf_service_client.marker_url("convert")
     logger.info(f"Marker URL: {marker_url}")
 
     try:
@@ -80,7 +81,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
         logger.info("Testing Marker service connectivity...")
         async with httpx.AsyncClient(timeout=5.0) as test_client:
             try:
-                health_response = await test_client.get("http://localhost:8002/")
+                health_response = await test_client.get(pdf_service_client.marker_url())
                 logger.info(f"Marker service health check: {health_response.status_code}")
             except Exception as e:
                 logger.error(f"Marker service not reachable: {e}")
@@ -99,8 +100,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
                     files = {'file': (pdf_file.name, file_content, 'application/pdf')}
 
                 # Add callback URL for progress updates
-                backend_port = os.getenv("BACKEND_PORT", "8088")
-                callback_url = f"http://localhost:{backend_port}/api/papers/{paper_id}/progress-callback"
+                callback_url = pdf_service_client.progress_callback_url(paper_id)
 
                 # CRITICAL: Must send paper_id for Marker to save images!
                 # Check if this paper already has an old_sqlite_id (shouldn't happen for new processing)
@@ -223,13 +223,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
                 }}
             )
         # Kill orphaned marker_single subprocess
-        try:
-            import httpx as httpx_sync
-            with httpx_sync.Client(timeout=5.0) as kill_client:
-                kill_resp = kill_client.post("http://localhost:8002/kill")
-                logger.info(f"Marker /kill response: {kill_resp.status_code} {kill_resp.text}")
-        except Exception as kill_err:
-            logger.warning(f"Failed to call Marker /kill endpoint: {kill_err}")
+        pdf_service_client.kill_marker_job()
     except httpx.RequestError as e:
         error_msg = f"Marker service connection error: {str(e)}"
         logger.error(f"=== MARKER CONNECTION ERROR ===")

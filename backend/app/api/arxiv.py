@@ -2,6 +2,7 @@
 ArXiv API endpoints
 """
 
+from app.paths import ARXIV_PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -73,7 +74,7 @@ async def import_arxiv_paper(
         # Create permanent directory for ArXiv PDFs
         import os
         from pathlib import Path
-        arxiv_dir = Path("data/papers/arxiv")
+        arxiv_dir = ARXIV_PAPERS_DIR_REL
         arxiv_dir.mkdir(parents=True, exist_ok=True)
         
         # Import from ArXiv with permanent directory (using validated ID)

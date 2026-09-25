@@ -7,6 +7,7 @@ set, etc., without editing source code.
 """
 
 from __future__ import annotations
+from app.config import settings
 
 import logging
 import os
@@ -63,7 +64,7 @@ def concept_id_query_variants(concept_id) -> list:
     return variants
 
 # Slow query threshold in seconds (configurable via environment)
-SLOW_QUERY_THRESHOLD = float(os.getenv("MONGODB_SLOW_QUERY_MS", "100")) / 1000  # Default 100ms
+SLOW_QUERY_THRESHOLD = float(settings.mongodb_slow_query_ms) / 1000  # Default 100ms
 
 T = TypeVar("T")
 
@@ -142,13 +143,13 @@ class MongoSettings:
 
     @classmethod
     def from_env(cls) -> "MongoSettings":
-        uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
-        database = os.getenv("MONGODB_DB", "smarttrendtracer")
-        replica_set = os.getenv("MONGODB_REPLICA_SET") or None
-        app_name = os.getenv("MONGODB_APP_NAME") or None
+        uri = settings.mongodb_uri
+        database = settings.mongodb_db
+        replica_set = settings.mongodb_replica_set or None
+        app_name = settings.mongodb_app_name or None
 
         # Optional extra driver params (comma-separated key=value pairs)
-        raw_options = os.getenv("MONGODB_OPTIONS", "")
+        raw_options = settings.mongodb_options
         options: Dict[str, str] = {}
         if raw_options:
             for pair in raw_options.split(","):

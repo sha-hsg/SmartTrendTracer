@@ -1,6 +1,7 @@
 """
 JAIR (Journal of Artificial Intelligence Research) import API endpoints.
 """
+from app.paths import PAPERS_DIR_REL
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -91,7 +92,7 @@ async def import_jair_paper(request: JAIRImportRequest) -> Dict[str, Any]:
             }
 
         # Download PDF
-        save_dir = Path("data/papers")
+        save_dir = PAPERS_DIR_REL
         save_dir.mkdir(parents=True, exist_ok=True)
 
         if not metadata.get('pdf_url'):

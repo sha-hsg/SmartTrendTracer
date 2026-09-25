@@ -4,6 +4,7 @@ Paper CRUD route handlers.
 Covers: list papers, get single paper, upload, and delete.
 """
 
+from app.paths import PAPERS_DIR_REL
 from .utils import (
     hashlib,
     datetime,
@@ -417,7 +418,7 @@ async def upload_paper(
         safe_filename = file.filename.replace(' ', '_').replace('.pdf', '')
         new_filename = f"{timestamp}_{file_hash}_{safe_filename}.pdf"
 
-        pdf_dir = Path("data/papers")
+        pdf_dir = PAPERS_DIR_REL
         pdf_dir.mkdir(parents=True, exist_ok=True)
         pdf_path = pdf_dir / new_filename
 

@@ -1,3 +1,4 @@
+from app.services import pdf_service_client
 import logging
 import os
 import re
@@ -46,8 +47,7 @@ def process_with_mineru_service(
             if paper_id:
                 data['paper_id'] = paper_id
                 callback_id = mongo_paper_id if mongo_paper_id else str(paper_id)
-                backend_port = os.getenv("BACKEND_PORT", "8088")
-                data['callback_url'] = f'http://localhost:{backend_port}/api/papers/{callback_id}/progress-callback'
+                data['callback_url'] = pdf_service_client.progress_callback_url(callback_id)
 
             logger.info(f"🌐 Calling MinerU Service at {mineru_service_url}")
             response = requests.post(

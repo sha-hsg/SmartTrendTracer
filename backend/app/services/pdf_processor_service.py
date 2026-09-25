@@ -1,3 +1,4 @@
+from app.services import pdf_service_client
 import logging
 import os
 from pathlib import Path
@@ -51,10 +52,10 @@ class PDFProcessorService:
         logger.info("="*60)
 
         # Marker service configuration
-        self.marker_service_url = "http://localhost:8002"
+        self.marker_service_url = pdf_service_client.marker_url()
 
         # MinerU service configuration
-        self.mineru_service_url = "http://localhost:8003"
+        self.mineru_service_url = pdf_service_client.mineru_url()
 
         # Check available processors in order of preference
         self.marker_service_available = self._check_marker_service()  # Best - isolated environment

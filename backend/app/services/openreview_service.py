@@ -2,6 +2,7 @@
 OpenReview integration service
 Handles paper metadata extraction and PDF downloads from openreview.net
 """
+from app.paths import PAPERS_DIR_REL
 import logging
 import re
 import json
@@ -400,7 +401,7 @@ class OpenReviewService:
             # Generate filename for PDF
             safe_title = re.sub(r'[^a-zA-Z0-9_\- ]', '', metadata['title'])[:50]
             pdf_filename = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{forum_id}_{safe_title}.pdf"
-            pdf_path = Path('data/papers') / pdf_filename
+            pdf_path = PAPERS_DIR_REL / pdf_filename
             
             # Download PDF if URL is available
             if metadata.get('pdf_url'):

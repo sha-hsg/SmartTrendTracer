@@ -4,6 +4,7 @@ Merges rule-based (ComprehensiveStrategy) and LLM-powered (LLMStrategy)
 approaches into a single service with strategy pattern.
 """
 
+from app.config import settings
 import re
 import json
 import logging
@@ -405,7 +406,7 @@ class LLMStrategy(ReorganizationStrategy):
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             from langchain_core.messages import HumanMessage, SystemMessage
-            api_key = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+            api_key = settings.google_or_gemini_api_key
             if not api_key:
                 return None
             client = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=api_key, temperature=0.15, max_tokens=100000, convert_system_message_to_human=True)

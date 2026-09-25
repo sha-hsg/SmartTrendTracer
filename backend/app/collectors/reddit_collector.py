@@ -2,6 +2,7 @@
 Reddit Data Collector using PRAW (Python Reddit API Wrapper)
 Collects posts from specified subreddits and stores them in MongoDB
 """
+from app.config import settings
 import praw
 import os
 import json
@@ -22,9 +23,9 @@ class RedditCollector:
         """Initialize Reddit collector with API credentials and MongoDB connection"""
         
         # Reddit API credentials
-        self.client_id = os.getenv('REDDIT_CLIENT_ID')
-        self.client_secret = os.getenv('REDDIT_CLIENT_SECRET')
-        self.user_agent = os.getenv('REDDIT_USER_AGENT', 'SmartTrendTracer:v1.0 (by /u/smarttrendtracer)')
+        self.client_id = settings.reddit_client_id
+        self.client_secret = settings.reddit_client_secret
+        self.user_agent = settings.reddit_user_agent
         
         if not self.client_id or not self.client_secret:
             raise ValueError("REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET must be set in environment variables")

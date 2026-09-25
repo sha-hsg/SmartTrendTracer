@@ -5,6 +5,7 @@ All books sub-modules should import from here rather than duplicating setup code
 """
 
 # --- Standard library ---
+from app.paths import BOOK_REPOSITORY_REL
 import hashlib
 import json
 import logging
@@ -46,7 +47,7 @@ db = get_database()
 concept_service = ConceptOnlyTagService()
 
 # Book storage directory
-BOOKS_REPOSITORY = Path("data/book_repository")
+BOOKS_REPOSITORY = BOOK_REPOSITORY_REL
 BOOKS_REPOSITORY.parent.mkdir(parents=True, exist_ok=True)
 BOOKS_REPOSITORY.mkdir(exist_ok=True)
 

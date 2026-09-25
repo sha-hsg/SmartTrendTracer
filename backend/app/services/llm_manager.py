@@ -3,6 +3,7 @@ Unified LLM Manager Service using LiteLLM
 Provides centralized LLM access with automatic fallbacks, caching, and user preferences
 """
 
+from app.config import settings
 import os
 import yaml
 import logging
@@ -225,7 +226,7 @@ class LLMManager:
                     'model_name': 'default',
                     'litellm_params': {
                         'model': 'gpt-4o-mini',
-                        'api_key': os.getenv('OPENAI_API_KEY'),
+                        'api_key': settings.openai_api_key,
                         'temperature': 0.3,
                         'max_tokens': 2000
                     }

@@ -2,6 +2,7 @@
 LLM Preferences API
 Allows users to view available models and manage their LLM preferences
 """
+from app.config import settings
 import os
 from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, List, Optional
@@ -24,22 +25,22 @@ async def get_api_key_status():
     # Check for common API keys
     api_keys = {
         "openai": {
-            "configured": bool(os.getenv("OPENAI_API_KEY")),
+            "configured": bool(settings.openai_api_key),
             "env_var": "OPENAI_API_KEY",
             "provider": "OpenAI"
         },
         "anthropic": {
-            "configured": bool(os.getenv("ANTHROPIC_API_KEY")),
+            "configured": bool(settings.anthropic_api_key),
             "env_var": "ANTHROPIC_API_KEY",
             "provider": "Anthropic (Claude)"
         },
         "google": {
-            "configured": bool(os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")),
+            "configured": bool(settings.google_or_gemini_api_key),
             "env_var": "GOOGLE_API_KEY or GEMINI_API_KEY",
             "provider": "Google (Gemini)"
         },
         "xai": {
-            "configured": bool(os.getenv("XAI_API_KEY")),
+            "configured": bool(settings.xai_api_key),
             "env_var": "XAI_API_KEY",
             "provider": "xAI (Grok)"
         }

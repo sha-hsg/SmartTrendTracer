@@ -1,6 +1,7 @@
 """
 Direct URL import API endpoints for importing PDFs from any URL
 """
+from app.paths import PAPERS_DIR_REL
 import asyncio
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
@@ -93,7 +94,7 @@ async def import_paper_from_url(
             }
         
         # Set up save directory
-        save_dir = Path("data/papers")
+        save_dir = PAPERS_DIR_REL
         save_dir.mkdir(parents=True, exist_ok=True)
         
         # Generate filename

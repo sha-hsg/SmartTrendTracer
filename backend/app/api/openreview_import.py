@@ -1,6 +1,7 @@
 """
 OpenReview paper import API endpoints
 """
+from app.paths import PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import Optional, List
@@ -145,7 +146,7 @@ async def import_openreview_paper(
                 # Generate filename
                 safe_title = ''.join(c for c in metadata["title"][:50] if c.isalnum() or c in ' -_')
                 pdf_filename = f"{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{forum_id[:8]}_{safe_title}.pdf"
-                pdf_path = Path("data/papers") / pdf_filename
+                pdf_path = PAPERS_DIR_REL / pdf_filename
                 
                 # Download PDF
                 if openreview_service.download_pdf(metadata["pdf_url"], pdf_path):

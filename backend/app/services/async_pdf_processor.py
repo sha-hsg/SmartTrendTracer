@@ -3,6 +3,7 @@ Async PDF Processor Service
 Handles PDF processing without blocking the main thread
 """
 
+from app.services import pdf_service_client
 import asyncio
 import atexit
 import logging
@@ -25,8 +26,8 @@ class AsyncPDFProcessor:
     def __init__(self):
         # Thread pool for blocking I/O operations
         self.executor = ThreadPoolExecutor(max_workers=3)
-        self.marker_service_url = "http://localhost:8002"
-        self.mineru_service_url = "http://localhost:8003"
+        self.marker_service_url = pdf_service_client.marker_url()
+        self.mineru_service_url = pdf_service_client.mineru_url()
         self._shutdown = False
         # Local synchronous fallback, injected by PDFProcessorService so this
         # module never imports it back (that import formed a dependency cycle)

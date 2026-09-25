@@ -3,6 +3,7 @@ ACM Digital Library paper import API endpoints
 Handles paper imports from dl.acm.org
 """
 
+from app.paths import PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
@@ -37,7 +38,7 @@ async def import_acm_paper(request: ACMImportRequest, background_tasks: Backgrou
         db = get_database()
         
         # Set up save directory
-        save_dir = Path("data/papers")
+        save_dir = PAPERS_DIR_REL
         save_dir.mkdir(parents=True, exist_ok=True)
         
         # Import paper using ACM service

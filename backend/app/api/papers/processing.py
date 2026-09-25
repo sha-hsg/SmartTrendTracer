@@ -3,6 +3,7 @@ Paper processing routes: Marker, MinerU, PDF extraction,
 progress callbacks, and processing status/health endpoints.
 """
 
+from app.services import pdf_service_client
 from datetime import datetime, timezone
 from typing import Any, Dict
 
@@ -158,13 +159,7 @@ async def cancel_processing(paper_id: str) -> Dict[str, Any]:
     # Kill the orphaned marker_single subprocess (same pattern as the
     # timeout handling in processing_helpers.py)
     if current_status == 'processing_with_marker':
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=5.0) as kill_client:
-                kill_resp = await kill_client.post("http://localhost:8002/kill")
-                logger.info(f"Marker /kill response: {kill_resp.status_code} {kill_resp.text}")
-        except Exception as kill_err:
-            logger.warning(f"Failed to call Marker /kill endpoint: {kill_err}")
+        await pdf_service_client.kill_marker_job_async()
 
     return {
         'success': True,

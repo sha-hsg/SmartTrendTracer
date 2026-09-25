@@ -3,6 +3,7 @@ Full MongoDB version of main.py
 All data operations use MongoDB - no SQLite dependencies
 """
 
+from app.config import settings
 import time
 
 from fastapi import FastAPI, Request
@@ -116,12 +117,7 @@ app = FastAPI(
 )
 
 # Configure CORS - origins from environment variable or defaults (CFG-004)
-cors_origins_env = os.getenv("CORS_ORIGINS", "")
-if cors_origins_env:
-    cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
-else:
-    # Default development origins
-    cors_origins = ["http://localhost:3470", "http://localhost:3000", "http://localhost:3001", "http://localhost:3002"]
+cors_origins = settings.cors_origins
 
 logger.info(f"CORS configured for origins: {cors_origins}")
 
@@ -348,4 +344,4 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("BACKEND_PORT", "8088")), reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=settings.backend_port, reload=True)

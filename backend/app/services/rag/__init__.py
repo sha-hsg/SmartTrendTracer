@@ -1,3 +1,5 @@
+from app.paths import RAG_INDEX_CONCEPTS
+from app.config import settings
 import os
 import logging
 from typing import List, Dict, Any, Optional
@@ -36,11 +38,11 @@ class ConceptBasedRAGService:
         self.llm_manager = get_llm_manager()
         self.user_id = "default"
 
-        google_api_key = os.getenv('GOOGLE_API_KEY')
-        openai_api_key = os.getenv('OPENAI_API_KEY')
+        google_api_key = settings.google_api_key
+        openai_api_key = settings.openai_api_key
         self.use_gemini_embeddings, self.openai_client = init_embedding_clients(google_api_key, openai_api_key)
 
-        self.index_dir = Path("data/rag_index_concepts")
+        self.index_dir = RAG_INDEX_CONCEPTS
         self.paths = get_index_paths(self.index_dir)
 
         self.embeddings_cache = {}

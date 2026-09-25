@@ -1,3 +1,4 @@
+from app.config import settings
 import logging
 import os
 
@@ -138,7 +139,7 @@ def _collect_tweets_sync(db, account: Dict, account_id: str, max_tweets: int, re
     twitter_id = account.get('twitter_id')
     now = datetime.now(timezone.utc)
 
-    bearer_token = os.getenv('TWITTER_BEARER_TOKEN')
+    bearer_token = settings.twitter_bearer_token
     if not bearer_token:
         raise HTTPException(
             status_code=503,

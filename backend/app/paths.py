@@ -8,6 +8,7 @@ Linux, macOS, and Windows.
 All paths are computed relative to the project root, eliminating hardcoded absolute paths.
 """
 
+from app.config import settings
 from pathlib import Path
 import os
 from typing import Optional
@@ -96,6 +97,13 @@ EMBEDDINGS_CACHE = DATA_ROOT / "embeddings_cache"
 # ============================================================================
 # MongoDB Sync Directory
 # ============================================================================
+
+# Storage paths in the form they are PERSISTED in MongoDB (pdf_path etc.):
+# relative to backend/, the process working directory. Keep these relative —
+# switching to absolute paths would change the stored data format.
+PAPERS_DIR_REL = Path("data/papers")
+ARXIV_PAPERS_DIR_REL = PAPERS_DIR_REL / "arxiv"
+BOOK_REPOSITORY_REL = Path("data/book_repository")
 
 MONGODB_SYNC = BACKEND_ROOT / "mongodb_sync"
 MONGODB_SYNC_LATEST = MONGODB_SYNC / "latest"
@@ -206,25 +214,12 @@ initialize_directories()
 # Environment Variable Support
 # ============================================================================
 
-def get_service_url(service_name: str, default: str) -> str:
-    """
-    Get service URL from environment variables with fallback to default.
-
-    Args:
-        service_name: Name of the service (e.g., "MARKER", "MINERU")
-        default: Default URL if not set in environment
-
-    Returns:
-        str: Service URL
-    """
-    env_var = f"{service_name}_SERVICE_URL"
-    return os.getenv(env_var, default)
 
 
 # Service URLs (configurable via environment variables)
-MARKER_SERVICE_URL = get_service_url("MARKER", "http://localhost:8002")
-MINERU_SERVICE_URL = get_service_url("MINERU", "http://localhost:8003")
-GROBID_SERVICE_URL = get_service_url("GROBID", "https://kermitt2-grobid.hf.space")
+MARKER_SERVICE_URL = settings.marker_service_url
+MINERU_SERVICE_URL = settings.mineru_service_url
+GROBID_SERVICE_URL = settings.grobid_service_url
 
 
 # ============================================================================
