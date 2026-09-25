@@ -13,7 +13,7 @@ import {
   Loader2,
   GraduationCap,
 } from 'lucide-react'
-import UnifiedModelSelector from '../UnifiedModelSelector'
+import UnifiedModelSelector from '../llm/UnifiedModelSelector'
 import { cn } from "@/lib/utils"
 
 interface IndexStats {

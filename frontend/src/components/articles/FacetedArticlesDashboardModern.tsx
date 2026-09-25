@@ -5,11 +5,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import ArticleViewerErrorBoundary from '../ArticleViewerErrorBoundary'
+import ArticleViewerErrorBoundary from '../article-viewer/ArticleViewerErrorBoundary'
 
 const ArticleViewerModern = React.lazy(() => import('../article-viewer/ArticleViewerModern'))
-import ArticleImportModal from '../ArticleImportModal'
-import AuthorManagementModal from '../AuthorManagementModal'
+import ArticleImportModal from './ArticleImportModal'
+import AuthorManagementModal from '../authors/AuthorManagementModal'
 import ArticleCard from './ArticleCard'
 import ArticleFilterPanel from './ArticleFilterPanel'
 import type { Article } from './ArticleCard'

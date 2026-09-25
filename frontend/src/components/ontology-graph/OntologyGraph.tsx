@@ -20,10 +20,10 @@ import {
   GitBranch,
 } from 'lucide-react';
 
-import { GraphNode, GraphLink, GraphData } from './ontology-graph/types';
-import { renderNodeCanvas } from './ontology-graph/nodeCanvasRenderer';
-import NodeInfoPanel from './ontology-graph/NodeInfoPanel';
-import GraphLegend from './ontology-graph/GraphLegend';
+import { GraphNode, GraphLink, GraphData } from './types';
+import { renderNodeCanvas } from './nodeCanvasRenderer';
+import NodeInfoPanel from './NodeInfoPanel';
+import GraphLegend from './GraphLegend';
 
 const OntologyGraph: React.FC = () => {
   const [graphData, setGraphData] = useState<GraphData | null>(null);

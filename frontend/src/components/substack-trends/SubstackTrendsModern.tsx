@@ -25,14 +25,14 @@ import {
   MessageSquare,
   ChevronRight,
 } from 'lucide-react'
-import type { TrendData } from './substack-trends/types'
-import { formatDate } from './substack-trends/helpers'
+import type { TrendData } from './types'
+import { formatDate } from './helpers'
 import {
   TopicsTabPanel,
   AuthorsTabPanel,
   VelocityTabPanel,
   ClustersTabPanel,
-} from './substack-trends/TabPanels'
+} from './TabPanels'
 
 export default function SubstackTrendsModern() {
   const [trends, setTrends] = useState<TrendData | null>(null)

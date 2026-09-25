@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import ModelSelector from '../ModelSelector'
+import ModelSelector from '../llm/ModelSelector'
 import type { AnalysisType, GeneratedAnalysis, BatchProgress } from './constants'
 
 interface AnalysisGenerationControlsProps {

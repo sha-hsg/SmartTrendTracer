@@ -6,7 +6,7 @@ import {
   Plus,
   Loader2,
 } from 'lucide-react'
-import OntologyGraph from '../OntologyGraph'
+import OntologyGraph from '../ontology-graph/OntologyGraph'
 
 interface NewConceptForm {
   tag: string

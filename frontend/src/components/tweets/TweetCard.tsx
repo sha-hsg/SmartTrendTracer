@@ -8,7 +8,7 @@ import {
   Twitter,
   Calendar,
 } from 'lucide-react'
-import TweetCardModern from '../TweetCardModern'
+import TweetCardModern from './TweetCardModern'
 import { Concept } from '@/types/concept'
 
 interface Tweet {

@@ -218,3 +218,12 @@ def test_frontend_axios_ratchet():
     assert n <= FRONTEND_AXIOS_IMPORT_FILES_MAX, (
         f'{n} frontend files import axios directly (max {FRONTEND_AXIOS_IMPORT_FILES_MAX}): '
         f'use an API client in src/services/')
+
+
+def test_no_flat_components():
+    """components/ holds feature folders only (+ ui/); no new top-level files."""
+    comp = FRONTEND_SRC / 'components'
+    if not comp.exists():
+        return
+    flat = [p.name for p in comp.iterdir() if p.is_file() and p.suffix in ('.ts', '.tsx')]
+    assert not flat, f'put components into a feature folder, not components/ root: {flat}'

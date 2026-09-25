@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { ProcessingStatusIndicator } from "../ProcessingStatusIndicator";
+import { ProcessingStatusIndicator } from "./ProcessingStatusIndicator";
 import { useTableOfContents } from "./hooks/useTableOfContents";
 import { useDocumentChunking } from "./hooks/useDocumentChunking";
 import MarkdownRenderer from "./MarkdownRenderer";

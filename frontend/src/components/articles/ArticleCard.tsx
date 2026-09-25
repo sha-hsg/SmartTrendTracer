@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Concept } from '@/types/concept'
 import conceptService from '@/services/conceptService'
-import TagSuggestionModalModern from '../TagSuggestionModalModern'
+import TagSuggestionModalModern from '../concept-management/TagSuggestionModalModern'
 
 
 export interface Article {

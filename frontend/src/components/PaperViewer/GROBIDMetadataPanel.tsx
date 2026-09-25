@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import http from '@/services/http'
-import MetadataImportDialog from './MetadataImportDialog'
+import MetadataImportDialog from '../paper-import/MetadataImportDialog'
 import { 
   FileText, 
   Loader2, 

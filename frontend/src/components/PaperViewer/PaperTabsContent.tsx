@@ -22,14 +22,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const PDFViewerModern = React.lazy(() => import("../PDFViewerModern"));
+const PDFViewerModern = React.lazy(() => import("./PDFViewerModern"));
 
-import { ProcessingStatusIndicator } from "../ProcessingStatusIndicator";
+import { ProcessingStatusIndicator } from "./ProcessingStatusIndicator";
 import PaperAnalysisPanel from "../paper-analysis";
-import TEIViewer from "../TEIViewer";
-import PaperReferences from "../PaperReferences";
-import GROBIDMetadataPanel from "../GROBIDMetadataPanel";
-import BibTeXViewer from "../BibTeXViewer";
+import TEIViewer from "./TEIViewer";
+import PaperReferences from "./PaperReferences";
+import GROBIDMetadataPanel from "./GROBIDMetadataPanel";
+import BibTeXViewer from "./BibTeXViewer";
 
 import PaperContentViewer from "./PaperContentViewer";
 import PaperSectionsTab from "./PaperSectionsTab";

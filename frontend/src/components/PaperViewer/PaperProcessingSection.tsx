@@ -10,8 +10,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ProcessingTimer } from "../ProcessingTimer";
-import { ProcessingStatusIndicator } from "../ProcessingStatusIndicator";
+import { ProcessingTimer } from "./ProcessingTimer";
+import { ProcessingStatusIndicator } from "./ProcessingStatusIndicator";
 import type { Paper } from "./types";
 
 export interface PaperProcessingSectionProps {

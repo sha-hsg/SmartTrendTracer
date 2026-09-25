@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Extracted PaperViewer sub-components and hooks
-import PaperDetailsSidebar from "./PaperViewer/PaperDetailsSidebar";
-import { PaperDialogs } from "./PaperViewer/PaperDialogs";
-import PaperTabsContent from "./PaperViewer/PaperTabsContent";
-import { useKeyboardNavigation } from "./PaperViewer/hooks/useKeyboardNavigation";
-import { useTableOfContents } from "./PaperViewer/hooks/useTableOfContents";
-import { usePaperData } from "./PaperViewer/hooks/usePaperData";
+import PaperDetailsSidebar from "./PaperDetailsSidebar";
+import { PaperDialogs } from "./PaperDialogs";
+import PaperTabsContent from "./PaperTabsContent";
+import { useKeyboardNavigation } from "./hooks/useKeyboardNavigation";
+import { useTableOfContents } from "./hooks/useTableOfContents";
+import { usePaperData } from "./hooks/usePaperData";
 
 interface PaperViewerOptimizedProps {
   paperId: string | number; // Support both MongoDB ObjectId strings and legacy integer IDs

@@ -8,7 +8,7 @@ import {
   Search,
   RefreshCw,
 } from 'lucide-react'
-import TagSuggestionModalModern from '../TagSuggestionModalModern'
+import TagSuggestionModalModern from '../concept-management/TagSuggestionModalModern'
 import { cn } from "@/lib/utils"
 import { Concept } from '@/types/concept'
 import TweetFilterPanel from './TweetFilterPanel'

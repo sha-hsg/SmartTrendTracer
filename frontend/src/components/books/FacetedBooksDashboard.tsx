@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { cn } from '@/lib/utils'
 
-import BookUploadModal from '../BookUploadModal'
+import BookUploadModal from './BookUploadModal'
 import BookCard from './BookCard'
 import type { Book } from './BookCard'
 import BookFilterPanel from './BookFilterPanel'

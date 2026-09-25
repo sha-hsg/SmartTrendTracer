@@ -10,8 +10,8 @@ import {
   RefreshCw,
   MessageSquare
 } from 'lucide-react'
-import TagSuggestionModalModern from '../TagSuggestionModalModern'
-import SemanticConceptSearch from '../SemanticConceptSearch'
+import TagSuggestionModalModern from '../concept-management/TagSuggestionModalModern'
+import SemanticConceptSearch from '../concept-management/SemanticConceptSearch'
 import { cn } from "@/lib/utils"
 import { Concept } from '@/types/concept'
 import RedditPostCard from './RedditPostCard'

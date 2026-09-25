@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { toast } from 'sonner'
-import UnifiedModelSelector from './UnifiedModelSelector'
+import UnifiedModelSelector from '../llm/UnifiedModelSelector'
 import { useModelSelector } from '@/hooks/useModelSelector'
 
 interface ConceptSuggestion {

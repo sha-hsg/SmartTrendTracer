@@ -24,7 +24,7 @@ import SearchControls from './SearchControls'
 import SearchResultCard, { Source } from './SearchResultCard'
 
 const ArticleViewerModern = React.lazy(() => import('../article-viewer/ArticleViewerModern'))
-const PaperViewerOptimized = React.lazy(() => import('../PaperViewerOptimized'))
+const PaperViewerOptimized = React.lazy(() => import('../PaperViewer/PaperViewerOptimized'))
 
 interface RAGResponse {
   question: string

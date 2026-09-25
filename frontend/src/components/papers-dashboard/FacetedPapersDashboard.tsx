@@ -21,21 +21,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils'
 
 import PaperUploadModern from './PaperUploadModern'
-import UnifiedImportDialog from './UnifiedImportDialog'
-import UnifiedModelSelector from './UnifiedModelSelector'
+import UnifiedImportDialog from '../paper-import/UnifiedImportDialog'
+import UnifiedModelSelector from '../llm/UnifiedModelSelector'
 
 // Lazy-loaded components for code-splitting
-const PaperViewerOptimized = React.lazy(() => import('./PaperViewerOptimized'))
+const PaperViewerOptimized = React.lazy(() => import('../PaperViewer/PaperViewerOptimized'))
 import PaperTagSuggestionModal from './PaperTagSuggestionModal'
 
 // Extracted hooks for batch processing and event handling
-import { useBatchProcessing } from './PapersDashboard/hooks/useBatchProcessing'
-import { useAnalysisBatchProcessing } from './PapersDashboard/hooks/useAnalysisBatchProcessing'
-import { usePaperEventListeners } from './PapersDashboard/hooks/usePaperEventListeners'
+import { useBatchProcessing } from '../PapersDashboard/hooks/useBatchProcessing'
+import { useAnalysisBatchProcessing } from '../PapersDashboard/hooks/useAnalysisBatchProcessing'
+import { usePaperEventListeners } from '../PapersDashboard/hooks/usePaperEventListeners'
 
 // Extracted sub-components
-import { PaperFacetsPanel, PaperListRenderer, BatchProcessingPanel, ConceptsSidebar } from './papers-dashboard'
-import { usePapersDashboard } from './papers-dashboard'
+import { PaperFacetsPanel, PaperListRenderer, BatchProcessingPanel, ConceptsSidebar } from '.'
+import { usePapersDashboard } from '.'
 
 interface FacetedPapersDashboardProps {
   paperType?: 'research' | 'review'

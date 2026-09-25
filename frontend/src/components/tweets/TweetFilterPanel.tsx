@@ -15,7 +15,7 @@ import {
   ChevronRight as ChevronRightIcon,
   X,
 } from 'lucide-react'
-import SemanticConceptSearch from '../SemanticConceptSearch'
+import SemanticConceptSearch from '../concept-management/SemanticConceptSearch'
 import { cn } from "@/lib/utils"
 import { Concept } from '@/types/concept'
 import conceptService from '@/services/conceptService'

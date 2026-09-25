@@ -6,8 +6,8 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-import EntityAnnotationReviewModern from '../EntityAnnotationReviewModern'
-import UnifiedModelSelector from '../UnifiedModelSelector'
+import EntityAnnotationReviewModern from '../entities/EntityAnnotationReviewModern'
+import UnifiedModelSelector from '../llm/UnifiedModelSelector'
 import { useModelSelector } from '@/hooks/useModelSelector'
 import {
   X,

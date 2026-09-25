@@ -7,7 +7,7 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react'
-import UnifiedModelSelector from '../UnifiedModelSelector'
+import UnifiedModelSelector from '../llm/UnifiedModelSelector'
 import type { BatchResult, AnnotateAllProgress, AnnotateAllResult } from './useBatchAnnotation'
 
 interface AnnotationFacet {

@@ -22,7 +22,7 @@ import {
   Trash2,
   Save,
 } from 'lucide-react'
-import TagReorganizerPersistent from '../TagReorganizerPersistent'
+import TagReorganizerPersistent from '../tag-reorganizer/TagReorganizerPersistent'
 import type { Concept } from './types'
 import type { ConceptTreeNode } from './ConceptTreePanel'
 

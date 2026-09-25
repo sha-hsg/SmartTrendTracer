@@ -18,8 +18,8 @@ import {
   ResultDisplay,
   calculateEstimatedTime,
   formatMinutes
-} from './tag-reorganizer'
-import type { Task } from './tag-reorganizer'
+} from '.'
+import type { Task } from '.'
 
 export default function TagReorganizerPersistent() {
   const [isRunning, setIsRunning] = useState(false)

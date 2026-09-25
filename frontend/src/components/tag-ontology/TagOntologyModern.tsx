@@ -30,7 +30,7 @@ import {
   GitBranch,
   FileDown,
 } from 'lucide-react'
-import TagReorganizerPersistent from '../TagReorganizerPersistent'
+import TagReorganizerPersistent from '../tag-reorganizer/TagReorganizerPersistent'
 import ConceptTree from './ConceptTree'
 import ConceptDetails, { SynonymsPanel } from './ConceptDetails'
 import { CreateConceptPanel, GraphPanel } from './ConceptActions'

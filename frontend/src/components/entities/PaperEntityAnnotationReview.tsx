@@ -6,16 +6,15 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Sparkles, AlertCircle, Undo2, CheckSquare, XSquare } from 'lucide-react'
-import ModelBadge from './ModelBadge'
-import UnifiedModelSelector from './UnifiedModelSelector'
-import EntityCardReview from './EntityCardReview'
-import type { EntitySuggestion } from './EntityCardReview'
-import { getDefaultModel } from '@/config/models'
+import { Loader2, Sparkles, AlertCircle, Undo2, CheckSquare, XSquare, FileText } from 'lucide-react'
+import ModelBadge from '../llm/ModelBadge'
+import UnifiedModelSelector from '../llm/UnifiedModelSelector'
+import { useModelSelector } from '@/hooks/useModelSelector'
+import EntityReviewCard from './EntityReviewCard'
+import type { EntitySuggestion, EntityTypeInfo } from './EntityReviewCard'
 
-interface EntityAnnotationReviewProps {
-  articleId?: number
-  tweetId?: string
+interface PaperEntityAnnotationReviewProps {
+  paperId: number
   onComplete?: () => void
 }
 
@@ -25,7 +24,7 @@ interface UndoAction {
   timestamp: number
 }
 
-function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: EntityAnnotationReviewProps) {
+function PaperEntityAnnotationReview({ paperId, onComplete }: PaperEntityAnnotationReviewProps) {
   const [entities, setEntities] = useState<EntitySuggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [extracting, setExtracting] = useState(false)
@@ -38,16 +37,14 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
   const [editingEntity, setEditingEntity] = useState<string | null>(null)
   const [editedValues, setEditedValues] = useState<Record<string, any>>({})
   const [extractionModel, setExtractionModel] = useState<string>('')
+  const [paperTitle, setPaperTitle] = useState<string>('')
 
-  // Model selection with localStorage persistence - uses centralized config default
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    return localStorage.getItem('preferredEntityExtractionModel') || getDefaultModel('entityExtraction')
-  })
-
-  // Save model preference to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('preferredEntityExtractionModel', selectedModel)
-  }, [selectedModel])
+  // Use unified model selector hook for entity extraction
+  const {
+    selectedModel,
+    loading: modelLoading,
+    selectModel
+  } = useModelSelector('entity_extraction')
 
   // Load schema on mount
   useEffect(() => {
@@ -69,28 +66,55 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     setLoading(true)
 
     try {
-      const payload: any = {}
-      if (articleId) payload.article_id = articleId
-      if (tweetId) payload.tweet_id = tweetId
-      payload.use_fast_model = false
+      // Create abort controller for timeout and cancellation
+      const controller = new AbortController()
+      // Increase timeout to 5 minutes for GPT-5 and Gemini processing
+      const timeoutId = setTimeout(() => {
+        controller.abort()
+        console.warn('Entity extraction timed out after 5 minutes')
+      }, 300000) // 5 minute timeout
 
-      // Add model selection
-      if (selectedModel) payload.model = selectedModel
+      console.log(`Starting entity extraction with model: ${selectedModel}`)
 
-      const response = await fetch(`${API_BASE_URL}/api/entities/extract`, {
+      const response = await fetch(`${API_BASE_URL}/api/papers/${paperId}/entities/extract?model_choice=${selectedModel}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ use_fast_model: false }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         const data = await response.json()
-        setEntities(data.entities)
+        console.log(`Extraction complete. Found ${data.entities?.length || 0} entities using model: ${data.model}`)
+        setEntities(data.entities || [])
         setStats(data.stats)
-        setExtractionModel(data.model || selectedModel || 'claude-sonnet-5')
+        setExtractionModel(data.model || 'unknown')
+        setPaperTitle(data.paper_title || `Paper ${paperId}`)
+
+        // Show message if it's a placeholder implementation
+        if (data.message) {
+          console.info('Entity Extraction:', data.message)
+        }
+
+        // Alert if no entities were found
+        if (!data.entities || data.entities.length === 0) {
+          console.warn('No entities were extracted. This might indicate an issue with the extraction process.')
+        }
+      } else {
+        const errorText = await response.text()
+        console.error('Error response from server:', errorText)
+        alert(`Entity extraction failed: ${errorText}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error extracting entities:', error)
+      if (error.name === 'AbortError') {
+        console.error('Entity extraction was cancelled or timed out after 5 minutes')
+        alert('Entity extraction timed out. The paper might be too long or the model might be slow. Try using a faster model.')
+      } else {
+        alert(`Entity extraction error: ${error.message}`)
+      }
     } finally {
       setExtracting(false)
       setLoading(false)
@@ -111,17 +135,8 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
       })
 
       if (response.ok) {
-        // Remove from list
         setEntities(entities.filter(e => e.id !== entity.id))
-        
-        // Add to undo stack
-        setUndoStack([...undoStack, {
-          type: 'accept',
-          entities: [entity],
-          timestamp: Date.now()
-        }])
-        
-        // Clear selection
+        setUndoStack([...undoStack, { type: 'accept', entities: [entity], timestamp: Date.now() }])
         selectedEntities.delete(entity.id)
         setSelectedEntities(new Set(selectedEntities))
       }
@@ -135,24 +150,12 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
       const response = await fetch(`${API_BASE_URL}/api/entities/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          entity_id: entity.id,
-          action: 'reject'
-        })
+        body: JSON.stringify({ entity_id: entity.id, action: 'reject' })
       })
 
       if (response.ok) {
-        // Remove from list
         setEntities(entities.filter(e => e.id !== entity.id))
-        
-        // Add to undo stack
-        setUndoStack([...undoStack, {
-          type: 'reject',
-          entities: [entity],
-          timestamp: Date.now()
-        }])
-        
-        // Clear selection
+        setUndoStack([...undoStack, { type: 'reject', entities: [entity], timestamp: Date.now() }])
         selectedEntities.delete(entity.id)
         setSelectedEntities(new Set(selectedEntities))
       }
@@ -166,29 +169,21 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     if (entitiesToAccept.length === 0) return
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/entities/bulk-action`, {
+      const response = await fetch(`${API_BASE_URL}/api/papers/${paperId}/entities/bulk-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           entity_ids: Array.from(selectedEntities),
           action: 'accept_all',
-          article_id: articleId,
           entities: entitiesToAccept
         })
       })
 
       if (response.ok) {
-        // Remove accepted entities
+        const result = await response.json()
+        console.log('Bulk accept result:', result)
         setEntities(entities.filter(e => !selectedEntities.has(e.id)))
-        
-        // Add to undo stack
-        setUndoStack([...undoStack, {
-          type: 'bulk',
-          entities: entitiesToAccept,
-          timestamp: Date.now()
-        }])
-        
-        // Clear selection
+        setUndoStack([...undoStack, { type: 'bulk', entities: entitiesToAccept, timestamp: Date.now() }])
         setSelectedEntities(new Set())
       }
     } catch (error) {
@@ -201,7 +196,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     if (entitiesToReject.length === 0) return
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/entities/bulk-action`, {
+      const response = await fetch(`${API_BASE_URL}/api/papers/${paperId}/entities/bulk-action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -211,17 +206,8 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
       })
 
       if (response.ok) {
-        // Remove rejected entities
         setEntities(entities.filter(e => !selectedEntities.has(e.id)))
-        
-        // Add to undo stack
-        setUndoStack([...undoStack, {
-          type: 'bulk',
-          entities: entitiesToReject,
-          timestamp: Date.now()
-        }])
-        
-        // Clear selection
+        setUndoStack([...undoStack, { type: 'bulk', entities: entitiesToReject, timestamp: Date.now() }])
         setSelectedEntities(new Set())
       }
     } catch (error) {
@@ -231,13 +217,8 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
 
   const undoLastAction = () => {
     if (undoStack.length === 0) return
-
     const lastAction = undoStack[undoStack.length - 1]
-    
-    // Restore entities to list
     setEntities([...entities, ...lastAction.entities])
-    
-    // Remove from undo stack
     setUndoStack(undoStack.slice(0, -1))
   }
 
@@ -264,16 +245,12 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     setEditingEntity(entityId)
     setEditedValues({
       ...editedValues,
-      [entityId]: {
-        text: entity.text,
-        type: entity.type
-      }
+      [entityId]: { text: entity.text, type: entity.type }
     })
   }
 
   const saveEntityEdit = (_entityId: string) => {
     setEditingEntity(null)
-    // The edited values will be used when accepting the entity
   }
 
   const cancelEntityEdit = (entityId: string) => {
@@ -283,62 +260,63 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
     setEditedValues(newEditedValues)
   }
 
+  const handleEditValueChange = (entityId: string, values: Record<string, any>) => {
+    setEditedValues({ ...editedValues, [entityId]: values })
+  }
+
   const getFilteredEntities = () => {
     let filtered = [...entities]
-    
-    // Filter by type
     if (filterType !== 'all') {
       filtered = filtered.filter(e => e.type === filterType)
     }
-    
-    // Sort
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'confidence':
-          return b.confidence - a.confidence
-        case 'type':
-          return a.type.localeCompare(b.type)
-        case 'text':
-          return a.text.localeCompare(b.text)
-        default:
-          return 0
+        case 'confidence': return b.confidence - a.confidence
+        case 'type': return a.type.localeCompare(b.type)
+        case 'text': return a.text.localeCompare(b.text)
+        default: return 0
       }
     })
-    
     return filtered
   }
 
-  const getEntityTypeInfo = (type: string) => {
+  const getEntityTypeInfo = (type: string): EntityTypeInfo => {
     if (!schema) return { color: 'bg-gray-100 text-gray-700', icon: '📌' }
-    
+
     const typeColorMap: Record<string, string> = {
       'person': 'bg-blue-100 text-blue-700',
+      'organisation': 'bg-purple-100 text-purple-700',
       'organization': 'bg-purple-100 text-purple-700',
-      'technology': 'bg-green-100 text-green-700',
-      'product': 'bg-orange-100 text-orange-700',
-      'concept': 'bg-yellow-100 text-yellow-700',
+      'model': 'bg-pink-100 text-pink-700',
+      'method': 'bg-orange-100 text-orange-700',
+      'dataset': 'bg-green-100 text-green-700',
+      'benchmark': 'bg-yellow-100 text-yellow-700',
+      'metric': 'bg-purple-100 text-purple-700',
+      'research-topic': 'bg-cyan-100 text-cyan-700',
       'location': 'bg-red-100 text-red-700',
       'event': 'bg-pink-100 text-pink-700',
+      'tool': 'bg-green-100 text-green-700',
+      'concept': 'bg-purple-100 text-purple-700',
+      'paper': 'bg-blue-100 text-blue-700',
       'default': 'bg-gray-100 text-gray-700'
     }
-    
+
     for (const category of Object.values(schema.entity_types || {})) {
       const cat = category as any
-      if (cat.tag === type) return { 
-        color: typeColorMap[type.toLowerCase()] || typeColorMap.default, 
-        icon: cat.icon 
+      if (cat.tag === type) return {
+        color: typeColorMap[type.toLowerCase()] || typeColorMap.default,
+        icon: cat.icon
       }
-      
       for (const child of Object.values(cat.children || {})) {
         const ch = child as any
-        if (ch.tag === type) return { 
-          color: typeColorMap[type.toLowerCase()] || typeColorMap.default, 
-          icon: ch.icon 
+        if (ch.tag === type) return {
+          color: typeColorMap[type.toLowerCase()] || typeColorMap.default,
+          icon: ch.icon
         }
       }
     }
-    
-    return { color: 'bg-gray-100 text-gray-700', icon: '📌' }
+
+    return { color: typeColorMap[type.toLowerCase()] || typeColorMap.default, icon: '📌' }
   }
 
   const filteredEntities = getFilteredEntities()
@@ -351,11 +329,11 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
           <div>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5" />
-              Entity Annotation Review
+              Paper Entity Annotation Review
             </CardTitle>
-            <CardDescription>
-              {articleId && <span>Article #{articleId}</span>}
-              {tweetId && <span>Tweet</span>}
+            <CardDescription className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              {paperTitle || `Paper #${paperId}`}
             </CardDescription>
           </div>
           {extractionModel && (
@@ -365,47 +343,42 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Extraction Configuration */}
+        {/* Extraction Button */}
         {entities.length === 0 && !loading && (
-          <div className="space-y-4">
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                No entities extracted yet. Configure your model and run automatic annotation to detect entities.
-              </AlertDescription>
-            </Alert>
-
-            {/* Model Selection - Uses UnifiedModelSelector with centralized model config */}
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-4">
+                <span>No entities extracted yet. Run automatic annotation to detect entities in this paper.</span>
                 <UnifiedModelSelector
                   taskType="entity_extraction"
-                  value={selectedModel}
-                  onValueChange={setSelectedModel}
-                  label="AI Model for Extraction"
-                  description="Select the model to use for entity extraction"
+                  value={selectedModel || ''}
+                  onValueChange={selectModel}
+                  label="Entity Extraction Model"
+                  description="Select the AI model for extracting entities from this paper"
+                  disabled={modelLoading || extracting}
+                  compact={false}
                 />
+                <Button
+                  onClick={runExtraction}
+                  disabled={extracting || !selectedModel}
+                  className="w-full"
+                >
+                  {extracting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Extracting entities...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Run Automatic Annotation
+                    </>
+                  )}
+                </Button>
               </div>
-
-              <Button
-                onClick={runExtraction}
-                disabled={extracting}
-                size="lg"
-              >
-                {extracting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Extracting...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Run Automatic Annotation
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Loading overlay while extracting */}
@@ -414,7 +387,7 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
             <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
             <h3 className="text-lg font-semibold text-purple-700 mb-2">Processing with AI...</h3>
             <p className="text-sm text-gray-600">
-              Extracting entities from {articleId ? 'article' : 'tweet'}
+              Extracting entities from full paper content...
             </p>
           </div>
         )}
@@ -422,21 +395,13 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
         {/* Stats Bar */}
         {entities.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">
-              Total: {entities.length}
-            </Badge>
-            <Badge variant="secondary">
-              Selected: {selectedEntities.size}
-            </Badge>
+            <Badge variant="secondary">Total: {entities.length}</Badge>
+            <Badge variant="secondary">Selected: {selectedEntities.size}</Badge>
             {Object.entries(stats.by_type || {}).map(([type, count]) => (
-              <Badge key={type} variant="outline">
-                {type}: {count as number}
-              </Badge>
+              <Badge key={type} variant="outline">{type}: {count as number}</Badge>
             ))}
             {stats.avg_confidence && (
-              <Badge variant="outline">
-                Avg Confidence: {(stats.avg_confidence * 100).toFixed(1)}%
-              </Badge>
+              <Badge variant="outline">Avg Confidence: {(stats.avg_confidence * 100).toFixed(1)}%</Badge>
             )}
           </div>
         )}
@@ -478,27 +443,13 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={selectAll}>
-                Select All
-              </Button>
-              <Button variant="outline" size="sm" onClick={deselectAll}>
-                Deselect All
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={bulkAccept}
-                disabled={selectedEntities.size === 0}
-              >
+              <Button variant="outline" size="sm" onClick={selectAll}>Select All</Button>
+              <Button variant="outline" size="sm" onClick={deselectAll}>Deselect All</Button>
+              <Button variant="default" size="sm" onClick={bulkAccept} disabled={selectedEntities.size === 0}>
                 <CheckSquare className="mr-2 h-4 w-4" />
                 Accept Selected ({selectedEntities.size})
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={bulkReject}
-                disabled={selectedEntities.size === 0}
-              >
+              <Button variant="destructive" size="sm" onClick={bulkReject} disabled={selectedEntities.size === 0}>
                 <XSquare className="mr-2 h-4 w-4" />
                 Reject Selected ({selectedEntities.size})
               </Button>
@@ -509,6 +460,36 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
                 </Button>
               )}
             </div>
+
+            {/* Re-extract with different model */}
+            <div className="space-y-3">
+              <UnifiedModelSelector
+                taskType="entity_extraction"
+                value={selectedModel || ''}
+                onValueChange={selectModel}
+                label="Re-extract with Different Model"
+                description="Choose a different AI model to re-extract entities"
+                disabled={modelLoading || extracting}
+                compact={false}
+              />
+              <Button
+                onClick={runExtraction}
+                disabled={extracting || !selectedModel}
+                className="w-full"
+              >
+                {extracting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Re-extracting entities...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Re-extract Entities
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -517,22 +498,19 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
           <ScrollArea className="h-[500px] w-full rounded-md border p-4">
             <div className="space-y-3">
               {filteredEntities.map(entity => (
-                <EntityCardReview
+                <EntityReviewCard
                   key={entity.id}
                   entity={entity}
+                  typeInfo={getEntityTypeInfo(entity.type)}
                   isSelected={selectedEntities.has(entity.id)}
                   isEditing={editingEntity === entity.id}
                   editValues={editedValues[entity.id] || {}}
-                  typeInfo={getEntityTypeInfo(entity.type)}
                   uniqueTypes={uniqueTypes}
                   onToggleSelection={toggleEntitySelection}
                   onStartEditing={startEditingEntity}
                   onSaveEdit={saveEntityEdit}
                   onCancelEdit={cancelEntityEdit}
-                  onEditValueChange={(entityId, values) => setEditedValues({
-                    ...editedValues,
-                    [entityId]: values
-                  })}
+                  onEditValueChange={handleEditValueChange}
                   onAccept={acceptEntity}
                   onReject={rejectEntity}
                 />
@@ -555,4 +533,4 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
   )
 }
 
-export default EntityAnnotationReviewModern
+export default PaperEntityAnnotationReview

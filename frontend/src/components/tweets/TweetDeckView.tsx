@@ -21,8 +21,8 @@ import {
   Sparkles,
   FileText,
 } from 'lucide-react'
-import TweetCardModern from '../TweetCardModern'
-import TagSuggestionModalModern from '../TagSuggestionModalModern'
+import TweetCardModern from './TweetCardModern'
+import TagSuggestionModalModern from '../concept-management/TagSuggestionModalModern'
 import BatchAnnotationPanel from './BatchAnnotationPanel'
 import { useBatchAnnotation } from './useBatchAnnotation'
 import type { TwitterAccount } from '../twitter/types'

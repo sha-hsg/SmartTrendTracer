@@ -19,11 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import PaperTagSuggestionModal from "../PaperTagSuggestionModal";
-import PaperEntityAnnotationReview from "../PaperEntityAnnotationReview";
-import { DBLPSearchModal } from "../DBLPSearchModal";
-import { MarkerProgressModal } from "../MarkerProgressModal";
-import ConceptEditModal from "../ConceptEditModal";
+import PaperTagSuggestionModal from "../papers-dashboard/PaperTagSuggestionModal";
+import PaperEntityAnnotationReview from "../entities/PaperEntityAnnotationReview";
+import { DBLPSearchModal } from "../paper-import/DBLPSearchModal";
+import { MarkerProgressModal } from "./MarkerProgressModal";
+import ConceptEditModal from "../concept-management/ConceptEditModal";
 
 import { MetadataDialog } from "./MetadataDialog";
 import { AffiliationDialog } from "./AffiliationDialog";
