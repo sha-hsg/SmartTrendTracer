@@ -45,7 +45,7 @@ def normalize_datetime(dt_value: Any) -> Optional[datetime]:
     return None
 
 # Import helper functions
-from app.services.analytics_helpers import (
+from app.services.analytics import (
     parse_period_to_days,
     get_date_range,
     get_previous_period_range,

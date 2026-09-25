@@ -37,7 +37,7 @@ def list_supported_auth_sites():
     Returns list of supported sites with their login URLs and session status.
     """
     try:
-        from app.collectors.playwright_collector.session_manager import (
+        from app.collectors.playwright_collector import (
             SessionManager, SUPPORTED_SITES
         )
 
@@ -86,7 +86,7 @@ async def start_auth_flow(site: str):
         )
 
     try:
-        from app.collectors.playwright_collector.session_manager import SUPPORTED_SITES
+        from app.collectors.playwright_collector import SUPPORTED_SITES
         from app.collectors.playwright_collector import PlaywrightCollector
 
         site_config = SUPPORTED_SITES.get(site)
@@ -127,7 +127,7 @@ def clear_auth_session(site: str):
     - site: Site identifier (substack, medium, patreon)
     """
     try:
-        from app.collectors.playwright_collector.session_manager import SessionManager
+        from app.collectors.playwright_collector import SessionManager
 
         sm = SessionManager()
         success = sm.delete_session(site)

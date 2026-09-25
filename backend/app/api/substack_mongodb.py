@@ -4,10 +4,10 @@ MongoDB-based Substack API - compatible with full MongoDB system
 
 from fastapi import APIRouter, HTTPException, Query
 from app.database.mongodb import get_database
-from app.services.analytics.concept_helpers import (
+from app.services.analytics import (
     count_tags_for_content, calculate_tag_velocity, determine_trend,
+    get_previous_period_range,
 )
-from app.services.analytics.date_helpers import get_previous_period_range
 from typing import Dict, Any
 from datetime import datetime, timezone, timedelta
 import logging

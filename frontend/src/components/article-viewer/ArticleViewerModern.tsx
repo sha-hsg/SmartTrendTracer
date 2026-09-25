@@ -30,13 +30,10 @@ import {
   RefreshCw
 } from 'lucide-react'
 
-import {
-  useArticleViewer,
-  ArticleContentRenderer,
-  ArticleSnippetsPanel,
-  useArticleAnnotator,
-  AnnotatorPortals,
-} from './index'
+import { useArticleViewer } from './useArticleViewer'
+import ArticleContentRenderer from './ArticleContentRenderer'
+import ArticleSnippetsPanel from './ArticleSnippetsPanel'
+import { useArticleAnnotator, AnnotatorPortals } from './ArticleAnnotator'
 import { AuthorEditor, SummaryCard } from './ArticleContent'
 
 interface ArticleViewerProps {

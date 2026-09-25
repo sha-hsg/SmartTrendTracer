@@ -8,7 +8,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from 'lucide-react'
-import type { SystemStats } from './StatisticsDashboard'
+import type { SystemStats } from './types'
 
 interface StatsOverviewCardsProps {
   stats: SystemStats

@@ -6,7 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { TrendingUp, Database, Activity, Hash, BookOpen, MessageSquare, AlertCircle, CheckCircle, Info, Search, Image, Tags } from 'lucide-react'
 import { LLMUsageTab } from '../StatisticsDashboard/LLMUsageTab'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts'
-import type { SystemStats } from './StatisticsDashboard'
+import type { SystemStats } from './types'
 
 interface StatsChartsProps {
   stats: SystemStats

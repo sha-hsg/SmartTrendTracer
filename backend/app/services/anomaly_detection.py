@@ -415,7 +415,7 @@ def get_concept_cooccurrence(
     Returns:
         Dict with concepts, matrix, and pairs
     """
-    from app.services.analytics_helpers import (
+    from app.services.analytics import (
         get_date_range, fetch_tweets_in_range,
         fetch_articles_in_range, fetch_papers_in_range
     )

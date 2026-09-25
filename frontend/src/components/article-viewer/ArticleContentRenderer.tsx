@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Save, Loader2 } from 'lucide-react'
-import type { FullArticle } from './useArticleViewer'
+import type { FullArticle } from './types'
 
 interface ArticleContentRendererProps {
   article: FullArticle

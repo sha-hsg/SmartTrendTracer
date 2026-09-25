@@ -8,7 +8,7 @@ import React from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StickyNote, Trash2 } from 'lucide-react'
-import type { FullArticle } from './useArticleViewer'
+import type { FullArticle } from './types'
 
 interface ArticleSnippetsPanelProps {
   snippets: FullArticle['snippets']

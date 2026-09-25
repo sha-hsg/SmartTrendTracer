@@ -11,13 +11,14 @@ Components:
 - PlaywrightCollector: Main orchestration class
 """
 
-from .session_manager import SessionManager
+from .session_manager import SessionManager, SUPPORTED_SITES
 from .content_extractor import ContentExtractor
 from .markdown_converter import MarkdownConverter
 from .collector import PlaywrightCollector
 
 __all__ = [
     'SessionManager',
+    'SUPPORTED_SITES',
     'ContentExtractor',
     'MarkdownConverter',
     'PlaywrightCollector'

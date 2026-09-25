@@ -28,6 +28,9 @@ class AsyncPDFProcessor:
         self.marker_service_url = "http://localhost:8002"
         self.mineru_service_url = "http://localhost:8003"
         self._shutdown = False
+        # Local synchronous fallback, injected by PDFProcessorService so this
+        # module never imports it back (that import formed a dependency cycle)
+        self.local_fallback = None
         # Register for cleanup on process exit (PERF: Quick Win #4)
         _processor_instances.append(self)
 
@@ -123,13 +126,13 @@ class AsyncPDFProcessor:
             result = await loop.run_in_executor(
                 self.executor, self._process_with_mineru_service, pdf_path, paper_id
             )
-        else:
-            # Fall back to synchronous processor in thread (your local fallback)
-            from .pdf_processor_service import get_pdf_processor_service
-            processor = get_pdf_processor_service()
+        elif self.local_fallback is not None:
+            # Fall back to the injected synchronous processor in a thread
             result = await loop.run_in_executor(
-                self.executor, processor.process_pdf, pdf_path, prefer_method
+                self.executor, self.local_fallback, pdf_path, prefer_method
             )
+        else:
+            result = {"success": False, "error": "No PDF service available and no local fallback configured"}
 
         return result
 

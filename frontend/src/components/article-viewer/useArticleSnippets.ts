@@ -3,7 +3,7 @@
  */
 import { useCallback } from 'react'
 import { API_BASE_URL } from '@/config/api'
-import type { FullArticle } from './useArticleViewer'
+import type { FullArticle } from './types'
 
 export interface UseArticleSnippetsParams {
   article: FullArticle | null

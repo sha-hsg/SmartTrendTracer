@@ -71,7 +71,7 @@ def print_install_instructions():
 
 def list_supported_sites():
     """Print list of supported sites."""
-    from app.collectors.playwright_collector.session_manager import SUPPORTED_SITES
+    from app.collectors.playwright_collector import SUPPORTED_SITES
 
     print("\n" + "="*60)
     print("Supported Sites")
@@ -85,7 +85,7 @@ def list_supported_sites():
 
 def list_sessions():
     """List all saved sessions."""
-    from app.collectors.playwright_collector.session_manager import SessionManager
+    from app.collectors.playwright_collector import SessionManager
 
     sm = SessionManager()
     sessions = sm.list_sessions()
@@ -110,7 +110,7 @@ def list_sessions():
 
 def clear_session(site: str):
     """Clear session for a site."""
-    from app.collectors.playwright_collector.session_manager import SessionManager
+    from app.collectors.playwright_collector import SessionManager
 
     sm = SessionManager()
     if sm.delete_session(site):
@@ -121,7 +121,7 @@ def clear_session(site: str):
 
 async def authenticate_site(site: str):
     """Authenticate with a site."""
-    from app.collectors.playwright_collector.collector import PlaywrightCollector
+    from app.collectors.playwright_collector import PlaywrightCollector
 
     collector = PlaywrightCollector(headless=False)
     try:
@@ -139,7 +139,7 @@ async def authenticate_site(site: str):
 
 async def check_status(site: str):
     """Check authentication status for a site."""
-    from app.collectors.playwright_collector.collector import PlaywrightCollector
+    from app.collectors.playwright_collector import PlaywrightCollector
 
     print(f"\nChecking authentication status for {site}...")
 
@@ -168,7 +168,7 @@ async def check_status(site: str):
 
 async def import_article(url: str, save_to_db: bool = True) -> dict:
     """Import a single article."""
-    from app.collectors.playwright_collector.collector import PlaywrightCollector
+    from app.collectors.playwright_collector import PlaywrightCollector
 
     print(f"\nImporting: {url}")
 
@@ -250,7 +250,7 @@ def save_article_to_db(article_data: dict) -> Optional[str]:
 
 async def batch_import(file_path: str, save_to_db: bool = True) -> List[dict]:
     """Import articles from a file of URLs."""
-    from app.collectors.playwright_collector.collector import PlaywrightCollector
+    from app.collectors.playwright_collector import PlaywrightCollector
 
     # Read URLs from file
     urls = []

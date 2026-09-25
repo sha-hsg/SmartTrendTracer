@@ -192,7 +192,7 @@ async def import_article_from_url(request: URLImportRequest):
     SUPPORTED_SITES: Dict[str, Any] = {}
     site: Optional[str] = None
     try:
-        from app.collectors.playwright_collector.session_manager import (
+        from app.collectors.playwright_collector import (
             SessionManager, SUPPORTED_SITES as _SUPPORTED_SITES,
         )
         SUPPORTED_SITES = _SUPPORTED_SITES

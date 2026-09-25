@@ -381,6 +381,8 @@ class PDFProcessorService:
     def _process_with_marker_service(self, pdf_path: str, paper_id: Optional[int] = None) -> Tuple[str, Dict]:
         try:
             async_client = get_async_pdf_processor()
+            if async_client.local_fallback is None:
+                async_client.local_fallback = self.process_pdf
             result = _run_async_coro(
                 async_client.process_pdf_async(
                     pdf_path=pdf_path,

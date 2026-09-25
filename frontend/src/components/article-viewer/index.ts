@@ -1,5 +1,5 @@
 export { useArticleViewer } from './useArticleViewer'
-export type { FullArticle, Author } from './useArticleViewer'
+export type { FullArticle, Author } from './types'
 export { default as ArticleContentRenderer } from './ArticleContentRenderer'
 export { default as ArticleSnippetsPanel } from './ArticleSnippetsPanel'
 export { useArticleAnnotator, AnnotatorPortals } from './ArticleAnnotator'

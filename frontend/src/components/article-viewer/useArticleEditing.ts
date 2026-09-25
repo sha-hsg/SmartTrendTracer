@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { API_BASE_URL } from '@/config/api'
-import type { FullArticle, Author } from './useArticleViewer'
+import type { FullArticle, Author } from './types'
 
 export interface UseArticleEditingParams {
   article: FullArticle | null
