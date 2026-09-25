@@ -8,12 +8,10 @@ from bson import ObjectId
 import logging
 
 from .utils import (
-    get_concepts_collection,
-    get_aliases_collection,
-    get_instances_collection,
-    find_concept_by_any_id,
     concept_id_variants,
 )
+from app.repositories.tag_ontology_utils_queries import find_concept_by_any_id
+from app.repositories import tag_ontology_concepts_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +22,13 @@ router = APIRouter()
 def get_tree():
     """Get the complete tag tree - returns array for frontend compatibility"""
     try:
-        concepts_col = get_concepts_collection()
-        aliases_col = get_aliases_collection()
 
         # Get all concepts
-        all_concepts = list(concepts_col.find({"status": {"$ne": "deprecated"}}))
+        all_concepts = list(queries.tag_concepts_v2_find__get_tree())
 
         # Get all aliases in one query, keyed by the string form of concept_id
         # (aliases store concept_id as ObjectId; legacy rows may hold "c_..." strings)
-        all_aliases = list(aliases_col.find({}))
+        all_aliases = list(queries.tag_aliases_v2_find__get_tree())
         aliases_by_concept = {}
         for alias in all_aliases:
             key = str(alias.get("concept_id"))
@@ -106,16 +102,14 @@ def get_tree():
 @router.get("/concepts")
 def get_all_concepts(include_aliases: bool = Query(False)):
     """Get all concepts from MongoDB"""
-    concepts_col = get_concepts_collection()
-    aliases_col = get_aliases_collection()
 
     # Get all active concepts
-    concepts = list(concepts_col.find({"status": {"$ne": "deprecated"}}))
+    concepts = list(queries.tag_concepts_v2_find__get_all_concepts())
 
     # Fetch all aliases in ONE query and group them by the string form of
     # concept_id (aliases store ObjectId; legacy rows may hold custom "c_..." ids)
     aliases_by_concept = {}
-    for alias in aliases_col.find({}):
+    for alias in queries.tag_aliases_v2_find__get_all_concepts():
         key = str(alias.get("concept_id"))
         aliases_by_concept.setdefault(key, []).append(alias)
 
@@ -166,17 +160,14 @@ def get_all_concepts(include_aliases: bool = Query(False)):
 @router.get("/concept/{concept_id}")
 def get_concept_detail(concept_id: str):
     """Get detailed information about a specific concept"""
-    concepts_col = get_concepts_collection()
-    aliases_col = get_aliases_collection()
-    instances_col = get_instances_collection()
 
     # Get concept - try both id field and _id (ObjectId)
-    concept = concepts_col.find_one({"id": concept_id})
+    concept = queries.tag_concepts_v2_find_one__get_concept_detail(concept_id)
     if not concept:
         # Try with ObjectId if it looks like one
         try:
             if len(concept_id) == 24:  # ObjectId is 24 hex chars
-                concept = concepts_col.find_one({"_id": ObjectId(concept_id)})
+                concept = queries.tag_concepts_v2_find_one__get_concept_detail_2(concept_id)
         except Exception:
             pass
 
@@ -217,7 +208,7 @@ def get_concept_detail(concept_id: str):
             else:
                 parent_ids.append(pid)
 
-        parent_concepts = list(concepts_col.find({"_id": {"$in": parent_ids}}))
+        parent_concepts = list(queries.tag_concepts_v2_find__get_concept_detail(parent_ids))
 
         # Ensure parents have id field
         for p in parent_concepts:
@@ -264,7 +255,7 @@ def get_concept_detail(concept_id: str):
             else:
                 child_ids.append(cid)
 
-        child_concepts = list(concepts_col.find({"_id": {"$in": child_ids}}))
+        child_concepts = list(queries.tag_concepts_v2_find__get_concept_detail_2(child_ids))
 
         # Ensure children have id field
         for c in child_concepts:
@@ -296,7 +287,7 @@ def get_concept_detail(concept_id: str):
         id_variants.append(concept["id"])
 
     # Get aliases (stored as ObjectId; legacy rows may hold custom "c_..." ids)
-    aliases = list(aliases_col.find({"concept_id": {"$in": id_variants}}))
+    aliases = list(queries.tag_aliases_v2_find__get_concept_detail(id_variants))
     concept["aliases"] = [
         {
             "text": a["alias_text"],
@@ -314,10 +305,7 @@ def get_concept_detail(concept_id: str):
     # tag_instances stores concept_id as ObjectId (with a small legacy
     # remainder as strings), so match both representations.
     usage_by_type = {}
-    for row in instances_col.aggregate([
-        {"$match": {"concept_id": {"$in": id_variants}}},
-        {"$group": {"_id": "$content_type", "count": {"$sum": 1}}}
-    ]):
+    for row in queries.tag_instances_aggregate__get_concept_detail(id_variants):
         usage_by_type[row["_id"]] = row["count"]
     tweet_count = usage_by_type.get("tweet", 0)
     paper_count = usage_by_type.get("paper", 0)
@@ -336,7 +324,6 @@ def get_concept_detail(concept_id: str):
 @router.post("/concept")
 def create_concept(concept_data: dict):
     """Create a new concept in MongoDB"""
-    concepts_col = get_concepts_collection()
 
     # Collision-free, schema-compliant IDs: ObjectId as _id,
     # custom id derived from it ("c_" + ObjectId string)
@@ -365,20 +352,17 @@ def create_concept(concept_data: dict):
     # Resolve parent (custom id or ObjectId string) and calculate level
     parent = None
     if concept_data.get("parent_id"):
-        parent = find_concept_by_any_id(concepts_col, str(concept_data["parent_id"]))
+        parent = find_concept_by_any_id(str(concept_data["parent_id"]))
         if parent:
             concept["parents"] = [parent["_id"]]
             concept["level"] = parent.get("level", 0) + 1
 
     # Insert concept
-    concepts_col.insert_one(concept)
+    queries.tag_concepts_v2_insert_one__create_concept(concept)
 
     # Update parent's children (ObjectId reference, schema-consistent)
     if parent:
-        concepts_col.update_one(
-            {"_id": parent["_id"]},
-            {"$push": {"children": new_oid}}
-        )
+        queries.tag_concepts_v2_update_one__create_concept(parent, new_oid)
 
     return {"message": "Concept created successfully", "id": new_id}
 
@@ -386,10 +370,9 @@ def create_concept(concept_data: dict):
 @router.put("/concept/{concept_id}")
 def update_concept(concept_id: str, update_data: dict):
     """Update a concept in MongoDB - only explicitly provided fields are set"""
-    concepts_col = get_concepts_collection()
 
     # Lookup via custom id field or ObjectId fallback
-    concept = find_concept_by_any_id(concepts_col, concept_id)
+    concept = find_concept_by_any_id(concept_id)
     if not concept:
         raise HTTPException(status_code=404, detail="Concept not found")
 
@@ -401,7 +384,7 @@ def update_concept(concept_id: str, update_data: dict):
     }
     fields["updated_at"] = datetime.now(timezone.utc)
 
-    concepts_col.update_one({"_id": concept["_id"]}, {"$set": fields})
+    queries.tag_concepts_v2_update_one__update_concept(fields, concept)
 
     return {"message": "Concept updated successfully"}
 
@@ -409,40 +392,24 @@ def update_concept(concept_id: str, update_data: dict):
 @router.delete("/concept/{concept_id}")
 def delete_concept(concept_id: str):
     """Delete a concept (soft delete) and clean up all references"""
-    concepts_col = get_concepts_collection()
-    instances_col = get_instances_collection()
 
     # Lookup via custom id field or ObjectId fallback
-    concept = find_concept_by_any_id(concepts_col, concept_id)
+    concept = find_concept_by_any_id(concept_id)
     if not concept:
         raise HTTPException(status_code=404, detail="Concept not found")
 
     id_variants = concept_id_variants(concept)
 
     # Soft delete by setting status
-    concepts_col.update_one(
-        {"_id": concept["_id"]},
-        {
-            "$set": {
-                "status": "deprecated",
-                "updated_at": datetime.now(timezone.utc)
-            }
-        }
-    )
+    queries.tag_concepts_v2_update_one__delete_concept(concept)
 
     # Remove from parents' children arrays (refs may be ObjectId or legacy string)
-    concepts_col.update_many(
-        {"children": {"$in": id_variants}},
-        {"$pull": {"children": {"$in": id_variants}}}
-    )
+    queries.tag_concepts_v2_update_many__delete_concept(id_variants)
 
     # Remove this concept from its children's parents arrays
-    concepts_col.update_many(
-        {"parents": {"$in": id_variants}},
-        {"$pull": {"parents": {"$in": id_variants}}}
-    )
+    queries.tag_concepts_v2_update_many__delete_concept_2(id_variants)
 
     # Delete tag instances referencing this concept
-    instances_col.delete_many({"concept_id": {"$in": id_variants}})
+    queries.tag_instances_delete_many__delete_concept(id_variants)
 
     return {"message": "Concept deleted successfully"}

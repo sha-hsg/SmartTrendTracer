@@ -10,11 +10,9 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, HttpUrl
 
-from app.database.mongodb import get_database
 from app.services.jair_service import jair_service
 from app.repositories import jair_import_queries as queries
 
-db = get_database()
 logger = logging.getLogger(__name__)
 router = APIRouter()
 

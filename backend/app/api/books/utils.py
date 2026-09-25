@@ -28,10 +28,8 @@ from fastapi import (
     Request,
     UploadFile,
 )
-from pymongo import ASCENDING, DESCENDING
 
 # --- Application services ---
-from app.database.mongodb import get_database
 from app.services.concept_only_tag_service import ConceptOnlyTagService
 from app.repositories.books import get_book_by_id  # noqa: F401 (moved to data layer)
 
@@ -41,8 +39,6 @@ from app.repositories.books import get_book_by_id  # noqa: F401 (moved to data l
 
 logger = logging.getLogger("app.api.books")
 
-# MongoDB connection
-db = get_database()
 
 # Initialize services
 concept_service = ConceptOnlyTagService()
@@ -53,7 +49,6 @@ BOOKS_REPOSITORY.parent.mkdir(parents=True, exist_ok=True)
 BOOKS_REPOSITORY.mkdir(exist_ok=True)
 
 # Queue collection for background processing
-BOOK_PROCESSING_QUEUE = db.book_processing_jobs
 
 
 # ---------------------------------------------------------------------------

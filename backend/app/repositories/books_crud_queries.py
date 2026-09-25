@@ -3,6 +3,7 @@ MongoDB queries of app.api.books.crud, moved verbatim out of the router
 (one function per former inline call site).
 """
 from bson import ObjectId
+from pymongo import DESCENDING
 from app.database.mongodb import get_database
 
 db = get_database()
@@ -41,6 +42,6 @@ def tag_concepts_v2_find__get_book_details(concept_object_ids):
             )
 
 
-def books_find__get_books(query):
+def books_find__get_books(query, page_size, skip):
     """books.find from books.crud.get_books()"""
-    return db.books.find(query)
+    return db.books.find(query).sort('uploaded_at', DESCENDING).skip(skip).limit(page_size)

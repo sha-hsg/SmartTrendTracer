@@ -21,3 +21,24 @@ def count_aliases():
 def count_orphan_tag_instances():
     """Tag instances without a concept (the _no_concepts sentinel rows)."""
     return db.tag_instances.count_documents({"concept_id": None})
+
+
+def tag_concepts_v2_count_documents__get_organization_stats():
+    """tag_concepts_v2.count_documents from concept_organization.get_organization_stats()"""
+    return db.tag_concepts_v2.count_documents({})
+
+
+def tag_concepts_v2_count_documents__get_organization_stats_2():
+    """tag_concepts_v2.count_documents from concept_organization.get_organization_stats()"""
+    return db.tag_concepts_v2.count_documents({"is_organized": True})
+
+
+def tag_concepts_v2_count_documents__get_organization_stats_3():
+    """tag_concepts_v2.count_documents from concept_organization.get_organization_stats()"""
+    return db.tag_concepts_v2.count_documents(
+                {"$or": [
+                    {"is_organized": False},
+                    {"needs_review": True}
+                ]}
+            )
+

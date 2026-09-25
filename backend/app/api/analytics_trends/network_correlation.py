@@ -13,6 +13,7 @@ from .utils import (
     db,
     get_date_range,
 )
+from app.repositories import analytics_trends_network_correlation_queries as queries
 
 router = APIRouter()
 
@@ -54,8 +55,7 @@ def get_concept_network(
         node_connections[pair['concept_b_id']] += 1
 
     for i, concept_id in enumerate(cooc_data['concept_ids']):
-        concept = db.tag_concepts_v2.find_one(
-            {'_id': {'$in': concept_id_query_variants(concept_id)}})
+        concept = queries.tag_concepts_v2_find_one__get_concept_network(concept_id)
         if concept:
             entity_type = concept.get('entity_type', 'concept')
             activity = node_connections.get(concept_id, 0)

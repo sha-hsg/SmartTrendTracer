@@ -9,8 +9,11 @@ debt so it can only go down:
 * no imports of another package's internal submodules
 * environment variables are read only in app/config.py
 * repositories never import FastAPI
-* MongoDB query call sites in app/api/ may not grow (ratchet); when you move
-  queries into app/repositories/, LOWER the constant below.
+* app/api/ runs no MongoDB operation itself (AST check: no pymongo import,
+  no collection handles derived from a database object, no pymongo calls on
+  *_col/*_collection handles, no cursor chains on repository results). A
+  database handle may only be passed into a lower layer; the number of API
+  modules doing that is ratcheted.
 * frontend files importing axios directly may not grow (ratchet).
 
 Pure static analysis — no DB, no network.
@@ -26,14 +29,19 @@ FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
 
 # Ratchets — only ever lower these.
 API_DB_CALL_SITES_MAX = 0
+API_DB_HANDLE_MODULES_MAX = 12      # api modules wiring get_database() into services
 FRONTEND_AXIOS_IMPORT_FILES_MAX = 0
 FRONTEND_RAW_FETCH_SITES_MAX = 52   # legacy fetch() calls bypassing services/http.ts
 
-DB_CALL_RE = re.compile(
-    r'\bdb\.[a-z_]+\.(find|find_one|insert_one|insert_many|update_one|update_many|delete_one|'
-    r'delete_many|aggregate|count_documents|distinct|replace_one|bulk_write)\('
-    r'|\bdb\[[\'"][a-z_]+[\'"]\]\.'
-)
+PYMONGO_OPS = {
+    'find', 'find_one', 'find_one_and_update', 'find_one_and_delete', 'find_one_and_replace',
+    'insert_one', 'insert_many', 'update_one', 'update_many', 'delete_one', 'delete_many',
+    'replace_one', 'bulk_write', 'aggregate', 'count_documents', 'estimated_document_count',
+    'distinct', 'create_index', 'create_indexes', 'drop_index', 'drop', 'command',
+    'list_collection_names', 'watch',
+}
+CURSOR_OPS = {'sort', 'skip', 'limit', 'batch_size', 'hint'}
+HANDLE_SUFFIXES = ('_col', '_collection', 'collection')
 
 
 def _python_files():
@@ -195,16 +203,72 @@ def test_repositories_do_not_import_fastapi():
     assert not bad, f'repositories must raise app.repositories.errors, not HTTP types: {bad}'
 
 
+def _db_handle_names(tree) -> set:
+    """Names bound to a pymongo Database: `x = get_database()` or `x=Depends(get_database)`."""
+    names = {'db'}
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Assign) and 'get_database' in ast.unparse(n.value):
+            names |= {t.id for t in n.targets if isinstance(t, ast.Name)}
+        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            args = n.args.args + n.args.kwonlyargs
+            defaults = [None] * (len(n.args.args) - len(n.args.defaults)) + n.args.defaults + n.args.kw_defaults
+            for arg, default in zip(args, defaults):
+                if default is not None and 'get_database' in ast.unparse(default):
+                    names.add(arg.arg)
+    return names
+
+
+def _api_db_call_sites(tree) -> list:
+    handles = _db_handle_names(tree)
+    hits = []
+    for n in ast.walk(tree):
+        # collection handle derived from a database object: db.papers, db['papers'], db.command
+        if isinstance(n, (ast.Attribute, ast.Subscript)) and isinstance(n.value, ast.Name) \
+                and n.value.id in handles:
+            hits.append((n.lineno, ast.unparse(n)))
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute):
+            recv = n.func.value
+            root = recv
+            while isinstance(root, (ast.Attribute, ast.Subscript, ast.Call)):
+                root = root.func if isinstance(root, ast.Call) else root.value
+            # pymongo operation on a *_col / *_collection handle
+            if n.func.attr in PYMONGO_OPS and isinstance(root, ast.Name) \
+                    and root.id.endswith(HANDLE_SUFFIXES):
+                hits.append((n.lineno, ast.unparse(n.func)))
+            # cursor shaping on a repository result: queries.x(...).sort(...)
+            if n.func.attr in CURSOR_OPS and isinstance(root, ast.Name) and root.id == 'queries' \
+                    and isinstance(recv, ast.Call):
+                hits.append((n.lineno, ast.unparse(n.func)))
+    return hits
+
+
 def test_api_db_call_sites_ratchet():
-    count = 0
+    count, sites = 0, []
     for mod, path in MODULES.items():
         if mod.startswith('app.api'):
-            count += sum(len(DB_CALL_RE.findall(line)) > 0 for line in path.read_text().splitlines())
+            hits = _api_db_call_sites(ast.parse(path.read_text()))
+            count += len(hits)
+            sites += [f'{path.relative_to(BACKEND)}:{line} {txt}' for line, txt in hits]
     assert count <= API_DB_CALL_SITES_MAX, (
         f'{count} MongoDB call sites in app/api (max {API_DB_CALL_SITES_MAX}): '
-        f'put new queries in app/repositories/')
+        f'put new queries in app/repositories/\n' + '\n'.join(sites[:20]))
     if count < API_DB_CALL_SITES_MAX:
         print(f'NOTE: api db call sites down to {count} — lower API_DB_CALL_SITES_MAX')
+
+
+def test_api_does_not_import_pymongo():
+    bad = [str(p.relative_to(BACKEND)) for m, p in MODULES.items()
+           if m.startswith('app.api') and re.search(r'^\s*(from|import) (pymongo|bson\.son)\b', p.read_text(), re.M)]
+    assert not bad, f'app/api must not use pymongo (queries belong in app/repositories): {bad}'
+
+
+def test_api_db_handle_modules_ratchet():
+    mods = sorted(str(p.relative_to(BACKEND)) for m, p in MODULES.items()
+                  if m.startswith('app.api') and re.search(
+                      r'^from app\.database\.mongodb import [^\n]*\b(get_database|get_client)\b',
+                      p.read_text(), re.M))
+    assert len(mods) <= API_DB_HANDLE_MODULES_MAX, (
+        f'{len(mods)} api modules take a database handle (max {API_DB_HANDLE_MODULES_MAX}): {mods}')
 
 
 def test_frontend_axios_ratchet():

@@ -10,13 +10,11 @@ import asyncio
 import uuid
 import time
 from datetime import datetime, timezone
-from pymongo import DESCENDING
 
-from .utils import (
-    logger, tasks_collection, active_tasks,
-    ReorganizationTask,
-    ComprehensiveTagReorganizer, GPT5TagReorganizer,
-)
+from app.services.tag_reorganizer import ComprehensiveStrategy as ComprehensiveTagReorganizer
+from app.services.tag_reorganizer import LLMStrategy as GPT5TagReorganizer
+from .utils import logger, active_tasks, ReorganizationTask
+from app.repositories import tag_reorganization_routes_queries as queries
 
 router = APIRouter()
 
@@ -367,10 +365,7 @@ async def get_task_history(limit: int = 10, status: Optional[str] = None):
         query['status'] = status
 
     # Get recent tasks from MongoDB
-    tasks = list(tasks_collection.find(
-        query,
-        {'_id': 0}  # Exclude MongoDB _id field
-    ).sort('created_at', DESCENDING).limit(limit))
+    tasks = list(queries.tag_reorganization_tasks_find__get_task_history(query, limit))
 
     # Convert datetime objects to ISO strings for JSON serialization
     for task in tasks:
@@ -381,5 +376,5 @@ async def get_task_history(limit: int = 10, status: Optional[str] = None):
     return {
         "tasks": tasks,
         "count": len(tasks),
-        "total": tasks_collection.count_documents(query)
+        "total": queries.tag_reorganization_tasks_count_documents__get_task_history(query)
     }

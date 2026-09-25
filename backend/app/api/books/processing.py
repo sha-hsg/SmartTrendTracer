@@ -4,7 +4,7 @@ Book processing endpoints: queue-based and direct processing.
 
 from fastapi import APIRouter
 
-from .utils import HTTPException, ObjectId, datetime, timezone, logger, db, get_book_by_id
+from .utils import HTTPException, ObjectId, datetime, timezone, logger, get_book_by_id
 from app.repositories import books_processing as repo
 from app.repositories import books_processing_queries as queries
 

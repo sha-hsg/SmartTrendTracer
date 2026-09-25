@@ -4,7 +4,6 @@ Provides CRUD operations for Reddit posts with faceted browsing and tagging.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body
-from app.database.mongodb import get_database
 from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 import logging
@@ -17,9 +16,6 @@ from app.repositories import reddit_queries as queries
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
-posts_collection = db.reddit_posts
 
 # Initialize concept service
 concept_service = ConceptOnlyTagService()
@@ -129,7 +125,7 @@ def get_reddit_posts(
     logger.info(f"Reddit posts query: {query}")
     
     # Execute query
-    cursor = posts_collection.find(query)
+    cursor = queries.reddit_posts_find__get_reddit_posts(query)
     
     # Sort
     sort_field = sort_by
@@ -204,7 +200,7 @@ def get_reddit_faceted_search(
         text_search=text_search,
         concept_id=concept_id
     )
-    total_posts = posts_collection.count_documents(query) if query is not None else 0
+    total_posts = queries.reddit_posts_count_documents__get_reddit_faceted_search(query) if query is not None else 0
     total_pages = (total_posts + page_size - 1) // page_size
     
     return {
@@ -229,7 +225,7 @@ def get_reddit_facets():
         {"$sort": {"count": -1}},
         {"$limit": 20}
     ]
-    subreddits = list(posts_collection.aggregate(subreddit_pipeline))
+    subreddits = list(queries.reddit_posts_aggregate__get_reddit_facets(subreddit_pipeline))
     
     # Top authors with post counts
     author_pipeline = [
@@ -238,28 +234,28 @@ def get_reddit_facets():
         {"$sort": {"count": -1}},
         {"$limit": 20}
     ]
-    authors = list(posts_collection.aggregate(author_pipeline))
+    authors = list(queries.reddit_posts_aggregate__get_reddit_facets_2(author_pipeline))
     
     # Time-based facets
     now = datetime.now(timezone.utc)
     time_facets = {
-        "24h": posts_collection.count_documents({"created_utc": {"$gte": now - timedelta(hours=24)}}),
-        "7d": posts_collection.count_documents({"created_utc": {"$gte": now - timedelta(days=7)}}),
-        "30d": posts_collection.count_documents({"created_utc": {"$gte": now - timedelta(days=30)}})
+        "24h": queries.reddit_posts_count_documents__get_reddit_facets(now),
+        "7d": queries.reddit_posts_count_documents__get_reddit_facets_2(now),
+        "30d": queries.reddit_posts_count_documents__get_reddit_facets_3(now)
     }
     
     # Score ranges
     score_facets = {
-        "high_score": posts_collection.count_documents({"score": {"$gte": 100}}),
-        "medium_score": posts_collection.count_documents({"score": {"$gte": 10, "$lt": 100}}),
-        "low_score": posts_collection.count_documents({"score": {"$lt": 10}})
+        "high_score": queries.reddit_posts_count_documents__get_reddit_facets_4(),
+        "medium_score": queries.reddit_posts_count_documents__get_reddit_facets_5(),
+        "low_score": queries.reddit_posts_count_documents__get_reddit_facets_6()
     }
     
     # Post types
     type_facets = {
-        "text_posts": posts_collection.count_documents({"is_self": True}),
-        "link_posts": posts_collection.count_documents({"is_self": False}),
-        "video_posts": posts_collection.count_documents({"is_video": True})
+        "text_posts": queries.reddit_posts_count_documents__get_reddit_facets_7(),
+        "link_posts": queries.reddit_posts_count_documents__get_reddit_facets_8(),
+        "video_posts": queries.reddit_posts_count_documents__get_reddit_facets_9()
     }
     
     return {
@@ -268,7 +264,7 @@ def get_reddit_facets():
         "time_ranges": time_facets,
         "score_ranges": score_facets,
         "post_types": type_facets,
-        "total_posts": posts_collection.count_documents({})
+        "total_posts": queries.reddit_posts_count_documents__get_reddit_facets_10()
     }
 
 @router.get("/stats/collection")
@@ -282,7 +278,7 @@ def get_reddit_collection_stats():
     except Exception as e:
         logger.error(f"Error getting collection stats: {e}")
         # Fallback to basic stats
-        total_posts = posts_collection.count_documents({})
+        total_posts = queries.reddit_posts_count_documents__get_reddit_collection_stats()
         return {
             "total_posts": total_posts,
             "error": "Could not load full statistics"

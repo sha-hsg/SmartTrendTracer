@@ -7,15 +7,12 @@ from fastapi import APIRouter, Query, HTTPException, Path
 from typing import Dict, Any, Optional
 import logging
 from datetime import datetime, timezone
-from app.database.mongodb import get_database
 from bson import ObjectId
 from app.services.dblp_service import DBLPService
 from app.repositories import dblp_queries as queries
 
 logger = logging.getLogger(__name__)
 
-# MongoDB connection
-db = get_database()
 
 # Create two routers - one for /api/dblp and one for /api/papers/dblp
 router = APIRouter(prefix="/api/dblp", tags=["dblp"])

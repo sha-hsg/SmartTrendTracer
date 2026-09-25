@@ -211,14 +211,9 @@ async def get_organization_stats() -> Dict:
         service = ConceptOrganizationService()
         
         # Count different states
-        total = service.db.tag_concepts_v2.count_documents({})
-        organized = service.db.tag_concepts_v2.count_documents({"is_organized": True})
-        unorganized = service.db.tag_concepts_v2.count_documents(
-            {"$or": [
-                {"is_organized": False},
-                {"needs_review": True}
-            ]}
-        )
+        total = queries.tag_concepts_v2_count_documents__get_organization_stats()
+        organized = queries.tag_concepts_v2_count_documents__get_organization_stats_2()
+        unorganized = queries.tag_concepts_v2_count_documents__get_organization_stats_3()
         
         # Count aliases
         aliases = queries.count_aliases()

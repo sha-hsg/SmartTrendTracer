@@ -6,11 +6,7 @@ from datetime import datetime, timezone
 from bson import ObjectId
 import logging
 
-from .utils import (
-    get_concepts_collection,
-    get_aliases_collection,
-    get_instances_collection,
-)
+from app.repositories import tag_ontology_tools_queries as queries
 
 logger = logging.getLogger(__name__)
 
@@ -20,19 +16,16 @@ router = APIRouter()
 @router.post("/rebuild-mappings")
 def rebuild_mappings():
     """Rebuild tag mappings - reprocess orphan tags"""
-    instances_col = get_instances_collection()
-    concepts_col = get_concepts_collection()
-    aliases_col = get_aliases_collection()
 
     # Get all unresolved instances
-    orphans = list(instances_col.find({"concept_id": None}))
+    orphans = list(queries.tag_instances_find__rebuild_mappings())
 
     # Build lookup maps - values are always ObjectIds (schema-consistent)
     concept_by_slug = {}
     concept_by_alias = {}
     custom_to_oid = {}
 
-    for concept in concepts_col.find():
+    for concept in queries.tag_concepts_v2_find__rebuild_mappings():
         oid = concept["_id"]
         concept_by_slug[concept["slug"]] = oid
         concept_by_slug[concept["display_name"].lower()] = oid
@@ -40,7 +33,7 @@ def rebuild_mappings():
         if concept.get("id"):
             custom_to_oid[concept["id"]] = oid
 
-    for alias in aliases_col.find():
+    for alias in queries.tag_aliases_v2_find__rebuild_mappings():
         cid = alias["concept_id"]
         oid = cid if isinstance(cid, ObjectId) else custom_to_oid.get(str(cid))
         if oid is not None:
@@ -64,10 +57,7 @@ def rebuild_mappings():
             concept_id = concept_by_slug[tag_lower]
 
         if concept_id:
-            instances_col.update_one(
-                {"_id": orphan["_id"]},
-                {"$set": {"concept_id": concept_id}}
-            )
+            queries.tag_instances_update_one__rebuild_mappings(orphan, concept_id)
             resolved_count += 1
 
     return {
@@ -81,28 +71,25 @@ def rebuild_mappings():
 @router.get("/stats")
 def get_stats():
     """Get tag system statistics"""
-    concepts_col = get_concepts_collection()
-    aliases_col = get_aliases_collection()
-    instances_col = get_instances_collection()
 
     return {
         "concepts": {
-            "total": concepts_col.count_documents({}),
-            "active": concepts_col.count_documents({"status": "active"}),
-            "root": concepts_col.count_documents({"parents": []}),
-            "with_children": concepts_col.count_documents({"children": {"$ne": []}})
+            "total": queries.tag_concepts_v2_count_documents__get_stats(),
+            "active": queries.tag_concepts_v2_count_documents__get_stats_2(),
+            "root": queries.tag_concepts_v2_count_documents__get_stats_3(),
+            "with_children": queries.tag_concepts_v2_count_documents__get_stats_4()
         },
         "aliases": {
-            "total": aliases_col.count_documents({}),
-            "unique_concepts": len(aliases_col.distinct("concept_id"))
+            "total": queries.tag_aliases_v2_count_documents__get_stats(),
+            "unique_concepts": len(queries.tag_aliases_v2_distinct__get_stats())
         },
         "instances": {
-            "total": instances_col.count_documents({}),
-            "tweets": instances_col.count_documents({"content_type": "tweet"}),
-            "papers": instances_col.count_documents({"content_type": "paper"}),
-            "articles": instances_col.count_documents({"content_type": "article"}),
-            "resolved": instances_col.count_documents({"concept_id": {"$ne": None}}),
-            "orphaned": instances_col.count_documents({"concept_id": None})
+            "total": queries.tag_instances_count_documents__get_stats(),
+            "tweets": queries.tag_instances_count_documents__get_stats_2(),
+            "papers": queries.tag_instances_count_documents__get_stats_3(),
+            "articles": queries.tag_instances_count_documents__get_stats_4(),
+            "resolved": queries.tag_instances_count_documents__get_stats_5(),
+            "orphaned": queries.tag_instances_count_documents__get_stats_6()
         }
     }
 
@@ -111,19 +98,14 @@ def get_stats():
 async def get_ontology_graph(include_synonyms: bool = False):
     """Get concept hierarchy as graph data for visualization"""
     try:
-        concepts_col = get_concepts_collection()
-        aliases_col = get_aliases_collection()
-        instances_col = get_instances_collection()
 
         # Get all concepts
-        concepts = list(concepts_col.find({}))
+        concepts = list(queries.tag_concepts_v2_find__get_ontology_graph())
 
         # Usage counts in ONE aggregation (tag_instances stores concept_id as
         # ObjectId with a small legacy remainder as strings - merge by str key)
         usage_by_concept = {}
-        for row in instances_col.aggregate([
-            {"$group": {"_id": "$concept_id", "count": {"$sum": 1}}}
-        ]):
+        for row in queries.tag_instances_aggregate__get_ontology_graph():
             key = str(row["_id"])
             usage_by_concept[key] = usage_by_concept.get(key, 0) + row["count"]
 
@@ -167,7 +149,7 @@ async def get_ontology_graph(include_synonyms: bool = False):
 
         # Add synonym nodes if requested
         if include_synonyms:
-            aliases = list(aliases_col.find({}))
+            aliases = list(queries.tag_aliases_v2_find__get_ontology_graph())
             for idx, alias in enumerate(aliases):
                 alias_id = f"a_{idx}"
                 concept_id = str(alias["concept_id"])
@@ -234,11 +216,9 @@ async def get_ontology_graph(include_synonyms: bool = False):
 async def export_ontology():
     """Export the complete ontology structure"""
     try:
-        concepts_col = get_concepts_collection()
-        aliases_col = get_aliases_collection()
 
         # Get all concepts
-        concepts = list(concepts_col.find({}))
+        concepts = list(queries.tag_concepts_v2_find__export_ontology())
 
         # Convert ObjectIds to strings
         for concept in concepts:
@@ -249,7 +229,7 @@ async def export_ontology():
                 concept["children"] = [str(c) for c in concept["children"]]
 
         # Get all aliases
-        aliases = list(aliases_col.find({}))
+        aliases = list(queries.tag_aliases_v2_find__export_ontology())
         for alias in aliases:
             alias["_id"] = str(alias["_id"])
             alias["concept_id"] = str(alias["concept_id"])

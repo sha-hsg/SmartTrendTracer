@@ -4,15 +4,12 @@ Provides per-user trend analysis for tweets
 """
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
 import logging
 from app.repositories import user_trends as repo
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 @router.get("/per-user")
 def get_per_user_trends(

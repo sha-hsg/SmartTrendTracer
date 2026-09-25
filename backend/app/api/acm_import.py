@@ -7,11 +7,8 @@ from app.paths import PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
-from pathlib import Path
 from datetime import datetime, timezone
 import logging
-from bson import ObjectId
-from app.database.mongodb import get_database
 from app.services.acm_service import acm_service
 from app.services.pdf_processor_service import get_pdf_processor_service
 from app.repositories import acm_import_queries as queries
@@ -36,7 +33,6 @@ async def import_acm_paper(request: ACMImportRequest, background_tasks: Backgrou
         Import result with paper ID and metadata
     """
     try:
-        db = get_database()
         
         # Set up save directory
         save_dir = PAPERS_DIR_REL
@@ -133,7 +129,6 @@ def process_pdf_background(paper_id: str, pdf_path: str):
     """
     try:
         logger.info(f"Processing PDF for ACM paper {paper_id} in background")
-        db_bg = get_database()
 
         processor = get_pdf_processor_service()
         result = processor.process_pdf(
@@ -143,16 +138,7 @@ def process_pdf_background(paper_id: str, pdf_path: str):
         )
 
         if result and result.get('success'):
-            db_bg.papers.update_one(
-                {'_id': ObjectId(paper_id)},
-                {'$set': {
-                    'content': result.get('markdown', ''),
-                    'markdown_content': result.get('markdown', ''),
-                    'processed': True,
-                    'processor_used': result.get('method_used', 'unknown'),
-                    'processed_at': datetime.now(timezone.utc)
-                }}
-            )
+            queries.papers_update_one__process_pdf_background(paper_id, result)
             logger.info(f"PDF processing completed for ACM paper {paper_id}")
         else:
             logger.error(f"PDF processing failed for ACM paper {paper_id}: {result.get('error') if result else 'no result'}")

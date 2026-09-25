@@ -130,10 +130,12 @@ SmartTrendTracer/
 │   │   ├── paths.py                # data paths (+ *_REL forms as persisted in MongoDB)
 │   │   ├── collectors/             # gmail_substack_collector, reddit_collector, playwright
 │   │   ├── database/mongodb.py     # client singleton + _ensure_indexes, concept_id_query_variants
-│   │   ├── repositories/           # data-access layer: queries + their rules (tweets save path,
-│   │   │                           # facets, stats, authors); raise repositories.errors, never HTTP
+│   │   ├── repositories/           # data-access layer: all MongoDB queries (tweets save path,
+│   │   │                           # concepts/, analytics/, facets, stats, *_queries.py per router);
+│   │   │                           # raise repositories.errors, never HTTP
 │   │   └── services/               # llm_manager (the only LLM stack), pdf_service_client
-│   │                               # (Marker/MinerU), rag/, analytics/, anomaly_detection, …
+│   │                               # (Marker/MinerU), rag/, anomaly_detection, import services, …
+│   │                               # (services/analytics is a re-export shim of repositories/analytics)
 │   ├── tests/                      # pytest: regression tests + test_arch_guard.py (layer rules)
 │   ├── tweet_collector_service.py  # standalone Twitter collector
 │   ├── book_processing_worker.py   # consumes book_processing_jobs queue
@@ -277,9 +279,12 @@ Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if
   latter keeps `last_tweet_id` monotonic via `$max`).
 - **Layering (enforced by `tests/test_arch_guard.py`):** api → services → repositories/
   database, never upward; no import cycles; import packages via their `__init__`, not
-  their internal submodules. New MongoDB queries go into `app/repositories/`, not into
-  routers — the guard ratchets the remaining API-layer query count (lower it when you
-  move queries). Repositories raise `app.repositories.errors.*` (mapped to HTTP in
+  their internal submodules. MongoDB queries live in `app/repositories/`, never in
+  routers: the guard (AST-based) fails on pymongo imports in `app/api/`, on collection
+  handles derived from a database object (`db.x`, `db['x']`, `db.command`), on pymongo
+  calls on `*_col`/`*_collection` handles and on cursor chains (`.sort/.limit`) on
+  repository results. API modules may only pass a `get_database()` handle into a lower
+  layer (ratcheted). Indexes are created only in `app/database/mongodb._ensure_indexes`. Repositories raise `app.repositories.errors.*` (mapped to HTTP in
   `app/main.py`); a repository that needs a service gets it injected as a parameter.
 - **Frontend:** HTTP only via `src/services/http.ts` (plus `apiErrorMessage`); components
   live in `src/components/<feature>/` — the guard fails on direct axios imports or new
@@ -465,7 +470,8 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    books-analysis) are placeholders.
 7. **Semantic concept search is lexical** (text + alias matching with relevance tiers);
    an embedding-based search would reuse the existing FAISS stack.
-8. **No inline MongoDB queries in `app/api/`** (arch audit 2026-09, ratchet at 0): routers
+8. **No inline MongoDB queries in `app/api/`** (arch audit 2026-09, AST guard at 0; 12 API
+   modules still wire a `get_database()` handle into services — ratcheted): routers
    call `app/repositories/`. Many repositories are verbatim extractions (`*_queries.py`
    hold one function per former call site, named `<coll>_<op>__<route>`); consolidating
    them into intent-named functions is the natural next cleanup. Frontend: 52 raw
@@ -485,7 +491,8 @@ Details live in `git log` and `docs/`; do not re-expand here.
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed
   (one LLM stack, `resolve_model_override`); `app/repositories/` data layer (API query
-  sites 565 → 0) with one tweet save path, concepts/analytics query layers moved into it; frontend `services/http.ts` seam
+  sites 565 → 0, plus 103 handle-based sites found by the AST guard) with one tweet save
+  path, reference import fixed (arXiv → shared `papers.save_arxiv_import`), concepts/analytics query layers moved into it; frontend `services/http.ts` seam
   and feature folders for all 53 flat components; `tests/test_arch_guard.py` enforces it.
   Same month: model refresh (gpt-6 astra/sol/luna, claude-opus-5-5, gemini-3.8-flash,
   grok-4.7), X-API 402 credit backoff in the tweet collector, UI/UX kaizen rounds

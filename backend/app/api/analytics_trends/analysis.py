@@ -217,11 +217,11 @@ def generate_summary(
             # Find the single most-recent item across the enabled sources
             most_recent_date = None
             if total_tweets_anytime > 0:
-                latest = queries.tweets_find__generate_summary(any_tweet_filter).sort('created_at', -1).limit(1)
+                latest = queries.tweets_find__generate_summary(any_tweet_filter)
                 for t in latest:
                     most_recent_date = t.get('created_at')
             if total_articles_anytime > 0:
-                latest = queries.articles_find__generate_summary(any_article_filter).sort('published_at', -1).limit(1)
+                latest = queries.articles_find__generate_summary(any_article_filter)
                 for a in latest:
                     pub = a.get('published_at')
                     if pub and (most_recent_date is None or pub > most_recent_date):

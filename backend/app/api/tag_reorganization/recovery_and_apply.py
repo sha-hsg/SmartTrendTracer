@@ -4,11 +4,11 @@ Includes task recovery and result application.
 """
 
 from fastapi import APIRouter, HTTPException
-from datetime import datetime, timezone
 
 from .utils import (
-    logger, tasks_collection, active_tasks,
+    logger, active_tasks,
 )
+from app.repositories import tag_reorganization_recovery_and_apply_queries as queries
 
 router = APIRouter()
 
@@ -26,7 +26,7 @@ async def recover_task(task_id: str):
         }
 
     # Try to load from MongoDB
-    task_doc = tasks_collection.find_one({'task_id': task_id}, {'_id': 0})
+    task_doc = queries.tag_reorganization_tasks_find_one__recover_task(task_id)
 
     if not task_doc:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -49,14 +49,7 @@ async def recover_task(task_id: str):
         task_doc['status'] = 'interrupted'
         task_doc['error'] = 'Task was interrupted by server restart'
         # Update in MongoDB
-        tasks_collection.update_one(
-            {'task_id': task_id},
-            {'$set': {
-                'status': 'interrupted',
-                'error': 'Task was interrupted by server restart',
-                'updated_at': datetime.now(timezone.utc)
-            }}
-        )
+        queries.tag_reorganization_tasks_update_one__recover_task(task_id)
 
     return {
         "status": "recovered",
@@ -69,7 +62,7 @@ async def apply_recovered_task(task_id: str):
     """Apply the results from a recovered completed task"""
 
     # Load task from MongoDB
-    task_doc = tasks_collection.find_one({'task_id': task_id})
+    task_doc = queries.tag_reorganization_tasks_find_one__apply_recovered_task(task_id)
 
     if not task_doc:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -89,14 +82,7 @@ async def apply_recovered_task(task_id: str):
         apply_result = apply_service.apply_gpt5_result(result)
 
         # Update task to mark as applied
-        tasks_collection.update_one(
-            {'task_id': task_id},
-            {'$set': {
-                'metadata.applied': True,
-                'metadata.applied_at': datetime.now(timezone.utc),
-                'updated_at': datetime.now(timezone.utc)
-            }}
-        )
+        queries.tag_reorganization_tasks_update_one__apply_recovered_task(task_id)
 
         return {
             "success": True,
@@ -113,7 +99,7 @@ async def apply_task_result(task_id: str, result_data: dict = None):
     """Apply the reorganization results for a task (can accept result data in body)"""
 
     # First check if task exists and get its result
-    task_doc = tasks_collection.find_one({'task_id': task_id})
+    task_doc = queries.tag_reorganization_tasks_find_one__apply_task_result(task_id)
 
     if not task_doc:
         # If no task in MongoDB, check in-memory tasks
@@ -144,14 +130,7 @@ async def apply_task_result(task_id: str, result_data: dict = None):
 
         # Update task to mark as applied (if in MongoDB)
         if task_doc:
-            tasks_collection.update_one(
-                {'task_id': task_id},
-                {'$set': {
-                    'metadata.applied': True,
-                    'metadata.applied_at': datetime.now(timezone.utc),
-                    'updated_at': datetime.now(timezone.utc)
-                }}
-            )
+            queries.tag_reorganization_tasks_update_one__apply_task_result(task_id)
 
         return {
             "success": True,

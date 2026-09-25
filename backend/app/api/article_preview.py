@@ -2,15 +2,12 @@
 
 from fastapi import APIRouter
 from app.repositories import article_preview as repo
-from app.database.mongodb import get_database
 import re
 from typing import Dict
 import mdformat
 
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 
 

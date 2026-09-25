@@ -16,13 +16,11 @@ from .utils import (
     Path,
     Query,
     UploadFile,
-    DESCENDING,
     datetime,
     timezone,
     logging,
     re,
     shutil,
-    db,
     concept_service,
     BOOKS_REPOSITORY,
     get_book_by_id,
@@ -105,10 +103,7 @@ def get_books(
     total = queries.books_count_documents__get_books(query)
 
     books = list(
-        queries.books_find__get_books(query)
-        .sort('uploaded_at', DESCENDING)
-        .skip(skip)
-        .limit(page_size)
+        queries.books_find__get_books(query, page_size, skip)
     )
 
     book_id_strings: List[str] = []

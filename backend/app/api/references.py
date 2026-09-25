@@ -3,7 +3,6 @@ API endpoints for managing references in the normalized references collection
 """
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional
-from app.database.mongodb import get_database
 import logging
 from app.repositories import references as repo
 from app.repositories import papers as papers_repo
@@ -14,8 +13,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/references", tags=["references"])
 
-# MongoDB connection
-db = get_database()
 
 @router.get("/")
 async def get_all_references(

@@ -16,26 +16,16 @@ Document shape:
 Unique compound index on (user_id, key).
 """
 
-from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from pymongo import ASCENDING
 
-from app.database.mongodb import get_database
+from app.repositories import user_settings_queries as queries
 
 router = APIRouter()
 
-db = get_database()
-collection = db.user_settings
-
-# Ensure unique index (idempotent).
-collection.create_index(
-    [("user_id", ASCENDING), ("key", ASCENDING)],
-    unique=True,
-    name="user_id_key_unique",
-)
+# Unique index (user_id, key) is ensured centrally in app.database.mongodb._ensure_indexes
 
 
 class SettingValue(BaseModel):
@@ -44,7 +34,7 @@ class SettingValue(BaseModel):
 
 @router.get("/{key}")
 def get_setting(key: str, user_id: str = Query(default="default")):
-    doc = collection.find_one({"user_id": user_id, "key": key})
+    doc = queries.user_settings_find_one__get_setting(user_id, key)
     if not doc:
         # Not found is not an error — caller treats absence as "use default".
         return {"user_id": user_id, "key": key, "value": None, "exists": False}
@@ -62,24 +52,11 @@ def put_setting(key: str, body: SettingValue, user_id: str = Query(default="defa
     if not key or len(key) > 128:
         raise HTTPException(status_code=400, detail="Invalid key")
 
-    collection.update_one(
-        {"user_id": user_id, "key": key},
-        {
-            "$set": {
-                "value": body.value,
-                "updated_at": datetime.now(timezone.utc),
-            },
-            "$setOnInsert": {
-                "user_id": user_id,
-                "key": key,
-            },
-        },
-        upsert=True,
-    )
+    queries.user_settings_update_one__put_setting(user_id, key, body)
     return {"success": True, "user_id": user_id, "key": key}
 
 
 @router.delete("/{key}")
 def delete_setting(key: str, user_id: str = Query(default="default")):
-    result = collection.delete_one({"user_id": user_id, "key": key})
+    result = queries.user_settings_delete_one__delete_setting(user_id, key)
     return {"success": True, "deleted": result.deleted_count}

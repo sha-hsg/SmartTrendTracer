@@ -8,15 +8,12 @@ from typing import Optional, Dict, Any
 from pathlib import Path
 import logging
 from datetime import datetime, timezone
-from app.database.mongodb import get_database
 from bson import ObjectId
 
 from app.services.acl_anthology_service import acl_anthology_service
 from app.services.pdf_processor_service import get_pdf_processor_service
 from app.repositories import acl_anthology_queries as queries
 
-# MongoDB connection
-db = get_database()
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -241,10 +238,9 @@ def process_pdf_background(paper_id: str, pdf_path: str):
     """
     try:
         # Get MongoDB connection for background task
-        db_bg = get_database()
 
         # Get the paper from MongoDB
-        paper = db_bg.papers.find_one({'_id': ObjectId(paper_id)})
+        paper = queries.papers_find_one__process_pdf_background(paper_id)
         if not paper:
             logger.error(f"Paper {paper_id} not found for processing")
             return
@@ -257,15 +253,7 @@ def process_pdf_background(paper_id: str, pdf_path: str):
             logger.info(f"Successfully processed PDF for paper {paper_id}")
 
             # Update paper with processed content
-            db_bg.papers.update_one(
-                {'_id': ObjectId(paper_id)},
-                {'$set': {
-                    'content': result.get('markdown', ''),
-                    'processed': True,
-                    'processor_used': result.get('method_used', 'unknown'),
-                    'processed_at': datetime.now(timezone.utc)
-                }}
-            )
+            queries.papers_update_one__process_pdf_background(paper_id, result)
         else:
             logger.error(f"Failed to process PDF for paper {paper_id}: {result.get('error')}")
 

@@ -5,7 +5,6 @@ MongoDB-based Media Gallery API for Twitter media
 import re
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
 from typing import Optional
 import logging
 from app.repositories import media_gallery as repo
@@ -14,8 +13,6 @@ from app.repositories.media_gallery import GALLERY_SORT_OPTIONS, _empty_gallery_
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 # Server-side sort options (tweet schema uses metrics.like_count / metrics.retweet_count)
 

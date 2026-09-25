@@ -3,7 +3,6 @@ Per-content-type statistics (concepts).
 """
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
 from typing import Optional
 import logging
 from app.repositories import statistics_content_stats as repo
@@ -11,8 +10,6 @@ from app.repositories import statistics_content_stats as repo
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 @router.get("/concepts/detailed")
 def get_detailed_concept_statistics(

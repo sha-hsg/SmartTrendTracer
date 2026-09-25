@@ -75,7 +75,6 @@ def extract_entities(
     """
     Extract entities from text, article, or tweet - MongoDB version
     """
-    db = get_database()
 
     # Get text based on source
     text = request.text

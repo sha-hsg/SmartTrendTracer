@@ -17,6 +17,7 @@ from .utils import (
     fetch_articles_in_range,
     fetch_papers_in_range,
 )
+from app.repositories import analytics_trends_timeline_animation_queries as queries
 
 router = APIRouter()
 
@@ -78,7 +79,7 @@ def get_animated_timeline_data(
     concepts_info = {}
     for cid in top_concept_ids:
         try:
-            concept = db.tag_concepts_v2.find_one({'_id': ObjectId(cid)})
+            concept = queries.tag_concepts_v2_find_one__get_animated_timeline_data(cid)
             if concept:
                 entity_type = concept.get('entity_type', 'concept')
                 concepts_info[cid] = {

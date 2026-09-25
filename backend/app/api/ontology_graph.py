@@ -4,13 +4,10 @@ MongoDB version
 """
 from fastapi import APIRouter, Query
 import logging
-from app.database.mongodb import get_database
 from app.repositories import ontology_graph as repo
 
 logger = logging.getLogger(__name__)
 
-# MongoDB connection
-db = get_database()
 
 router = APIRouter()
 

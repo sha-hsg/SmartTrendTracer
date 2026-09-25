@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter, HTTPException, Query, Body
 from fastapi.responses import FileResponse
-from pymongo import ASCENDING, DESCENDING
 from app.database.mongodb import get_database
 from typing import List, Optional, Dict, Any
 from datetime import datetime

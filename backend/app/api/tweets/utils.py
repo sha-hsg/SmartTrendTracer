@@ -3,7 +3,6 @@ Shared imports, database connection, logger, and helper functions for the tweets
 """
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from pymongo import ASCENDING, DESCENDING
 from app.database.mongodb import get_database
 from typing import List, Optional, Dict, Any
 from datetime import datetime

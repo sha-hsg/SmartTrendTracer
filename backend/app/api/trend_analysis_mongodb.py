@@ -4,7 +4,6 @@ Provides comprehensive trend analysis across tweets, papers, and articles
 """
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 import logging
@@ -14,8 +13,6 @@ from app.repositories import trend_analysis_queries as queries
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 @router.get("/top-concepts")
 async def get_top_concepts(

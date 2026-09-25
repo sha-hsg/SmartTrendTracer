@@ -369,6 +369,8 @@ async def receive_marker_progress(
 
         return {'success': True, 'message': 'Progress updated'}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to update progress for paper {paper_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to update progress")

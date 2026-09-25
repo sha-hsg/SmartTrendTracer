@@ -4,7 +4,6 @@ Provides topic frequency over time and correlation analysis
 """
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
 from typing import Optional
 import logging
 from app.repositories import topic_explorer as repo
@@ -13,8 +12,6 @@ from app.repositories.topic_explorer import TOPIC_COLORS, ensure_aware, get_date
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 # Color palette for topics
 

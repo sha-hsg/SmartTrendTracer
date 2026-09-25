@@ -271,6 +271,16 @@ def _ensure_indexes(db: Database) -> None:
                 logger.error("Failed to create text index %s: %s", index_name, exc)
                 failed_indexes.append(index_name)
 
+    # Unique per-user settings key (user_settings API); idempotent
+    try:
+        db.user_settings.create_index(
+            [("user_id", ASCENDING), ("key", ASCENDING)],
+            unique=True,
+            name="user_id_key_unique",
+        )
+    except Exception as exc:
+        logger.warning(f"Could not ensure user_settings unique index: {exc}")
+
     _indexes_initialized = True
 
     total_indexes = len(index_definitions) + len(text_index_definitions)

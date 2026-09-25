@@ -4,7 +4,6 @@ Provides comprehensive trend analysis for tweets, articles, and papers
 """
 
 from fastapi import APIRouter, Query
-from app.database.mongodb import get_database
 from typing import Optional
 import logging
 from app.repositories import trends as repo
@@ -13,8 +12,6 @@ from app.repositories.trends import _batch_fetch_concept_counts, _batch_fetch_co
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 
 

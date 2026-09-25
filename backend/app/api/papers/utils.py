@@ -30,7 +30,6 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import FileResponse, Response
-from pymongo import ASCENDING, DESCENDING
 
 # --- Application services ---
 from app.database.mongodb import get_database

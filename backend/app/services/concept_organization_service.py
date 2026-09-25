@@ -269,10 +269,13 @@ class ConceptOrganizationService:
                 if organization.get("description"):
                     update_doc["description"] = organization["description"]
                 
-                self.db.tag_concepts_v2.update_one(
+                result = self.db.tag_concepts_v2.update_one(
                     {"_id": concept_obj_id},
                     {"$set": update_doc}
                 )
+                if result.matched_count == 0:
+                    logger.warning(f"Cannot organize {concept_id}: concept not found")
+                    return False
                 
                 logger.info(f"Concept {concept_id} organized with parents: {organization.get('parent_concepts')}")
                 return True

@@ -16,6 +16,7 @@ from .utils import (
     find_paper_by_id,
 )
 from app.repositories import papers_concepts as repo
+from app.repositories import papers_concepts_queries as queries
 
 logger = logging.getLogger("app.api.papers")
 
@@ -68,9 +69,7 @@ def remove_tag_from_paper(paper_id: str, tag: str) -> Dict[str, str]:
     # Resolve tag text to a concept: slug/alias first, then display name
     concept = concept_service._find_concept_by_slug_or_alias(tag)
     if not concept:
-        concept = db.tag_concepts_v2.find_one({
-            'display_name': {'$regex': f'^{re.escape(tag)}$', '$options': 'i'}
-        })
+        concept = queries.tag_concepts_v2_find_one__remove_tag_from_paper(tag)
 
     if not concept:
         raise HTTPException(status_code=404, detail=f"Concept '{tag}' not found")

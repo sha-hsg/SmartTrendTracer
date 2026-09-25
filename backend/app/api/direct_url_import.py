@@ -10,15 +10,12 @@ from typing import Optional, List, Dict, Any
 from pathlib import Path
 import logging
 from datetime import datetime, timezone
-from app.database.mongodb import get_database
 import hashlib
 import os
 import requests
 from urllib.parse import urlparse, unquote
 from app.repositories import direct_url_import_queries as queries
 
-# MongoDB connection
-db = get_database()
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

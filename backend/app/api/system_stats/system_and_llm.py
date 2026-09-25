@@ -3,11 +3,10 @@ System health, LLM usage, summary statistics, and circuit breaker endpoints.
 """
 from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
-from pymongo import DESCENDING
 import os
 
 from app.paths import RAG_INDEX_PATH, VECTOR_STORE_PATH
-from .utils import db, logger
+from .utils import logger
 from app.repositories import system_stats_system_and_llm_queries as queries
 
 router = APIRouter(
@@ -19,21 +18,7 @@ router = APIRouter(
 async def get_system_statistics():
     """System health and performance statistics (used internally by /statistics/summary)"""
     try:
-        # Database size estimation
-        stats = db.command("dbStats")
-
-        # Collection sizes
-        collection_sizes = {}
-        for collection_name in db.list_collection_names():
-            try:
-                coll_stats = db.command("collStats", collection_name)
-                collection_sizes[collection_name] = {
-                    "documents": coll_stats.get("count", 0),
-                    "size_bytes": coll_stats.get("size", 0),
-                    "avg_doc_size": coll_stats.get("avgObjSize", 0)
-                }
-            except Exception:
-                continue
+        stats, collection_sizes = queries.database_size_stats()
 
         # RAG index status
         rag_stats = {
@@ -135,51 +120,27 @@ async def get_llm_statistics():
     """Get LLM usage statistics and history"""
     try:
         # Get LLM usage from MongoDB
-        llm_usage_collection = db.llm_usage
 
         # Most recent LLM calls
-        recent_calls = list(llm_usage_collection.find(
-            {},
-            {"_id": 0}
-        ).sort("timestamp", DESCENDING).limit(20))
+        recent_calls = list(queries.llm_usage_find__get_llm_statistics())
 
         # Get last used model
-        last_call = llm_usage_collection.find_one(
-            {},
-            {"_id": 0, "model": 1, "task_type": 1, "timestamp": 1, "status": 1}
-        , sort=[("timestamp", DESCENDING)])
+        last_call = queries.llm_usage_find_one__get_llm_statistics()
 
         # Model usage distribution
-        model_distribution = list(llm_usage_collection.aggregate([
-            {"$group": {"_id": "$model", "count": {"$sum": 1}}},
-            {"$sort": {"count": -1}}
-        ]))
+        model_distribution = list(queries.llm_usage_aggregate__get_llm_statistics())
 
         # Task type distribution
-        task_distribution = list(llm_usage_collection.aggregate([
-            {"$group": {"_id": "$task_type", "count": {"$sum": 1}}},
-            {"$sort": {"count": -1}}
-        ]))
+        task_distribution = list(queries.llm_usage_aggregate__get_llm_statistics_2())
 
         # Usage by hour (last 24 hours)
         now = datetime.now(timezone.utc)
         day_ago = now - timedelta(days=1)
 
-        usage_last_24h = llm_usage_collection.count_documents({
-            "timestamp": {"$gte": day_ago}
-        })
+        usage_last_24h = queries.llm_usage_count_documents__get_llm_statistics(day_ago)
 
         # Token usage statistics
-        token_stats = list(llm_usage_collection.aggregate([
-            {
-                "$group": {
-                    "_id": None,
-                    "total_tokens": {"$sum": "$tokens_used"},
-                    "avg_tokens": {"$avg": "$tokens_used"},
-                    "total_calls": {"$sum": 1}
-                }
-            }
-        ]))
+        token_stats = list(queries.llm_usage_aggregate__get_llm_statistics_3())
 
         token_summary = token_stats[0] if token_stats else {
             "total_tokens": 0,
@@ -188,20 +149,12 @@ async def get_llm_statistics():
         }
 
         # Success rate
-        total_calls = llm_usage_collection.count_documents({})
-        successful_calls = llm_usage_collection.count_documents({"status": "success"})
+        total_calls = queries.llm_usage_count_documents__get_llm_statistics_2()
+        successful_calls = queries.llm_usage_count_documents__get_llm_statistics_3()
         success_rate = (successful_calls / total_calls * 100) if total_calls > 0 else 0
 
         # Average duration
-        duration_stats = list(llm_usage_collection.aggregate([
-            {
-                "$group": {
-                    "_id": "$model",
-                    "avg_duration": {"$avg": "$duration_ms"}
-                }
-            },
-            {"$sort": {"avg_duration": -1}}
-        ]))
+        duration_stats = list(queries.llm_usage_aggregate__get_llm_statistics_4())
 
         return {
             "last_used": last_call,
@@ -280,7 +233,7 @@ async def get_statistics_summary():
         }
 
         # Get recently added concepts
-        recent_concepts = list(queries.tag_concepts_v2_find__get_statistics_summary().sort("created_at", -1).limit(10))
+        recent_concepts = list(queries.tag_concepts_v2_find__get_statistics_summary())
         recently_added_tags = [
             {
                 "id": str(c["_id"]),

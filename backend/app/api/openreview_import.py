@@ -9,7 +9,6 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from bson import ObjectId
-from app.database.mongodb import get_database
 
 from app.services.openreview_service import OpenReviewService
 from app.services.pdf_processor_service import PDFProcessorService
@@ -18,8 +17,6 @@ from app.repositories import openreview_import_queries as queries
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/openreview")
 
-# MongoDB connection
-db = get_database()
 
 # Initialize services
 openreview_service = OpenReviewService()

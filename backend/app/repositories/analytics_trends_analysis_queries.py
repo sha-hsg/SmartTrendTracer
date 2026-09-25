@@ -44,9 +44,9 @@ def papers_count_documents__generate_summary_2(any_paper_filter):
 
 def tweets_find__generate_summary(any_tweet_filter):
     """tweets.find from analytics_trends.analysis.generate_summary()"""
-    return db.tweets.find(any_tweet_filter, {'created_at': 1})
+    return db.tweets.find(any_tweet_filter, {'created_at': 1}).sort('created_at', -1).limit(1)
 
 
 def articles_find__generate_summary(any_article_filter):
     """articles.find from analytics_trends.analysis.generate_summary()"""
-    return db.articles.find(any_article_filter, {'published_at': 1})
+    return db.articles.find(any_article_filter, {'published_at': 1}).sort('published_at', -1).limit(1)

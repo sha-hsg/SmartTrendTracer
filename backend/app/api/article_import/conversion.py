@@ -5,7 +5,6 @@ Playwright-based authenticated article collection endpoints
 from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any
 from datetime import datetime, timezone
-from app.database.mongodb import get_database
 import logging
 from app.repositories import article_import_conversion_queries as queries
 
@@ -22,8 +21,6 @@ def _check_playwright_available() -> bool:
 
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 
 # ============================================================================

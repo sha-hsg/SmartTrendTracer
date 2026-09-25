@@ -8,7 +8,6 @@ from typing import List, Dict, Optional
 from pydantic import BaseModel
 import json
 import logging
-from app.database.mongodb import get_database
 from bson import ObjectId
 
 from app.services.concept_only_tag_service import ConceptOnlyTagService
@@ -19,8 +18,6 @@ from app.repositories import concepts_suggestions_queries as queries
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# MongoDB connection
-db = get_database()
 
 # Initialize services
 concept_service = ConceptOnlyTagService()

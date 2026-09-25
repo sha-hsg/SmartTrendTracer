@@ -2,25 +2,13 @@
 Shared state, imports, and classes for tag reorganization package
 """
 
-from typing import Dict, List, Optional
-import json
-import asyncio
-import uuid
-import time
+from typing import Dict
 from datetime import datetime, timezone
-from collections import defaultdict
 import logging
-from pymongo import DESCENDING
-from app.database.mongodb import get_database
 
-from app.services.tag_reorganizer import ComprehensiveStrategy as ComprehensiveTagReorganizer
-from app.services.tag_reorganizer import LLMStrategy as GPT5TagReorganizer
+from app.repositories import tag_reorganization_utils_queries as queries
 
 logger = logging.getLogger(__name__)
-
-# MongoDB connection for persistent storage
-mongo_db = get_database()
-tasks_collection = mongo_db.tag_reorganization_tasks
 
 # Store active reorganization tasks (for real-time updates)
 active_tasks: Dict[str, Dict] = {}
@@ -80,11 +68,7 @@ class ReorganizationTask:
         }
 
         # Upsert to MongoDB
-        tasks_collection.replace_one(
-            {'task_id': self.task_id},
-            doc,
-            upsert=True
-        )
+        queries.tag_reorganization_tasks_replace_one___save_to_db(doc, self)
 
     def update(self, status: str = None, progress: int = None,
                current_step: str = None, message: str = None):
