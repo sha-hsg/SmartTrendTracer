@@ -19,6 +19,7 @@ from .utils import (
     logger,
     get_paper_by_id,
 )
+from app.paths import resolve_stored_path
 from app.repositories import paper_content as repo
 from app.repositories import papers as paper_repo
 
@@ -171,12 +172,9 @@ def get_paper_pdf(paper_id: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="PDF not found for this paper")
 
     # Check if file exists
-    pdf_file = Path(pdf_path)
+    pdf_file = resolve_stored_path(pdf_path)
     if not pdf_file.exists():
-        # Try relative to backend directory
-        pdf_file = Path(__file__).parent.parent.parent.parent / pdf_path
-        if not pdf_file.exists():
-            raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
+        raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
 
     # Return PDF file
     return FileResponse(

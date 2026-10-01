@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Pending initial Linux import and released/failed handoffs must not start writers.
+"$(cd "$(dirname "$0")" && pwd)/smooth-switch" guard || exit $?
+
 # SmartTrendTracer - Start All Services
 # This script starts all components of the SmartTrendTracer system
 
@@ -364,11 +367,15 @@ if check_service 8002 "Marker Service"; then
         if [ ! -x "$MARKER_PYTHON" ]; then
             log "   ✗ Failed to create Marker virtual environment"
             # Continue without Marker - it's optional
-        else
-            log "   Installing Marker dependencies (marker-pdf, fastapi, uvicorn)..."
-            $MARKER_PYTHON -m pip install --upgrade pip >> "$STARTUP_LOG" 2>&1
-            $MARKER_PYTHON -m pip install marker-pdf fastapi uvicorn python-multipart >> "$STARTUP_LOG" 2>&1
         fi
+    fi
+
+    # A venv can exist with a python binary but without packages (e.g. recreated
+    # after a platform switch) - check the imports marker_server.py needs
+    if [ -x "$MARKER_PYTHON" ] && ! $MARKER_PYTHON -c "import marker, uvicorn, fastapi, multipart, httpx, psutil, PIL" >/dev/null 2>&1; then
+        log "   Installing Marker dependencies (marker-pdf, fastapi, uvicorn, httpx, psutil, pillow)..."
+        $MARKER_PYTHON -m pip install --upgrade pip >> "$STARTUP_LOG" 2>&1
+        $MARKER_PYTHON -m pip install marker-pdf fastapi uvicorn python-multipart httpx psutil pillow >> "$STARTUP_LOG" 2>&1
     fi
 
     # Start the marker server in the background with explicit venv path

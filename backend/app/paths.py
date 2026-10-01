@@ -161,6 +161,16 @@ def resolve_data_path(relative_path: str) -> Path:
     return DATA_ROOT / normalized
 
 
+def resolve_stored_path(stored_path: str) -> Path:
+    """Resolve a file path as persisted in MongoDB (e.g. ``papers.pdf_path``).
+
+    Relative values ("data/papers/x.pdf") are relative to BACKEND_ROOT, never
+    to the process working directory.
+    """
+    path = Path(stored_path)
+    return path if path.is_absolute() else BACKEND_ROOT / path
+
+
 def ensure_dir(path: Path) -> Path:
     """
     Ensure a directory exists, creating it if necessary.

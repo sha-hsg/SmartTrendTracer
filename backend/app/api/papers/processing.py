@@ -3,6 +3,7 @@ Paper processing routes: Marker, MinerU, PDF extraction,
 progress callbacks, and processing status/health endpoints.
 """
 
+from app.paths import resolve_stored_path
 from app.services import pdf_service_client
 from datetime import datetime, timezone
 from typing import Any, Dict
@@ -87,15 +88,10 @@ async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundT
         }
 
     # Check if file exists
-    from pathlib import Path
-    pdf_file = Path(pdf_path)
+    pdf_file = resolve_stored_path(pdf_path)
     if not pdf_file.exists():
-        # Try relative to backend directory
-        pdf_file = Path(__file__).resolve().parents[3] / pdf_path
-        logger.info(f"Trying relative path: {pdf_file}")
-        if not pdf_file.exists():
-            logger.error(f"PDF file not found at: {pdf_file}")
-            raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
+        logger.error(f"PDF file not found at: {pdf_file}")
+        raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
 
     logger.info(f"PDF file found: {pdf_file}")
     logger.info(f"PDF file size: {pdf_file.stat().st_size} bytes")
@@ -275,13 +271,10 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) ->
         raise HTTPException(status_code=400, detail="No PDF path found for this paper")
 
     # Check if file exists
-    from pathlib import Path
-    pdf_file = Path(pdf_path)
+    pdf_file = resolve_stored_path(pdf_path)
     if not pdf_file.exists():
-        # Try relative to backend directory
-        pdf_file = Path(__file__).resolve().parents[3] / pdf_path
-        if not pdf_file.exists():
-            raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
+        logger.error(f"PDF file not found at: {pdf_file}")
+        raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
 
     # Process the PDF
     from ...services.pdf_processor_service import get_pdf_processor_service
@@ -394,13 +387,10 @@ async def process_paper_with_mineru(paper_id: str, background_tasks: BackgroundT
         raise HTTPException(status_code=400, detail="No PDF path found for this paper")
 
     # Check if file exists
-    from pathlib import Path
-    pdf_file = Path(pdf_path)
+    pdf_file = resolve_stored_path(pdf_path)
     if not pdf_file.exists():
-        # Try relative to backend directory
-        pdf_file = Path(__file__).resolve().parents[3] / pdf_path
-        if not pdf_file.exists():
-            raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
+        logger.error(f"PDF file not found at: {pdf_file}")
+        raise HTTPException(status_code=404, detail=f"PDF file not found: {pdf_path}")
 
     logger.info(f"Starting MinerU processing for paper {paper_id}")
 

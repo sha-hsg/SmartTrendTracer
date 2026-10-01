@@ -1,3 +1,4 @@
+from app.paths import resolve_stored_path
 from app.repositories.papers import paper_filter as _paper_filter
 from app.services import pdf_service_client
 import os
@@ -46,11 +47,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
     queries.papers_update_one__process_with_marker_background(paper_id)
     logger.info(f"Updated paper status to 'processing_with_marker'")
 
-    pdf_file = Path(pdf_path)
-    if not pdf_file.exists():
-        # Try relative to backend directory
-        pdf_file = Path(__file__).parent.parent.parent / pdf_path
-        logger.info(f"Using relative path: {pdf_file}")
+    pdf_file = resolve_stored_path(pdf_path)
 
     if not pdf_file.exists():
         error_msg = f"PDF file not found: {pdf_file}"
