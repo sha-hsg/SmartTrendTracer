@@ -6,7 +6,7 @@ model_list:
   # Tag Suggestion - Claude Sonnet 4 with GPT-5.2 fallback
   - model_name: tag_suggestion
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 1000
 
   - model_name: tag_suggestion
@@ -24,13 +24,13 @@ model_list:
   # Advanced Tag Generation
   - model_name: tag_generation_advanced
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 1000
 
   # Trend Analysis - Claude Opus 4 with GPT-5.2 fallback
   - model_name: trend_analysis
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 10000
 
   - model_name: trend_analysis
@@ -41,51 +41,51 @@ model_list:
   # Deep Trend Analysis
   - model_name: trend_analysis_deep
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 30000
 
   # Content Classification - Claude Haiku 3 (fastest)
   - model_name: content_classification
     litellm_params:
-      model: claude-haiku-4-5
+      model: anthropic/claude-haiku-4-5
       temperature: 0.1
       max_tokens: 500
 
   # Summarization - Claude Sonnet 4
   - model_name: summarization
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 2000
 
   # Comprehensive Summarization - Claude Opus 4.1
   - model_name: summarization_comprehensive
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 15000
 
   # Ontology Suggestion
   - model_name: ontology_suggestion
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 8000
 
   # Ontology Validation - Claude Haiku 3 (fast)
   - model_name: ontology_validation
     litellm_params:
-      model: claude-haiku-4-5
+      model: anthropic/claude-haiku-4-5
       temperature: 0.1
       max_tokens: 1000
 
   # Bulk Ontology
   - model_name: ontology_bulk
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 20000
 
   # Code Generation - Claude Sonnet 4 with GPT-5.1 fallback
   - model_name: code_generation
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 10000
 
   - model_name: code_generation
@@ -141,30 +141,30 @@ model_list:
 
   - model_name: rag_answer
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 8000
 
   # Article Summarizer - Claude Sonnet 4
   - model_name: article_summarizer
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 3000
 
   # Article Summarization (camelCase for frontend) - Claude Sonnet 4
   - model_name: articleSummarization
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 5000
 
   # Entity Extraction - Claude Opus 4.1
   - model_name: entity_extraction
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 5000
 
   - model_name: entity_extraction_fast
     litellm_params:
-      model: claude-haiku-4-5
+      model: anthropic/claude-haiku-4-5
       temperature: 0.1
       max_tokens: 2000
 
@@ -216,19 +216,19 @@ model_list:
   # Concept Organization
   - model_name: concept_organization
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 5000
 
   # Paper Author Extraction
   - model_name: paper_author_extraction
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 2000
 
   # Paper Affiliation Extraction
   - model_name: paper_affiliation_extraction
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 2000
 
   # Paper Analysis - Gemini 2.5 Pro with Claude fallback
@@ -240,7 +240,7 @@ model_list:
 
   - model_name: paper_analysis
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 8000
 
   # Paper Section Extraction
@@ -295,17 +295,17 @@ model_list:
   # NOTE: claude-opus-5-5 / claude-sonnet-5 reject temperature/top_p/top_k (400) - do not add sampling params
   - model_name: claude-opus-5-5
     litellm_params:
-      model: claude-opus-5-5
+      model: anthropic/claude-opus-5-5
       max_tokens: 32000
 
   - model_name: claude-sonnet-5
     litellm_params:
-      model: claude-sonnet-5
+      model: anthropic/claude-sonnet-5
       max_tokens: 16000
 
   - model_name: claude-haiku-4-5
     litellm_params:
-      model: claude-haiku-4-5
+      model: anthropic/claude-haiku-4-5
       temperature: 0.3
       max_tokens: 8000
 
