@@ -216,7 +216,7 @@ setup_marker() {
 
         log_info "Installing Marker dependencies..."
         marker_env/bin/pip install --upgrade pip -q
-        marker_env/bin/pip install marker-pdf fastapi uvicorn python-multipart -q
+        marker_env/bin/pip install "marker-pdf==1.10.2" fastapi uvicorn python-multipart httpx psutil pillow -q
         log_success "Marker environment ready"
     fi
 
@@ -246,7 +246,7 @@ setup_mineru() {
 
         log_info "Installing MinerU dependencies..."
         mineru_env/bin/pip install --upgrade pip -q
-        mineru_env/bin/pip install mineru fastapi uvicorn python-multipart aiofiles -q
+        mineru_env/bin/pip install "mineru[core]==3.4.5" fastapi uvicorn python-multipart aiofiles -q
         log_success "MinerU environment ready"
     fi
 

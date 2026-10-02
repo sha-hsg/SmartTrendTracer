@@ -236,6 +236,7 @@ def process_pdf_background(paper_id: str, pdf_path: str):
             # Update paper with processed content
             update_data = {
                 "content": result.get("markdown", ""),
+                "word_count": len((result.get("markdown", "") or '').split()),
                 "processed": True,
                 "processor_used": result.get("method_used", "unknown"),
                 "processed_at": datetime.now(timezone.utc),

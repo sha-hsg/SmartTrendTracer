@@ -3,6 +3,8 @@ Paper processing routes: Marker, MinerU, PDF extraction,
 progress callbacks, and processing status/health endpoints.
 """
 
+import asyncio
+
 from app.paths import resolve_stored_path
 from app.services import pdf_service_client
 from datetime import datetime, timezone
@@ -281,7 +283,9 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) ->
     pdf_service = get_pdf_processor_service()
 
     logger.info(f"Processing PDF for paper {paper_id}: {pdf_path}")
-    result = pdf_service.process_pdf(str(pdf_file), paper_id=str(paper['_id']))
+    # Blocking work (minutes) runs off the event loop; inside the worker thread
+    # process_pdf may start its own loop for the Marker service client
+    result = await asyncio.to_thread(pdf_service.process_pdf, str(pdf_file), paper_id=str(paper['_id']))
 
     if result['success']:
         # Update paper with processed content
@@ -289,6 +293,7 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) ->
         content = result.get('markdown', '') or result.get('content', '')
         update_data = {
             'content': content,
+            'word_count': len((content or '').split()),
             'markdown_content': content,  # Store in both fields for compatibility
             'processed': True,
             'processor_used': result.get('method_used', 'unknown'),

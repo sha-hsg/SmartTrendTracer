@@ -209,6 +209,7 @@ def process_with_mineru_cli(pdf_path: str) -> Tuple[str, Dict]:
 
             possible_paths = [
                 Path(tmpdir) / pdf_name / "auto" / f"{pdf_name}.md",
+                Path(tmpdir) / pdf_name / "hybrid_auto" / f"{pdf_name}.md",  # MinerU 3.x
                 Path(tmpdir) / pdf_name / f"{pdf_name}.md",
                 Path(tmpdir) / f"{pdf_name}.md",
             ]

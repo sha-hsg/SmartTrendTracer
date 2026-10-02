@@ -37,11 +37,15 @@ def _run_async_coro(coro):
     """
     try:
         asyncio.get_running_loop()
-        # If we got here, we're inside an event loop on this thread – we cannot block.
-        raise RuntimeError("Cannot run coroutine from within an active event loop.")
     except RuntimeError:
         # No running loop in this thread — safe to asyncio.run
         return asyncio.run(coro)
+    # Inside an event loop on this thread we cannot block. (This raise used to
+    # sit inside the try and was swallowed by its own except, so asyncio.run
+    # failed instead and the Marker path silently fell back.) Callers in async
+    # code must run process_pdf via asyncio.to_thread.
+    coro.close()
+    raise RuntimeError("Cannot run coroutine from within an active event loop.")
 
 class PDFProcessorService:
     """Service for processing PDF documents to markdown"""
@@ -191,6 +195,17 @@ class PDFProcessorService:
         Returns:
             Dict with processed content and metadata
         """
+        # Callers often pass the MongoDB id as paper_id. Marker/MinerU need the
+        # integer form (Form int -> HTTP 422 otherwise, silently ending in the
+        # plain-text fallback); derive it the way image storage does.
+        if isinstance(paper_id, str) and not paper_id.isdigit():
+            mongo_paper_id = mongo_paper_id or paper_id
+            paper_id = None
+        elif isinstance(paper_id, str):
+            paper_id = int(paper_id)
+        if paper_id is None and mongo_paper_id and len(mongo_paper_id) == 24:
+            paper_id = int(mongo_paper_id[-8:], 16)
+
         result = {
             "success": False,
             "markdown": "",

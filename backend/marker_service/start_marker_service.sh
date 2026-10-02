@@ -100,7 +100,7 @@ if [[ "${MARKER_FORCE_CLI}" == "1" || "${MARKER_ALWAYS_CLI}" == "1" ]]; then
   if [[ -z "${MARKER_SINGLE_PATH}" ]]; then
     echo "ERROR: marker_single not found in current environment."
     echo "       Install marker-pdf into this venv:"
-    echo "         source ${VENV_DIR}/bin/activate && pip install marker-pdf"
+    echo "         source ${VENV_DIR}/bin/activate && pip install \"marker-pdf==1.10.2\""
     exit 1
   fi
 fi

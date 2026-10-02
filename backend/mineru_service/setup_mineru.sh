@@ -21,7 +21,7 @@ pip install --upgrade pip
 
 # Install MinerU with specific dependencies
 echo "Installing MinerU..."
-pip install magic-pdf[full] mineru
+pip install "mineru[core]==3.4.5"
 
 # Install web server dependencies
 echo "Installing server dependencies..."

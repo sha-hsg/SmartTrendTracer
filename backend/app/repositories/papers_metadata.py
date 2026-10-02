@@ -32,6 +32,7 @@ def update_paper_content(paper_id, data):
     # Update both content and markdown_content fields
     update_data = {
         'content': content,
+        'word_count': len((content or '').split()),
         'markdown_content': content,
         'updated_at': datetime.now(timezone.utc)  # BSON datetime, not ISO string
     }

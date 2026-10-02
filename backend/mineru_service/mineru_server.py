@@ -289,8 +289,12 @@ async def convert_pdf(
         pdf_name = Path(original_filename).stem
         output_subdir = Path(output_dir) / pdf_name
         
-        # MinerU creates output in <pdf_name>/auto/ directory
-        auto_dir = output_subdir / "auto" if output_subdir.exists() else None
+        # MinerU creates output in <pdf_name>/<backend>/ — "auto" up to 2.x,
+        # "hybrid_auto" in 3.x; take whichever subdirectory holds the markdown
+        auto_dir = None
+        if output_subdir.exists():
+            auto_dir = next((d for d in sorted(output_subdir.iterdir())
+                             if d.is_dir() and any(d.glob("*.md"))), None)
         
         # Look for markdown files
         md_files = []

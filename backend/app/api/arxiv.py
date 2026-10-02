@@ -2,6 +2,7 @@
 ArXiv API endpoints
 """
 
+import asyncio
 from app.paths import ARXIV_PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -112,7 +113,7 @@ async def import_arxiv_paper(
             pdf_service = get_pdf_processor_service()
             
             # Process with MinerU/Marker and extract images
-            process_result = pdf_service.process_pdf(result['pdf_path'], paper_id=paper_id)
+            process_result = await asyncio.to_thread(pdf_service.process_pdf, result['pdf_path'], paper_id=paper_id)
             
             if process_result['success']:
                 response.markdown_content = process_result['markdown']

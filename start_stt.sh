@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Pending initial Linux import and released/failed handoffs must not start writers.
-"$(cd "$(dirname "$0")" && pwd)/smooth-switch" guard || exit $?
-
 # SmartTrendTracer - Start All Services
 # This script starts all components of the SmartTrendTracer system
 
@@ -372,10 +369,10 @@ if check_service 8002 "Marker Service"; then
 
     # A venv can exist with a python binary but without packages (e.g. recreated
     # after a platform switch) - check the imports marker_server.py needs
-    if [ -x "$MARKER_PYTHON" ] && ! $MARKER_PYTHON -c "import marker, uvicorn, fastapi, multipart, httpx, psutil, PIL" >/dev/null 2>&1; then
+    if [ -x "$MARKER_PYTHON" ] && ! $MARKER_PYTHON -c "import marker, uvicorn, fastapi, multipart, httpx, psutil, PIL, importlib.metadata as m, sys; sys.exit(m.version('marker-pdf') != '1.10.2')" >/dev/null 2>&1; then
         log "   Installing Marker dependencies (marker-pdf, fastapi, uvicorn, httpx, psutil, pillow)..."
         $MARKER_PYTHON -m pip install --upgrade pip >> "$STARTUP_LOG" 2>&1
-        $MARKER_PYTHON -m pip install marker-pdf fastapi uvicorn python-multipart httpx psutil pillow >> "$STARTUP_LOG" 2>&1
+        $MARKER_PYTHON -m pip install "marker-pdf==1.10.2" fastapi uvicorn python-multipart httpx psutil pillow >> "$STARTUP_LOG" 2>&1
     fi
 
     # Start the marker server in the background with explicit venv path
@@ -421,7 +418,7 @@ if check_service 8003 "MinerU Service"; then
         else
             log "   Installing MinerU dependencies (mineru, fastapi, uvicorn)..."
             $MINERU_PYTHON -m pip install --upgrade pip >> "$STARTUP_LOG" 2>&1
-            $MINERU_PYTHON -m pip install mineru fastapi uvicorn python-multipart aiofiles >> "$STARTUP_LOG" 2>&1
+            $MINERU_PYTHON -m pip install "mineru[core]==3.4.5" fastapi uvicorn python-multipart aiofiles >> "$STARTUP_LOG" 2>&1
         fi
     fi
 

@@ -31,6 +31,7 @@ def papers_update_one__process_pdf_background(paper_id, result):
         {'_id': ObjectId(paper_id)},
         {'$set': {
             'content': result.get('markdown', ''),
+            'word_count': len((result.get('markdown', '') or '').split()),
             'processed': True,
             'processor_used': result.get('method_used', 'unknown'),
             'processed_at': datetime.now(timezone.utc)

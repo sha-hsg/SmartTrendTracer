@@ -1,6 +1,7 @@
 from app.paths import resolve_stored_path
 from app.repositories.papers import paper_filter as _paper_filter
 from app.services import pdf_service_client
+import asyncio
 import os
 import re
 import traceback
@@ -150,6 +151,7 @@ async def process_with_marker_background(paper_id: str, pdf_path: str) -> None:
 
                     update_data = {
                         'content': content,  # Fixed: Marker returns 'content', not 'markdown'
+                        'word_count': len((content or '').split()),
                         'processed': True,
                         'processor_used': 'marker_service',
                         'processed_at': datetime.now(timezone.utc),
@@ -236,7 +238,8 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
 
         # Pass both the integer ID for file storage and MongoDB ID for callback URL
         logger.info(f"Processing PDF with MinerU service, paper_id_int={paper_id_int}, mongo_id={mongo_id}")
-        result = pdf_service.process_pdf(
+        result = await asyncio.to_thread(
+            pdf_service.process_pdf,
             pdf_path,
             prefer_method='mineru',
             paper_id=paper_id_int,
@@ -265,6 +268,7 @@ async def process_with_mineru_background(paper_id: str, pdf_path: str) -> None:
             # Update paper with processed content
             update_data = {
                 'content': content,  # Fixed: use 'content' field
+                'word_count': len((content or '').split()),
                 'processed': True,
                 'processor_used': 'mineru_service',
                 'processed_at': datetime.now(timezone.utc),
