@@ -2,7 +2,7 @@ from app.services import pdf_service_client
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 import time
 import subprocess
 import requests
@@ -182,7 +182,7 @@ class PDFProcessorService:
             logger.error(f"❌ Nougat check failed: {e}")
             return False
 
-    def process_pdf(self, pdf_path: str, prefer_method: str = "auto", paper_id: Optional[int] = None, mongo_paper_id: Optional[str] = None) -> Dict:
+    def process_pdf(self, pdf_path: str, prefer_method: str = "auto", paper_id: Optional[Union[int, str]] = None, mongo_paper_id: Optional[str] = None) -> Dict:
         """
         Process a PDF file to extract structured content with image extraction
 
