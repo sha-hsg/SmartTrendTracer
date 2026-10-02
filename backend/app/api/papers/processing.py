@@ -297,7 +297,11 @@ async def process_paper_pdf(paper_id: str, background_tasks: BackgroundTasks) ->
             'markdown_content': content,  # Store in both fields for compatibility
             'processed': True,
             'processor_used': result.get('method_used', 'unknown'),
-            'processed_at': datetime.now(timezone.utc)
+            'processed_at': datetime.now(timezone.utc),
+            # same fields the background paths set; a retry after a failure
+            # otherwise kept showing status "failed" despite stored content
+            'processing_status': 'completed',
+            'processing_error': None,
         }
 
         # Add metadata if available
