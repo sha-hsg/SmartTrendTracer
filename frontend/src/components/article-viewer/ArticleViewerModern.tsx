@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { decodeHtmlEntities } from '@/utils/htmlDecoder'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -36,7 +37,8 @@ import {
   Wand2,
   RefreshCw,
   ChevronDown,
-  MoreHorizontal
+  MoreHorizontal,
+  Check
 } from 'lucide-react'
 
 import { useArticleViewer } from './useArticleViewer'
@@ -49,9 +51,13 @@ interface ArticleViewerProps {
   articleId: string | number
   onClose: () => void
   onArticleUpdated?: () => void
+  /** Reading is the default; 'edit' shows the editing affordances right away */
+  initialMode?: 'view' | 'edit'
 }
 
-function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleViewerProps) {
+function ArticleViewerModern({ articleId, onClose, onArticleUpdated, initialMode = 'view' }: ArticleViewerProps) {
+  // Read mode hides edit pencils and maintenance actions; "Edit" toggles them
+  const [editMode, setEditMode] = useState(initialMode === 'edit')
   try {
 
   // --- Custom hooks ---
@@ -166,7 +172,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                           {viewer.savingEdits ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         </Button>
                       </div>
-                    ) : (
+                    ) : editMode ? (
                       <h2
                         className="text-2xl font-bold cursor-pointer hover:text-primary transition-colors flex items-center gap-2"
                         onClick={() => viewer.setIsEditingTitle(true)}
@@ -174,13 +180,27 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                         {decodeHtmlEntities(article.title)}
                         <Edit3 className="h-4 w-4 opacity-50" />
                       </h2>
+                    ) : (
+                      <h2 className="text-2xl font-bold">{decodeHtmlEntities(article.title)}</h2>
                     )}
                     {article.subtitle && (
                       <p className="text-muted-foreground mt-1">{article.subtitle}</p>
                     )}
                   </div>
+                  <div className="flex items-center gap-2">
+                  <Button
+                    variant={editMode ? 'default' : 'outline'} size="sm"
+                    onClick={() => setEditMode(!editMode)}
+                    disabled={editMode && viewer.isEditingContent}
+                    title={editMode && viewer.isEditingContent ? 'Save or cancel the content edit first' : undefined}
+                  >
+                    {editMode
+                      ? <><Check className="h-4 w-4 mr-2" />Done</>
+                      : <><Edit2 className="h-4 w-4 mr-2" />Edit</>}
+                  </Button>
                   <Button
                     variant="ghost" size="icon"
+                    aria-label="Close"
                     onClick={() => {
                       window.dispatchEvent(new CustomEvent('articleViewerClosed', {
                         detail: { articleId: article.id }
@@ -192,12 +212,19 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                   >
                     <X className="h-4 w-4" />
                   </Button>
+                  </div>
                 </div>
 
                 {/* ===== Metadata Row ===== */}
                 <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
                   {/* Author */}
-                  {viewer.isEditingAuthor ? (
+                  {!editMode ? (
+                    article.author && (
+                      <span className="flex items-center gap-1">
+                        <User className="h-4 w-4" />{article.author.name}
+                      </span>
+                    )
+                  ) : viewer.isEditingAuthor ? (
                     <AuthorEditor viewer={viewer} article={article} />
                   ) : (
                     article.author ? (
@@ -230,7 +257,14 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                   )}
 
                   {/* Published Date */}
-                  {viewer.isEditingDate ? (
+                  {!editMode ? (
+                    article.published_at && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(article.published_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                      </span>
+                    )
+                  ) : viewer.isEditingDate ? (
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
                       <Input type="date" value={viewer.editedDate}
@@ -257,7 +291,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                   )}
 
                   {/* Extract Metadata */}
-                  {(!article.author || !article.published_at) && (
+                  {editMode && (!article.author || !article.published_at) && (
                     <div className="flex items-center gap-2">
                       <div className="min-w-[180px]">
                         <UnifiedModelSelector
@@ -320,7 +354,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                 </div>
 
                 {/* AI Model Selection for Summarization */}
-                {!article.summary && (
+                {editMode && !article.summary && (
                   <div className="mt-4 p-4 border rounded-lg bg-muted/30">
                     <UnifiedModelSelector
                       taskType="article_summarizer"
@@ -376,7 +410,8 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  {/* Maintenance actions: rarely needed, kept out of the main row */}
+                  {/* Maintenance actions: edit mode only */}
+                  {editMode && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm"
@@ -410,6 +445,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  )}
                 </div>
               </div>
 
@@ -441,10 +477,13 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                       <Badge key={tag.id} variant="outline"
                         className="cursor-pointer bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800 group">
                         <Tags className="h-3 w-3 mr-1" />{tag.tag}
-                        <button onClick={() => viewer.removeTag(tag.id, tag.tag)}
-                          className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity hover:text-blue-900">
-                          <X className="h-3 w-3" />
-                        </button>
+                        {editMode && (
+                          <button onClick={() => viewer.removeTag(tag.id, tag.tag)}
+                            aria-label={`Remove tag ${tag.tag}`}
+                            className="ml-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:text-blue-900">
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
                       </Badge>
                     ))}
                   </div>

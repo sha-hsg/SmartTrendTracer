@@ -18,6 +18,7 @@ import {
   ChevronRight as ChevronRightIcon,
   RotateCw,
   Edit2,
+  Eye,
   X,
   Check
 } from 'lucide-react'
@@ -56,7 +57,7 @@ interface ArticleCardProps {
   expandedSummaries: Set<string | number>
   regeneratingPreviews: Set<string | number>
   selectedConcepts: string[]
-  onOpenArticle: (article: Article) => void
+  onOpenArticle: (article: Article, mode?: 'view' | 'edit') => void
   onToggleSummary: (articleId: string | number) => void
   onToggleConcept: (conceptId: string) => void
   onDeleteArticle: (articleId: string, title: string) => void
@@ -103,7 +104,13 @@ export default function ArticleCard({
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg mb-2 line-clamp-2">
-              {article.title}
+              <button
+                type="button"
+                onClick={() => onOpenArticle(article, 'view')}
+                className="text-left hover:text-primary hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+              >
+                {article.title}
+              </button>
             </CardTitle>
             <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
               {article.author && (
@@ -130,9 +137,22 @@ export default function ArticleCard({
               size="sm"
               onClick={(e) => {
                 e.stopPropagation()
-                onOpenArticle(article)
+                onOpenArticle(article, 'view')
               }}
-              title="View/Edit Article"
+              title="View article"
+              aria-label="View article"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpenArticle(article, 'edit')
+              }}
+              title="Edit article"
+              aria-label="Edit article"
             >
               <Edit2 className="h-4 w-4" />
             </Button>

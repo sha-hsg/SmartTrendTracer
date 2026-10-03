@@ -178,8 +178,11 @@ export default function FacetedArticlesDashboardModern() {
     })
   }
 
-  const openArticle = (article: Article) => {
+  const [viewerMode, setViewerMode] = useState<'view' | 'edit'>('view')
+
+  const openArticle = (article: Article, mode: 'view' | 'edit' = 'view') => {
     setSelectedArticle(article)
+    setViewerMode(mode)
     setShowViewer(true)
   }
 
@@ -544,6 +547,8 @@ export default function FacetedArticlesDashboardModern() {
             </div>
           }>
             <ArticleViewerModern
+              key={`${selectedArticle?.id}-${viewerMode}`}
+              initialMode={viewerMode}
               articleId={selectedArticle?.id}
               onClose={() => {
                 setShowViewer(false)
