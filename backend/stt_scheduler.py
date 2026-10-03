@@ -63,8 +63,15 @@ def job_paper_feed():
     return {'subscriptions': result['subscriptions'], 'new': result['new']}
 
 
+def job_weekly_digest():
+    """Weekly briefing; runs after the feed so its suggestions are included."""
+    from app.services.digest_service import generate_digest
+    return generate_digest()
+
+
 JOBS: Dict[str, Dict] = {
     'paper_feed': {'run': job_paper_feed, 'due': due_daily},
+    'weekly_digest': {'run': job_weekly_digest, 'due': due_weekly},
     'rag_update': {'run': job_rag_update, 'due': due_daily},
 }
 
