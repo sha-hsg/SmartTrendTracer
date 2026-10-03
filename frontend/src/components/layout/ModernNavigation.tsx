@@ -31,7 +31,8 @@ import {
   GitBranch,
   MessageSquare,
   FileSearch,
-  Library
+  Library,
+  LineChart
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
@@ -280,7 +281,7 @@ const navigationItems = [
   },
   {
     title: 'Analysis',
-    icon: Brain,
+    icon: LineChart,
     items: [
       { 
         title: 'Unified Trends', 
@@ -337,7 +338,7 @@ const navigationItems = [
 export default function ModernNavigation({ activeView, onViewChange }: ModernNavigationProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex min-h-14 flex-wrap items-center py-1 gap-y-1">
+      <div className="container mx-auto flex min-h-14 flex-wrap items-center px-4 py-1 gap-y-1">
         <div className="mr-2 flex">
           <a className="mr-4 flex items-center space-x-2" href="/">
             <Database className="h-6 w-6 text-primary" />
@@ -360,7 +361,7 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                         item.items.some(i => i.view === activeView) && "bg-accent"
                       )}
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <item.icon className="mr-2 hidden h-4 w-4 2xl:block" />
                       {item.title}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent
@@ -410,11 +411,10 @@ export default function ModernNavigation({ activeView, onViewChange }: ModernNav
                   <NavigationMenuItem key={item.title}>
                     <Button
                       variant={activeView === item.view ? "secondary" : "ghost"}
-                      size="sm"
                       onClick={() => onViewChange(item.view!)}
-                      className="h-9 px-2"
+                      className="h-9 px-2 font-medium"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <item.icon className="mr-2 hidden h-4 w-4 2xl:block" />
                       {item.title}
                     </Button>
                   </NavigationMenuItem>
