@@ -268,9 +268,13 @@ function ArticleContentRenderer({
           del: ({node, ...props}) => (
             <del className="line-through text-muted-foreground" {...props} />
           ),
+          // The code renderer below draws its own <pre> container
+          pre: ({children}: any) => <>{children}</>,
           code: ({node, className, children, ...props}: any) => {
             const match = /language-(\w+)/.exec(className || '')
-            const isInline = !match && !className?.includes('language-')
+            // fenced blocks without a language have no className: detect them by
+            // their line breaks, otherwise they render as unscrollable inline code
+            const isInline = !match && !className?.includes('language-') && !String(children).includes('\n')
             return isInline ? (
               <code
                 {...props}
@@ -280,7 +284,7 @@ function ArticleContentRenderer({
               </code>
             ) : (
               <div className="my-4">
-                <pre className="bg-muted p-4 rounded-lg overflow-auto">
+                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
                   <code className={`font-mono text-sm ${className || ''}`} {...props}>
                     {children}
                   </code>

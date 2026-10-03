@@ -5,6 +5,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 import EntityAnnotationReviewModern from '../entities/EntityAnnotationReviewModern'
 import UnifiedModelSelector from '../llm/UnifiedModelSelector'
@@ -27,7 +34,9 @@ import {
   Calendar,
   Plus,
   Wand2,
-  RefreshCw
+  RefreshCw,
+  ChevronDown,
+  MoreHorizontal
 } from 'lucide-react'
 
 import { useArticleViewer } from './useArticleViewer'
@@ -131,7 +140,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
             <DialogTitle>{decodeHtmlEntities(article.title) || 'Article Viewer'}</DialogTitle>
             <DialogDescription>View and edit article content, manage tags, and generate summaries.</DialogDescription>
           </VisuallyHidden>
-          <ScrollArea className="h-[90vh]">
+          <ScrollArea className="h-[90vh] [&_[data-radix-scroll-area-viewport]>div]:!block">
             {/* ===== Header ===== */}
             <div className="sticky top-0 z-10 bg-background border-b">
               <div className="p-6">
@@ -275,7 +284,8 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
 
                   {/* Read time / word count */}
                   <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />{article.reading_time_minutes} min read
+                    <Clock className="h-4 w-4" />
+                    {article.reading_time_minutes || Math.max(1, Math.round((article.word_count || 0) / 230))} min read
                   </div>
                   <div className="flex items-center gap-1">
                     <FileText className="h-4 w-4" />{article.word_count} words
@@ -305,11 +315,6 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                           <ExternalLink className="h-4 w-4" />View on Substack
                         </a>
                       )}
-                      <Button variant="ghost" size="sm"
-                        onClick={() => { viewer.setEditedUrl(article.url || ''); viewer.setIsEditingUrl(true) }}
-                        className="h-8 px-2">
-                        <Link2 className="h-4 w-4 mr-1" />{article.url ? 'Edit' : 'Add'} URL
-                      </Button>
                     </>
                   )}
                 </div>
@@ -351,50 +356,60 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated }: ArticleVi
                     )}
                   </Button>
 
-                  {article.summary && (
-                    <Button variant="outline" size="sm" onClick={() => viewer.generateSummary(summarizerModel || undefined)}
-                      disabled={viewer.generatingSummary || !summarizerModel} title="Regenerate summary with current model">
-                      {viewer.generatingSummary ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Regenerating...</>
-                      ) : (
-                        <><RefreshCw className="h-4 w-4 mr-2" />Redo Summary</>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" disabled={viewer.exportingPDF}>
+                        {viewer.exportingPDF
+                          ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          : <Download className="h-4 w-4 mr-2" />}
+                        Export
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={viewer.exportToPDF}>
+                        <Download className="h-4 w-4 mr-2" />PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={viewer.exportToMarkdown}>
+                        <FileText className="h-4 w-4 mr-2" />Markdown
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Maintenance actions: rarely needed, kept out of the main row */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm"
+                        disabled={viewer.recollecting || viewer.beautifyingMarkdown || viewer.generatingSummary}>
+                        {viewer.recollecting || viewer.beautifyingMarkdown
+                          ? <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          : <MoreHorizontal className="h-4 w-4 mr-2" />}
+                        {viewer.recollecting ? 'Recollecting…' : viewer.beautifyingMarkdown ? 'Beautifying…' : 'More'}
+                        <ChevronDown className="h-4 w-4 ml-1" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {article.summary && (
+                        <DropdownMenuItem onClick={() => viewer.generateSummary(summarizerModel || undefined)}
+                          disabled={!summarizerModel}>
+                          <RefreshCw className="h-4 w-4 mr-2" />Redo summary
+                        </DropdownMenuItem>
                       )}
-                    </Button>
-                  )}
-
-                  <Button variant="outline" size="sm" onClick={viewer.recollectArticle}
-                    disabled={viewer.recollecting || !article.url} title="Re-fetch article content from URL">
-                    {viewer.recollecting ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Recollecting...</>
-                    ) : (
-                      <><RefreshCw className="h-4 w-4 mr-2" />Recollect</>
-                    )}
-                  </Button>
-
-                  <Button variant="outline" size="sm" onClick={() => viewer.setIsEditingContent(!viewer.isEditingContent)}>
-                    <Edit2 className="h-4 w-4 mr-2" />{viewer.isEditingContent ? 'View' : 'Edit'} Content
-                  </Button>
-
-                  <Button variant="outline" size="sm" onClick={viewer.beautifyMarkdown}
-                    disabled={viewer.beautifyingMarkdown} title="Beautify and format the markdown content">
-                    {viewer.beautifyingMarkdown ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Beautifying...</>
-                    ) : (
-                      <><Wand2 className="h-4 w-4 mr-2" />Beautify Markdown</>
-                    )}
-                  </Button>
-
-                  <Button variant="outline" size="sm" onClick={viewer.exportToPDF} disabled={viewer.exportingPDF}>
-                    {viewer.exportingPDF ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Exporting...</>
-                    ) : (
-                      <><Download className="h-4 w-4 mr-2" />Export PDF</>
-                    )}
-                  </Button>
-
-                  <Button variant="outline" size="sm" onClick={viewer.exportToMarkdown}>
-                    <FileText className="h-4 w-4 mr-2" />Export Markdown
-                  </Button>
+                      <DropdownMenuItem onClick={() => viewer.setIsEditingContent(!viewer.isEditingContent)}>
+                        <Edit2 className="h-4 w-4 mr-2" />{viewer.isEditingContent ? 'View content' : 'Edit content'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={viewer.beautifyMarkdown}>
+                        <Wand2 className="h-4 w-4 mr-2" />Beautify markdown
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={viewer.recollectArticle} disabled={!article.url}>
+                        <RefreshCw className="h-4 w-4 mr-2" />Recollect from URL
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { viewer.setEditedUrl(article.url || ''); viewer.setIsEditingUrl(true) }}>
+                        <Link2 className="h-4 w-4 mr-2" />{article.url ? 'Edit URL' : 'Add URL'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
