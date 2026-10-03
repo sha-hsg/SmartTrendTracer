@@ -23,6 +23,7 @@ import FacetedPapersDashboard from './components/papers-dashboard/FacetedPapersD
 import FacetedBooksDashboard from './components/books/FacetedBooksDashboard'
 import ReferenceManager from './components/reference-manager'
 import PaperFeed from './components/paper-feed'
+import WeeklyDigest from './components/weekly-digest'
 import { ArticleClusteringDashboard } from './components/clustering'
 import AuthorManagementModern from './components/authors/AuthorManagementModern'
 import TwitterAccountManager from './components/twitter'
@@ -45,6 +46,8 @@ export default function ModernApp() {
         return <StatisticsDashboard />
       case 'rag-search':
         return <RAGSearchModern />
+      case 'weekly-digest':
+        return <WeeklyDigest />
       // Twitter views
       case 'twitter-faceted':
         return <FacetedTweetsDashboardModern />

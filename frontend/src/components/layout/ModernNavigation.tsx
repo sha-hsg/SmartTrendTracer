@@ -33,7 +33,8 @@ import {
   FileSearch,
   Library,
   LineChart,
-  Rss
+  Rss,
+  Newspaper
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
@@ -41,6 +42,7 @@ export type ViewType =
   | 'dashboard'
   | 'statistics'
   | 'rag-search'
+  | 'weekly-digest'
   // Twitter views
   | 'twitter-faceted'
   | 'twitter-media'
@@ -116,6 +118,12 @@ const navigationItems = [
         view: 'twitter-summary' as ViewType, 
         icon: ScrollText,
         description: 'Generate intelligent summaries'
+      },
+      {
+        title: 'Weekly Digest',
+        view: 'weekly-digest' as ViewType,
+        icon: Newspaper,
+        description: 'Automatic briefing on the last 7 days'
       }
     ]
   },
