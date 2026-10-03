@@ -19,6 +19,7 @@ import logging
 from app.utils.preview_utils import generate_preview
 from app.repositories import article_import_url_import_queries as queries
 from app.repositories import articles as articles_repo
+from app.utils.content_cleaner import strip_substack_byline
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,7 @@ def clean_article_content(html_content: str) -> str:
 
     markdown_content = re.sub(r'!\[([^\]]*)\]\(([^)]+)\)', fix_image_url, markdown_content)
 
-    return markdown_content
+    return strip_substack_byline(markdown_content)
 
 @router.post("/import-url", response_model=URLImportResponse)
 async def import_article_from_url(request: URLImportRequest):

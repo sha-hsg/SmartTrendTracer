@@ -11,6 +11,7 @@ import re
 import logging
 
 from app.services.aggressive_html_cleaner import AggressiveHTMLCleaner
+from app.utils.content_cleaner import strip_substack_byline
 
 logger = logging.getLogger(__name__)
 
@@ -239,7 +240,7 @@ def clean_markdown(markdown: str) -> str:
     for pattern in patterns_to_remove:
         markdown = re.sub(pattern, '', markdown, flags=re.MULTILINE | re.IGNORECASE)
 
-    return markdown.strip()
+    return strip_substack_byline(markdown.strip())
 
 
 def validate_and_fix_content(markdown: str, is_forwarded: bool, check_only: bool = False) -> str:

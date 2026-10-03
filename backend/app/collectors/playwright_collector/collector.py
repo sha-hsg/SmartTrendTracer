@@ -25,6 +25,7 @@ except ImportError:
 from .session_manager import SessionManager, SUPPORTED_SITES
 from .content_extractor import ContentExtractor
 from .markdown_converter import MarkdownConverter
+from app.utils.content_cleaner import strip_substack_byline
 
 
 class PlaywrightCollector:
@@ -317,7 +318,8 @@ class PlaywrightCollector:
                     }
 
             # Convert to markdown
-            content_markdown = self.markdown_converter.convert(extracted.get('content_html', ''))
+            content_markdown = strip_substack_byline(
+                self.markdown_converter.convert(extracted.get('content_html', '')))
             preview = self.markdown_converter.extract_preview(content_markdown)
             word_count = self.markdown_converter.count_words(content_markdown)
             reading_time = self.markdown_converter.estimate_reading_time(word_count)
