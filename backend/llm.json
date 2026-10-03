@@ -206,16 +206,16 @@
       "description": "Embedding models for the concept-based RAG index (data/rag_index_concepts)",
       "is_embedding": true,
       "primary": {
-        "model": "models/text-embedding-004",
+        "model": "models/gemini-embedding-001",
         "provider": "google",
         "dimension": 768
       },
       "fallback": {
-        "model": "text-embedding-ada-002",
+        "model": "text-embedding-3-small",
         "provider": "openai",
         "dimension": 1536
       },
-      "note": "DO NOT change models/dimensions without rebuilding the FAISS index - the existing index was built with these embeddings"
+      "note": "DO NOT change models/dimensions without rebuilding the FAISS index - queries must use the model the index was built with (index_info.json embedding_model). text-embedding-004 was retired by Google (404 since 2026); gemini-embedding-001 is truncated to 768 dims and L2-normalized."
     },
     "paper_section_extraction": {
       "model": "claude-sonnet-5",

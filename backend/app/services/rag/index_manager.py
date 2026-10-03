@@ -48,6 +48,30 @@ def _embedding_model_and_dimension(use_gemini_embeddings: bool):
     return entry['model'], entry['dimension']
 
 
+def _with_rate_limit_retry(call, attempts: int = 6, first_wait: float = 2.0):
+    """Retry an embedding API call on HTTP 429 with exponential backoff.
+
+    The 2026-10-03 rebuild lost 61 of 32,282 documents to transient Gemini
+    quota errors because nothing was retried."""
+    wait = first_wait
+    for attempt in range(attempts):
+        try:
+            return call()
+        except Exception as e:
+            if '429' not in str(e) or attempt == attempts - 1:
+                raise
+            logger.warning(f"Embedding rate limited, retrying in {wait:.0f}s")
+            time.sleep(wait)
+            wait *= 2
+
+
+def _normalize(vec: np.ndarray) -> np.ndarray:
+    """L2-normalize so IndexFlatL2 distance ranks like cosine similarity.
+    gemini-embedding-001 vectors truncated below 3072 dims are not normalized."""
+    norm = np.linalg.norm(vec)
+    return vec / norm if norm else vec
+
+
 def init_embedding_clients(google_api_key, openai_api_key):
     """Returns (use_gemini_embeddings, openai_client) tuple."""
     if google_api_key:
@@ -341,31 +365,33 @@ def get_embedding(text: str, use_gemini_embeddings: bool, openai_client, embeddi
         Exception: Propagated API errors - callers must handle failures
         explicitly (no silent zero-vector fallback).
     """
-    text_hash = hashlib.md5(text.encode()).hexdigest()
+    model, dimension = _embedding_model_and_dimension(use_gemini_embeddings)
+    # Key includes the model: after a model switch, cached vectors of the old
+    # model must not be mixed into the new index
+    text_hash = hashlib.md5(f"{model}:{dimension}:{text}".encode()).hexdigest()
 
     # Check cache if we have one (but not for queries)
     if not is_query and text_hash in embeddings_cache:
         return np.array(embeddings_cache[text_hash])
 
-    model, _ = _embedding_model_and_dimension(use_gemini_embeddings)
-
     try:
         if use_gemini_embeddings:
             # Use Gemini embeddings with appropriate task type
             task_type = "retrieval_query" if is_query else "retrieval_document"
-            result = genai.embed_content(
+            result = _with_rate_limit_retry(lambda: genai.embed_content(
                 model=model,
                 content=text[:8000],
-                task_type=task_type
-            )
-            embedding = np.array(result['embedding'])
+                task_type=task_type,
+                output_dimensionality=dimension
+            ))
+            embedding = _normalize(np.array(result['embedding']))
         else:
             # Fallback to OpenAI
             response = openai_client.embeddings.create(
                 model=model,
                 input=text[:8000]
             )
-            embedding = np.array(response.data[0].embedding)
+            embedding = _normalize(np.array(response.data[0].embedding))
     except Exception as e:
         logger.error(f"Embedding error ({model}): {e}")
         raise
@@ -390,22 +416,23 @@ def get_embeddings_batch(texts: List[str], use_gemini_embeddings: bool, openai_c
     batch_size = 100
 
     if use_gemini_embeddings:
-        model, _ = _embedding_model_and_dimension(use_gemini_embeddings)
+        model, dimension = _embedding_model_and_dimension(use_gemini_embeddings)
 
         for i in range(0, len(texts), batch_size):
             batch = texts[i:i+batch_size]
 
             try:
                 # Gemini supports batch embedding
-                batch_results = genai.embed_content(
+                batch_results = _with_rate_limit_retry(lambda: genai.embed_content(
                     model=model,
                     content=batch,
-                    task_type="retrieval_document"
-                )
+                    task_type="retrieval_document",
+                    output_dimensionality=dimension
+                ))
 
                 # Extract embeddings from results
                 for embedding in batch_results['embedding']:
-                    embeddings.append(np.array(embedding))
+                    embeddings.append(_normalize(np.array(embedding)))
 
             except Exception as e:
                 logger.error(f"Batch embedding failed, falling back to individual: {e}")
