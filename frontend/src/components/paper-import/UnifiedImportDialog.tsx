@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { X, FileDown, BookOpen, GraduationCap, Globe, ChevronRight, FileText, Search, BookMarked, MessageSquare } from 'lucide-react'
+import { X, FileDown, BookOpen, GraduationCap, Globe, ChevronRight, FileText, Search, BookMarked, MessageSquare, Link2 } from 'lucide-react'
 import { ArxivImportModal } from './ArxivImportModal'
 import ACLAnthologyImportModal from './ACLAnthologyImportModal'
 import DirectURLImportModal from './DirectURLImportModal'
+import DOIImportModal from './DOIImportModal'
 import { ACMImportModal } from './ACMImportModal'
 import OpenReviewImportModal from './OpenReviewImportModal'
 import JAIRImportModal from './JAIRImportModal'
@@ -14,7 +15,7 @@ interface UnifiedImportDialogProps {
   onImportSuccess?: (paperId: number | string) => void
 }
 
-type ImportSource = 'selection' | 'arxiv' | 'acl' | 'acm' | 'url' | 'dblp' | 'openreview' | 'jair'
+type ImportSource = 'selection' | 'doi' | 'arxiv' | 'acl' | 'acm' | 'url' | 'dblp' | 'openreview' | 'jair'
 
 interface ImportOption {
   id: ImportSource
@@ -31,6 +32,13 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
   if (!isOpen) return null
 
   const importOptions: ImportOption[] = [
+    {
+      id: 'doi',
+      name: 'DOI / Paper Link',
+      description: 'Any DOI, doi.org, SSRN or publisher link — metadata and open PDF are fetched automatically',
+      icon: <Link2 className="w-8 h-8 text-sky-600" />,
+      available: true
+    },
     {
       id: 'arxiv',
       name: 'ArXiv',
@@ -257,6 +265,16 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
       <DBLPSearchModal
         isOpen={true}
         onClose={handleBack}
+      />
+    )
+  }
+
+  if (selectedSource === 'doi') {
+    return (
+      <DOIImportModal
+        isOpen={true}
+        onClose={handleBack}
+        onImportSuccess={handleImportSuccess}
       />
     )
   }
