@@ -12,6 +12,7 @@ import logging
 from datetime import datetime, timezone
 import hashlib
 import os
+import httpx
 import requests
 from urllib.parse import urlparse, unquote
 from app.repositories import direct_url_import_queries as queries
@@ -204,6 +205,27 @@ async def import_paper_from_url(
             except Exception:
                 pass
         raise HTTPException(status_code=500, detail=str(e))
+
+class DOIImportRequest(BaseModel):
+    """DOI, doi.org / SSRN / publisher link, or arXiv link/id"""
+    identifier: str
+
+
+@router.post("/import-doi")
+async def import_paper_from_doi(request: DOIImportRequest) -> Dict[str, Any]:
+    """Import a paper by DOI or paper link: Crossref metadata + open-access PDF via OpenAlex.
+
+    Without an open PDF the paper is created with metadata only (pdf_missing).
+    """
+    from app.services.doi_import_service import DOIImportError, import_identifier
+    try:
+        return await asyncio.to_thread(import_identifier, request.identifier)
+    except DOIImportError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except httpx.HTTPError as e:
+        logger.error(f"DOI import lookup failed: {e}")
+        raise HTTPException(status_code=502, detail=f"Metadata service unavailable: {type(e).__name__}")
+
 
 @router.get("/validate-url")
 async def validate_pdf_url(url: str) -> Dict[str, Any]:

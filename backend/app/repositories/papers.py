@@ -140,3 +140,17 @@ def insert_paper(paper_doc):
 def set_fields_on_paper(update_data, paper):
     """Set fields on an already loaded paper document."""
     return db.papers.update_one({'_id': paper['_id']}, {'$set': update_data})
+
+
+def find_paper_by_doi(doi: str) -> Optional[Dict[str, Any]]:
+    """Paper whose DOI matches case-insensitively (DOIs are case-insensitive)."""
+    import re
+    return db.papers.find_one({'doi': {'$regex': f'^{re.escape(doi)}$', '$options': 'i'}})
+
+
+def find_paper_by_title(title: str) -> Optional[Dict[str, Any]]:
+    """Paper with exactly this title, ignoring case and surrounding whitespace."""
+    import re
+    if not title or not title.strip():
+        return None
+    return db.papers.find_one({'title': {'$regex': f'^\\s*{re.escape(title.strip())}\\s*$', '$options': 'i'}})

@@ -86,8 +86,19 @@ async def import_reference_as_paper(reference_id: str):
         }
     
     elif ref.get('doi'):
-        # TODO: Implement DOI import (CrossRef, Unpaywall, etc.)
-        raise HTTPException(status_code=501, detail="DOI import not yet implemented")
+        from app.services.doi_import_service import DOIImportError, import_doi
+        try:
+            result = await asyncio.to_thread(import_doi, ref['doi'].strip().lower())
+        except DOIImportError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        paper_id = result['paper_id']  # also set when the paper already existed
+        repo.mark_reference_imported(ref, paper_id)
+        return {
+            'success': True,
+            'paper_id': paper_id,
+            'has_pdf': result.get('has_pdf', True),
+            'message': result['message'],
+        }
     
     else:
         raise HTTPException(status_code=400, detail="Reference has no DOI or ArXiv ID for import")
