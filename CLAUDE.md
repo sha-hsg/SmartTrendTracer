@@ -295,9 +295,15 @@ mise if present.
 ```
 
 `start_stt.sh` ends with `backend/smoke_check.py`: functional checks (backend+DB, LLM
-routing/keys, Marker, MinerU, RAG model + test embedding, frontend) with one red line
-per failure. Run it any time: `cd backend && venv/bin/python smoke_check.py [--deep]`
+routing/keys, Marker, MinerU, RAG model + test embedding, frontend, scheduler) with one
+red line per failure. Run it any time: `cd backend && venv/bin/python smoke_check.py [--deep]`
 (`--deep` also converts one PDF page with Marker, ~30 s).
+
+`start_stt.sh` also starts `backend/stt_scheduler.py` (log `logs/scheduler.log`): periodic
+jobs without fixed clock times, caught up after each start because the Mac is not always
+on — `paper_feed` (daily), `weekly_digest` (weekly, after the feed), `rag_update` (daily,
+via `POST /api/rag/update`). State in `scheduled_jobs`. Manual: `venv/bin/python
+stt_scheduler.py --run NAME` or `--once`.
 
 After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `.env`.
 
@@ -350,7 +356,7 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | Prefix | Module | Content |
 |---|---|---|
 | `/api/tweets` | `api/tweets/` | browse, `faceted-search`, hierarchy-facets, per-tweet concepts, batch-annotate(+`-all`, status, cancel) |
-| `/api/papers` | `api/papers/` | CRUD/upload/facets, Marker/MinerU processing + progress/health callbacks, analyses, entities, concepts/tags, snippets, sections, references, TEI/PDF/images, GROBID, affiliations |
+| `/api/papers` | `api/papers/` | CRUD/upload/facets, Marker/MinerU processing + progress/health callbacks, analyses, entities, concepts/tags, snippets, sections, references, TEI/PDF/images, GROBID, affiliations, `POST /qa` (questions to papers/a concept collection, [n] section citations; chunk cache `paper_chunks`) + `/qa/scope` |
 | `/api/papers` (also) | `direct_url_import` | `POST /import-url`, `POST /import-doi` (DOI/doi.org/SSRN/publisher/arXiv link → Crossref metadata + open PDF via OpenAlex; metadata-only + `pdf_missing` when no open PDF), `GET /validate-url` |
 | `/api/papers/dblp`, `/api/dblp` | `dblp_mongodb` | DBLP search/BibTeX/metadata |
 | `/api/books` | `api/books/` | CRUD/upload/facets, concepts, content, `process` (queue → worker) / `process-direct` |
@@ -366,6 +372,8 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/trends`, `/api/trends/analysis`, `/api/user-trends` | trends modules | trend queries and analysis |
 | `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data: at-a-glance, heatmap, bubble-chart, network, cooccurrence, animated-timeline; AI summarization (`/summarize`) |
 | `/api/topics` | `topic_explorer` | frequency / correlation / popular topics |
+| `/api/paper-feed` | `paper_feed` | arXiv feed: subscriptions (query + optional concept) CRUD, candidates (new/imported/dismissed, ranked by similarity to the concept's papers via FAISS vectors), `run`, import/dismiss |
+| `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_overview_service` + LLM prompt `weekly_digest`) |
 | `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, `update` (incremental: new/changed/deleted content only), `rebuild` (full), sample-questions |
 | `/api/ontology`, `/api/ontology-graph` | `tag_ontology/`, `ontology_graph` | concept ontology CRUD + visualization |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
@@ -427,7 +435,7 @@ DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are res
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **Test suite is thin** (H-Q1): `backend/tests/` has 97 pytest tests (regression tests
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 114 pytest tests (regression tests
    for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
    frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
@@ -464,6 +472,12 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
 
 Details live in `git log` and `docs/`; do not re-expand here.
 
+- **2026-10 — New capabilities + repairs**: Mac-only; functional smoke check at the end
+  of `start_stt.sh`; DOI/paper-link import (Crossref + OpenAlex); incremental RAG update;
+  `stt_scheduler.py` (catch-up jobs); daily arXiv paper feed; weekly digest; paper Q&A
+  with section citations. Repairs: LiteLLM provider prefixes (backend crash), pinned
+  Marker 1.10.2 / MinerU 3.4.5, async PDF processing + integer paper ids, stored PDF
+  paths, RAG embeddings moved to gemini-embedding-001.
 - **2026-09 — Architecture audit + fixes** (commits d8b3ab7…495d4cf): dead code and the
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed
