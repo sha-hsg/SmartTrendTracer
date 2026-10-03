@@ -280,13 +280,21 @@ class ArXivImportService:
         logger.info(f"Successfully imported ArXiv paper: {metadata['title']}")
         return result
     
-    def search_papers(self, query: str, max_results: int = 10) -> Optional[list]:
+    @staticmethod
+    def _summary(text: str, limit: Optional[int]) -> str:
+        text = ' '.join((text or '').split())
+        return text if limit is None or len(text) <= limit else text[:limit] + '...'
+
+    def search_papers(self, query: str, max_results: int = 10, sort_by: str = 'relevance',
+                      summary_chars: Optional[int] = 200) -> Optional[list]:
         """
         Search for papers on ArXiv
         
         Args:
             query: Search query
             max_results: Maximum number of results
+            sort_by: 'relevance' or 'submittedDate' (newest first; used by the paper feed)
+            summary_chars: truncate the abstract to this length (None = full abstract)
         
         Returns:
             List of paper metadata or None if failed
@@ -295,7 +303,7 @@ class ArXivImportService:
             params = {
                 'search_query': query,
                 'max_results': max_results,
-                'sortBy': 'relevance',
+                'sortBy': sort_by,
                 'sortOrder': 'descending'
             }
             
@@ -319,7 +327,7 @@ class ArXivImportService:
                 paper = {
                     'arxiv_id': arxiv_id,
                     'title': entry.find('atom:title', ns).text.strip().replace('\n', ' '),
-                    'summary': entry.find('atom:summary', ns).text.strip()[:200] + '...',
+                    'summary': self._summary(entry.find('atom:summary', ns).text, summary_chars),
                     'authors': [],
                     'published': entry.find('atom:published', ns).text,
                     'pdf_url': f"https://arxiv.org/pdf/{arxiv_id}.pdf",

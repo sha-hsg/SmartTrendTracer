@@ -56,7 +56,15 @@ def job_rag_update():
     return r.json().get('stats')
 
 
+def job_paper_feed():
+    """Check all paper feed subscriptions for new arXiv papers."""
+    from app.services.paper_feed_service import run_feed
+    result = run_feed()
+    return {'subscriptions': result['subscriptions'], 'new': result['new']}
+
+
 JOBS: Dict[str, Dict] = {
+    'paper_feed': {'run': job_paper_feed, 'due': due_daily},
     'rag_update': {'run': job_rag_update, 'due': due_daily},
 }
 

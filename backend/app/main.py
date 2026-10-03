@@ -107,6 +107,7 @@ from app.api import references  # Normalized references collection API
 from app.api import entity_extraction  # Entity extraction and annotation management - MongoDB version
 from app.api import llm_preferences  # LLM model preferences and management
 from app.api import user_settings  # Generic per-user key-value settings (TweetDeck columns, etc.)
+from app.api import paper_feed  # arXiv paper feed (subscriptions + candidates)
 from app.api import authors_management  # Author management and analytics
 from app.api import twitter_accounts  # Twitter account management
 
@@ -179,6 +180,7 @@ app.include_router(papers.router, prefix="/api/papers", tags=["papers"])
 app.include_router(entity_extraction.router, prefix="/api/entities", tags=["entity_extraction"])  # MongoDB entity extraction
 app.include_router(llm_preferences.router, prefix="/api/llm", tags=["llm"])  # LLM preferences and model management
 app.include_router(user_settings.router, prefix="/api/user-settings", tags=["user_settings"])  # Generic per-user settings (TweetDeck columns, etc.)
+app.include_router(paper_feed.router, prefix="/api/paper-feed", tags=["paper_feed"])  # daily arXiv feed
 app.include_router(books.router, prefix="/api/books", tags=["books"])
 app.include_router(articles.router, prefix="/api/articles", tags=["articles"])
 app.include_router(authors_management.router, prefix="/api/authors", tags=["authors"])  # Author management and analytics

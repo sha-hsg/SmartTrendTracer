@@ -271,6 +271,13 @@ def _ensure_indexes(db: Database) -> None:
                 logger.error("Failed to create text index %s: %s", index_name, exc)
                 failed_indexes.append(index_name)
 
+    # Paper feed: one candidate per arXiv paper; listing by status/score
+    try:
+        db.feed_candidates.create_index([("arxiv_id", ASCENDING)], unique=True, name="arxiv_id_unique")
+        db.feed_candidates.create_index([("status", ASCENDING), ("score", DESCENDING)], name="status_score")
+    except Exception as exc:
+        logger.warning(f"Could not ensure feed_candidates indexes: {exc}")
+
     # Unique per-user settings key (user_settings API); idempotent
     try:
         db.user_settings.create_index(
