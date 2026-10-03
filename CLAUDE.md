@@ -1,27 +1,5 @@
 # SmartTrendTracer - Claude Assistant Documentation
 
-<!-- smooth-switch-current:start -->
-## Smooth Switch — current implementation (2026-09-07)
-
-This section is the current handoff contract; earlier dated session notes below describe historical behavior. General standard: [smooth_switch.md](../../smooth_switch.md); commands and limitations: [runtime README](../../smooth-switch/README.md). Run commands from the project root.
-
-- `./smooth-switch doctor` / `status` are read-only inventory checks, not application health tests. `setup` prints a plan; `setup --apply` installs local dependencies without importing data or starting services.
-- `smooth-switch.json` defines transferable assets. The project wrapper uses the vendored runtime; update the central implementation and run its `vendor.py` when changing shared behavior.
-- Stop all project writers before `prepare --to DEVICE --writers-stopped`. Review `receive PACKAGE` (first transfer: `--initial`), then apply the identical plan with its token and `--writers-stopped`. Use `rollback` for reviewed recovery. Data packages do not transfer source code; synchronize the matching code separately.
-- `guard` blocks starts in released/importing/failed states. `guard --export` additionally blocks exports where initial import is required but incomplete. An outstanding first import alone does not block normal starts or imports. This is cooperative single-writer handoff, not a distributed lock.
-- Local state/backups: `~/.local/state/smooth-switch/smarttrendtracer/`; transfer outbox defaults to `~/SmoothSwitch/smarttrendtracer/`. Keep secrets (`~/.env`), native environments, PIDs, caches and service registrations local. Include `smooth-switch.ignore` at the actual Syncthing root; do not sync raw active databases or native environments.
-- A complete Mac → Linux → Mac acceptance test is still outstanding. Do not infer application readiness from an installed adapter or successful import.
-
-Imported `dump_DenkZentrale_20260906_214843.tar.gz` into `smarttrendtracer`: 23 collections / 236,975 documents, verified against the Mac archive. Local handoff state is initialized/received. The initial export restriction is cleared here; do not repeat the import merely to start the app. Backend/frontend, collectors, OCR/ML services and external integrations have NOT yet been exercised in this Linux test session. Samanta's successful application test does not certify STT.
-
-Pause backend/frontend, collectors, cron jobs, converters and book workers before handoff; shared MongoDB stays running. Existing `start_stt.sh`/`stop_stt.sh` retain legacy service-management behavior and still require a separate runtime audit; do not use MongoDB-stop options for an individual app. Provision Python 3.12/backend and frontend dependencies locally via the adapter; optional Marker/MinerU environments need their own setup. Review media, documents and `accounts.json` separately.
-
-Shared database operations: see [MongoDB service](../../infrastructure/mongodb/README.md) and [verified import status](../../infrastructure/mongodb/IMPORT_STATUS.md). Linux uses shared `development-mongodb` (MongoDB 8.3.8, loopback :27017); database for this app is `smarttrendtracer`. Keep application/database/import lifecycle separate; never set one global database name for all apps. The Compose rseq setting is local infrastructure, not a host-kernel change. Logical dumps preserve modern `prelude.json` metadata; empty-target rollback was tested separately.
-
-Legacy `scripts/sync-in.sh` now delegates to `legacy-receive` and requires an explicit archive/SHA-256 and reviewed apply token. `sync-out.sh` requires destination and writer-pause acknowledgement. No automatic latest-dump selection, backup bypass or unattended hourly export is supported by these wrappers. Existing schedulers were not enabled by these changes.
-
-<!-- smooth-switch-current:end -->
-
 ## 1. Project Overview
 
 SmartTrendTracer (STT) is a comprehensive AI content monitoring system that collects and
@@ -112,9 +90,7 @@ SmartTrendTracer/
 ├── start_stt.sh / stop_stt.sh      # start/stop all services
 ├── setup_python.sh                 # venv + frontend setup
 ├── mise.toml                       # Python 3.12 pin
-├── .db-sync-config                 # MongoDB sync settings
-├── scripts/                        # setup.sh, sync-out/in/status.sh, sync_manual.md
-├── db-sync/                        # dumps/ (synced), backups/ (local only)
+├── scripts/                        # setup.sh (+ legacy sync-*.sh, unused since Mac-only)
 ├── docs/
 │   └── funktionsinventur.md        # 2026-07-24 full function inventory + fix status
 ├── DEFECTS.md                      # defect tracking
@@ -168,8 +144,9 @@ to `http://localhost:3470` (plus 3000/3001/3002); override via `CORS_ORIGINS` en
 
 ## 3. Development Requirements (MANDATORY)
 
-SmartTrendTracer must work seamlessly on both macOS and Linux (project is synced via
-Syncthing between machines).
+**STT runs only on the Mac (since 2026-10-03).** The former macOS↔Linux setup
+(Syncthing, Smooth Switch handoff, MongoDB dump sync) is no longer used; do not plan
+cross-machine steps. Keep the robustness rules below anyway — they prevent real bugs.
 
 ### 3.1 Path Handling — dynamically determined absolute paths
 
@@ -186,8 +163,8 @@ LOG_FILE="$SCRIPT_DIR/logs/startup.log"
 - Always call venv binaries explicitly (`venv/bin/python`), **never**
   `source venv/bin/activate` before `nohup ... &` — background processes do not inherit
   the activated environment.
-- venvs synced between macOS and Linux have broken symlinks. Validate before use and
-  recreate if invalid:
+- Validate venvs before use and recreate if invalid (a recreated venv can exist
+  without packages — `start_stt.sh` therefore also checks Marker's imports/version):
 
 ```bash
 check_venv_valid() {  # valid if bin/python exists and is executable
@@ -196,17 +173,22 @@ check_venv_valid() {  # valid if bin/python exists and is executable
 ```
 
 `setup_python.sh` and `start_stt.sh` do this automatically for backend venv,
-marker_env and mineru_env. Frontend `node_modules` also contain platform-native modules
-(`@rollup/rollup-darwin-*` vs `-linux-x64-gnu`) — run `npm install` after switching
-platforms.
+marker_env and mineru_env.
 
-### 3.3 MongoDB Cross-Machine Synchronization
+**PDF converters are pinned — never install them unpinned:** `marker-pdf==1.10.2`
+(2.x needs an external `llama-server`) and `mineru[core]==3.4.5` (4.x is a different
+CLI/server product). An unpinned reinstall on 2026-10-01 broke all PDF extraction.
 
-Use the current Smooth Switch contract above. Shared MongoDB stays running while this project's writers are paused. Review explicit snapshots rather than choosing the latest dump by time. This Linux device has already received the verified Mac dump; application testing is still pending.
+### 3.3 MongoDB (shared, Homebrew service)
+
+MongoDB runs as the Homebrew service `mongodb-community` (9.0.2, featureCompatibilityVersion
+8.3, `mongodb://127.0.0.1:27017`) and is **shared with other apps** (Scriptorium, Samanta).
+Never stop it for STT work; STT uses only the database `smarttrendtracer`. Backups:
+`mongodump --db smarttrendtracer`.
 
 ### 3.4 Environment Variables — API keys in `~/.env`, never in the project
 
-`~/.env` (home directory, synced across machines, not in git) contains all LLM keys:
+`~/.env` (home directory, not in git) contains all LLM keys:
 `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`/`GEMINI_API_KEY`, `XAI_API_KEY`,
 plus `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET`. Do **not** use `backend/.env`.
 `start_stt.sh` auto-loads it with `set -a; source "$HOME/.env"; set +a`
@@ -228,18 +210,12 @@ All startup scripts create timestamped logs (`logs/startup_YYYYmmdd_HHMMSS.log`)
 `log()` function with `tee`. Must include: timestamps, PIDs of all services, port checks,
 startup timing, Python/venv paths, MongoDB connection status.
 
-### 3.7 Platform Detection
+### 3.7 Platform
 
-> Legacy service-management behavior below still needs a runtime audit; do not stop shared MongoDB for STT handoff.
-
-Scripts detect the platform via `$OSTYPE` and use the appropriate commands:
-
-| Operation | macOS | Linux |
-|---|---|---|
-| MongoDB start/stop | `brew services start/stop mongodb-community` | `systemctl start/stop mongod` |
-| File timestamps | `stat -f` / `date -r` | `stat -c` |
-
-Python version is pinned via `mise.toml` (Python 3.12); scripts activate mise if present.
+macOS only. Scripts still contain `$OSTYPE` branches for Linux from the former setup;
+they may stay but need not be extended. Use macOS/BSD tools (`stat -f`, `date -r`,
+`sed -i ''`). Python version is pinned via `mise.toml` (Python 3.12); scripts activate
+mise if present.
 
 ### 3.8 Configuration Rules
 
@@ -323,18 +299,11 @@ After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `
 ### Setup
 
 ```bash
-./scripts/setup.sh              # full cross-platform setup (detects macOS/Linux)
-./scripts/setup.sh check        # status only (also: mongodb|python|frontend|sync)
+./scripts/setup.sh              # full setup
+./scripts/setup.sh check        # status only (also: mongodb|python|frontend)
 ./setup_python.sh               # Python venvs + frontend (also: backend|frontend|check|activate)
 ```
 
-### Machine Sync
-
-```bash
-./scripts/sync-out.sh           # export MongoDB (end of session)
-./scripts/sync-status.sh        # show sync status of all systems
-./scripts/sync-in.sh            # import (start of session on other machine)
-```
 
 ### Collectors
 
@@ -431,13 +400,12 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 
 | File | Purpose |
 |---|---|
-| `backend/llm.json` | Model per task type (tag_suggestion, summarization, trend_analysis, paper_section_extraction, …). Includes **`models.rag_embedding`**: primary `models/text-embedding-004` (Google, 768d), fallback `text-embedding-ada-002` (OpenAI, 1536d). **Changing embedding model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, index at `data/rag_index_concepts`). |
+| `backend/llm.json` | Model per task type (tag_suggestion, summarization, trend_analysis, paper_section_extraction, …). Includes **`models.rag_embedding`**: primary `models/gemini-embedding-001` (Google, truncated to 768d, L2-normalized), fallback `text-embedding-3-small` (OpenAI, 1536d). **Queries must use the model the index was built with — changing model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, ~30 min, ~0.50 $; index at `data/rag_index_concepts`, local only, not in git). Last rebuild 2026-10-03: 32,221 docs. |
 | `backend/prompts_config.json` | All LLM prompts/templates (incl. paper analyses catalog, rag_trend_analysis). Never inline prompts in code. |
 | `backend/litellm_config.yaml` | LiteLLM router model list. No explicit `api_key:` lines — keys are auto-detected from env. Gemini 3 preview models pinned to temperature 1.0 (infinite-loop bug below 1.0). |
 | `backend/reddit_config.json` | Monitored subreddits, priorities, score thresholds. |
 | `backend/forwarded_authors.json` | Forwarded-newsletter author matching (name/email/search patterns). |
 | `backend/accounts.json` | Twitter accounts (also managed via UI/DB). |
-| `.db-sync-config` | MongoDB sync settings (dump dir, retention, backup-before-import). |
 | `frontend/.env` | `VITE_API_URL=http://localhost:8088`. |
 | `frontend/src/config/models.ts` | Model choices shown in the UI — keep in sync with litellm_config (no deprecated models). |
 | `mise.toml` | Pins Python 3.12. |
@@ -454,7 +422,7 @@ DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are res
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **Test suite is thin** (H-Q1): `backend/tests/` has 58 pytest tests (regression tests
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 70 pytest tests (regression tests
    for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
    frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
@@ -553,4 +521,4 @@ Details live in `git log` and `docs/`; do not re-expand here.
 
 ---
 
-Last updated: September 25, 2026
+Last updated: October 3, 2026
