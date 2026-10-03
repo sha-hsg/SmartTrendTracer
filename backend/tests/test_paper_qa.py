@@ -80,7 +80,7 @@ def test_ask_end_to_end(monkeypatch):
     monkeypatch.setattr(svc.repo, 'paper_ids_for_concept', lambda c: ['p1'])
     monkeypatch.setattr(svc.repo, 'find_papers', lambda ids: [{'_id': 'p1', 'title': 'Great Paper', 'content': MD}])
     monkeypatch.setattr(svc.repo, 'get_chunks', lambda pid: cache.get(pid))
-    monkeypatch.setattr(svc.repo, 'save_chunks', lambda pid, h, m, ch: cache.update({pid: {'content_hash': h, 'model': m, 'chunks': ch}}))
+    monkeypatch.setattr(svc.repo, 'save_chunks', lambda pid, h, m, ch, v=1: cache.update({pid: {'content_hash': h, 'model': m, 'chunks': ch, 'chunker': v}}))
     monkeypatch.setattr(svc, '_embedding_model', lambda: 'test-model')
     llm = FakeLLM()
     out = svc.ask('What about memory?', concept='Agent Memory', llm=llm, embed=fake_embed)
@@ -100,3 +100,12 @@ def test_ask_requires_scope_and_text(monkeypatch):
     monkeypatch.setattr(svc.repo, 'find_papers', lambda ids: [{'_id': 'p', 'title': 't', 'content': ''}])
     with pytest.raises(InvalidInputError, match='full text'):
         svc.ask('q', paper_ids=['p'], llm=FakeLLM(), embed=fake_embed)
+
+
+def test_clean_text_turns_marker_links_into_labels():
+    raw = '[\\[Cronbach and Meehl,](#page-11-3) [1955\\]](#page-11-3) see <span id="page-2-0"></span>[docs](https://x.org/a)'
+    assert svc.clean_text(raw) == '[Cronbach and Meehl, 1955] see docs'
+
+
+def test_clean_text_unescapes_parentheses():
+    assert svc.clean_text('(Section 3.1\\), see \\(a\\)') == '(Section 3.1), see (a)'

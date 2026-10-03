@@ -25,6 +25,7 @@ from app.repositories.errors import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
+CHUNKER_VERSION = 3   # bump when chunk text changes, so cached chunks are rebuilt
 CHUNK_CHARS = 2000
 MIN_CHUNK_CHARS = 150
 TOP_K = 8
@@ -40,6 +41,15 @@ def clean_heading(text: str) -> str:
     text = text.replace('\\[', '[').replace('\\]', ']')       # Marker escapes brackets
     text = re.sub(r'\[(\[?[^\]]*\]?)\]\([^)]*\)', r'\1', text)  # [label](link), [[label]](link)
     return ' '.join(text.split()).strip(' #*') or 'Untitled section'
+
+
+def clean_text(text: str) -> str:
+    """Strip Marker's HTML anchors and turn markdown links into their label
+    ("[\\[Smith,](#page-11-3) [2020\\]](#page-11-3)" -> "[Smith, 2020]")."""
+    text = re.sub(r'<span[^>]*>\s*</span>', '', text)
+    text = text.replace('\\[', '[').replace('\\]', ']').replace('\\(', '(').replace('\\)', ')')
+    text = re.sub(r'\[(\[?[^\]\n]*\]?)\]\((?:#|https?://)[^)]*\)', r'\1', text)
+    return re.sub(r'[ \t]+', ' ', text)
 
 
 def _split_long(text: str) -> List[str]:
@@ -66,7 +76,7 @@ def chunk_markdown(markdown: str) -> List[Dict[str, str]]:
     skip_level = 0
 
     def flush():
-        body = '\n'.join(lines).strip()
+        body = clean_text('\n'.join(lines)).strip()
         if body and not skipping:
             sections.append({'heading': heading, 'text': body})
 
@@ -122,7 +132,8 @@ def paper_chunks(paper: Dict[str, Any], model: str, embed=_embed) -> List[Dict[s
     content = paper.get('content') or ''
     content_hash = hashlib.md5(content.encode()).hexdigest()
     cached = repo.get_chunks(str(paper['_id']))
-    if cached and cached.get('content_hash') == content_hash and cached.get('model') == model:
+    if (cached and cached.get('content_hash') == content_hash and cached.get('model') == model
+            and cached.get('chunker') == CHUNKER_VERSION):
         return cached['chunks']
     chunks = chunk_markdown(content)
     if not chunks:
@@ -130,7 +141,7 @@ def paper_chunks(paper: Dict[str, Any], model: str, embed=_embed) -> List[Dict[s
     title = paper.get('title', '')
     vectors = embed([f"Paper: {title}\nSection: {c['heading']}\n{c['text']}" for c in chunks])
     out = [{**c, 'vector': [float(x) for x in v]} for c, v in zip(chunks, vectors)]
-    repo.save_chunks(str(paper['_id']), content_hash, model, out)
+    repo.save_chunks(str(paper['_id']), content_hash, model, out, CHUNKER_VERSION)
     logger.info(f"Embedded {len(out)} chunks for paper {paper['_id']}")
     return out
 

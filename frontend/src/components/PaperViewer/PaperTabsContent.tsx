@@ -10,6 +10,7 @@ import {
   Hash,
   Brain,
   Loader2,
+  MessageSquareText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ import PaperContentViewer from "./PaperContentViewer";
 import PaperSectionsTab from "./PaperSectionsTab";
 import PaperSnippetsTab from "./PaperSnippetsTab";
 import PaperSearchTab, { SearchMatch } from "./PaperSearchTab";
+import { PaperQAPanel } from "../paper-qa";
 import { Paper, PaperSection } from "./types";
 
 interface PaperTabsContentProps {
@@ -225,7 +227,7 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
         </TabsList>
 
         {/* Secondary Tabs - Analysis & Tools */}
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="analyses" className="flex items-center gap-2">
             <Brain className="h-3 w-3" />
             Analysis
@@ -233,6 +235,10 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
           <TabsTrigger value="search" className="flex items-center gap-2">
             <Search className="h-3 w-3" />
             Search
+          </TabsTrigger>
+          <TabsTrigger value="ask" className="flex items-center gap-2">
+            <MessageSquareText className="h-3 w-3" />
+            Ask
           </TabsTrigger>
           <TabsTrigger value="references" className="flex items-center gap-2">
             <ExternalLink className="h-3 w-3" />
@@ -420,6 +426,17 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
           content={paper.markdown_content || paper.content || ""}
           onNavigateToMatch={handleNavigateToMatch}
         />
+      </TabsContent>
+
+      {/* Ask Tab - questions answered from this paper's full text with section citations */}
+      <TabsContent value="ask" className="flex-1 p-4">
+        <div className="h-full overflow-y-auto">
+          <PaperQAPanel
+            paperIds={[String(paperId)]}
+            singlePaper
+            disabledReason={paper.content && paper.content.length >= 100 ? undefined : 'Process the PDF first — questions are answered from the full text.'}
+          />
+        </div>
       </TabsContent>
 
       {/* References Tab */}

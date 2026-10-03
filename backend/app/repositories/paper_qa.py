@@ -24,9 +24,10 @@ def get_chunks(paper_id: str) -> Optional[Dict[str, Any]]:
     return db.paper_chunks.find_one({'_id': paper_id})
 
 
-def save_chunks(paper_id: str, content_hash: str, model: str, chunks: List[Dict[str, Any]]) -> None:
+def save_chunks(paper_id: str, content_hash: str, model: str, chunks: List[Dict[str, Any]],
+                chunker: int = 1) -> None:
     db.paper_chunks.replace_one({'_id': paper_id}, {
-        'content_hash': content_hash, 'model': model, 'chunks': chunks,
+        'content_hash': content_hash, 'model': model, 'chunker': chunker, 'chunks': chunks,
         'created_at': datetime.now(timezone.utc)}, upsert=True)
 
 

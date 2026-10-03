@@ -34,7 +34,8 @@ import {
   Library,
   LineChart,
   Rss,
-  Newspaper
+  Newspaper,
+  BookOpenCheck
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
@@ -43,6 +44,7 @@ export type ViewType =
   | 'statistics'
   | 'rag-search'
   | 'weekly-digest'
+  | 'paper-qa'
   // Twitter views
   | 'twitter-faceted'
   | 'twitter-media'
@@ -124,6 +126,12 @@ const navigationItems = [
         view: 'weekly-digest' as ViewType,
         icon: Newspaper,
         description: 'Automatic briefing on the last 7 days'
+      },
+      {
+        title: 'Paper Q&A',
+        view: 'paper-qa' as ViewType,
+        icon: BookOpenCheck,
+        description: 'Ask questions across papers, with cited sections'
       }
     ]
   },
