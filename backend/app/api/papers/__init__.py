@@ -36,10 +36,12 @@ from .concepts import router as concepts_router
 from .content import router as content_router
 from .content_media import router as content_media_router
 from .grobid import router as grobid_router
+from .qa import router as qa_router
 
 router = APIRouter()
 
 # Static-path routers first, parametric catch-all last
+router.include_router(qa_router)         # static /qa routes before /{paper_id}
 router.include_router(facets_router)
 router.include_router(processing_router)
 router.include_router(analysis_router)

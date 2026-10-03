@@ -11,6 +11,7 @@ from app.services.llm_manager import get_llm_manager
 from app.services.rag.index_manager import (
     init_embedding_clients,
     get_embedding,
+    get_rag_embedding_config,
     get_embeddings_batch,
     load_index,
     get_index_paths,
