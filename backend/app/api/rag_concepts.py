@@ -3,6 +3,7 @@ RAG API using MongoDB concepts for enhanced search
 Replaces rag_simple.py with concept-aware search
 """
 
+import asyncio
 from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -137,7 +138,8 @@ async def rebuild_index(
         
         # Start rebuild
         logger.info("Starting RAG index rebuild with concepts...")
-        result = rag_service.rebuild_index()
+        # Runs for many minutes: keep it off the event loop
+        result = await asyncio.to_thread(rag_service.rebuild_index)
         
         return {
             "message": "Index rebuilt successfully with concept integration",
@@ -147,3 +149,17 @@ async def rebuild_index(
     except Exception as e:
         logger.error(f"Error rebuilding index: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/update")
+async def update_index():
+    """Add new and changed content to the RAG index (no full rebuild)."""
+    try:
+        result = await asyncio.to_thread(get_rag_service().update_index)
+    except RuntimeError as e:
+        # no index yet / embedding model changed: a full rebuild is required
+        raise HTTPException(status_code=409, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error updating index: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"message": "Index updated", "stats": result}

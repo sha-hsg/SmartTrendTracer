@@ -14,6 +14,7 @@ from app.services.rag.index_manager import (
     get_index_paths,
     load_index as _load_index,
     rebuild_index as _rebuild_index,
+    update_index as _update_index,
     get_stats as _get_stats,
     get_sample_questions as _get_sample_questions,
 )
@@ -59,6 +60,15 @@ class ConceptBasedRAGService:
             self.openai_client, self.paths, self.embeddings_cache
         )
         return index_info
+
+    def update_index(self):
+        """Embed only new/changed content and append it (see index_manager.update_index)."""
+        self.index, self.metadata, self.doc_map, result = _update_index(
+            self.db, self.concept_service, self.use_gemini_embeddings,
+            self.openai_client, self.paths, self.embeddings_cache,
+            self.index, self.metadata, self.doc_map
+        )
+        return result
 
     def _expand_concept_filter(self, concept_filter: Optional[List[str]]) -> Optional[List[str]]:
         """Expand incoming concept ids to all stored id forms.

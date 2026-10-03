@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Loader2,
   Copy,
-  Check
+  Check,
+  PlusCircle
 } from 'lucide-react'
 import { useModelSelector } from '@/hooks/useModelSelector'
 import SearchControls from './SearchControls'
@@ -72,6 +73,7 @@ export default function RAGSearchModern() {
   const [searchHistory, setSearchHistory] = useState<string[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [rebuildingIndex, setRebuildingIndex] = useState(false)
+  const [updatingIndex, setUpdatingIndex] = useState(false)
   const [indexStats, setIndexStats] = useState<IndexStats | null>(null)
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null)
   const [selectedPaperId, setSelectedPaperId] = useState<string | null>(null)
@@ -254,6 +256,30 @@ export default function RAGSearchModern() {
     })
   }
 
+  // Embeds only content added or changed since the last build/update (cheap, seconds)
+  const updateIndex = async () => {
+    setUpdatingIndex(true)
+    const update = http.post('/api/rag/update').finally(() => {
+      setUpdatingIndex(false)
+      loadIndexStats()
+    })
+
+    toast.promise(update, {
+      loading: 'Adding new content to the search index…',
+      success: (result) => {
+        const s = result.data?.stats
+        if (!s) return 'Index updated.'
+        if (!s.added && !s.updated && !s.removed) return 'Index is already up to date.'
+        return `Index updated — ${s.added} added, ${s.updated} refreshed, ${s.removed} removed` +
+          (s.failed ? `, ${s.failed} failed (retried next time)` : '') + '.'
+      },
+      error: (error: any) => {
+        const detail = error?.response?.data?.detail
+        return detail ? `Index update failed: ${detail}` : 'Index update failed — is the backend running?'
+      }
+    })
+  }
+
   const navigateToSource = (source: Source) => {
     if (source.type === 'tweet') {
       const tweetUrl = source.url || source.metadata?.url || source.navigate_to
@@ -345,8 +371,28 @@ export default function RAGSearchModern() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={updateIndex}
+                  disabled={updatingIndex || rebuildingIndex}
+                  title="Add new and changed content (seconds)"
+                >
+                  {updatingIndex ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      Update Index
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={rebuildIndex}
-                  disabled={rebuildingIndex}
+                  disabled={rebuildingIndex || updatingIndex}
+                  title="Re-embed everything (about 30 minutes; needed after an embedding model change)"
                 >
                   {rebuildingIndex ? (
                     <>

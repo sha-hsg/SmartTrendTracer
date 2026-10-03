@@ -4,6 +4,12 @@ Rebuild the RAG index for AI-powered search (MongoDB version)
 
 Runs the full index build synchronously and only exits once the index
 has been written to disk (data/rag_index_concepts/).
+
+    venv/bin/python rebuild_rag_index.py                # full rebuild (~30 min, ~0.50 $)
+    venv/bin/python rebuild_rag_index.py --incremental  # only new/changed content
+
+The running backend keeps its loaded index; use POST /api/rag/update (or
+restart the backend) so it sees a CLI update.
 """
 import sys
 import os
@@ -44,5 +50,20 @@ def rebuild_index():
     return 1
 
 
+def update_index():
+    """Embed only new and changed content and append it to the existing index"""
+    print("🔄 Updating RAG index (incremental)...")
+    try:
+        result = ConceptBasedRAGService().update_index()
+    except RuntimeError as e:
+        print(f"❌ {e}")
+        return 1
+    print(f"✅ Added {result['added']}, updated {result['updated']}, "
+          f"removed {result['removed']}, failed {result['failed']}")
+    print(f"📊 Total documents: {result['total_documents']} "
+          f"(tweets {result['tweets']}, articles {result['articles']}, papers {result['papers']})")
+    return 0 if result['failed'] == 0 else 1
+
+
 if __name__ == "__main__":
-    sys.exit(rebuild_index())
+    sys.exit(update_index() if '--incremental' in sys.argv[1:] else rebuild_index())

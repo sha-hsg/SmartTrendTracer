@@ -47,7 +47,7 @@ def search(index, metadata, doc_map, use_gemini_embeddings, openai_client, embed
     first_article_pos = -1
     first_paper_pos = -1
     for pos, idx in enumerate(indices[0]):
-        if idx >= 0 and idx < len(metadata):
+        if idx >= 0 and idx < len(metadata) and not metadata[idx].get('stale'):
             meta = metadata[idx]
             doc_type = meta.get('type', 'other')
             raw_type_counts[doc_type] = raw_type_counts.get(doc_type, 0) + 1
@@ -73,6 +73,8 @@ def search(index, metadata, doc_map, use_gemini_embeddings, openai_client, embed
             continue
 
         meta = metadata[idx]
+        if meta.get('stale'):  # superseded by update_index (changed or deleted content)
+            continue
         doc_type = meta.get('type', 'other')
 
         # Apply content type filter if provided

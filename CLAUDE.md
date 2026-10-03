@@ -294,6 +294,11 @@ mise if present.
 ./stop_stt.sh -n        # keep MongoDB running (--mongo-no)
 ```
 
+`start_stt.sh` ends with `backend/smoke_check.py`: functional checks (backend+DB, LLM
+routing/keys, Marker, MinerU, RAG model + test embedding, frontend) with one red line
+per failure. Run it any time: `cd backend && venv/bin/python smoke_check.py [--deep]`
+(`--deep` also converts one PDF page with Marker, ~30 s).
+
 After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `.env`.
 
 ### Setup
@@ -346,7 +351,7 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 |---|---|---|
 | `/api/tweets` | `api/tweets/` | browse, `faceted-search`, hierarchy-facets, per-tweet concepts, batch-annotate(+`-all`, status, cancel) |
 | `/api/papers` | `api/papers/` | CRUD/upload/facets, Marker/MinerU processing + progress/health callbacks, analyses, entities, concepts/tags, snippets, sections, references, TEI/PDF/images, GROBID, affiliations |
-| `/api/papers` (also) | `direct_url_import` | `POST /import-url`, `GET /validate-url` |
+| `/api/papers` (also) | `direct_url_import` | `POST /import-url`, `POST /import-doi` (DOI/doi.org/SSRN/publisher/arXiv link → Crossref metadata + open PDF via OpenAlex; metadata-only + `pdf_missing` when no open PDF), `GET /validate-url` |
 | `/api/papers/dblp`, `/api/dblp` | `dblp_mongodb` | DBLP search/BibTeX/metadata |
 | `/api/books` | `api/books/` | CRUD/upload/facets, concepts, content, `process` (queue → worker) / `process-direct` |
 | `/api/articles` | `api/articles/` | browse/faceted-search, concepts/snippets, **author management** (`/authors/...`), extract-metadata, tags/suggest, summarize, recollect. (Old `/api/substack/articles` paths are gone.) |
@@ -361,7 +366,7 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/trends`, `/api/trends/analysis`, `/api/user-trends` | trends modules | trend queries and analysis |
 | `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data: at-a-glance, heatmap, bubble-chart, network, cooccurrence, animated-timeline; AI summarization (`/summarize`) |
 | `/api/topics` | `topic_explorer` | frequency / correlation / popular topics |
-| `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, rebuild, sample-questions |
+| `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, `update` (incremental: new/changed/deleted content only), `rebuild` (full), sample-questions |
 | `/api/ontology`, `/api/ontology-graph` | `tag_ontology/`, `ontology_graph` | concept ontology CRUD + visualization |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
 | `/api/concepts/organization` | `concept_organization` | organizing unorganized concepts |
@@ -370,7 +375,7 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/llm` | `llm_preferences` | model preferences, status, deprecated-model migration |
 | `/api/user-settings` | `user_settings` | per-user key-value settings (TweetDeck columns etc.) |
 | `/api/arxiv`, `/api/acl-anthology`, `/api/acm`, `/api/openreview`, `/api/jair` | importers | paper imports |
-| `/api/references` | `references` | normalized references, top-cited, import (arXiv path; DOI → 501) |
+| `/api/references` | `references` | normalized references, top-cited, import (arXiv id or DOI via `doi_import_service`) |
 | `/api/pdf` | `pdf_export` | article PDF export |
 | `/api/media-gallery` | `media_gallery_mongodb` | Twitter media gallery |
 | `/health`, `/` | `main.py` | health check (DB counts + Marker/MinerU status) |
@@ -400,7 +405,7 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 
 | File | Purpose |
 |---|---|
-| `backend/llm.json` | Model per task type (tag_suggestion, summarization, trend_analysis, paper_section_extraction, …). Includes **`models.rag_embedding`**: primary `models/gemini-embedding-001` (Google, truncated to 768d, L2-normalized), fallback `text-embedding-3-small` (OpenAI, 1536d). **Queries must use the model the index was built with — changing model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, ~30 min, ~0.50 $; index at `data/rag_index_concepts`, local only, not in git). Last rebuild 2026-10-03: 32,221 docs. |
+| `backend/llm.json` | Model per task type (tag_suggestion, summarization, trend_analysis, paper_section_extraction, …). Includes **`models.rag_embedding`**: primary `models/gemini-embedding-001` (Google, truncated to 768d, L2-normalized), fallback `text-embedding-3-small` (OpenAI, 1536d). **Queries must use the model the index was built with — changing model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, ~30 min, ~0.50 $; index at `data/rag_index_concepts`, local only, not in git). Day-to-day use `POST /api/rag/update`, the "Update Index" button or `rebuild_rag_index.py --incremental`: embeds only new/changed content (tag_instances.created_at, papers.processed_at/updated_at, articles.updated_at since the last run) and marks superseded entries `stale`; refuses to run on an index of another embedding model. Last full rebuild 2026-10-03. |
 | `backend/prompts_config.json` | All LLM prompts/templates (incl. paper analyses catalog, rag_trend_analysis). Never inline prompts in code. |
 | `backend/litellm_config.yaml` | LiteLLM router model list. No explicit `api_key:` lines — keys are auto-detected from env. Gemini 3 preview models pinned to temperature 1.0 (infinite-loop bug below 1.0). |
 | `backend/reddit_config.json` | Monitored subreddits, priorities, score thresholds. |
@@ -422,14 +427,15 @@ DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are res
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **Test suite is thin** (H-Q1): `backend/tests/` has 70 pytest tests (regression tests
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 97 pytest tests (regression tests
    for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
    frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
    progress reporting; MinerU processing shows no live progress (deliberately not built,
    docs corrected instead).
-3. **DOI-based reference import returns 501** — CrossRef integration planned
-   (`references.py`).
+3. **Publisher PDFs behind bot protection** (SSRN, ACM) cannot be downloaded by the DOI
+   import; such papers are created metadata-only (`pdf_missing: true`) and need a manual
+   PDF upload.
 4. **Author merge/analytics UI missing** — `/api/authors` endpoints exist and are kept
    deliberately; UI design in `AUTHOR_UI_DESIGN.md`.
 5. **Reddit UI gaps** — frontend only uses `faceted-search` + `facets`; the collect

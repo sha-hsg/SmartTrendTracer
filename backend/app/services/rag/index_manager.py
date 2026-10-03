@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import faiss
+from bson import ObjectId
 import numpy as np
 import google.generativeai as genai
 from openai import OpenAI
@@ -114,135 +115,125 @@ def load_index(paths):
         return None, [], {}
 
 
+PAPER_INDEX_QUERY = {'processed': True, 'paper_type': {'$ne': 'review'}}
+
+
+def _concept_fields(concepts):
+    names = [c['display_name'] for c in concepts]
+    ids = sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
+    return names, ids
+
+
+def build_tweet_doc(tweet, concepts):
+    """(text, metadata) of one tweet — shared by rebuild_index and update_index."""
+    concept_names, concept_ids = _concept_fields(concepts)
+    doc_text = f"Tweet by @{tweet.get('author_username', '')}: {tweet.get('text', '')}"
+    if concept_names:
+        doc_text += f"\nConcepts: {', '.join(concept_names)}"
+    return doc_text, {
+        'type': 'tweet',
+        'id': str(tweet['_id']),
+        'author': tweet.get('author_username', ''),
+        'created_at': tweet.get('created_at'),
+        'concepts': concept_names,
+        'concept_ids': concept_ids,
+    }
+
+
+def build_article_doc(article, concepts):
+    concept_names, concept_ids = _concept_fields(concepts)
+    doc_text = f"Article: {article.get('title', '')}\nBy: {article.get('author_name', 'Unknown')}\n"
+    content = article.get('content', '')
+    doc_text += f"{content[:2000]}..." if len(content) > 2000 else content
+    if concept_names:
+        doc_text += f"\nConcepts: {', '.join(concept_names)}"
+    return doc_text, {
+        'type': 'article',
+        'id': str(article['_id']),
+        'title': article.get('title', ''),
+        'author': article.get('author_name'),
+        'published_at': article.get('published_at'),
+        'concepts': concept_names,
+        'concept_ids': concept_ids,
+    }
+
+
+def build_paper_doc(paper, concepts):
+    """(text, metadata) of one paper, or None when it has neither content nor abstract."""
+    concept_names, concept_ids = _concept_fields(concepts)
+    doc_text = f"Paper: {paper.get('title', '')}\n"
+
+    # Add authors if available
+    authors = paper.get('authors', [])
+    if authors:
+        # Handle both string and list formats
+        if isinstance(authors, str):
+            doc_text += f"Authors: {authors}\n"
+        elif isinstance(authors, list):
+            doc_text += f"Authors: {', '.join(str(a) for a in authors)}\n"
+
+    abstract = paper.get('abstract', '')
+    if abstract:
+        doc_text += f"Abstract: {abstract}\n"
+
+    # MongoDB papers have content field - use more of it for better context
+    content = paper.get('content', '')
+    if content and len(content) > 100:  # Only add if meaningful content exists
+        # Use first 8000 chars for papers (much more than tweets/articles)
+        content_preview = content[:8000] if len(content) > 8000 else content
+        doc_text += f"\nContent: {content_preview}\n"
+        if len(content) > 8000:
+            doc_text += "... [content truncated]"
+    elif not abstract:
+        logger.warning(f"Paper '{paper.get('title', 'Unknown')}' has no meaningful content, skipping")
+        return None
+
+    if concept_names:
+        doc_text += f"\nConcepts: {', '.join(concept_names)}"
+
+    return doc_text, {
+        'type': 'paper',
+        'id': str(paper['_id']),
+        'title': paper.get('title', ''),
+        'year': paper.get('year'),
+        'concepts': concept_names,
+        'concept_ids': concept_ids,
+    }
+
+
+_BUILDERS = {'tweet': build_tweet_doc, 'article': build_article_doc, 'paper': build_paper_doc}
+
+
+def collect_documents(db, concept_service, queries):
+    """Build (documents, metadata) for {content_type: mongo_query}; order tweets, articles, papers."""
+    documents, metadata = [], []
+    collections = {'tweet': db.tweets, 'article': db.articles, 'paper': db.papers}
+    for content_type in ('tweet', 'article', 'paper'):
+        if content_type not in queries:
+            continue
+        items = list(collections[content_type].find(queries[content_type]))
+        logger.info(f"Found {len(items)} {content_type}s in MongoDB")
+        for item in items:
+            concepts = concept_service.get_tags_for_content(
+                content_type=content_type,
+                content_id=str(item['_id'])
+            )
+            built = _BUILDERS[content_type](item, concepts)
+            if built is None:
+                continue
+            documents.append(built[0])
+            metadata.append(built[1])
+    return documents, metadata
+
+
 def rebuild_index(db, concept_service, use_gemini_embeddings, openai_client, paths, embeddings_cache):
     """Rebuild the entire index with concept information"""
     logger.info("Starting RAG index rebuild with concepts...")
 
-    documents = []
-    metadata = []
-    doc_map = {}
-    doc_id = 0
-
     try:
-        # Process tweets from MongoDB
-        tweets = list(db.tweets.find())
-        logger.info(f"Found {len(tweets)} tweets in MongoDB")
-        for tweet in tweets:
-            # Get concepts for this tweet
-            concepts = concept_service.get_tags_for_content(
-                content_type='tweet',
-                content_id=str(tweet['_id'])
-            )
-            concept_names = [c['display_name'] for c in concepts]
-
-            # Build document text with concepts
-            doc_text = f"Tweet by @{tweet.get('author_username', '')}: {tweet.get('text', '')}"
-            if concept_names:
-                doc_text += f"\nConcepts: {', '.join(concept_names)}"
-
-            documents.append(doc_text)
-            metadata.append({
-                'type': 'tweet',
-                'id': str(tweet['_id']),
-                'author': tweet.get('author_username', ''),
-                'created_at': tweet.get('created_at'),
-                'concepts': concept_names,
-                'concept_ids': sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
-            })
-            doc_map[doc_id] = doc_text
-            doc_id += 1
-
-        logger.info(f"Processed {len(tweets)} tweets")
-
-        # Process articles from MongoDB
-        articles = list(db.articles.find())
-        logger.info(f"Found {len(articles)} articles in MongoDB")
-        for article in articles:
-            # Get concepts for this article
-            concepts = concept_service.get_tags_for_content(
-                content_type='article',
-                content_id=str(article['_id'])
-            )
-            concept_names = [c['display_name'] for c in concepts]
-
-            # Build document text with concepts
-            doc_text = f"Article: {article.get('title', '')}\nBy: {article.get('author_name', 'Unknown')}\n"
-            content = article.get('content', '')
-            doc_text += f"{content[:2000]}..." if len(content) > 2000 else content
-            if concept_names:
-                doc_text += f"\nConcepts: {', '.join(concept_names)}"
-
-            documents.append(doc_text)
-            metadata.append({
-                'type': 'article',
-                'id': str(article['_id']),
-                'title': article.get('title', ''),
-                'author': article.get('author_name'),
-                'published_at': article.get('published_at'),
-                'concepts': concept_names,
-                'concept_ids': sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
-            })
-            doc_map[doc_id] = doc_text
-            doc_id += 1
-
-        logger.info(f"Processed {len(articles)} articles")
-
-        # Process papers from MongoDB
-        papers = list(db.papers.find({'processed': True, 'paper_type': {'$ne': 'review'}}))
-        logger.info(f"Found {len(papers)} processed papers in MongoDB")
-        for paper in papers:
-            # Get concepts for this paper
-            concepts = concept_service.get_tags_for_content(
-                content_type='paper',
-                content_id=str(paper['_id'])
-            )
-            concept_names = [c['display_name'] for c in concepts]
-
-            # Build document text with concepts
-            doc_text = f"Paper: {paper.get('title', '')}\n"
-
-            # Add authors if available
-            authors = paper.get('authors', [])
-            if authors:
-                # Handle both string and list formats
-                if isinstance(authors, str):
-                    doc_text += f"Authors: {authors}\n"
-                elif isinstance(authors, list):
-                    doc_text += f"Authors: {', '.join(str(a) for a in authors)}\n"
-
-            abstract = paper.get('abstract', '')
-            if abstract:
-                doc_text += f"Abstract: {abstract}\n"
-
-            # MongoDB papers have content field - use more of it for better context
-            content = paper.get('content', '')
-            if content and len(content) > 100:  # Only add if meaningful content exists
-                # Use first 8000 chars for papers (much more than tweets/articles)
-                content_preview = content[:8000] if len(content) > 8000 else content
-                doc_text += f"\nContent: {content_preview}\n"
-                if len(content) > 8000:
-                    doc_text += "... [content truncated]"
-            elif not abstract:
-                # If no content and no abstract, skip this paper
-                logger.warning(f"Paper '{paper.get('title', 'Unknown')}' has no meaningful content, skipping")
-                continue
-
-            if concept_names:
-                doc_text += f"\nConcepts: {', '.join(concept_names)}"
-
-            documents.append(doc_text)
-            metadata.append({
-                'type': 'paper',
-                'id': str(paper['_id']),
-                'title': paper.get('title', ''),
-                'year': paper.get('year'),
-                'concepts': concept_names,
-                'concept_ids': sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
-            })
-            doc_map[doc_id] = doc_text
-            doc_id += 1
-
-        logger.info(f"Processed {len(papers)} papers")
+        documents, metadata = collect_documents(
+            db, concept_service, {'tweet': {}, 'article': {}, 'paper': PAPER_INDEX_QUERY})
+        doc_map = {i: d for i, d in enumerate(documents)}
 
         # Create embeddings
         if documents:
@@ -471,3 +462,119 @@ def get_embeddings_batch(texts: List[str], use_gemini_embeddings: bool, openai_c
         logger.warning(f"{len(failed_indices)} of {len(texts)} embeddings failed")
 
     return np.array(embeddings), failed_indices
+
+
+def _active_counts(metadata) -> Dict[str, int]:
+    active = [m for m in metadata if not m.get('stale')]
+    return {
+        'total_documents': len(active),
+        'tweets': sum(m['type'] == 'tweet' for m in active),
+        'articles': sum(m['type'] == 'article' for m in active),
+        'papers': sum(m['type'] == 'paper' for m in active),
+    }
+
+
+def _changed_since(db, since: datetime) -> set:
+    """(type, id) of indexed content that may have new text since `since`:
+    newly tagged items (concept names are part of the document) and
+    re-processed papers / updated articles."""
+    changed = {(t['content_type'], str(t['content_id']))
+               for t in db.tag_instances.find({'created_at': {'$gt': since}},
+                                              {'content_type': 1, 'content_id': 1})}
+    changed |= {('paper', str(p['_id'])) for p in db.papers.find(
+        {'$or': [{'processed_at': {'$gt': since}}, {'updated_at': {'$gt': since}}]}, {'_id': 1})}
+    changed |= {('article', str(a['_id'])) for a in db.articles.find({'updated_at': {'$gt': since}}, {'_id': 1})}
+    return changed
+
+
+def update_index(db, concept_service, use_gemini_embeddings, openai_client, paths, embeddings_cache,
+                 index, metadata, doc_map):
+    """Add new and changed content to the existing index without a full rebuild.
+
+    New documents are embedded and appended. For changed or deleted content the
+    old entry is marked metadata['stale'] (search skips it); a changed item also
+    gets a fresh entry. Only the candidates are rebuilt and embedded, so a run
+    costs a fraction of a full rebuild. Documents whose embedding fails stay
+    missing and are picked up again by the next update.
+
+    Refuses to run when the index was built with a different embedding model —
+    query and index vectors would not be comparable.
+    """
+    if index is None or not paths['info'].exists():
+        raise RuntimeError('No index yet - run a full rebuild first')
+    info = json.loads(paths['info'].read_text())
+    model, dimension = _embedding_model_and_dimension(use_gemini_embeddings)
+    if info.get('embedding_model') != model or index.d != dimension:
+        raise RuntimeError(f"Index was built with {info.get('embedding_model')} ({index.d}d), "
+                           f"configured is {model} ({dimension}d) - a full rebuild is required")
+
+    started = datetime.now(timezone.utc)
+    since = datetime.fromisoformat(info.get('last_incremental_update') or info['last_updated'])
+    if since.tzinfo is None:
+        since = since.replace(tzinfo=timezone.utc)
+
+    indexed = {(m['type'], m['id']): pos for pos, m in enumerate(metadata) if not m.get('stale')}
+    in_db = {('tweet', str(i)) for i in db.tweets.distinct('_id')}
+    in_db |= {('article', str(i)) for i in db.articles.distinct('_id')}
+    in_db |= {('paper', str(i)) for i in db.papers.distinct('_id', PAPER_INDEX_QUERY)}
+
+    new = in_db - indexed.keys()
+    changed = (_changed_since(db, since) & indexed.keys()) & in_db
+    deleted = indexed.keys() - in_db
+    candidates = new | changed
+    logger.info(f"RAG update: {len(new)} new, {len(changed)} changed, {len(deleted)} deleted since {since.isoformat()}")
+
+    def ids_of(content_type):
+        ids = [i for t, i in candidates if t == content_type]
+        return ids if content_type == 'tweet' else [ObjectId(i) for i in ids if ObjectId.is_valid(i)]
+
+    queries = {}
+    for content_type in ('tweet', 'article', 'paper'):
+        ids = ids_of(content_type)
+        if ids:
+            base = PAPER_INDEX_QUERY if content_type == 'paper' else {}
+            queries[content_type] = {**base, '_id': {'$in': ids}}
+    documents, new_meta = collect_documents(db, concept_service, queries) if queries else ([], [])
+
+    failed: List[int] = []
+    added = 0
+    if documents:
+        embeddings, failed = get_embeddings_batch(documents, use_gemini_embeddings, openai_client, embeddings_cache)
+        keep = [i for i in range(len(documents)) if i not in set(failed)]
+        documents = [documents[i] for i in keep]
+        new_meta = [new_meta[i] for i in keep]
+        if documents:
+            index.add(embeddings.astype('float32'))
+            for doc_text, meta in zip(documents, new_meta):
+                doc_map[len(metadata)] = doc_text
+                metadata.append(meta)
+            added = len(documents)
+
+    # Superseded entries: changed items that got a fresh entry, and deleted content
+    refreshed = {(m['type'], m['id']) for m in new_meta}
+    for key in (changed & refreshed) | deleted:
+        metadata[indexed[key]]['stale'] = True
+
+    faiss.write_index(index, str(paths['index']))
+    with open(paths['metadata'], 'wb') as f:
+        pickle.dump(metadata, f)
+    with open(paths['doc_map'], 'wb') as f:
+        pickle.dump(doc_map, f)
+    info.update(_active_counts(metadata))
+    info.update({
+        'status': 'ready',
+        'last_incremental_update': started.isoformat(),
+        'stale_entries': sum(1 for m in metadata if m.get('stale')),
+        'skipped_documents': len(failed),
+    })
+    paths['info'].write_text(json.dumps(info, indent=2))
+
+    result = {
+        'added': added - len(changed & refreshed),
+        'updated': len(changed & refreshed),
+        'removed': len(deleted),
+        'failed': len(failed),
+        **_active_counts(metadata),
+    }
+    logger.info(f"RAG update done: {result}")
+    return index, metadata, doc_map, result
