@@ -179,6 +179,15 @@ else
     stop_service_by_name "book_processing_worker.py" "Book Processing Worker"
 fi
 
+# Stop STT Scheduler
+echo ""
+echo "3c. Stopping STT Scheduler..."
+if [ -f "pids/scheduler.pid" ]; then
+    stop_service_by_pid "pids/scheduler.pid" "STT Scheduler"
+else
+    stop_service_by_name "stt_scheduler.py" "STT Scheduler"
+fi
+
 # Stop Marker Service
 echo ""
 echo "4. Stopping Marker Service..."
@@ -373,6 +382,13 @@ if pgrep -f "book_processing_worker.py" > /dev/null; then
     all_stopped=false
 else
     echo -e "Book Worker:      ${GREEN}✓ Stopped${NC}"
+fi
+
+if pgrep -f "stt_scheduler.py" > /dev/null; then
+    echo -e "Scheduler:        ${RED}✗ Still running${NC}"
+    all_stopped=false
+else
+    echo -e "Scheduler:        ${GREEN}✓ Stopped${NC}"
 fi
 
 if pgrep -x "mongod" > /dev/null; then

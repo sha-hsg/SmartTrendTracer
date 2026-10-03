@@ -572,6 +572,25 @@ else
 fi
 cd "$SCRIPT_DIR"
 
+# Start STT Scheduler (paper feed, weekly digest, RAG update; catches up missed runs)
+log_plain ""
+log "7b. Starting STT Scheduler..."
+if pgrep -f "stt_scheduler.py" > /dev/null; then
+    log_plain "   ⚠️  Scheduler is already running (PID: $(pgrep -f stt_scheduler.py))"
+else
+    cd "$BACKEND_DIR"
+    nohup "$BACKEND_DIR/venv/bin/python" stt_scheduler.py >> "$SCRIPT_DIR/logs/scheduler.log" 2>&1 &
+    SCHEDULER_PID=$!
+    echo $SCHEDULER_PID > "$SCRIPT_DIR/pids/scheduler.pid"
+    sleep 2
+    if pgrep -f "stt_scheduler.py" > /dev/null; then
+        log_plain "   ✓ Scheduler started (PID: $SCHEDULER_PID)"
+    else
+        log_plain "   ✗ Failed to start Scheduler (check logs/scheduler.log)"
+    fi
+    cd "$SCRIPT_DIR"
+fi
+
 # Start Frontend Development Server
 log_plain ""
 log "8. Starting Frontend Development Server (port 3470)..."
@@ -695,6 +714,12 @@ else
     log_plain "Book Worker:      ✗ Not running"
 fi
 
+if pgrep -f "stt_scheduler.py" > /dev/null; then
+    log_plain "Scheduler:        ✓ Running in background (PID: $(pgrep -f stt_scheduler.py))"
+else
+    log_plain "Scheduler:        ✗ Not running"
+fi
+
 # Frontend
 if lsof -Pi :3470 -sTCP:LISTEN -t >/dev/null 2>&1; then
     FRONTEND_PID=$(lsof -Pi :3470 -sTCP:LISTEN -t)
@@ -713,6 +738,7 @@ log "  MinerU:          logs/mineru.log"
 log "  Tweet Collector: logs/tweet_collector.log"
 log "  Reddit Collector: logs/reddit_collector.log"
 log "  Book Worker:     logs/book_worker.log"
+log "  Scheduler:       logs/scheduler.log"
 log "  Frontend:        logs/frontend.log"
 log_plain ""
 log "To stop all services, run: ./stop_stt.sh"

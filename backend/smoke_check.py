@@ -176,6 +176,24 @@ def check_rag(client):
                hint='model retired or API key missing — check llm.json models.rag_embedding and ~/.env')
 
 
+def check_scheduler():
+    import subprocess
+    running = subprocess.run(['pgrep', '-f', 'stt_scheduler.py'], capture_output=True).returncode == 0
+    try:
+        from app.repositories.scheduled_jobs import list_job_states
+        failed = [j['_id'] for j in list_job_states() if j.get('last_ok') is False]
+    except Exception as e:
+        report(False, 'Scheduler', f'job state unreadable ({type(e).__name__})')
+        return
+    if not running:
+        report(False, 'Scheduler', 'not running', hint='start it with ./start_stt.sh — see logs/scheduler.log')
+    elif failed:
+        report(False, 'Scheduler', f'last run failed: {", ".join(failed)}',
+               hint='see logs/scheduler.log; rerun: venv/bin/python stt_scheduler.py --run NAME')
+    else:
+        report(True, 'Scheduler', 'running, last runs ok')
+
+
 def check_frontend(client):
     try:
         r = client.get(FRONTEND)
@@ -201,6 +219,7 @@ def main():
         if backend_ok:
             check_rag(client)
         check_frontend(client)
+    check_scheduler()
 
     failed = results.count(False)
     if failed:
