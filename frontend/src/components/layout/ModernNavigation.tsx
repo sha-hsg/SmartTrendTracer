@@ -32,7 +32,8 @@ import {
   MessageSquare,
   FileSearch,
   Library,
-  LineChart
+  LineChart,
+  Rss
 } from 'lucide-react'
 import ThemeToggle from './ThemeToggle'
 
@@ -64,6 +65,7 @@ export type ViewType =
   // Papers views
   | 'papers-dashboard'
   | 'papers-references'
+  | 'papers-feed'
   | 'reviews-dashboard'
   // Books views
   | 'books-dashboard'
@@ -258,6 +260,12 @@ const navigationItems = [
         view: 'papers-references' as ViewType,
         icon: Database,
         description: 'Manage paper references'
+      },
+      {
+        title: 'Paper Feed',
+        view: 'papers-feed' as ViewType,
+        icon: Rss,
+        description: 'New arXiv papers for your saved searches'
       }
     ]
   },

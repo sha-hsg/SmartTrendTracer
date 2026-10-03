@@ -22,6 +22,7 @@ import RAGSearchModern from './components/rag-search'
 import FacetedPapersDashboard from './components/papers-dashboard/FacetedPapersDashboard'
 import FacetedBooksDashboard from './components/books/FacetedBooksDashboard'
 import ReferenceManager from './components/reference-manager'
+import PaperFeed from './components/paper-feed'
 import { ArticleClusteringDashboard } from './components/clustering'
 import AuthorManagementModern from './components/authors/AuthorManagementModern'
 import TwitterAccountManager from './components/twitter'
@@ -106,6 +107,8 @@ export default function ModernApp() {
         return <FacetedPapersDashboard />
       case 'papers-references':
         return <ReferenceManager />
+      case 'papers-feed':
+        return <PaperFeed />
       case 'reviews-dashboard':
         return <FacetedPapersDashboard paperType="review" />
       // Books views
