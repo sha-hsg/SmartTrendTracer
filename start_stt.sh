@@ -719,4 +719,13 @@ log "To stop all services, run: ./stop_stt.sh"
 log "To view logs, check the logs/ directory"
 log "Startup log saved to: $STARTUP_LOG"
 log_plain ""
-log "All services started successfully!"
+
+# Functional smoke check (backend/LLM/Marker/MinerU/RAG/frontend) instead of an
+# unconditional success message: port checks alone missed real outages
+log "Running smoke check (backend/smoke_check.py)..."
+"$BACKEND_DIR/venv/bin/python" "$BACKEND_DIR/smoke_check.py" 2>&1 | tee -a "$STARTUP_LOG"
+if [ "${PIPESTATUS[0]}" -eq 0 ]; then
+    log "All services started and verified."
+else
+    log "⚠️  Some services are not working - see the ✗ lines above."
+fi
