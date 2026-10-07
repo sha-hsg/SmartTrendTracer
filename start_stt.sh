@@ -641,14 +641,9 @@ else
 fi
 
 # Calculate total startup time
-SCRIPT_END=$(date +%s)
-# Platform-specific file modification time
-if [[ "$PLATFORM" == "macos" ]]; then
-    SCRIPT_START=$(date -r "$STARTUP_LOG" +%s 2>/dev/null || echo $SCRIPT_END)
-else
-    SCRIPT_START=$(stat -c %Y "$STARTUP_LOG" 2>/dev/null || echo $SCRIPT_END)
-fi
-TOTAL_TIME=$((SCRIPT_END - SCRIPT_START))
+# Seconds since this script started (bash builtin). The former value used the
+# startup log's modification time, which is "now" because the log was just written.
+TOTAL_TIME=$SECONDS
 
 # Collect all PIDs for summary
 log_plain ""
