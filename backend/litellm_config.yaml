@@ -7,7 +7,7 @@ model_list:
   - model_name: tag_suggestion
     litellm_params:
       model: anthropic/claude-sonnet-5-5
-      max_tokens: 1000
+      max_tokens: 4000
 
   - model_name: tag_suggestion
     litellm_params:
@@ -25,7 +25,7 @@ model_list:
   - model_name: tag_generation_advanced
     litellm_params:
       model: anthropic/claude-sonnet-5-5
-      max_tokens: 1000
+      max_tokens: 4000
 
   # Trend Analysis - Claude Opus 4 with GPT-5.2 fallback
   - model_name: trend_analysis
@@ -48,13 +48,13 @@ model_list:
   - model_name: content_classification
     litellm_params:
       model: anthropic/claude-haiku-5-5
-      max_tokens: 500
+      max_tokens: 4000
 
   # Summarization - Claude Sonnet 4
   - model_name: summarization
     litellm_params:
       model: anthropic/claude-sonnet-5-5
-      max_tokens: 2000
+      max_tokens: 4000
 
   # Comprehensive Summarization - Claude Opus 4.1
   - model_name: summarization_comprehensive
@@ -72,7 +72,7 @@ model_list:
   - model_name: ontology_validation
     litellm_params:
       model: anthropic/claude-haiku-5-5
-      max_tokens: 1000
+      max_tokens: 4000
 
   # Bulk Ontology
   - model_name: ontology_bulk
@@ -146,7 +146,7 @@ model_list:
   - model_name: article_summarizer
     litellm_params:
       model: anthropic/claude-sonnet-5-5
-      max_tokens: 3000
+      max_tokens: 4000
 
   # Article Summarization (camelCase for frontend) - Claude Sonnet 4
   - model_name: articleSummarization
@@ -163,7 +163,7 @@ model_list:
   - model_name: entity_extraction_fast
     litellm_params:
       model: anthropic/claude-haiku-5-5
-      max_tokens: 2000
+      max_tokens: 4000
 
   - model_name: entity_extraction_gpt5
     litellm_params:
@@ -220,13 +220,13 @@ model_list:
   - model_name: paper_author_extraction
     litellm_params:
       model: anthropic/claude-sonnet-5-5
-      max_tokens: 2000
+      max_tokens: 4000
 
   # Paper Affiliation Extraction
   - model_name: paper_affiliation_extraction
     litellm_params:
       model: anthropic/claude-sonnet-5-5
-      max_tokens: 2000
+      max_tokens: 4000
 
   # Paper Analysis - Gemini 2.5 Pro with Claude fallback
   - model_name: paper_analysis
@@ -271,6 +271,9 @@ model_list:
   # ========================================
 
   # OpenAI GPT-6 Models (current lineup, Sep 2026: astra=flagship, sol=mid, luna=nano)
+  # NOTE: claude-sonnet-5-5 / claude-haiku-5-5 count hidden reasoning in output tokens
+  # (~3x the visible text on instruction-heavy prompts): keep max_tokens >= 4000,
+  # lower limits truncated JSON answers (finish_reason=length). Billing is per used token.
   # NOTE: gpt-6 astra/sol/luna reject non-default temperature AND max_tokens
   #       (use max_completion_tokens) - do not add sampling params
   - model_name: gpt-6-astra
