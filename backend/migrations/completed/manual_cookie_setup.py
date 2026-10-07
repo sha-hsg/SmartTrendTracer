@@ -11,7 +11,8 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from twscrape import API
-from app.config import ACCOUNTS_TO_FOLLOW
+from app.repositories.twitter_accounts_crud import followed_accounts
+ACCOUNTS_TO_FOLLOW = followed_accounts()
 
 async def manual_setup():
     print("🍪 MANUAL TWITTER COOKIE SETUP")

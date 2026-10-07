@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.database.mongodb import get_database
-from app.config import ACCOUNTS_TO_FOLLOW
+from app.repositories.twitter_accounts_crud import followed_accounts
 
 REFRESH_INTERVAL_SECONDS = 5
 
@@ -116,7 +116,7 @@ def monitor_collection():
 
         # Check each account for gaps
         gaps_found = False
-        for account in ACCOUNTS_TO_FOLLOW:
+        for account in followed_accounts():
             account_tweet = db.tweets.find_one(
                 {'author_id': str(account['id'])},
                 sort=[('created_at', -1)]

@@ -57,22 +57,8 @@ def load_accounts_from_mongodb(enabled_only: bool = True) -> List[Dict[str, Any]
         List of account dictionaries with id, username, displayName, category, description, tier
     """
     try:
-        query = {'enabled': True} if enabled_only else {}
-        accounts = list(db.twitter_accounts.find(query).sort([('tier', 1), ('username', 1)]))
-
-        # Convert MongoDB format to expected format
-        result = []
-        for acc in accounts:
-            result.append({
-                'id': acc.get('twitter_id', ''),
-                'username': acc.get('username', ''),
-                'displayName': acc.get('display_name', acc.get('username', '')),
-                'category': acc.get('category', 'Other'),
-                'description': acc.get('description', ''),
-                'tier': acc.get('tier', 2)
-            })
-
-        return result
+        from app.repositories.twitter_accounts_crud import followed_accounts
+        return followed_accounts(enabled_only)
     except Exception as e:
         print(f"Warning: Could not load accounts from MongoDB: {e}")
         return []

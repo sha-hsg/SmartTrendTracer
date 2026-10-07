@@ -11,8 +11,6 @@ API keys live in ~/.env (loaded by start_stt.sh, and by load_dotenv below for
 direct runs). LiteLLM additionally reads the provider keys from the process
 environment on its own; this module does not change that.
 """
-import json
-import os
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -113,27 +111,6 @@ class Settings(BaseSettings):
 settings = Settings()
 
 
-# --- Twitter accounts (legacy helpers used by monitor/maintenance scripts) --
-def load_accounts():
-    """Load accounts from accounts.json"""
-    accounts_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'accounts.json')
-    try:
-        with open(accounts_file, 'r') as f:
-            return json.load(f)['accounts']
-    except FileNotFoundError:
-        print(f"Warning: {accounts_file} not found, using default accounts")
-        return [
-            {"username": "OpenAI", "id": "4398626122"},
-            {"username": "emollick", "id": "39125788"},
-            {"username": "stanfordnlp", "id": "118263124"},
-            {"username": "AnthropicAI", "id": "1353836358901501952"},
-            {"username": "GoogleDeepMind", "id": "4783690002"},
-            {"username": "huggingface", "id": "778764142412984320"},
-            {"username": "sama", "id": "1605"}
-        ]
-
-
-ACCOUNTS_TO_FOLLOW = load_accounts()
 
 # Backwards-compatible aliases
 API_HOST = settings.api_host

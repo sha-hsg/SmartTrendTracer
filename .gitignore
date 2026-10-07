@@ -107,3 +107,20 @@ backend/mongodb_sync/backups/
 # --- Service virtualenvs (platform-specific, rebuilt per machine) ---
 backend/marker_service/marker_env/
 backend/mineru_service/mineru_env/
+
+# --- Rotated logs (*.log does not match name.log.2026-09-20) ---
+*.log.*
+
+# --- Local data, never versioned ---
+# RAG FAISS index: rebuilt locally (rebuild_rag_index.py / POST /api/rag/update)
+backend/data/rag_index_concepts/
+# Former MongoDB dump sync (retired 2026-10, Mac-only); dumps hold personal/usage data
+backend/mongodb_sync/
+db-sync/
+
+# --- Retired Syncthing / Smooth Switch setup (Mac-only since 2026-10) ---
+.stfolder/
+.stignore
+.syncthingignore
+.db-sync-config
+.smooth-switch-local/

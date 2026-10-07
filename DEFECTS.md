@@ -87,7 +87,7 @@ url_import 2x, playwright markdown_converter) erzeugten Previews als rohen
 `markdown[:500]`-Slice — jede Collection erzeugte den Schmutz neu; das frühere
 Rezept `clean_substack_footers.py` entfernte nur Footer, nicht die Artefakte.
 Alle Stellen nutzen jetzt den gemeinsamen Cleaner
-`app/services/preview_utils.generate_preview` (inkl. Empty-Label-Autolinks
+`app/utils/preview_utils.generate_preview` (inkl. Empty-Label-Autolinks
 `[](<url>)` und verschachtelter Bild-in-Link-Reste). 329 Alt-Previews per
 Backfill regeneriert; 0 verbleibende Artefakte in der DB.
 

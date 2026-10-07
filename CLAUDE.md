@@ -8,11 +8,13 @@ to identify emerging trends, hot topics, and declining discussions in the AI spa
 
 ### Data Sources
 
-**Twitter/X** — 21 monitored accounts, managed via the Twitter Account Manager UI and
-stored in `backend/accounts.json` / MongoDB. Current set:
+**Twitter/X** — 24 monitored accounts, managed via the Twitter Account Manager UI and
+stored in MongoDB `twitter_accounts` (the only source; collector, monitor and scripts read
+it via `app.repositories.twitter_accounts_crud.followed_accounts`). Current set:
 @OpenAI, @emollick, @stanfordnlp, @AnthropicAI, @GoogleDeepMind, @huggingface, @sama,
 @kaggle, @rasbt, @JayAlammar, @hwchase17, @Sebastienbubeck, @Shayneredford, @Langchainai,
-@Colm_Conf, @GH_Wiegand, @ABosselut, @LorenaRaichle, @_akhaliq, @zurichnlp, @AiBreakfast.
+@Colm_Conf, @GH_Wiegand, @ABosselut, @LorenaRaichle, @_akhaliq, @zurichnlp, @AiBreakfast,
+@karpathy, @percyliang, @Idiap_ch.
 Collection runs in Basic Account Mode by default (10k tweets/month budget, tiered
 priorities, 15-minute intervals).
 
@@ -418,7 +420,7 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 | `backend/litellm_config.yaml` | LiteLLM router model list. No explicit `api_key:` lines — keys are auto-detected from env. Gemini 3 preview models pinned to temperature 1.0 (infinite-loop bug below 1.0). |
 | `backend/reddit_config.json` | Monitored subreddits, priorities, score thresholds. |
 | `backend/forwarded_authors.json` | Forwarded-newsletter author matching (name/email/search patterns). |
-| `backend/accounts.json` | Twitter accounts (also managed via UI/DB). |
+| `backend/accounts.json` | Export of `twitter_accounts` for reference only — not read by code. |
 | `frontend/.env` | `VITE_API_URL=http://localhost:8088`. |
 | `frontend/src/config/models.ts` | Model choices shown in the UI — keep in sync with litellm_config (no deprecated models). |
 | `mise.toml` | Pins Python 3.12. |

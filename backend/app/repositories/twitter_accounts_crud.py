@@ -6,6 +6,7 @@ Data access for app.api.twitter_accounts.crud (extracted by the arch-audit refac
 from app.repositories.errors import InvalidInputError, NotFoundError
 from app.utils.serializers import serialize_account
 from bson import ObjectId
+from typing import Any, Dict, List
 from datetime import datetime
 from datetime import timezone
 
@@ -99,3 +100,17 @@ def delete_account(account_id, delete_tweets):
         'tweets_deleted': tweets_deleted
     }
 
+
+
+def followed_accounts(enabled_only: bool = True) -> List[Dict[str, Any]]:
+    """Monitored accounts from twitter_accounts (the single source the collector,
+    the monitor and maintenance scripts use), in the collector's dict format."""
+    query = {'enabled': True} if enabled_only else {}
+    return [{
+        'id': acc.get('twitter_id', ''),
+        'username': acc.get('username', ''),
+        'displayName': acc.get('display_name', acc.get('username', '')),
+        'category': acc.get('category', 'Other'),
+        'description': acc.get('description', ''),
+        'tier': acc.get('tier', 2),
+    } for acc in db.twitter_accounts.find(query).sort([('tier', 1), ('username', 1)])]

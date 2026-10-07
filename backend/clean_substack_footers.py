@@ -13,15 +13,23 @@ from pymongo import UpdateOne
 from app.database.mongodb import get_database
 from app.collectors.substack_content_cleaners import remove_substack_footer
 
+# Only Substack posts get Substack footer cleaning: the footer patterns (copyright
+# lines, street addresses) would also match ordinary text of other web articles.
+SUBSTACK_QUERY = {'$or': [
+    {'url': {'$regex': r'substack\.com', '$options': 'i'}},
+    {'content_markdown': {'$regex': r'substackcdn\.com|substack\.com'}},
+]}
+
 def clean_existing_articles():
     """Clean footers from all existing Substack articles in MongoDB"""
     db = get_database()
 
     try:
-        # Get all articles
-        articles = list(db.articles.find({}))
+        articles = list(db.articles.find(SUBSTACK_QUERY))
+        skipped_other = db.articles.count_documents({}) - len(articles)
 
-        print(f"🔍 Found {len(articles)} Substack articles to check")
+        print(f"🔍 Found {len(articles)} Substack articles to check "
+              f"({skipped_other} non-Substack articles left untouched)")
 
         cleaned_count = 0
         already_clean_count = 0
@@ -34,7 +42,7 @@ def clean_existing_articles():
             update_fields = {}
 
             # Get article title for logging
-            title = article.get('title', 'Untitled')[:50]
+            title = (article.get('title') or 'Untitled')[:50]
 
             # Clean markdown content
             content_markdown = article.get('content_markdown', '')
@@ -68,7 +76,7 @@ def clean_existing_articles():
                 # Regenerate preview from cleaned markdown
                 new_markdown = update_fields.get('content_markdown', content_markdown)
                 if new_markdown:
-                    from app.services.preview_utils import generate_preview
+                    from app.utils.preview_utils import generate_preview
                     update_fields['preview'] = generate_preview(new_markdown)
 
                 # Prepare bulk update
