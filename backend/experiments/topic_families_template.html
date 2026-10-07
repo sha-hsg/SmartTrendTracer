@@ -29,7 +29,16 @@
   <div class="muted">Height = share of the month (averaged over tweets, articles, papers). Click a stream or a name to see how the family branched.</div>
   <div id="fam-list"></div>
 </header>
-<section><svg id="stream"></svg></section>
+<section>
+  <h2>Episodes — when topics flare up and fade</h2>
+  <div class="muted">Each bar is a burst inside a topic: weeks with clearly more attention than the topic's own baseline.
+    Bar = start → end, darker = stronger. Rows = families. Hover for details.</div>
+  <svg id="episodes"></svg>
+</section>
+<section>
+  <h2>Themes — the slow background</h2>
+  <svg id="stream"></svg>
+</section>
 <section>
   <h2 id="fam-title">Select a family</h2>
   <div class="muted" id="fam-sub">Rows = micro-topics in birth order; dashed line = branched off its closest earlier relative.</div>
@@ -45,6 +54,49 @@ const x = d3.scalePoint().domain(months).range([M.l + 200, W - M.r]);
 const tip = d3.select('#tip');
 const showTip = (e, html) => tip.style('display', 'block').style('left', (e.clientX + 14) + 'px').style('top', (e.clientY + 10) + 'px').html(html);
 const hideTip = () => tip.style('display', 'none');
+
+// ---- episode map ----
+(function episodeMap() {
+  const parse = d3.timeParse('%Y-%m-%d');
+  const weeks = DATA.weeks.map(parse);
+  const xt = d3.scaleTime().domain([weeks[0], d3.timeDay.offset(weeks[weeks.length - 1], 7)]).range([M.l + 220, W - M.r]);
+  const famRows = fams.map(f => {
+    const eps = f.topics.flatMap(t => t.episodes.map(e => ({...e, topic: t.label, s: parse(e.start), e: d3.timeDay.offset(parse(e.end), 7)})))
+      .sort((a, b) => a.s - b.s);
+    const lanes = [];             // greedy lane packing so overlapping episodes don't collide
+    eps.forEach(ep => {
+      let li = lanes.findIndex(end => end <= ep.s);
+      if (li < 0) { li = lanes.length; lanes.push(ep.e); } else lanes[li] = ep.e;
+      ep.lane = li;
+    });
+    return {f, eps, lanes: Math.max(1, lanes.length)};
+  });
+  const laneH = 18, gap = 10;
+  let yOff = 10;
+  famRows.forEach(r => { r.y = yOff; yOff += r.lanes * laneH + gap; });
+  const svgE = d3.select('#episodes').attr('width', W).attr('height', yOff + 30);
+  const maxI = d3.max(famRows.flatMap(r => r.eps.map(e => Math.log(e.intensity)))) || 1;
+  svgE.append('g').attr('class', 'axis').attr('transform', `translate(0,${yOff})`).call(d3.axisBottom(xt).ticks(d3.timeMonth.every(2)).tickFormat(d3.timeFormat('%Y-%m')));
+  famRows.forEach(r => {
+    const g = svgE.append('g');
+    g.append('rect').attr('x', 0).attr('y', r.y - 2).attr('width', W).attr('height', r.lanes * laneH + 4)
+      .attr('fill', '#f6f8fa').attr('opacity', .6);
+    g.append('text').attr('class', 'row-label').attr('x', M.l).attr('y', r.y + 12)
+      .text(r.f.name.split(' · ').slice(0, 2).join(' · ').slice(0, 34)).style('cursor', 'pointer').on('click', () => showFamily(r.f));
+    const bars = g.selectAll('g.ep').data(r.eps).join('g').attr('class', 'ep');
+    bars.append('rect').attr('x', d => xt(d.s)).attr('y', d => r.y + d.lane * laneH)
+      .attr('width', d => Math.max(3, xt(d.e) - xt(d.s))).attr('height', laneH - 3).attr('rx', 3)
+      .attr('fill', color(r.f.id)).attr('opacity', d => 0.35 + 0.65 * Math.log(d.intensity) / maxI);
+    bars.append('text').attr('x', d => xt(d.s) + 3).attr('y', d => r.y + d.lane * laneH + 11)
+      .attr('font-size', 10).attr('pointer-events', 'none')
+      .text(d => { const w = xt(d.e) - xt(d.s); return w > 40 ? d.name.slice(0, Math.floor(w / 6)) : ''; });
+    bars.on('mousemove', (e, d) => showTip(e, `<b>${d.name}</b><br>${d.start} → ${d.end} (${d.weeks} weeks) · peak ${d.peak}` +
+        `<br>×${d.intensity} the topic's usual level · ${d.docs} docs (tweets ${d.channels.tweet || 0}, articles ${d.channels.article || 0}, papers ${d.channels.paper || 0})` +
+        `<br>first movers: ${d.movers.map(m => m[0] + ' (' + m[1] + ')').join(', ') || '—'}<br>topic: <i>${d.topic}</i>` +
+        `<hr>${d.examples.map(x => '• ' + x.replace(/</g, '&lt;')).join('<br>')}`))
+      .on('mouseleave', hideTip);
+  });
+})();
 
 // ---- streamgraph of families ----
 const rows = months.map((m, i) => Object.fromEntries([['m', m], ...fams.map(f => [f.id, f.series[i]])]));

@@ -61,6 +61,80 @@ def family_label(member_docs, global_freq, n_global, min_support=0.03):
     return ' · '.join(top) if top else '(unlabelled)'
 
 
+EP_FACTOR = 2.5               # episode: smoothed weekly share >= factor x the topic's baseline
+EP_FLOOR = 0.003              # ... and at least this share of the week
+EP_MIN_WEEKS = 2
+EP_GAP = 1                    # runs separated by <= this many weeks are one episode
+WEEK_MIN = {'tweet': 1, 'article': 3, 'paper': 5}
+
+
+def week_of(dt):
+    from datetime import timedelta
+    monday = (dt - timedelta(days=dt.weekday())).date()
+    return monday.isoformat()
+
+
+def detect_episodes(mem, docs, weeks, week_totals, global_freq, topic_freq):
+    """Bursts inside one micro-topic: contiguous weeks well above its own
+    baseline. Each burst has a start and an end and is labelled by the
+    concepts that stand out in that period against the rest of the topic."""
+    per_week = defaultdict(Counter)
+    for i in mem:
+        per_week[docs[i]['week']][docs[i]['type']] += 1
+    series = []
+    for w in weeks:
+        tot = week_totals[w]
+        shares = [per_week[w][ty] / tot[ty] for ty in ('tweet', 'article', 'paper') if tot[ty] >= WEEK_MIN[ty]]
+        series.append(float(np.mean(shares)) if shares else 0.0)
+    smooth = np.convolve(series, np.ones(3) / 3, mode='same')
+    nonzero = smooth[smooth > 0]
+    if not len(nonzero):
+        return []
+    baseline = float(np.median(nonzero))
+    thr = max(EP_FACTOR * baseline, EP_FLOOR)
+    hot = smooth >= thr
+    runs, start = [], None
+    for i, h in enumerate(list(hot) + [False]):
+        if h and start is None:
+            start = i
+        if not h and start is not None:
+            runs.append([start, i - 1])
+            start = None
+    merged = []
+    for r in runs:
+        if merged and r[0] - merged[-1][1] - 1 <= EP_GAP:
+            merged[-1][1] = r[1]
+        else:
+            merged.append(r)
+    out = []
+    n_topic = len(mem)
+    for a, b in merged:
+        if b - a + 1 < EP_MIN_WEEKS:
+            continue
+        span = set(weeks[a:b + 1])
+        ep_docs = [docs[i] for i in mem if docs[i]['week'] in span]
+        if len(ep_docs) < 8:
+            continue
+        freq = Counter(c for d in ep_docs for c in set(d['concepts']))
+        scored = []
+        for c, f in freq.items():
+            if c.lower() in v1.GENERIC or c in v1.AUTHOR_SPECIFIC or f < max(2, 0.1 * len(ep_docs)):
+                continue
+            lift = (f / len(ep_docs)) / (topic_freq[c] / n_topic)
+            scored.append((np.log(lift + 1) * (f / len(ep_docs)), c))
+        name = ' · '.join(c for _, c in sorted(scored, reverse=True)[:2]) or '(unlabelled)'
+        early = sorted(ep_docs, key=lambda d: d['date'])
+        peak = a + int(np.argmax(smooth[a:b + 1]))
+        out.append({'name': name, 'start': weeks[a], 'end': weeks[b], 'peak': weeks[peak],
+                    'weeks': b - a + 1, 'docs': len(ep_docs),
+                    'intensity': round(float(smooth[peak] / baseline), 1),
+                    'peak_share': round(float(smooth[peak]), 4),
+                    'movers': Counter(d['author'] for d in early[:10] if d['type'] != 'paper').most_common(3),
+                    'channels': dict(Counter(d['type'] for d in ep_docs)),
+                    'examples': [d['text'][:140] for d in early[:3]]})
+    return out
+
+
 def month_of(d):
     return d['date'].strftime('%Y-%m')
 
@@ -99,8 +173,13 @@ def main():
     print(f'{len(docs)} docs → {n_topics} micro-topics ({(labels < 0).mean():.1%} in tiny groups)')
 
     month_totals = defaultdict(Counter)
+    week_totals = defaultdict(Counter)
     for d in docs:
         month_totals[month_of(d)][d['type']] += 1
+        d['week'] = week_of(d['date'])
+        week_totals[d['week']][d['type']] += 1
+    this_week = week_of(datetime.now(timezone.utc))
+    weeks = sorted(w for w in week_totals if '2025-01-06' <= w < this_week)
 
     topics = []
     for t in range(n_topics):
@@ -142,7 +221,11 @@ def main():
         movers = Counter(docs[i]['author'] for i in first_docs if docs[i]['type'] != 'paper').most_common(3)
         first_by_channel = {ty: min((docs[i]['date'] for i in mem if docs[i]['type'] == ty), default=None)
                             for ty in ('tweet', 'article', 'paper')}
+        topic_freq = Counter(c for d in md for c in set(d['concepts']))
+        episodes = detect_episodes(mem, docs, weeks, week_totals, global_freq, topic_freq)
         topics.append({'id': t, 'label': v1.label_cluster(md, global_freq, len(docs)), 'size': len(mem),
+                       'episodes': episodes,
+                       'alive_share': round(len(alive) / len(months), 2),
                        'members': mem,
                        'series': [round(s, 5) for s in series], 'birth': birth, 'peak': peak,
                        'status': status, 'drift': round(drift, 3), 'centroid': c,
@@ -187,6 +270,10 @@ def main():
         for t in f['topics'][:10]:
             par = next((p['label'] for p in f['topics'] if p['id'] == t['parent']), '—')
             print(f"   {months[t['birth']]} {t['status']:7s} drift {t['drift']:.2f}  {t['label'][:55]:55s} ← {par[:35]}")
+    eps = [(e, f['name'], t['label']) for f in fam_list for t in f['topics'] for e in t['episodes']]
+    print(f'\n{len(eps)} episodes; strongest 25 by intensity:')
+    for e, fname, tl in sorted(eps, key=lambda x: -x[0]['intensity'])[:25]:
+        print(f"   {e['start']} → {e['end']} ({e['weeks']:2d}w, x{e['intensity']:4.1f}, {e['docs']:3d} docs) {e['name'][:40]:40s} [{tl[:30]}]")
     print('\nagent topics (all families):')
     for f in fam_list:
         for t in f['topics']:
@@ -197,7 +284,7 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     html = (Path(__file__).with_name('topic_families_template.html').read_text()
-            .replace('/*DATA*/null', json.dumps({'months': months, 'families': fam_list}, default=str)))
+            .replace('/*DATA*/null', json.dumps({'months': months, 'weeks': weeks, 'families': fam_list}, default=str)))
     OUT.write_text(html)
     print(f'\nwrote {OUT}')
 
