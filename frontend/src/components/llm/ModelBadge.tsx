@@ -10,8 +10,11 @@ const ModelBadge: React.FC<ModelBadgeProps> = ({ model, size = 'small', style })
     const modelMap: { [key: string]: { name: string, color: string } } = {
       // Current lineup (Sep 2026, third refresh)
       'claude-opus-5-5': { name: 'Claude Opus 5.5', color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' },
+      'claude-sonnet-5-5': { name: 'Claude Sonnet 5.5', color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+      'claude-haiku-5-5': { name: 'Claude Haiku 5.5', color: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' },
       'gemini-3.8-flash': { name: 'Gemini 3.8 Flash', color: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)' },
       'gpt-6-astra': { name: 'GPT-6 Astra', color: 'linear-gradient(135deg, #10a37f 0%, #1a7f64 100%)' },
+      'gpt-6.1-sol': { name: 'GPT-6.1 Sol', color: 'linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%)' },
       'gpt-6-sol': { name: 'GPT-6 Sol', color: 'linear-gradient(135deg, #10a37f 0%, #0d8a6a 100%)' },
       'gpt-6-luna': { name: 'GPT-6 Luna', color: 'linear-gradient(135deg, #10a37f 0%, #74d0bd 100%)' },
       'grok-4.7': { name: 'Grok 4.7', color: 'linear-gradient(135deg, #333333 0%, #666666 100%)' },

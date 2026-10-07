@@ -32,8 +32,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'openai/gpt-6-sol',
-    label: 'GPT-6 Sol',
+    value: 'openai/gpt-6.1-sol',
+    label: 'GPT-6.1 Sol',
     description: 'Powerful reasoning and analysis',
     icon: Brain,
     iconColor: 'text-purple-700',
@@ -61,8 +61,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'claude-sonnet-5',
-    label: 'Claude Sonnet 5',
+    value: 'claude-sonnet-5-5',
+    label: 'Claude Sonnet 5.5',
     description: 'Balanced intelligence, speed & cost',
     icon: Target,
     iconColor: 'text-orange-500',
@@ -70,8 +70,8 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     badgeVariant: 'secondary'
   },
   {
-    value: 'claude-haiku-4-5',
-    label: 'Claude Haiku 4.5',
+    value: 'claude-haiku-5-5',
+    label: 'Claude Haiku 5.5',
     description: 'Fastest and most cost-effective',
     icon: Zap,
     iconColor: 'text-orange-400',
@@ -145,44 +145,44 @@ export const AVAILABLE_MODELS: ModelOption[] = [
 export const MODEL_PRESETS = {
   // Tag suggestion for papers - prioritize comprehensive analysis
   paperTagSuggestion: {
-    default: 'claude-sonnet-5',
+    default: 'claude-sonnet-5-5',
     alternatives: ['gemini/gemini-3.1-pro-preview', 'openai/gpt-6-astra', 'claude-opus-5-5']
   },
 
   // Paper analysis - need deep understanding
   paperAnalysis: {
     default: 'gemini/gemini-3.1-pro-preview',
-    alternatives: ['claude-opus-5-5', 'openai/gpt-6-sol', 'claude-sonnet-5']
+    alternatives: ['claude-opus-5-5', 'openai/gpt-6.1-sol', 'claude-sonnet-5-5']
   },
 
   // Entity extraction - need accuracy
   entityExtraction: {
     default: 'claude-opus-5-5',
-    alternatives: ['openai/gpt-6-sol', 'gemini/gemini-3.1-pro-preview', 'claude-sonnet-5']
+    alternatives: ['openai/gpt-6.1-sol', 'gemini/gemini-3.1-pro-preview', 'claude-sonnet-5-5']
   },
 
   // Article summarization - need speed and quality
   articleSummarization: {
-    default: 'claude-sonnet-5',
-    alternatives: ['gemini/gemini-3.8-flash', 'claude-haiku-4-5', 'openai/gpt-6-astra']
+    default: 'claude-sonnet-5-5',
+    alternatives: ['gemini/gemini-3.8-flash', 'claude-haiku-5-5', 'openai/gpt-6-astra']
   },
 
   // Tweet annotation - need speed
   tweetAnnotation: {
-    default: 'claude-haiku-4-5',
+    default: 'claude-haiku-5-5',
     alternatives: ['gemini/gemini-3.8-flash', 'openai/gpt-6-luna']
   },
 
   // Free-form paper analysis
   freeAnalysis: {
     default: 'gemini/gemini-3.8-flash',
-    alternatives: ['claude-sonnet-5', 'openai/gpt-6-astra', 'gemini/gemini-3.1-pro-preview']
+    alternatives: ['claude-sonnet-5-5', 'openai/gpt-6-astra', 'gemini/gemini-3.1-pro-preview']
   },
 
   // RAG search answers
   ragAnswer: {
     default: 'gemini/gemini-3.1-pro-preview',
-    alternatives: ['claude-opus-5-5', 'openai/gpt-6-sol']
+    alternatives: ['claude-opus-5-5', 'openai/gpt-6.1-sol']
   },
 
   // Trend analysis

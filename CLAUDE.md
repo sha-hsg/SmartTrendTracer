@@ -480,6 +480,8 @@ Details live in `git log` and `docs/`; do not re-expand here.
   with section citations. Repairs: LiteLLM provider prefixes (backend crash), pinned
   Marker 1.10.2 / MinerU 3.4.5, async PDF processing + integer paper ids, stored PDF
   paths, RAG embeddings moved to gemini-embedding-001.
+  Model refresh: Claude Sonnet 5.5 and Haiku 5.5 (both reject `temperature` — removed from
+  their routes), GPT-6.1 Sol (`max_completion_tokens`); old ids in MODEL_MIGRATION_MAP.
 - **2026-09 — Architecture audit + fixes** (commits d8b3ab7…495d4cf): dead code and the
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed

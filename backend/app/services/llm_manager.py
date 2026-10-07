@@ -360,7 +360,7 @@ class LLMManager:
             task_type: Task type (e.g., "tag_suggestion", "entity_extraction")
 
         Returns:
-            Actual model name (e.g., "claude-sonnet-5")
+            Actual model name (e.g., "claude-sonnet-5-5")
             Falls back to task_type if not found in config
         """
         try:
@@ -370,7 +370,7 @@ class LLMManager:
                     litellm_model = model_config.get('litellm_params', {}).get('model', '')
 
                     # Extract just the model name without provider prefix
-                    # e.g., "anthropic/claude-sonnet-5" -> "claude-sonnet-5"
+                    # e.g., "anthropic/claude-sonnet-5-5" -> "claude-sonnet-5-5"
                     if '/' in litellm_model:
                         return litellm_model.split('/', 1)[1]
                     return litellm_model
@@ -407,7 +407,7 @@ class LLMManager:
         # Check for user preference or use task_type for routing
         model_name = self.get_user_preference(task_type, user_id) or task_type
 
-        # Resolve actual model name for logging (e.g., "claude-sonnet-5")
+        # Resolve actual model name for logging (e.g., "claude-sonnet-5-5")
         actual_model_name = self._resolve_actual_model(task_type)
 
         # Merge parameters
@@ -478,7 +478,7 @@ class LLMManager:
         # Check for user preference
         model_name = self.get_user_preference(task_type, user_id) or task_type
 
-        # Resolve actual model name for logging (e.g., "claude-sonnet-5")
+        # Resolve actual model name for logging (e.g., "claude-sonnet-5-5")
         actual_model_name = self._resolve_actual_model(task_type)
 
         # Merge parameters
@@ -581,8 +581,8 @@ class LLMManager:
         'gemini-3.1-flash-lite': 'gemini-3.5-flash-lite',
         'gemini/gemini-3.1-flash-lite': 'gemini-3.5-flash-lite',
         # Legacy OpenAI/xAI models removed from litellm_config.yaml (July 2026)
-        'gpt-4o': 'gpt-6-sol',
-        'openai/gpt-4o': 'gpt-6-sol',
+        'gpt-4o': 'gpt-6.1-sol',
+        'openai/gpt-4o': 'gpt-6.1-sol',
         'gpt-4o-mini': 'gpt-6-luna',
         'openai/gpt-4o-mini': 'gpt-6-luna',
         'grok-2-latest': 'grok-4.7',
@@ -590,8 +590,8 @@ class LLMManager:
         # OpenAI/xAI models superseded or gone from provider APIs (Aug 2026)
         'gpt-5.2': 'gpt-6-astra',
         'openai/gpt-5.2': 'gpt-6-astra',
-        'gpt-5.1': 'gpt-6-sol',
-        'openai/gpt-5.1': 'gpt-6-sol',
+        'gpt-5.1': 'gpt-6.1-sol',
+        'openai/gpt-5.1': 'gpt-6.1-sol',
         'gpt-5-nano': 'gpt-6-luna',
         'openai/gpt-5-nano': 'gpt-6-luna',
         'grok-4-1-fast': 'grok-4.7',
@@ -603,8 +603,8 @@ class LLMManager:
         # Superseded Aug 2026 (second refresh)
         'gpt-5.5': 'gpt-6-astra',
         'openai/gpt-5.5': 'gpt-6-astra',
-        'gpt-5.4': 'gpt-6-sol',
-        'openai/gpt-5.4': 'gpt-6-sol',
+        'gpt-5.4': 'gpt-6.1-sol',
+        'openai/gpt-5.4': 'gpt-6.1-sol',
         'gpt-5.4-nano': 'gpt-6-luna',
         'openai/gpt-5.4-nano': 'gpt-6-luna',
         'grok-4.5': 'grok-4.7',
@@ -612,22 +612,22 @@ class LLMManager:
         'gemini-3.6-flash': 'gemini-3.8-flash',
         'gemini/gemini-3.6-flash': 'gemini-3.8-flash',
         # Anthropic models retired/deprecated (removed from configs July 2026)
-        'claude-sonnet-4-20250514': 'claude-sonnet-5',
-        'anthropic/claude-sonnet-4-20250514': 'claude-sonnet-5',
+        'claude-sonnet-4-20250514': 'claude-sonnet-5-5',
+        'anthropic/claude-sonnet-4-20250514': 'claude-sonnet-5-5',
         'claude-opus-4-1-20250805': 'claude-opus-5-5',
         'anthropic/claude-opus-4-1-20250805': 'claude-opus-5-5',
         'claude-opus-4-20250514': 'claude-opus-5-5',
         'claude-opus-4-5-20251101': 'claude-opus-5-5',
         'claude-3-opus-20240229': 'claude-opus-5-5',
-        'claude-3-haiku-20240307': 'claude-haiku-4-5',
-        'anthropic/claude-3-haiku-20240307': 'claude-haiku-4-5',
+        'claude-3-haiku-20240307': 'claude-haiku-5-5',
+        'anthropic/claude-3-haiku-20240307': 'claude-haiku-5-5',
         # Superseded Sep 2026 (second refresh: gpt-6 astra/sol/luna, opus-5-5,
         # gemini-3.8-flash, grok-4.7). Tier mapping: 5.6-sol was flagship ->
-        # astra; 5.6-terra mid -> gpt-6-sol; 5.6-luna nano -> gpt-6-luna.
+        # astra; 5.6-terra mid -> gpt-6.1-sol; 5.6-luna nano -> gpt-6-luna.
         'gpt-5.6-sol': 'gpt-6-astra',
         'openai/gpt-5.6-sol': 'gpt-6-astra',
-        'gpt-5.6-terra': 'gpt-6-sol',
-        'openai/gpt-5.6-terra': 'gpt-6-sol',
+        'gpt-5.6-terra': 'gpt-6.1-sol',
+        'openai/gpt-5.6-terra': 'gpt-6.1-sol',
         'gpt-5.6-luna': 'gpt-6-luna',
         'openai/gpt-5.6-luna': 'gpt-6-luna',
         'claude-opus-5': 'claude-opus-5-5',
@@ -636,6 +636,15 @@ class LLMManager:
         'gemini/gemini-3.7-flash': 'gemini-3.8-flash',
         'grok-4.6': 'grok-4.7',
         'xai/grok-4.6': 'grok-4.7',
+        # Superseded Oct 2026 (third refresh): Sonnet 5.5, Haiku 5.5, GPT-6.1 Sol.
+        # Sonnet/Haiku 5.5 reject temperature (removed from their routes).
+        'claude-sonnet-5': 'claude-sonnet-5-5',
+        'anthropic/claude-sonnet-5': 'claude-sonnet-5-5',
+        'claude-haiku-4-5': 'claude-haiku-5-5',
+        'anthropic/claude-haiku-4-5': 'claude-haiku-5-5',
+        'claude-haiku-4-5-20251001': 'claude-haiku-5-5',
+        'gpt-6-sol': 'gpt-6.1-sol',
+        'openai/gpt-6-sol': 'gpt-6.1-sol',
     }
 
     def get_valid_model_names(self) -> set:
