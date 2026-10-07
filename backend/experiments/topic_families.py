@@ -68,6 +68,69 @@ EP_GAP = 1                    # runs separated by <= this many weeks are one epi
 WEEK_MIN = {'tweet': 1, 'article': 3, 'paper': 5}
 
 
+LINK_SIM = 0.40               # centred cosine: above the 99th percentile of random episode pairs
+LINK_MAX_GAP = 6              # weeks between predecessor's end and successor's start
+LINK_MAX_SPAN = 26            # predecessor must have started at most this many weeks earlier
+NAMES_CACHE = Path(__file__).resolve().parent / 'output' / 'episode_names.json'
+
+
+def name_episodes(episodes, batch=6):  # route max_tokens is 500: keep batches small
+    """Short names (and a noise flag) via llm_manager, prompt 'episode_naming';
+    cached by episode signature so reruns cost nothing."""
+    cache = json.loads(NAMES_CACHE.read_text()) if NAMES_CACHE.exists() else {}
+    todo = [e for e in episodes if e['sig'] not in cache]
+    if todo:
+        from app.services.llm_manager import get_llm_manager
+        llm = get_llm_manager()
+        prompt = llm.get_prompt('episode_naming')
+        for k in range(0, len(todo), batch):
+            chunk = todo[k:k + batch]
+            payload = [{'id': i, 'tags': e['tags'], 'period': f"{e['start']}..{e['end']}",
+                        'examples': [x[:160] for x in e['examples']]} for i, e in enumerate(chunk)]
+            raw = llm.complete_text('content_classification',
+                                    prompt['user_template'].format(episodes=json.dumps(payload, ensure_ascii=False)),
+                                    system_prompt=prompt['system'])
+            try:
+                items = json.loads(raw[raw.index('['):raw.rindex(']') + 1])
+            except ValueError:
+                print('naming batch failed to parse; keeping tag names')
+                with open(NAMES_CACHE.with_name('naming_failures.txt'), 'a') as fh:
+                    fh.write(repr(raw[:600]) + '\n---\n')
+                continue
+            for it in items:
+                if isinstance(it, dict) and 0 <= int(it.get('id', -1)) < len(chunk):
+                    cache[chunk[int(it['id'])]['sig']] = {'name': str(it.get('name', '')).strip(),
+                                                           'noise': bool(it.get('noise'))}
+        NAMES_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        NAMES_CACHE.write_text(json.dumps(cache, indent=1, ensure_ascii=False))
+    for e in episodes:
+        hit = cache.get(e['sig'])
+        if hit and hit['name']:
+            e['name'], e['noise'] = hit['name'], hit['noise']
+        else:
+            e['noise'] = False
+
+
+def link_episodes(episodes, vecs):
+    """Lineage between episodes (across topics): B descends from A when A was
+    active up to LINK_MAX_GAP weeks before B started and their centred
+    centroids are similar. Up to two parents per episode."""
+    gm = vecs.mean(axis=0)
+    C = np.stack([vecs[e['_idx']].mean(axis=0) - gm for e in episodes])
+    C /= np.linalg.norm(C, axis=1, keepdims=True)
+    S = C @ C.T
+    links = []
+    for j, b in enumerate(episodes):
+        cands = [(S[i, j], i) for i, a in enumerate(episodes)
+                 if a['wi'][0] < b['wi'][0] and b['wi'][0] - a['wi'][1] <= LINK_MAX_GAP
+                 and b['wi'][0] - a['wi'][0] <= LINK_MAX_SPAN and S[i, j] >= LINK_SIM]
+        cands.sort(reverse=True)
+        for sim, i in cands[:2]:
+            if sim >= cands[0][0] - 0.05:
+                links.append({'source': i, 'target': j, 'sim': round(float(sim), 3)})
+    return links
+
+
 def week_of(dt):
     from datetime import timedelta
     monday = (dt - timedelta(days=dt.weekday())).date()
@@ -125,7 +188,9 @@ def detect_episodes(mem, docs, weeks, week_totals, global_freq, topic_freq):
         name = ' · '.join(c for _, c in sorted(scored, reverse=True)[:2]) or '(unlabelled)'
         early = sorted(ep_docs, key=lambda d: d['date'])
         peak = a + int(np.argmax(smooth[a:b + 1]))
-        out.append({'name': name, 'start': weeks[a], 'end': weeks[b], 'peak': weeks[peak],
+        out.append({'name': name, 'tags': name, 'start': weeks[a], 'end': weeks[b], 'peak': weeks[peak],
+                    'wi': [a, b],
+                    '_idx': [i for i in mem if docs[i]['week'] in span],
                     'weeks': b - a + 1, 'docs': len(ep_docs),
                     'intensity': round(float(smooth[peak] / baseline), 1),
                     'peak_share': round(float(smooth[peak]), 4),
@@ -254,6 +319,38 @@ def main():
             earlier = [p for p in members[:i] if p['birth'] < t['birth']]
             t['parent'] = max(earlier, key=lambda p: float(p['centroid'] @ t['centroid']))['id'] if earlier else None
 
+    # ---- episodes across all topics: names, lineage, events ----
+    episodes = []
+    for t in topics:
+        for e in t['episodes']:
+            e.update({'family': t['family'], 'topic': t['label'], 'sig': f"{t['id']}:{e['start']}:{e['end']}"})
+            episodes.append(e)
+    episodes.sort(key=lambda e: e['start'])
+    name_episodes(episodes)
+    episodes = [e for e in episodes if not e['noise']]
+    ep_links = link_episodes(episodes, vecs)
+    kids, parents = defaultdict(list), defaultdict(list)
+    for l in ep_links:
+        kids[l['source']].append(l['target'])
+        parents[l['target']].append(l['source'])
+    last_wi = len(weeks) - 1
+    for i, e in enumerate(episodes):
+        e['id'] = i
+        ev = []
+        if not parents[i]:
+            ev.append('birth')
+        if len(kids[i]) >= 2:
+            ev.append('split')
+        if len(parents[i]) >= 2:
+            ev.append('merge')
+        if not kids[i] and e['wi'][1] < last_wi - LINK_MAX_GAP:
+            ev.append('end')
+        e['events'] = ev
+    for t in topics:
+        t['episodes'] = []          # episodes are exported once, top-level
+    print(f"{len(episodes)} episodes after noise filter, {len(ep_links)} lineage links; "
+          f"events {dict(Counter(x for e in episodes for x in e['events']))}")
+
     fam_list = []
     for f, members in families.items():
         series = np.sum([m['series'] for m in members], axis=0)
@@ -270,10 +367,11 @@ def main():
         for t in f['topics'][:10]:
             par = next((p['label'] for p in f['topics'] if p['id'] == t['parent']), '—')
             print(f"   {months[t['birth']]} {t['status']:7s} drift {t['drift']:.2f}  {t['label'][:55]:55s} ← {par[:35]}")
-    eps = [(e, f['name'], t['label']) for f in fam_list for t in f['topics'] for e in t['episodes']]
-    print(f'\n{len(eps)} episodes; strongest 25 by intensity:')
-    for e, fname, tl in sorted(eps, key=lambda x: -x[0]['intensity'])[:25]:
-        print(f"   {e['start']} → {e['end']} ({e['weeks']:2d}w, x{e['intensity']:4.1f}, {e['docs']:3d} docs) {e['name'][:40]:40s} [{tl[:30]}]")
+    print('\nagent/memory lineage:')
+    for l in ep_links:
+        a, b = episodes[l['source']], episodes[l['target']]
+        if any(w in (a['name'] + b['name']).lower() for w in ('agent', 'memory')):
+            print(f"   {a['start']} {a['name'][:30]:30s} → {b['start']} {b['name'][:30]:30s} (sim {l['sim']})")
     print('\nagent topics (all families):')
     for f in fam_list:
         for t in f['topics']:
@@ -284,7 +382,9 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     html = (Path(__file__).with_name('topic_families_template.html').read_text()
-            .replace('/*DATA*/null', json.dumps({'months': months, 'weeks': weeks, 'families': fam_list}, default=str)))
+            .replace('/*DATA*/null', json.dumps({'months': months, 'weeks': weeks, 'families': fam_list,
+                                                 'episodes': [{k: v for k, v in e.items() if k != '_idx'} for e in episodes],
+                                                 'episode_links': ep_links}, default=str)))
     OUT.write_text(html)
     print(f'\nwrote {OUT}')
 

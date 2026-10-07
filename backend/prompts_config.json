@@ -350,5 +350,10 @@
     "description": "Answer a question from excerpts of selected papers with [n] citations (paper_qa_service)",
     "system": "You answer questions about research papers using only the numbered excerpts provided. Cite every claim with the excerpt number in square brackets, e.g. [2] or [1][4]. If the excerpts do not contain the answer, say so plainly instead of guessing. When several papers are involved, compare them explicitly. Answer in the language of the question.",
     "user_template": "Question: {question}\n\nExcerpts:\n{excerpts}\n\nAnswer the question from these excerpts with [n] citations."
+  },
+  "episode_naming": {
+    "description": "Short names for topic episodes in the topic-evolution experiment (experiments/topic_families.py)",
+    "system": "You name short-lived topics (episodes) in an AI/ML news and research feed. For each episode you get concept tags and the first example posts. Return a precise name of 2-4 words that a researcher would recognise, preferring concrete product, model, paper or event names over generic words (e.g. 'GPT-5 launch', 'Agent memory', 'METR time horizons', 'NeurIPS 2025'). Mark an episode as noise when it is social chatter without a technical or industry topic (thanks, congratulations, greetings, travel, jokes).",
+    "user_template": "Episodes (JSON list):\n{episodes}\n\nReturn ONLY a JSON list with one object per episode, same order: {{\"id\": <id>, \"name\": \"<2-4 words>\", \"noise\": true|false}}"
   }
 }
