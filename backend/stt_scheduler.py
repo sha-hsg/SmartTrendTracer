@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-STT scheduler: runs periodic jobs (daily paper feed, weekly digest, RAG index
-update) while STT is running.
+STT scheduler: runs periodic jobs (daily paper feed, RAG index update, weekly
+topic map and digest) while STT is running.
 
 The Mac does not run around the clock, so jobs are not bound to a clock time:
 every few minutes the scheduler checks which jobs are due — "daily" means the
@@ -63,16 +63,26 @@ def job_paper_feed():
     return {'subscriptions': result['subscriptions'], 'new': result['new']}
 
 
+def job_topic_map():
+    """Topics, episodes and their lineage in the bubble (topic_episodes)."""
+    from app.services.topic_episodes import build_topic_map
+    stats = build_topic_map()
+    return {k: stats[k] for k in ('episodes', 'links', 'events', 'naming')}
+
+
 def job_weekly_digest():
     """Weekly briefing; runs after the feed so its suggestions are included."""
     from app.services.digest_service import generate_digest
     return generate_digest()
 
 
+# Run order matters: the topic map uses the freshly updated RAG index, the
+# digest uses the feed and the topic map.
 JOBS: Dict[str, Dict] = {
     'paper_feed': {'run': job_paper_feed, 'due': due_daily},
-    'weekly_digest': {'run': job_weekly_digest, 'due': due_weekly},
     'rag_update': {'run': job_rag_update, 'due': due_daily},
+    'topic_map': {'run': job_topic_map, 'due': due_weekly},
+    'weekly_digest': {'run': job_weekly_digest, 'due': due_weekly},
 }
 
 

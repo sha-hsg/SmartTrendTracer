@@ -228,6 +228,7 @@ def _ensure_indexes(db: Database) -> None:
         ("books", [("uploaded_at", DESCENDING)]),
         ("books", [("processing_status", ASCENDING)]),
         ("books", [("concept_ids", ASCENDING)]),
+        ("topic_maps", [("created_at", DESCENDING)]),
         ("books", [("file_type", ASCENDING)]),
         ("books", [("publisher", ASCENDING)]),
         ("books", [("publication_year", ASCENDING)]),

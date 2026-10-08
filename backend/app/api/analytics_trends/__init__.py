@@ -6,6 +6,7 @@ from .cooccurrence import router as cooccurrence_router
 from .heatmap_bubble import router as heatmap_bubble_router
 from .network_correlation import router as network_correlation_router
 from .timeline_animation import router as timeline_animation_router
+from .episodes import router as episodes_router
 
 router = APIRouter()
 router.include_router(viz_router)
@@ -14,3 +15,4 @@ router.include_router(cooccurrence_router)
 router.include_router(heatmap_bubble_router)
 router.include_router(network_correlation_router)
 router.include_router(timeline_animation_router)
+router.include_router(episodes_router)

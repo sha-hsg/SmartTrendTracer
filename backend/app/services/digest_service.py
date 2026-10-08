@@ -3,7 +3,8 @@ Weekly digest: one briefing per week from data STT already has.
 
 Collects the week's trend overview (rising/declining/stable concepts and
 anomalies, from trend_overview_service), new papers and articles, the
-most-liked tweets and new paper-feed suggestions, then asks the LLM (task
+most-liked tweets, new paper-feed suggestions and the episode news of the
+topic map (new / running / faded topics, from topic_episodes), then asks the LLM (task
 trend_analysis, prompt weekly_digest) for a short narrative. The raw data is
 stored with the text, so the page shows facts even if the LLM call fails.
 
@@ -63,7 +64,18 @@ def collect_week(now: Optional[datetime] = None) -> Dict[str, Any]:
                         'text': (t.get('text') or '')[:280]} for t in tweets],
         'feed_suggestions': [{'title': c['title'], 'arxiv_id': c['arxiv_id'], 'score': c.get('score'),
                               'subscription': c.get('subscription_name')} for c in feed_top],
+        'episodes': _episodes(since),
     }
+
+
+def _episodes(since: datetime) -> Dict[str, Any]:
+    """New / running / faded episodes of the latest topic map (topic_episodes)."""
+    from app.services.topic_episodes import digest_episodes
+    try:
+        return digest_episodes(since)
+    except Exception:  # the digest must not fail because of the topic map
+        logger.exception('Episode section for the digest failed')
+        return {'available': False}
 
 
 def write_summary(data: Dict[str, Any], llm=None) -> str:
