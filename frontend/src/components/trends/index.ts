@@ -11,5 +11,6 @@ export { default as CorrelationMatrix } from './CorrelationMatrix';
 export { default as TrendNetworkGraph } from './TrendNetworkGraph';
 export { default as AnimatedTimeline } from './AnimatedTimeline';
 export { default as TimeWindowAnalysis } from './TimeWindowAnalysis';
+export { default as EpisodeMap } from './EpisodeMap';
 
 export * from './hooks/useTrendData';

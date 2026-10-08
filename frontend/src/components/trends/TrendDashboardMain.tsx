@@ -24,6 +24,7 @@ import {
   Settings,
   Clock,
   History,
+  GitBranch,
 } from 'lucide-react';
 
 import TrendAtAGlance from './TrendAtAGlance';
@@ -33,6 +34,7 @@ import CorrelationMatrix from './CorrelationMatrix';
 import TrendNetworkGraph from './TrendNetworkGraph';
 import AnimatedTimeline from './AnimatedTimeline';
 import TimeWindowAnalysis from './TimeWindowAnalysis';
+import EpisodeMap from './EpisodeMap';
 import {
   useAtAGlanceData,
   useHeatmapData,
@@ -46,7 +48,7 @@ interface TrendDashboardMainProps {
   onConceptClick?: (conceptId: string) => void;
 }
 
-type TabValue = 'overview' | 'heatmap' | 'bubble' | 'correlation' | 'network' | 'timeline' | 'lifecycle';
+type TabValue = 'overview' | 'heatmap' | 'bubble' | 'correlation' | 'network' | 'timeline' | 'lifecycle' | 'episodes';
 
 const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick }) => {
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
@@ -215,7 +217,7 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-        <TabsList className="grid grid-cols-7 w-full max-w-4xl">
+        <TabsList className="grid grid-cols-8 w-full max-w-5xl">
           <TabsTrigger value="overview" className="flex items-center gap-1">
             <Flame className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -243,6 +245,10 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
           <TabsTrigger value="lifecycle" className="flex items-center gap-1">
             <History className="w-4 h-4" />
             <span className="hidden sm:inline">Lifecycle</span>
+          </TabsTrigger>
+          <TabsTrigger value="episodes" className="flex items-center gap-1">
+            <GitBranch className="w-4 h-4" />
+            <span className="hidden sm:inline">Episodes</span>
           </TabsTrigger>
         </TabsList>
 
@@ -346,6 +352,11 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
           <TimeWindowAnalysis
             onConceptClick={onConceptClick}
           />
+        </TabsContent>
+
+        {/* Episodes Tab: topic map of the bubble (own data, recomputed weekly) */}
+        <TabsContent value="episodes" className="mt-4">
+          <EpisodeMap />
         </TabsContent>
       </Tabs>
     </div>

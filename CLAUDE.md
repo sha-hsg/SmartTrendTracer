@@ -78,6 +78,7 @@ with automatic trend-query detection.
 | `references` | ~2.4k | Normalized paper references |
 | `book_processing_jobs` | queue | Consumed by book_processing_worker.py |
 | `collection_state` | 1-few | Tweet collector state |
+| `topic_maps` / `episode_names` | 8 / ~300 | Bubble topic map (last 8 runs) and the content-keyed episode-name cache |
 
 Backend startup creates/repairs indexes centrally in
 `app/database/mongodb.py::_ensure_indexes` (incl. combined text indexes
@@ -303,8 +304,8 @@ red line per failure. Run it any time: `cd backend && venv/bin/python smoke_chec
 
 `start_stt.sh` also starts `backend/stt_scheduler.py` (log `logs/scheduler.log`): periodic
 jobs without fixed clock times, caught up after each start because the Mac is not always
-on — `paper_feed` (daily), `weekly_digest` (weekly, after the feed), `rag_update` (daily,
-via `POST /api/rag/update`). State in `scheduled_jobs`. Manual: `venv/bin/python
+on — `paper_feed` (daily), `rag_update` (daily, via `POST /api/rag/update`), `topic_map`
+(weekly, after the RAG update), `weekly_digest` (weekly, last; uses feed and topic map). State in `scheduled_jobs`. Manual: `venv/bin/python
 stt_scheduler.py --run NAME` or `--once`.
 
 After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `.env`.
@@ -372,10 +373,10 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/authors` | `authors_management` | author merge/analytics endpoints — **UI not built yet** (see AUTHOR_UI_DESIGN.md) |
 | `/api/statistics`, `/api/system` | `statistics/`, `system_stats/` | statistics dashboards |
 | `/api/trends`, `/api/trends/analysis`, `/api/user-trends` | trends modules | trend queries and analysis |
-| `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data: at-a-glance, heatmap, bubble-chart, network, cooccurrence, animated-timeline; AI summarization (`/summarize`) |
+| `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data: at-a-glance, heatmap, bubble-chart, network, cooccurrence, animated-timeline; AI summarization (`/summarize`); `episodes` (bubble topic map from `services/topic_episodes`: families, episodes, lineage; `/episodes/{id}`, `POST /episodes/rebuild` + `/rebuild/status`) |
 | `/api/topics` | `topic_explorer` | frequency / correlation / popular topics |
 | `/api/paper-feed` | `paper_feed` | arXiv feed: subscriptions (query + optional concept) CRUD, candidates (new/imported/dismissed, ranked by similarity to the concept's papers via FAISS vectors), `run`, import/dismiss |
-| `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_overview_service` + LLM prompt `weekly_digest`) |
+| `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_overview_service` + topic-map episode news + LLM prompt `weekly_digest`) |
 | `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, `update` (incremental: new/changed/deleted content only), `rebuild` (full), sample-questions |
 | `/api/ontology`, `/api/ontology-graph` | `tag_ontology/`, `ontology_graph` | concept ontology CRUD + visualization |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
@@ -484,6 +485,11 @@ Details live in `git log` and `docs/`; do not re-expand here.
   their routes), GPT-6.1 Sol (`max_completion_tokens`); old ids in MODEL_MIGRATION_MAP.
   Claude 5.5 models count hidden reasoning as output tokens: their routes need
   `max_tokens` >= 4000 (500-2000 truncated answers).
+  Bubble topic map (`app/services/topic_episodes`): global micro-topics on author-debiased
+  RAG vectors, families, episodes (bursts with start/end, LLM-named via prompt
+  `episode_naming`), lineage (birth/split/merge/end); weekly job `topic_map`, Trend
+  Dashboard tab "Episodes", digest section "Topics in motion". Standalone HTML view:
+  `experiments/topic_families.py`.
 - **2026-09 — Architecture audit + fixes** (commits d8b3ab7…495d4cf): dead code and the
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed

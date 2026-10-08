@@ -2,13 +2,15 @@ import { useCallback, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
-import { Newspaper, Loader2, RefreshCw, TrendingUp, TrendingDown, AlertTriangle, Twitter, FileText } from 'lucide-react'
+import { Newspaper, Loader2, RefreshCw, TrendingUp, TrendingDown, AlertTriangle, Twitter, FileText, GitBranch } from 'lucide-react'
 import http, { apiErrorMessage } from '@/services/http'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface TrendItem { concept: string; count: number; previous: number; velocity_pct: number }
+
+interface EpisodeNews { name: string; start: string; end: string; family: string; from: string[]; continues_as: string[] }
 
 interface Digest {
   id: string
@@ -25,7 +27,14 @@ interface Digest {
   new_articles?: { id: string; title: string; author?: string; url?: string }[]
   top_tweets?: { id: string; author: string; likes: number; text: string }[]
   feed_suggestions?: { title: string; arxiv_id: string; score: number | null }[]
+  episodes?: { available: boolean; new?: EpisodeNews[]; running?: EpisodeNews[]; faded?: EpisodeNews[] }
 }
+
+const EPISODE_GROUPS = [
+  { key: 'new', title: 'New' },
+  { key: 'running', title: 'Still running' },
+  { key: 'faded', title: 'Faded' },
+] as const
 
 const fmt = (d: string) => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -161,6 +170,32 @@ export default function WeeklyDigest() {
                 </CardContent>
               </Card>
             </div>
+
+            {digest.episodes?.available && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2"><GitBranch className="w-4 h-4" /> Topics in motion</CardTitle>
+                  <p className="text-xs text-muted-foreground">Episodes of your bubble's topic map (Trend Dashboard → Episodes)</p>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-3 text-sm">
+                  {EPISODE_GROUPS.map(g => (
+                    <div key={g.key} className="space-y-1">
+                      <div className="font-medium">{g.title}</div>
+                      {(digest.episodes?.[g.key] || []).map(e => (
+                        <div key={e.name + e.start}>
+                          <div className="truncate">{e.name}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {e.start} → {e.end}{e.from.length ? ` · from ${e.from.join(', ')}` : ''}
+                            {g.key === 'faded' && e.continues_as.length ? ` · continues as ${e.continues_as.join(', ')}` : ''}
+                          </div>
+                        </div>
+                      ))}
+                      {!(digest.episodes?.[g.key] || []).length && <div className="text-muted-foreground">—</div>}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
