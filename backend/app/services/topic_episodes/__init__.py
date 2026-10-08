@@ -161,7 +161,7 @@ def digest_episodes(since: datetime, topic_map: Optional[Dict[str, Any]] = None)
                 'continues_as': [eps[c]['name'] for c in e.get('children', [])]}
     new = [brief(e) for e in eps if e['start'] >= recent]
     running = [brief(e) for e in eps if e['end'] == last and e['start'] < recent]
-    faded = [brief(e) for e in eps if recent <= e['end'] < last and not e.get('children')]
+    faded = [brief(e) for e in eps if recent <= e['end'] < last and e['start'] < recent and not e.get('children')]
     top = lambda xs: sorted(xs, key=lambda x: -x['intensity'])[:8]  # noqa: E731
     return {'available': True, 'last_week': last, 'new': top(new), 'running': top(running), 'faded': top(faded)}
 

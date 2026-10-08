@@ -553,4 +553,4 @@ Details live in `git log` and `docs/`; do not re-expand here.
 
 ---
 
-Last updated: October 3, 2026
+Last updated: October 8, 2026
