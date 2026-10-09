@@ -77,14 +77,14 @@ SmartTrendTracer/
 ## Key Workflows
 - **Books** – Upload via “Book Library → Upload Book”, then trigger `Process` to convert to markdown. Faceted dashboard supports filtering by author, publisher, concept, genre, difficulty, processor, etc. Large documents stream via virtualized viewer.
 - **Tweets** – `backend/tweet_collector_service.py` schedules tiered pulls with MongoDB persistence. Use `collect_all_with_retweets.py` or `collect_twscrape.py` for specialty imports.
-- **Substack** – Gmail/forwarded pipelines normalize newsletters into MongoDB; see `SUBSTACK_SETUP.md` and `ENHANCED_IMPORT_GUIDE.md` for OAuth + filtering steps.
+- **Substack** – Gmail/forwarded pipelines normalize newsletters into MongoDB; see `docs/archive/SUBSTACK_SETUP.md` and `docs/archive/ENHANCED_IMPORT_GUIDE.md` for OAuth + filtering steps.
 - **Concepts** – Concept-only tagging ensures consistent ontology usage. Utilities in `backend/analyze_*` and `tag_reorganization_*` help curate hierarchies.
 
 ## Additional Documentation
 Extensive deep-dive notes live alongside the codebase:
 - `CLAUDE.md` – running change log and feature index (large file).
-- `API_DOCUMENTATION.md` – endpoint reference.
-- `FACETED_BROWSING_GUIDE.md`, `PDF_PAPERS_IMPLEMENTATION_PLAN.md`, `TAG_SYSTEM_V2_DOCUMENTATION.md`, etc. for feature-specific guidance.
+- `docs/archive/API_DOCUMENTATION.md` – endpoint reference.
+- `docs/archive/FACETED_BROWSING_GUIDE.md`, `docs/archive/PDF_PAPERS_IMPLEMENTATION_PLAN.md`, `docs/archive/TAG_SYSTEM_V2_DOCUMENTATION.md`, etc. for feature-specific guidance.
 
 ## Contributing Tips
 - Prefer enhancing existing services instead of creating parallel stacks.
