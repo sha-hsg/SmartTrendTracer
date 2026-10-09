@@ -205,7 +205,8 @@ async def apply_concepts_to_article(article_id: str, concepts: List[Dict[str, st
                 content_type='article',
                 content_id=str(article['_id']),
                 text=concept_data['display_name'],
-                preserve_display_name=True
+                preserve_display_name=True,
+                entity_type=concept_data.get('entity_type')
             )
             if success:
                 # Keep articles.concept_ids in sync (parity with

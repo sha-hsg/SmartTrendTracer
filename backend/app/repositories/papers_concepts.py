@@ -41,7 +41,8 @@ def apply_concepts_to_paper(paper_id, concepts):
                 content_type='paper',
                 content_id=str(paper['_id']),
                 text=text,
-                preserve_display_name=True
+                preserve_display_name=True,
+                entity_type=concept_data.get('entity_type')
             )
             if success:
                 success_count += 1

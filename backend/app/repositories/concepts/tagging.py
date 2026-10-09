@@ -6,6 +6,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
+# The tagging prompt's vocabulary (prompt concept_suggestion); spelling variants map onto it
+ENTITY_TYPES = {'topic', 'person', 'organisation', 'location', 'event', 'product'}
+_ENTITY_TYPE_VARIANTS = {'organization': 'organisation', 'org': 'organisation', 'company': 'organisation',
+                         'people': 'person', 'place': 'location', 'concept': 'topic'}
+
+
+def normalize_entity_type(value: Optional[str]) -> Optional[str]:
+    """A known entity type, or None for anything else."""
+    if not value:
+        return None
+    v = str(value).strip().lower()
+    v = _ENTITY_TYPE_VARIANTS.get(v, v)
+    return v if v in ENTITY_TYPES else None
+
 class ConceptTaggingMixin:
 
     def _concept_instance_exists(self, content_type: str, content_id: str, concept_ref) -> bool:
@@ -110,14 +125,18 @@ class ConceptTaggingMixin:
             logger.error(f"Error getting tags for {content_type} {content_id}: {e}")
             return []
 
-    def add_tag(self, content_type: str, content_id: str, text: str, preserve_display_name: bool = True) -> Tuple[bool, str]:
+    def add_tag(self, content_type: str, content_id: str, text: str, preserve_display_name: bool = True,
+                entity_type: Optional[str] = None) -> Tuple[bool, str]:
         """
         Add a tag to content. Creates concept if needed.
         Returns (success, concept_id)
 
         Args:
             preserve_display_name: If True, preserve exact text as display_name (for user input)
+            entity_type: the tagger's type (person, organisation, …). A new concept gets it;
+                an auto-generated concept still typed 'topic'/'concept' is upgraded to it.
         """
+        entity_type = normalize_entity_type(entity_type)
         try:
             # First check if concept exists (don't create yet)
             slug = self._normalize_to_slug(text)
@@ -127,6 +146,10 @@ class ConceptTaggingMixin:
             if existing_concept:
                 concept_id = str(existing_concept['_id'])
                 concept_existed = True
+                if (entity_type not in (None, 'topic') and existing_concept.get('auto_generated')
+                        and existing_concept.get('entity_type') in (None, 'topic', 'concept')):
+                    self.tag_concepts.update_one({'_id': existing_concept['_id']},
+                                                 {'$set': {'entity_type': entity_type}})
             else:
                 # Check aliases
                 alias_concept = self._concept_id_for_alias(slug)
@@ -151,7 +174,7 @@ class ConceptTaggingMixin:
                     "display_name": display_name,
                     "description": f"Auto-generated concept for '{display_name}'",
                     "parents": [],
-                    "entity_type": "topic",
+                    "entity_type": entity_type or "topic",
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "created_by": "concept_service",
                     "auto_generated": True

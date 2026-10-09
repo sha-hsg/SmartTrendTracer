@@ -12,13 +12,14 @@ def test_parse_concepts_tolerates_fences_and_strings():
 
 class FakeService:
     def __init__(self, existing=()):
-        self.existing, self.added = list(existing), []
+        self.existing, self.added, self.types = list(existing), [], {}
 
     def get_tags_for_content(self, *_):
         return [{'slug': s} for s in self.existing]
 
-    def add_tag(self, ctype, cid, name, preserve_display_name=True):
+    def add_tag(self, ctype, cid, name, preserve_display_name=True, entity_type=None):
         self.added.append(name)
+        self.types[name] = entity_type
         return True, 'id'
 
 
@@ -50,3 +51,20 @@ def test_nothing_found_marks_item_as_tagged(monkeypatch):
     monkeypatch.setattr(ct, 'suggest', lambda *a, **k: ([], 'm'))
     ct.tag_item('article', 'a', concept_service=FakeService())
     assert marked == ['a']
+
+
+def test_tag_item_passes_entity_type(monkeypatch):
+    monkeypatch.setattr(ct.repo, 'load_item', lambda t, i: {'title': '', 'author': '', 'text': 'x'})
+    monkeypatch.setattr(ct, 'suggest', lambda *a, **k: (
+        [{'display_name': 'Andrej Karpathy', 'slug': 'andrej_karpathy', 'entity_type': 'person'}], 'm'))
+    svc = FakeService()
+    ct.tag_item('tweet', '1', concept_service=svc)
+    assert svc.types == {'Andrej Karpathy': 'person'}
+
+
+def test_normalize_entity_type():
+    from app.repositories.concepts.tagging import normalize_entity_type
+    assert normalize_entity_type('Organization') == 'organisation'
+    assert normalize_entity_type('person') == 'person'
+    assert normalize_entity_type('concept') == 'topic'
+    assert normalize_entity_type('banana') is None and normalize_entity_type(None) is None

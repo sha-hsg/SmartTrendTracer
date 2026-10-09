@@ -41,7 +41,8 @@ def apply_concepts_to_tweet(tweet_id, concepts):
                 content_type='tweet',
                 content_id=tweet_id,
                 text=concept_data['display_name'],
-                preserve_display_name=True  # Preserve exact display name
+                preserve_display_name=True,
+                entity_type=concept_data.get('entity_type')
             )
             
             if success:
@@ -84,7 +85,8 @@ def apply_concepts_to_reddit(post_id, concepts):
                 content_type='reddit',
                 content_id=str(post['_id']),
                 text=concept_data['display_name'],
-                preserve_display_name=True
+                preserve_display_name=True,
+                entity_type=concept_data.get('entity_type')
             )
             if success:
                 success_count += 1

@@ -121,7 +121,8 @@ def tag_item(content_type: str, content_id: str, model: Optional[str] = None, co
         if not slug or slug in existing_slugs:
             skipped += 1
             continue
-        ok, _cid = concept_service.add_tag(content_type, content_id, s['display_name'], preserve_display_name=True)
+        ok, _cid = concept_service.add_tag(content_type, content_id, s['display_name'], preserve_display_name=True,
+                                          entity_type=s.get('entity_type'))
         if ok:
             new.append(s['display_name'])
             existing_slugs.add(slug)
