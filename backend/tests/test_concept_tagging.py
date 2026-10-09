@@ -63,7 +63,7 @@ def test_tag_item_passes_entity_type(monkeypatch):
 
 
 def test_normalize_entity_type():
-    from app.repositories.concepts.tagging import normalize_entity_type
+    from app.repositories.concepts import normalize_entity_type
     assert normalize_entity_type('Organization') == 'organisation'
     assert normalize_entity_type('person') == 'person'
     assert normalize_entity_type('concept') == 'topic'

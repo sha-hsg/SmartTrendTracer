@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from app.repositories import ontology  # noqa: E402
-from app.repositories.concepts.tagging import normalize_entity_type  # noqa: E402
+from app.repositories.concepts import normalize_entity_type  # noqa: E402
 from app.database.mongodb import get_database  # noqa: E402
 
 BATCH = 80
