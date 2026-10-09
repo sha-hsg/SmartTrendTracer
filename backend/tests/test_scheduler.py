@@ -52,7 +52,7 @@ def test_tagging_runs_every_six_hours():
 
 
 def test_tagging_runs_first(monkeypatch):
-    assert list(sch.JOBS)[:2] == ['newsletters', 'tag_content']
+    assert list(sch.JOBS)[:1] == ['tag_content']
     assert list(sch.JOBS).index('rag_update') < list(sch.JOBS).index('topic_map') < list(sch.JOBS).index('weekly_digest')
 
 

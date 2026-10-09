@@ -125,7 +125,9 @@ def job_weekly_digest():
 # trend views count only tagged days), the topic map uses the freshly updated
 # RAG index, the digest uses the feed and the topic map.
 JOBS: Dict[str, Dict] = {
-    'newsletters': {'run': job_newsletters, 'due': due_daily},
+    # 'newsletters' (Gmail) paused 2026-10-09: Substack posts are fetched directly
+    # (Playwright collector / URL import). Re-enable by adding:
+    # 'newsletters': {'run': job_newsletters, 'due': due_daily},
     'tag_content': {'run': job_tag_content, 'due': due_tagging},
     'paper_hygiene': {'run': job_paper_hygiene, 'due': due_daily},
     'paper_feed': {'run': job_paper_feed, 'due': due_daily},

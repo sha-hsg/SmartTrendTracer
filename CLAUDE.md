@@ -22,8 +22,9 @@ stored with their full text (`note_tweet`).
 **Substack newsletters** — collected from Gmail (direct subscriptions, e.g. Ethan Mollick
 "One Useful Thing") and forwarded university mail. Forwarded authors are configured in
 `backend/forwarded_authors.json`: Gary Marcus (Marcus on AI), Nathan Lambert
-(Interconnects), Sebastian Raschka (Ahead of AI). Scheduler job `newsletters` runs the collector
-daily without ever opening a browser; when the Gmail token (`backend/databases/token.pickle`) is
+(Interconnects), Sebastian Raschka (Ahead of AI). The Gmail scheduler job `newsletters` is **paused** (2026-10-09: Substack posts are fetched
+directly via the Playwright collector / URL import; re-enable in `stt_scheduler.py` JOBS). It never
+opens a browser; when the Gmail token (`backend/databases/token.pickle`) is
 revoked it fails with the login command: `cd backend && venv/bin/python -m
 app.collectors.gmail_substack_collector --setup`. Only senders listed in `backend/newsletter_sources.json`
 are kept (sender/publication → person; unknown senders are skipped and reported in the job result as
