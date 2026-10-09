@@ -2,7 +2,7 @@
  * Custom hook for fetching trend data from the API
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import http from '@/services/http'
 import {
   AtAGlanceData,
@@ -12,7 +12,6 @@ import {
   NetworkGraphData,
   AnimatedTimelineData,
   TrendQueryParams,
-  ContentType,
 } from '@/types/trends';
 
 const API_BASE = '/api/analytics/trends';
@@ -74,8 +73,13 @@ function useFetch<T>(
     }
   }, [endpoint, JSON.stringify(params)]);
 
+  // Fetch when enabled and the parameters changed since the last fetch, so
+  // switching back to a tab does not reload it (Refresh does).
+  const fetchedKey = useRef<string | null>(null);
   useEffect(() => {
-    if (autoFetch) {
+    const key = `${endpoint}?${JSON.stringify(params)}`;
+    if (autoFetch && fetchedKey.current !== key) {
+      fetchedKey.current = key;
       fetch();
     }
   }, [fetch, autoFetch]);
@@ -87,72 +91,78 @@ function useFetch<T>(
 export function useAtAGlanceData(
   hours: number = 48,
   anomalyThreshold: number = 2.5,
-  limit: number = 10
+  limit: number = 10,
+  enabled: boolean = true
 ): UseTrendDataReturn<AtAGlanceData> {
   return useFetch<AtAGlanceData>('/at-a-glance', {
     hours,
     anomaly_threshold: anomalyThreshold,
     limit,
-  });
+  }, enabled);
 }
 
 // Heatmap data hook
 export function useHeatmapData(
   days: number = 14,
-  topN: number = 20
+  topN: number = 20,
+  enabled: boolean = true
 ): UseTrendDataReturn<HeatmapData> {
   return useFetch<HeatmapData>('/heatmap', {
     days,
     top_n: topN,
-  });
+  }, enabled);
 }
 
 // Bubble chart data hook
 export function useBubbleChartData(
   days: number = 30,
-  limit: number = 50
+  limit: number = 50,
+  enabled: boolean = true
 ): UseTrendDataReturn<BubbleChartData> {
   return useFetch<BubbleChartData>('/bubble-chart', {
     days,
     limit,
-  });
+  }, enabled);
 }
 
 // Co-occurrence data hook
 export function useCooccurrenceData(
   days: number = 30,
   topN: number = 25,
-  minCooccurrence: number = 2
+  minCooccurrence: number = 2,
+  enabled: boolean = true
 ): UseTrendDataReturn<CooccurrenceData> {
   return useFetch<CooccurrenceData>('/cooccurrence', {
     days,
     top_n: topN,
     min_cooccurrence: minCooccurrence,
-  });
+  }, enabled);
 }
 
 // Network graph data hook
 export function useNetworkGraphData(
   days: number = 30,
   minConnections: number = 2,
-  topN: number = 40
+  topN: number = 40,
+  enabled: boolean = true
 ): UseTrendDataReturn<NetworkGraphData> {
   return useFetch<NetworkGraphData>('/network', {
     days,
     min_connections: minConnections,
     top_n: topN,
-  });
+  }, enabled);
 }
 
 // Animated timeline data hook
 export function useAnimatedTimelineData(
   days: number = 30,
-  topN: number = 15
+  topN: number = 15,
+  enabled: boolean = true
 ): UseTrendDataReturn<AnimatedTimelineData> {
   return useFetch<AnimatedTimelineData>('/animated-timeline', {
     days,
     top_n: topN,
-  });
+  }, enabled);
 }
 
 // Combined dashboard data hook

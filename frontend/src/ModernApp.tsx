@@ -38,6 +38,8 @@ import './index.css'
 
 export default function ModernApp() {
   const [activeView, setActiveView] = useState<ViewType>('dashboard')
+  // concept handed from the Trend Dashboard to the Topic Explorer
+  const [explorerConcept, setExplorerConcept] = useState<string | undefined>()
 
   const renderContent = () => {
     switch (activeView) {
@@ -132,13 +134,13 @@ export default function ModernApp() {
       // Analysis views
       case 'analysis-unified':
       case 'trend-dashboard':
-        return <TrendDashboardMain onConceptClick={() => setActiveView('topic-explorer')} />
+        return <TrendDashboardMain onConceptClick={(conceptId) => { setExplorerConcept(conceptId); setActiveView('topic-explorer') }} />
       case 'analysis-compare':
         return <TrendVisualizationModern />
       case 'analysis-clustering':
         return <TrendAnalysisModern />
       case 'topic-explorer':
-        return <TopicExplorerModern />
+        return <TopicExplorerModern initialConceptId={explorerConcept} />
       // New unified concept management
       case 'concept-management':
         return <ConceptManagementCenter />

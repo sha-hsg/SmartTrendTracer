@@ -21,7 +21,12 @@ import TopicDetailPanel from './TopicDetailPanel'
 import TopicFiltersPanel from './TopicFiltersPanel'
 import { Topic, FrequencyResponse, CorrelationResponse } from './types'
 
-export default function TopicExplorerModern() {
+interface TopicExplorerModernProps {
+  /** concept to preselect, e.g. clicked in the Trend Dashboard */
+  initialConceptId?: string
+}
+
+export default function TopicExplorerModern({ initialConceptId }: TopicExplorerModernProps = {}) {
   // State
   const [activeTab, setActiveTab] = useState<'frequency' | 'correlation'>('frequency')
   const [loading, setLoading] = useState(false)
@@ -56,6 +61,28 @@ export default function TopicExplorerModern() {
   useEffect(() => {
     loadPopularTopics()
   }, [])
+
+  // Preselect a concept handed over from another view and chart it
+  useEffect(() => {
+    if (!initialConceptId) return
+    let cancelled = false
+    http.get<{ display_name: string; slug?: string; entity_type?: string }>(`/api/ontology/concept/${initialConceptId}`)
+      .then(({ data }) => {
+        if (cancelled) return
+        setSelectedTopics([{ id: initialConceptId, name: data.display_name, slug: data.slug, count: 0, entity_type: data.entity_type }])
+        setActiveTab('frequency')
+      })
+      .catch(err => console.error('Failed to load concept:', err))
+    return () => { cancelled = true }
+  }, [initialConceptId])
+
+  // Once a handed-over concept is selected, load its frequency chart
+  useEffect(() => {
+    if (initialConceptId && selectedTopics.length === 1 && selectedTopics[0].id === initialConceptId && !frequencyData) {
+      fetchFrequencyData()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTopics, initialConceptId])
 
   const loadPopularTopics = async () => {
     setTopicsLoading(true)

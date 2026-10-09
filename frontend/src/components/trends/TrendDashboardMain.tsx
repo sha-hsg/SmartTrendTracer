@@ -6,9 +6,8 @@
 
 import React, { useState, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -58,12 +57,13 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
   const [showSettings, setShowSettings] = useState(false);
 
   // Fetch data for each view
+  // Only the visible tab loads (the overview feeds the header and is always on)
   const atAGlance = useAtAGlanceData(timeRange, 2.5, 10);
-  const heatmap = useHeatmapData(Math.min(days, 30), topN);
-  const bubbleChart = useBubbleChartData(days, 50);
-  const cooccurrence = useCooccurrenceData(days, 25, 2);
-  const network = useNetworkGraphData(days, 2, 40);
-  const timeline = useAnimatedTimelineData(days, 15);
+  const heatmap = useHeatmapData(days, topN, activeTab === 'heatmap');
+  const bubbleChart = useBubbleChartData(days, Math.max(topN, 30), activeTab === 'bubble');
+  const cooccurrence = useCooccurrenceData(days, topN, 2, activeTab === 'correlation');
+  const network = useNetworkGraphData(days, 2, topN, activeTab === 'network');
+  const timeline = useAnimatedTimelineData(days, Math.min(topN, 20), activeTab === 'timeline');
 
   const handleRefresh = useCallback(() => {
     atAGlance.refetch();
