@@ -104,7 +104,7 @@ def fill_md5() -> int:
     return done
 
 
-GROBID_PER_RUN = 10                # external server (huggingface space): catch up gradually
+GROBID_PER_RUN = 40                # local container, ~20 s per paper: the backlog clears in ~10 days
 
 
 def grobid_enrich(limit: int = GROBID_PER_RUN) -> Dict[str, int]:

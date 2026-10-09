@@ -590,6 +590,24 @@ else
 fi
 cd "$SCRIPT_DIR"
 
+# GROBID (reference extraction) runs as a local docker container; the restart
+# policy keeps it up, this only makes sure it is started (and created once).
+log_plain ""
+log "7a. Checking GROBID (docker container stt-grobid, port 8070)..."
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    if docker ps --format '{{.Names}}' | grep -q '^stt-grobid$'; then
+        log_plain "   ✓ GROBID container already running"
+    elif docker ps -a --format '{{.Names}}' | grep -q '^stt-grobid$'; then
+        docker start stt-grobid >/dev/null && log_plain "   ✓ GROBID container started"
+    else
+        docker run -d --name stt-grobid --platform linux/amd64 --restart unless-stopped \
+            -p 127.0.0.1:8070:8070 --memory 3g grobid/grobid:0.8.2-crf >/dev/null \
+            && log_plain "   ✓ GROBID container created (first start downloads ~0.5 GB)"
+    fi
+else
+    log_plain "   ⚠️  Docker not running — GROBID unavailable (references are not extracted)"
+fi
+
 # Start STT Scheduler (tagging, paper feed, RAG update, topic map, digest, backup;
 # catches up missed runs). A running scheduler is restarted: it imports the job
 # code once, so an old process would keep running outdated jobs.

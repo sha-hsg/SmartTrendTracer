@@ -39,7 +39,9 @@ REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET).
 
 **Research papers** — PDF upload plus importers for arXiv, ACL Anthology, ACM DL,
 OpenReview, JAIR, DBLP and direct URLs. Processed with Marker or MinerU, enriched via
-GROBID (external server https://kermitt2-grobid.hf.space), analyzed with LLMs.
+GROBID (local docker container `stt-grobid`, `grobid/grobid:0.8.2-crf`, port 8070, started by
+`start_stt.sh`; the job `paper_hygiene` extracts references for 40 papers/day into `references`),
+analyzed with LLMs.
 A separate **review mode** (`paper_type: 'review'`) keeps papers under review out of
 global statistics, trends, and the RAG index (default is `paper_type: 'research'`).
 
@@ -144,6 +146,7 @@ SmartTrendTracer/
 | **STT Backend** | **8088** (`BACKEND_PORT`, exported by start_stt.sh) |
 | STT Frontend (Vite) | 3470 |
 | STT Marker / MinerU | 8002 / 8003 |
+| STT GROBID (docker `stt-grobid`) | 8070 (127.0.0.1) |
 | MongoDB | 27017 |
 | Honcho (Docker — occupies 8000!) | 8000, 5433, 6379 |
 | Samanta | 3270, 8100, 8800 |
@@ -322,7 +325,7 @@ on — `tag_content` (every 6 h: concept tags for untagged tweets, articles and 
 path as "Annotate all" and the tweet/article tag suggestions; trend views count only tagged days), `paper_feed` (daily),
 `rag_update` (daily, via `POST /api/rag/update`), `topic_map` (weekly, after the RAG update),
 `newsletters` (daily, Gmail), `paper_hygiene` (daily: ISO publication dates, arXiv/Crossref
-backfill, arXiv id form, abstracts from processed text, PDF md5, GROBID for 10 papers),
+backfill, arXiv id form, abstracts from processed text, PDF md5, GROBID for 40 papers),
 `weekly_digest` (weekly; uses feed and topic map), `backup` (weekly `mongodump` gzip archive to
 `STT_BACKUP_DIR`, default `~/Backups/SmartTrendTracer`, newest 8 kept; restore:
 `mongorestore --gzip --archive=<file> --nsInclude='smarttrendtracer.*' --drop`). A failed job

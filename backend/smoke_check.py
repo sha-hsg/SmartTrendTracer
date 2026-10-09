@@ -262,7 +262,7 @@ def check_grobid():
     from app.services.grobid_service import GROBIDService
     alive = GROBIDService().is_alive()
     report(alive, 'GROBID', 'reachable' if alive else f'{settings.grobid_service_url} unavailable — references are not extracted',
-           hint='external huggingface space; set GROBID_SERVICE_URL to a local GROBID (docker) to make it reliable')
+           hint='local docker container stt-grobid (port 8070): docker start stt-grobid — or ./start_stt.sh')
 
 
 def check_frontend(client):

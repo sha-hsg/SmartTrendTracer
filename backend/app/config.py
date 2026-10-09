@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     # --- External services -------------------------------------------------
     marker_service_url: str = "http://localhost:8002"
     mineru_service_url: str = "http://localhost:8003"
-    grobid_service_url: str = "https://kermitt2-grobid.hf.space"
+    grobid_service_url: str = "http://localhost:8070"    # local docker container stt-grobid (start_stt.sh)
 
     # --- Database backup (scheduler job "backup": mongodump, weekly) ----------
     backup_dir: str = Field(default=str(Path.home() / "Backups" / "SmartTrendTracer"),
