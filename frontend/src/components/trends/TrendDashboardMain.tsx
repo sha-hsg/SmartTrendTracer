@@ -209,7 +209,7 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
         <p className="text-xs text-muted-foreground">
           Data through {atAGlance.data.time_range.data_through}
           {(atAGlance.data.time_range.untagged_after ?? 0) > 0 &&
-            ` · ${atAGlance.data.time_range.untagged_after} newer items are not tagged yet and not counted`}
+            ` · ${atAGlance.data.time_range.untagged_after} newer items (today, or not tagged yet) are not counted yet`}
           {' · '}generic concepts (AI, LLM, ML, big labs) are left out of rankings
         </p>
       )}

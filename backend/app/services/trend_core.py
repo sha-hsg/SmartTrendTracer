@@ -7,9 +7,9 @@ Rules shared by every view (they come from the 2026-10 dashboard audit and
 the bubble topic map in app.services.topic_episodes):
 - Documents: tweets (created_at), articles (published_at), research papers
   by *publication* date. Counts are distinct documents per concept.
-- data_through: the last day whose tweets are mostly tagged. Tagging runs
-  behind collection; untagged days would look like a collapse, so windows
-  end there and the UI says "data through …".
+- data_through: the last complete day whose tweets are mostly tagged. The
+  running day is partial and tagging may lag; either would look like a
+  collapse, so windows end there and the UI says "data through …".
 - Generic hub concepts (AI, LLM, ML, big lab names) and near-duplicate
   concept pairs are left out of rankings: they are always on top and say
   nothing about change.
@@ -99,15 +99,17 @@ class Cube:
                     self.last_seen[c] = day
         self.meta = meta
         self.concepts = concepts_loader(set(self.daily))
-        today = datetime.now(timezone.utc).date().toordinal()
+        # last complete (UTC) day whose tweets are mostly tagged: the running
+        # day is partial and would count as a drop in every window
+        last_complete = datetime.now(timezone.utc).date().toordinal() - 1
         tagged_days = [d for d, tot in self.day_total.items()
-                       if d <= today and tot[0] and self.day_tagged[d][0] / tot[0] >= TAGGED_SHARE]
-        self.data_through = max(tagged_days) if tagged_days else today
+                       if d <= last_complete and tot[0] and self.day_tagged[d][0] / tot[0] >= TAGGED_SHARE]
+        self.data_through = max(tagged_days) if tagged_days else last_complete
         per, totals = self.counts(self.data_through - HUB_DAYS + 1, self.data_through)
         n = sum(totals) or 1
         self.hub_set = {c for c, v in per.items() if self.is_generic(c) or sum(v) / n > GENERIC_DOC_SHARE}
-        self.untagged_after = sum(sum(t) - sum(self.day_tagged[d]) for d, t in self.day_total.items()
-                                  if d > self.data_through)
+        # items after data_through (the running day, untagged days) — not counted yet
+        self.untagged_after = sum(sum(t) for d, t in self.day_total.items() if d > self.data_through)
         self.built_at = time.time()
 
     # -- basic access -------------------------------------------------------

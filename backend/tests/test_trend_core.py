@@ -72,6 +72,18 @@ def test_untagged_recent_days_are_cut_off():
     assert c.untagged_after == 2
 
 
+def test_the_running_day_is_never_counted(monkeypatch):
+    import datetime as dt
+
+    class Frozen(dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return END                                              # "today" = END's day, partly over
+    monkeypatch.setattr(tc, 'datetime', Frozen)
+    c = build()                                                     # END's day is fully tagged
+    assert c.data_through == END.date().toordinal() - 1
+
+
 def test_associations_need_two_sources_and_drop_aliases(monkeypatch):
     extra = [(off, f'p{off}', ['a', 'b', 'steady']) for off in range(4)]          # 4 sources: real pair
     extra += [(off, 'podcast', ['x', 'y', 'steady']) for off in range(5)]          # one source only

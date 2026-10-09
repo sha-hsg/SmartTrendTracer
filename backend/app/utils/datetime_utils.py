@@ -1,5 +1,5 @@
 """Datetime parsing helpers."""
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 
@@ -30,7 +30,7 @@ def normalize_datetime(dt_value: Any) -> Optional[datetime]:
         return None
     if isinstance(dt_value, (int, float)):
         try:
-            return datetime.fromtimestamp(dt_value)
+            return datetime.fromtimestamp(dt_value, tz=timezone.utc)
         except (ValueError, OSError):
             return None
     return None

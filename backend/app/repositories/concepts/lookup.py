@@ -31,14 +31,28 @@ class ConceptLookupMixin:
         if concept:
             return concept
 
-        alias = self.tag_aliases.find_one({"alias": normalized_slug})
-        if not alias:
-            alias = self.tag_aliases.find_one({"alias_text": normalized_slug})
-
-        if alias:
-            return self.get_concept_by_id(alias.get('concept_id'))
+        concept_id = self._concept_id_for_alias(normalized_slug)
+        if concept_id:
+            return self.get_concept_by_id(concept_id)
 
         return None
+
+    def _concept_id_for_alias(self, slug: str) -> Optional[str]:
+        """Concept id whose alias normalises to `slug`. Aliases are stored as
+        free text ("AI-safety", "ai_safety", "LLMs") in tag_aliases_v2.alias_text;
+        they are compared in slug form. (The old lookups queried a field
+        `alias` that no alias document has, so aliases never applied and every
+        spelling variant became a new concept.) Cached for 5 minutes."""
+        import time
+        cache = getattr(type(self), '_alias_cache', None)
+        if cache is None or time.time() - cache[0] > 300:
+            mapping = {}
+            for a in self.tag_aliases.find({}, {'alias_text': 1, 'concept_id': 1}):
+                if a.get('alias_text') and a.get('concept_id'):
+                    mapping.setdefault(self._normalize_to_slug(a['alias_text']), str(a['concept_id']))
+            cache = (time.time(), mapping)
+            type(self)._alias_cache = cache
+        return cache[1].get(slug)
 
     def _generate_concept_id(self) -> str:
         """Generate a unique concept ID in format c_XXXXX.
@@ -119,9 +133,9 @@ class ConceptLookupMixin:
             return str(existing['_id'])
 
         # Check aliases
-        alias = self.tag_aliases.find_one({"alias": slug})
-        if alias:
-            return alias['concept_id']
+        alias_concept = self._concept_id_for_alias(slug)
+        if alias_concept:
+            return alias_concept
 
         # Create new concept
         # Use exact text as display_name if preserve_display_name is True (e.g., from context menu)

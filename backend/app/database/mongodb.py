@@ -241,8 +241,8 @@ def _ensure_indexes(db: Database) -> None:
         ("papers", [("title", TEXT), ("abstract", TEXT), ("content_markdown", TEXT)], "papers_text_search"),
         # Articles: search across title and content
         ("articles", [("title", TEXT), ("content_markdown", TEXT)], "articles_text_search"),
-        # Tweets: search across full_text
-        ("tweets", [("full_text", TEXT)], "tweets_text_search"),
+        # Tweets: the text is in `text` (full_text only on ~10% of tweets: long retweets)
+        ("tweets", [("text", TEXT), ("full_text", TEXT)], "tweets_text_search"),
     ]
 
     failed_indexes = []
@@ -261,6 +261,13 @@ def _ensure_indexes(db: Database) -> None:
     text_successful = 0
     for collection_name, index_fields, index_name in text_index_definitions:
         try:
+            # A text index whose fields changed must be dropped first (one text
+            # index per collection; create_index would fail on the name clash)
+            wanted = {f for f, _ in index_fields}
+            for idx in db[collection_name].list_indexes():
+                if 'weights' in idx and set(idx['weights']) != wanted:
+                    db[collection_name].drop_index(idx['name'])
+                    logger.info("Dropped text index %s.%s (fields changed)", collection_name, idx['name'])
             db[collection_name].create_index(index_fields, name=index_name)
             text_successful += 1
         except Exception as exc:

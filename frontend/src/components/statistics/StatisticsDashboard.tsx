@@ -10,6 +10,19 @@ import { StatsOverviewCards } from './StatsOverviewCards'
 import { StatsCharts } from './StatsCharts'
 
 
+// Tweets are collected continuously; everything else runs in stt_scheduler.py
+const JOB_LABELS: Record<string, string> = {
+  tag_tweets: 'tagging (6 h)', paper_feed: 'paper feed (daily)', rag_update: 'RAG update (daily)',
+  topic_map: 'topic map (weekly)', weekly_digest: 'digest (weekly)', backup: 'backup (weekly)',
+}
+
+function schedulerLine(jobs?: { job: string; last_ok?: boolean }[]): string {
+  if (!jobs?.length) return 'Tweet collector every ~15–30 min; scheduler state unknown'
+  const failed = jobs.filter(j => j.last_ok === false).map(j => JOB_LABELS[j.job] || j.job)
+  return 'Tweets continuously · ' + jobs.map(j => JOB_LABELS[j.job] || j.job).join(' · ') +
+    (failed.length ? ` — last run failed: ${failed.join(', ')}` : '')
+}
+
 export default function StatisticsDashboard() {
   const [stats, setStats] = useState<SystemStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -83,13 +96,13 @@ export default function StatisticsDashboard() {
           database_size: summary.system.database_size || 'N/A',
           index_status: {
             rag_documents: summary.rag.indexed_documents || 0,
-            last_updated: summary.rag.last_rebuild || 'N/A',
+            last_updated: summary.rag.last_update || summary.rag.last_rebuild || 'N/A',
             is_ready: summary.rag.status === 'ready'
           },
           collection_status: {
             last_tweet_collection: summary.system.collection_status?.last_tweet_collection || 'N/A',
             last_article_collection: summary.system.collection_status?.last_article_collection || 'N/A',
-            next_scheduled: 'Manual collection only'
+            next_scheduled: schedulerLine(summary.scheduler)
           }
         },
         trends: {

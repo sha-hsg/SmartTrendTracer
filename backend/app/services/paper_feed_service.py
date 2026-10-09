@@ -15,6 +15,7 @@ Run daily by stt_scheduler.py (job paper_feed) and on demand via the API.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -51,6 +52,9 @@ def concept_centroid(index, metadata, paper_ids: List[str]) -> Optional[np.ndarr
 
 
 class PaperFeed:
+    request_pause = 3.0                          # seconds between arXiv queries
+    retry_pause = 15.0
+
     def __init__(self, search=None, embed=None, index_state=None):
         """search(query, max_results) -> list of arXiv dicts; embed(texts) -> (vectors, failed).
         Defaults use the arXiv service and the RAG embedding model."""
@@ -78,7 +82,13 @@ class PaperFeed:
         return self._index_state
 
     def run_subscription(self, sub: Dict[str, Any]) -> Dict[str, Any]:
-        results = self._search(sub['query'], sub.get('max_results', 25)) or []
+        results = self._search(sub['query'], sub.get('max_results', 25))
+        if results is None:                      # arXiv error (429 / timeout): one retry after a pause
+            time.sleep(self.retry_pause)
+            results = self._search(sub['query'], sub.get('max_results', 25))
+        if results is None:
+            logger.warning(f"Feed '{sub['name']}': arXiv search failed")
+            return {'subscription': sub['name'], 'results': 0, 'new': 0, 'failed': True}
         fresh = []
         for paper in results:
             arxiv_id = _strip_version(paper['arxiv_id'])
@@ -119,8 +129,13 @@ class PaperFeed:
         return {'subscription': sub['name'], 'results': len(results), 'new': len(fresh)}
 
     def run(self) -> Dict[str, Any]:
-        runs = [self.run_subscription(sub) for sub in repo.list_subscriptions(active_only=True)]
-        return {'subscriptions': len(runs), 'new': sum(r['new'] for r in runs), 'runs': runs}
+        runs = []
+        for i, sub in enumerate(repo.list_subscriptions(active_only=True)):
+            if i:
+                time.sleep(self.request_pause)    # arXiv API asks for a pause between calls (429 otherwise)
+            runs.append(self.run_subscription(sub))
+        return {'subscriptions': len(runs), 'new': sum(r['new'] for r in runs),
+                'failed': [r['subscription'] for r in runs if r.get('failed')], 'runs': runs}
 
 
 def run_feed() -> Dict[str, Any]:

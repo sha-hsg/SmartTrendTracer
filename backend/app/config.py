@@ -11,6 +11,7 @@ API keys live in ~/.env (loaded by start_stt.sh, and by load_dotenv below for
 direct runs). LiteLLM additionally reads the provider keys from the process
 environment on its own; this module does not change that.
 """
+from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(extra="ignore", case_sensitive=False)
 
     # --- Server -----------------------------------------------------------
-    api_host: str = "0.0.0.0"
+    api_host: str = "127.0.0.1"          # local only: the API has no authentication
     backend_port: int = Field(default=8088, validation_alias=AliasChoices("BACKEND_PORT", "API_PORT"))
     cors_origins_raw: str = Field(default="", validation_alias="CORS_ORIGINS")
 
@@ -42,6 +43,11 @@ class Settings(BaseSettings):
     marker_service_url: str = "http://localhost:8002"
     mineru_service_url: str = "http://localhost:8003"
     grobid_service_url: str = "https://kermitt2-grobid.hf.space"
+
+    # --- Database backup (scheduler job "backup": mongodump, weekly) ----------
+    backup_dir: str = Field(default=str(Path.home() / "Backups" / "SmartTrendTracer"),
+                            validation_alias="STT_BACKUP_DIR")
+    backup_keep: int = 8
 
     # --- LLM provider keys (status display / embedding clients) -------------
     openai_api_key: Optional[str] = None

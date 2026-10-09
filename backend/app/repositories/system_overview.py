@@ -66,38 +66,68 @@ def get_content_statistics():
     """Get detailed content statistics across all sources"""
     try:
         def _compute() -> Dict[str, Any]:
+            now = datetime.now(timezone.utc)
+            day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            week_ago, month_ago = now - timedelta(days=7), now - timedelta(days=30)
+
+            def tagged_ids(content_type):
+                # tag_instances is the only tagging truth (concept_id null = "no concepts found")
+                return set(db.tag_instances.distinct(
+                    "content_id", {"content_type": content_type, "concept_id": {"$nin": [None, ""]}}))
+
+            tweets_total = db.tweets.count_documents({})
+            tweets_tagged = len(tagged_ids("tweet"))
             tweet_stats = {
-                "total": db.tweets.count_documents({}),
+                "total": tweets_total,
+                "today": db.tweets.count_documents({"created_at": {"$gte": day_start}}),
+                "this_week": db.tweets.count_documents({"created_at": {"$gte": week_ago}}),
+                "this_month": db.tweets.count_documents({"created_at": {"$gte": month_ago}}),
                 "with_media": db.tweets.count_documents({"media_count": {"$gt": 0}}),
                 "with_urls": db.tweets.count_documents({"urls": {"$ne": []}}),
                 "retweets": db.tweets.count_documents({"referenced_tweets": {"$elemMatch": {"type": "retweeted"}}}),
                 "quotes": db.tweets.count_documents({"referenced_tweets": {"$elemMatch": {"type": "quoted"}}}),
                 "replies": db.tweets.count_documents({"referenced_tweets": {"$elemMatch": {"type": "replied_to"}}}),
-                "processed": db.tweets.count_documents({"processed": True}),
-                "tagged": db.tweets.count_documents({"concept_ids": {"$ne": []}}),
+                "with_tags": tweets_tagged,
+                "tagged": tweets_tagged,
             }
 
+            words = next(db.articles.aggregate([
+                {"$project": {"n": {"$size": {"$split": [
+                    {"$trim": {"input": {"$ifNull": ["$content_markdown", {"$ifNull": ["$content", ""]}]}}}, " "]}}}},
+                {"$group": {"_id": None, "total": {"$sum": "$n"}, "count": {"$sum": 1}}},
+            ]), {"total": 0, "count": 0})
             article_stats = {
                 "total": db.articles.count_documents({}),
+                "this_week": db.articles.count_documents({"published_at": {"$gte": week_ago}}),
+                "this_month": db.articles.count_documents({"published_at": {"$gte": month_ago}}),
                 "with_summaries": db.articles.count_documents({"summary": {"$exists": True, "$ne": ""}}),
                 "with_snippets": db.articles.count_documents({"snippets": {"$exists": True, "$ne": []}}),
-                # Articles have no 'tags' field - count distinct tagged articles via tag_instances
-                "with_tags": len(db.tag_instances.distinct("content_id", {"content_type": "article"})),
-                "forwarded": db.articles.count_documents({"forwarded": True}),
-                "direct_subscriptions": db.articles.count_documents({"forwarded": {"$ne": True}}),
+                "with_tags": len(tagged_ids("article")),
+                "total_word_count": words["total"],
+                # reading time at 230 words per minute
+                "avg_reading_time": round(words["total"] / words["count"] / 230, 1) if words["count"] else 0,
             }
 
+            research = {"paper_type": {"$ne": "review"}}
+            papers_total = db.papers.count_documents(research)
+            research_ids = {str(p["_id"]) for p in db.papers.find(research, {"_id": 1})}
+            papers_tagged = len(tagged_ids("paper") & research_ids)
             paper_stats = {
-                "total": db.papers.count_documents({}),
-                "with_pdf": db.papers.count_documents({"pdf_path": {"$exists": True, "$ne": None}}),
+                "total": papers_total,
+                "review": db.papers.count_documents({"paper_type": "review"}),
+                # papers are added to the library (import date), not published, this week
+                "this_week": db.papers.count_documents({**research, "created_at": {"$gte": week_ago}}),
+                "this_month": db.papers.count_documents({**research, "created_at": {"$gte": month_ago}}),
+                "with_pdf": db.papers.count_documents({"pdf_path": {"$nin": [None, ""]}}),
                 "with_markdown": db.papers.count_documents({"markdown_content": {"$exists": True, "$ne": ""}}),
                 "with_grobid": db.papers.count_documents({"grobid_processed": True}),
                 # Papers store the processor in 'processor_used' (marker_service/mineru_service/...)
                 "with_marker": db.papers.count_documents({"processor_used": "marker_service"}),
                 "with_mineru": db.papers.count_documents({"processor_used": "mineru_service"}),
-                "with_tags": db.papers.count_documents({"tags": {"$exists": True, "$ne": []}}),
+                "with_tags": papers_tagged,
+                "tag_coverage": round(papers_tagged / papers_total * 100, 1) if papers_total else 0,
                 "with_snippets": db.papers.count_documents({"snippets": {"$exists": True, "$ne": []}}),
-                "from_arxiv": db.papers.count_documents({"arxiv_id": {"$exists": True, "$ne": None}}),
+                "from_arxiv": db.papers.count_documents({"arxiv_id": {"$nin": [None, ""]}}),
             }
 
             media_stats = {

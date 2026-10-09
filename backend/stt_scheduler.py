@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 STT scheduler: runs periodic jobs (tweet tagging every few hours, daily paper
-feed and RAG index update, weekly topic map and digest) while STT is running.
+feed and RAG index update, weekly topic map, digest and database backup)
+while STT is running.
 
 The Mac does not run around the clock, so jobs are not bound to a clock time:
 every few minutes the scheduler checks which jobs are due — "daily" means the
@@ -28,6 +29,7 @@ logger = logging.getLogger("stt_scheduler")
 CHECK_EVERY_SECONDS = 300
 DAILY_AFTER = timedelta(hours=20)
 TAGGING_EVERY = timedelta(hours=6)
+FAILURE_BACKOFF = timedelta(hours=2)   # after a failed run, wait before retrying (no retry storm)
 TAGGING_TIMEOUT_SECONDS = 3600
 
 
@@ -93,6 +95,9 @@ def job_paper_feed():
     """Check all paper feed subscriptions for new arXiv papers."""
     from app.services.paper_feed_service import run_feed
     result = run_feed()
+    if result.get('failed'):     # partial failure: report it, retry after the backoff
+        raise RuntimeError(f"{len(result['failed'])} of {result['subscriptions']} feeds failed "
+                           f"({', '.join(result['failed'])}); {result['new']} new from the others")
     return {'subscriptions': result['subscriptions'], 'new': result['new']}
 
 
@@ -101,6 +106,12 @@ def job_topic_map():
     from app.services.topic_episodes import build_topic_map
     stats = build_topic_map()
     return {k: stats[k] for k in ('episodes', 'links', 'events', 'naming')}
+
+
+def job_backup():
+    """Weekly mongodump of the smarttrendtracer database (backup_service)."""
+    from app.services.backup_service import run_backup
+    return run_backup()
 
 
 def job_weekly_digest():
@@ -118,6 +129,7 @@ JOBS: Dict[str, Dict] = {
     'rag_update': {'run': job_rag_update, 'due': due_daily},
     'topic_map': {'run': job_topic_map, 'due': due_weekly},
     'weekly_digest': {'run': job_weekly_digest, 'due': due_weekly},
+    'backup': {'run': job_backup, 'due': due_weekly},
 }
 
 
@@ -147,8 +159,15 @@ def due_jobs(now: Optional[datetime] = None, get_state: Optional[Callable] = Non
     if get_state is None:
         from app.repositories.scheduled_jobs import get_job_state as get_state
     now = now or datetime.now(timezone.utc)
-    return [name for name, job in JOBS.items()
-            if job['due'](_aware((get_state(name) or {}).get('last_success')), now)]
+    due = []
+    for name, job in JOBS.items():
+        state = get_state(name) or {}
+        last_run = _aware(state.get('last_run'))
+        if state.get('last_ok') is False and last_run and now - last_run < FAILURE_BACKOFF:
+            continue          # 2026-10-06: a failing rag_update was retried 10x and blocked all jobs for 6 h
+        if job['due'](_aware(state.get('last_success')), now):
+            due.append(name)
+    return due
 
 
 def run_due_jobs() -> None:

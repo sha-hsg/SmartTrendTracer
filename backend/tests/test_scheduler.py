@@ -83,3 +83,21 @@ def test_tag_job_skips_when_a_ui_run_is_active(monkeypatch):
     import httpx
     monkeypatch.setattr(httpx, 'post', lambda url, **kw: _Resp(409, {}))
     assert sch.job_tag_tweets(poll_seconds=0) == {'skipped': 'annotate-all already running'}
+
+
+def test_failed_job_waits_for_the_backoff(monkeypatch):
+    monkeypatch.setattr(sch, 'JOBS', {'x': {'run': None, 'due': sch.due_daily}})
+    just_failed = {'x': {'last_ok': False, 'last_run': NOW - timedelta(minutes=30),
+                         'last_success': NOW - timedelta(days=2)}}
+    failed_long_ago = {'x': {'last_ok': False, 'last_run': NOW - timedelta(hours=3),
+                             'last_success': NOW - timedelta(days=2)}}
+    assert sch.due_jobs(NOW, get_state=just_failed.get) == []
+    assert sch.due_jobs(NOW, get_state=failed_long_ago.get) == ['x']
+
+
+def test_partial_feed_failure_is_not_reported_as_success(monkeypatch):
+    import app.services.paper_feed_service as feed
+    monkeypatch.setattr(feed, 'run_feed', lambda: {'subscriptions': 5, 'new': 2, 'failed': ['A', 'B']})
+    import pytest
+    with pytest.raises(RuntimeError, match='2 of 5 feeds failed'):
+        sch.job_paper_feed()

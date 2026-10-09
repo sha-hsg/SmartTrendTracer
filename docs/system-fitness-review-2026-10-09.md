@@ -44,7 +44,7 @@ Speichern, Verarbeiten, Scheduler, RAG, Tests) ist besser als bei persönlichen 
 
 ## 2. Priorisierte Massnahmen
 
-### P1 — sofort (Fehlfunktion oder Risiko, kleiner Aufwand)
+### P1 — sofort (Fehlfunktion oder Risiko, kleiner Aufwand) — ✔ alle 10 umgesetzt am 2026-10-09
 
 | # | Element | Problem | Auswirkung | Massnahme | Status |
 |---|---|---|---|---|---|

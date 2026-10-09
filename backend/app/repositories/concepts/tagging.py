@@ -129,9 +129,9 @@ class ConceptTaggingMixin:
                 concept_existed = True
             else:
                 # Check aliases
-                alias = self.tag_aliases.find_one({"alias": slug})
-                if alias:
-                    concept_id = alias['concept_id']
+                alias_concept = self._concept_id_for_alias(slug)
+                if alias_concept:
+                    concept_id = alias_concept
                     concept_existed = True
                 else:
                     concept_id = None

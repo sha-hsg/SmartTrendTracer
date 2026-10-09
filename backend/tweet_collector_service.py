@@ -389,7 +389,7 @@ def get_monthly_usage() -> Dict:
     if not BASIC_ACCOUNT_MODE:
         return {}
     
-    current_date = datetime.now()
+    current_date = datetime.now(timezone.utc)
     month_start = datetime(current_date.year, current_date.month, 1, tzinfo=timezone.utc)
     
     tweet_count = db.tweets.count_documents({
@@ -415,7 +415,7 @@ def get_daily_usage() -> Dict:
     if not BASIC_ACCOUNT_MODE:
         return {}
     
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     
     tweet_count = db.tweets.count_documents({
         "collected_at": {"$gte": today_start}

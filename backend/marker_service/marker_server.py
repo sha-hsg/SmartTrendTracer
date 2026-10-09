@@ -832,5 +832,5 @@ if __name__ == "__main__":
     # happens via the FastAPI shutdown hook (_shutdown_cleanup above), which
     # uvicorn invokes during graceful shutdown.
 
-    print(f"Starting Marker PDF service (CLI-only) on http://0.0.0.0:8002 (v{APP_VERSION}) ...")
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    print(f"Starting Marker PDF service (CLI-only) on http://127.0.0.1:8002 (v{APP_VERSION}) ...")
+    uvicorn.run(app, host="127.0.0.1", port=8002)   # local only

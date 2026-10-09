@@ -39,6 +39,14 @@ log_plain() {
     echo "$*" | tee -a "$STARTUP_LOG"
 }
 
+# Service logs are appended across restarts; keep each below 20 MB (one backup)
+rotate_log() {
+    local f="$1"
+    if [ -f "$f" ] && [ "$(stat -f%z "$f" 2>/dev/null || echo 0)" -gt 20971520 ]; then
+        mv -f "$f" "$f.1"
+    fi
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -325,7 +333,10 @@ if check_service $BACKEND_PORT "Backend API"; then
 
     # Start the backend server in the background with explicit venv path
     log "   Starting uvicorn server (reload mode)..."
-    nohup $PYTHON_BIN -m uvicorn app.main:app --reload --host 0.0.0.0 --port $BACKEND_PORT > "$SCRIPT_DIR/logs/backend.log" 2>&1 &
+    # backend.log is written (and rotated) by the app itself; stdout/stderr go to a
+    # separate file, appended — ">" into backend.log wiped its history on every start
+    rotate_log "$SCRIPT_DIR/logs/backend_stdout.log"
+    nohup $PYTHON_BIN -m uvicorn app.main:app --reload --host 127.0.0.1 --port $BACKEND_PORT >> "$SCRIPT_DIR/logs/backend_stdout.log" 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > "$SCRIPT_DIR/pids/backend.pid"
     log "   Backend process started with PID: $BACKEND_PID"
@@ -377,7 +388,8 @@ if check_service 8002 "Marker Service"; then
 
     # Start the marker server in the background with explicit venv path
     log "   Starting Marker uvicorn server (1 worker, 120s keepalive)..."
-    nohup $MARKER_PYTHON -m uvicorn marker_server:app --host 0.0.0.0 --port 8002 --workers 1 --timeout-keep-alive 120 > "$SCRIPT_DIR/logs/marker.log" 2>&1 &
+    rotate_log "$SCRIPT_DIR/logs/marker.log"
+    nohup $MARKER_PYTHON -m uvicorn marker_server:app --host 127.0.0.1 --port 8002 --workers 1 --timeout-keep-alive 120 >> "$SCRIPT_DIR/logs/marker.log" 2>&1 &
     MARKER_PID=$!
     echo $MARKER_PID > "$SCRIPT_DIR/pids/marker.pid"
     log "   Marker process started with PID: $MARKER_PID"
@@ -424,7 +436,8 @@ if check_service 8003 "MinerU Service"; then
 
     # Start the MinerU server in the background with explicit venv path
     log "   Starting MinerU server..."
-    nohup $MINERU_PYTHON mineru_server.py > "$SCRIPT_DIR/logs/mineru.log" 2>&1 &
+    rotate_log "$SCRIPT_DIR/logs/mineru.log"
+    nohup $MINERU_PYTHON mineru_server.py >> "$SCRIPT_DIR/logs/mineru.log" 2>&1 &
     MINERU_PID=$!
     echo $MINERU_PID > "$SCRIPT_DIR/pids/mineru.pid"
     log "   MinerU process started with PID: $MINERU_PID"
@@ -467,7 +480,8 @@ else
 
     # Start the tweet collector in the background with explicit venv path
     log "   Starting tweet collector service (background process)..."
-    nohup $COLLECTOR_PYTHON tweet_collector_service.py > "$SCRIPT_DIR/logs/tweet_collector.log" 2>&1 &
+    rotate_log "$SCRIPT_DIR/logs/tweet_collector.log"
+    nohup $COLLECTOR_PYTHON tweet_collector_service.py >> "$SCRIPT_DIR/logs/tweet_collector.log" 2>&1 &
     COLLECTOR_PID=$!
     echo $COLLECTOR_PID > "$SCRIPT_DIR/pids/tweet_collector.pid"
     log "   Tweet Collector process started with PID: $COLLECTOR_PID"
@@ -510,7 +524,8 @@ if [ -n "$REDDIT_CLIENT_ID" ] && [ -n "$REDDIT_CLIENT_SECRET" ]; then
 
         # Start the reddit collector in the background with explicit venv path
         log "   Starting reddit collector service (background process)..."
-        nohup $REDDIT_PYTHON -m app.collectors.reddit_collector > "$SCRIPT_DIR/logs/reddit_collector.log" 2>&1 &
+        rotate_log "$SCRIPT_DIR/logs/reddit_collector.log"
+        nohup $REDDIT_PYTHON -m app.collectors.reddit_collector >> "$SCRIPT_DIR/logs/reddit_collector.log" 2>&1 &
         REDDIT_PID=$!
         echo $REDDIT_PID > "$SCRIPT_DIR/pids/reddit_collector.pid"
         log "   Reddit Collector process started with PID: $REDDIT_PID"
@@ -557,7 +572,8 @@ else
 
     # Start the book processing worker in the background with explicit venv path
     log "   Starting book processing worker (background process)..."
-    nohup $BOOK_WORKER_PYTHON book_processing_worker.py > "$SCRIPT_DIR/logs/book_worker.log" 2>&1 &
+    rotate_log "$SCRIPT_DIR/logs/book_worker.log"
+    nohup $BOOK_WORKER_PYTHON book_processing_worker.py >> "$SCRIPT_DIR/logs/book_worker.log" 2>&1 &
     BOOK_WORKER_PID=$!
     echo $BOOK_WORKER_PID > "$SCRIPT_DIR/pids/book_worker.pid"
     log "   Book Processing Worker process started with PID: $BOOK_WORKER_PID"
@@ -572,24 +588,28 @@ else
 fi
 cd "$SCRIPT_DIR"
 
-# Start STT Scheduler (paper feed, weekly digest, RAG update; catches up missed runs)
+# Start STT Scheduler (tagging, paper feed, RAG update, topic map, digest, backup;
+# catches up missed runs). A running scheduler is restarted: it imports the job
+# code once, so an old process would keep running outdated jobs.
 log_plain ""
 log "7b. Starting STT Scheduler..."
 if pgrep -f "stt_scheduler.py" > /dev/null; then
-    log_plain "   ⚠️  Scheduler is already running (PID: $(pgrep -f stt_scheduler.py))"
-else
-    cd "$BACKEND_DIR"
-    nohup "$BACKEND_DIR/venv/bin/python" stt_scheduler.py >> "$SCRIPT_DIR/logs/scheduler.log" 2>&1 &
-    SCHEDULER_PID=$!
-    echo $SCHEDULER_PID > "$SCRIPT_DIR/pids/scheduler.pid"
-    sleep 2
-    if pgrep -f "stt_scheduler.py" > /dev/null; then
-        log_plain "   ✓ Scheduler started (PID: $SCHEDULER_PID)"
-    else
-        log_plain "   ✗ Failed to start Scheduler (check logs/scheduler.log)"
-    fi
-    cd "$SCRIPT_DIR"
+    log_plain "   ↻ Restarting running scheduler (PID: $(pgrep -f stt_scheduler.py | tr '\n' ' '))"
+    pkill -TERM -f "stt_scheduler.py"
+    for _ in 1 2 3 4 5 6 7 8 9 10; do pgrep -f "stt_scheduler.py" > /dev/null || break; sleep 1; done
+    pkill -KILL -f "stt_scheduler.py" 2>/dev/null || true
 fi
+cd "$BACKEND_DIR"
+nohup "$BACKEND_DIR/venv/bin/python" stt_scheduler.py >> "$SCRIPT_DIR/logs/scheduler.log" 2>&1 &
+SCHEDULER_PID=$!
+echo $SCHEDULER_PID > "$SCRIPT_DIR/pids/scheduler.pid"
+sleep 2
+if pgrep -f "stt_scheduler.py" > /dev/null; then
+    log_plain "   ✓ Scheduler started (PID: $SCHEDULER_PID)"
+else
+    log_plain "   ✗ Failed to start Scheduler (check logs/scheduler.log)"
+fi
+cd "$SCRIPT_DIR"
 
 # Start Frontend Development Server
 log_plain ""
@@ -625,7 +645,8 @@ if check_service 3470 "Frontend"; then
 
     # Start the frontend server in the background
     log "   Starting Vite dev server..."
-    nohup npm run dev > "$SCRIPT_DIR/logs/frontend.log" 2>&1 &
+    rotate_log "$SCRIPT_DIR/logs/frontend.log"
+    nohup npm run dev >> "$SCRIPT_DIR/logs/frontend.log" 2>&1 &
     FRONTEND_PID=$!
     echo $FRONTEND_PID > "$SCRIPT_DIR/pids/frontend.pid"
     log "   Frontend process started with PID: $FRONTEND_PID"
@@ -727,7 +748,7 @@ log_plain "========================================="
 log "Total startup time: ${TOTAL_TIME}s"
 log_plain ""
 log "Service Logs:"
-log "  Backend:         logs/backend.log"
+log "  Backend:         logs/backend.log (app, rotated) + logs/backend_stdout.log"
 log "  Marker:          logs/marker.log"
 log "  MinerU:          logs/mineru.log"
 log "  Tweet Collector: logs/tweet_collector.log"

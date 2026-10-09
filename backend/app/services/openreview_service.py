@@ -120,7 +120,7 @@ class OpenReviewService:
                     if not year and 'cdate' in note:
                         # cdate is in milliseconds
                         try:
-                            created_date = datetime.fromtimestamp(note['cdate'] / 1000)
+                            created_date = datetime.fromtimestamp(note['cdate'] / 1000, tz=timezone.utc)
                             year = created_date.year
                         except Exception:
                             pass
@@ -161,12 +161,12 @@ class OpenReviewService:
                     publication_date = None
                     if 'pdate' in note:
                         try:
-                            publication_date = datetime.fromtimestamp(note['pdate'] / 1000)
+                            publication_date = datetime.fromtimestamp(note['pdate'] / 1000, tz=timezone.utc)
                         except Exception:
                             pass
                     elif 'cdate' in note:
                         try:
-                            publication_date = datetime.fromtimestamp(note['cdate'] / 1000)
+                            publication_date = datetime.fromtimestamp(note['cdate'] / 1000, tz=timezone.utc)
                         except Exception:
                             pass
                     

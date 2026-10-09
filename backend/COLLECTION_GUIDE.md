@@ -108,7 +108,7 @@ python reset_collection_state.py
 
 ### Emergency Stop
 ```bash
-./emergency_stop.sh
+../stop_stt.sh -n
 ```
 - Force kills all server processes
 - Use when server won't respond to Ctrl+C
@@ -116,7 +116,7 @@ python reset_collection_state.py
 
 ### Clean Start
 ```bash
-./clean_start.sh
+../start_stt.sh
 ```
 - Kills existing processes on port 8000
 - Starts fresh server instance
@@ -148,7 +148,7 @@ python check_rate_limit.py
 3. **Option C**: Check specific time with `monitor_collection.py`
 
 #### If Getting 429 Errors
-1. Stop current collection (Ctrl+C or `emergency_stop.sh`)
+1. Stop current collection (Ctrl+C or `../stop_stt.sh -n`)
 2. Check rate limit: `python check_rate_limit.py`
 3. Wait for reset or use `wait_and_collect.py`
 
@@ -170,7 +170,7 @@ python check_rate_limit.py
 
 ### "Port 8000 already in use"
 ```bash
-./emergency_stop.sh
+../stop_stt.sh -n
 # or
 lsof -i :8000 | grep LISTEN | awk '{print $2}' | xargs kill -9
 ```
@@ -188,7 +188,7 @@ python wait_and_collect.py  # Will wait automatically
 
 ### "Server won't stop"
 ```bash
-./emergency_stop.sh
+../stop_stt.sh -n
 ```
 
 ## Performance Stats

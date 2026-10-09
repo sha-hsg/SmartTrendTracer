@@ -140,7 +140,10 @@ SmartTrendTracer/
 | StatCoach | 8888, 3001, 5432 |
 | Docendi | 3005, 8005 |
 
-Never use port 8000 for STT — Honcho's Docker container binds it. CORS origins default
+Never use port 8000 for STT — Honcho's Docker container binds it. Backend, Marker and MinerU
+bind `127.0.0.1` only (the API has no authentication; it was reachable from the LAN). Service
+logs are appended across restarts (`rotate_log` keeps each under 20 MB); `backend.log` is the
+app's rotating log, uvicorn stdout goes to `backend_stdout.log`. CORS origins default
 to `http://localhost:3470` (plus 3000/3001/3002); override via `CORS_ORIGINS` env var.
 
 ---
@@ -307,7 +310,11 @@ jobs without fixed clock times, caught up after each start because the Mac is no
 on — `tag_tweets` (every 6 h, via `POST /api/tweets/batch-annotate-all`: concept tags for new
 tweets, LLM task `tag_suggestion`; trend views count only tagged days), `paper_feed` (daily),
 `rag_update` (daily, via `POST /api/rag/update`), `topic_map` (weekly, after the RAG update),
-`weekly_digest` (weekly, last; uses feed and topic map). State in `scheduled_jobs`. Manual: `venv/bin/python
+`weekly_digest` (weekly; uses feed and topic map), `backup` (weekly `mongodump` gzip archive to
+`STT_BACKUP_DIR`, default `~/Backups/SmartTrendTracer`, newest 8 kept; restore:
+`mongorestore --gzip --archive=<file> --nsInclude='smarttrendtracer.*' --drop`). A failed job
+waits 2 h before it is retried; a partly failed paper feed counts as failed. `start_stt.sh`
+restarts a running scheduler so new job code takes effect. State in `scheduled_jobs`. Manual: `venv/bin/python
 stt_scheduler.py --run NAME` or `--once`.
 
 After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `.env`.

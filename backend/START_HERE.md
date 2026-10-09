@@ -100,7 +100,7 @@ This gives you:
 
 **"Port 8000 in use"**
 ```bash
-./emergency_stop.sh
+../stop_stt.sh -n
 ```
 
 **"No new tweets"**

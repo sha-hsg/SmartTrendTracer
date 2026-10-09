@@ -66,11 +66,14 @@ def test_without_concept_no_embedding_cost(fake_repo):
     assert [c['score'] for c in stored] == [None, None]
 
 
-def test_failed_search_is_empty_not_error(fake_repo):
+def test_failed_search_is_retried_once_then_reported(fake_repo):
     stored, runs = fake_repo
-    feed = svc.PaperFeed(search=lambda q, n: None, embed=fake_embed, index_state=index_state())
-    assert feed.run_subscription({'_id': 's', 'name': 'x', 'query': 'q'})['new'] == 0
-    assert stored == [] and runs == [('s', 0)]
+    calls = []
+    feed = svc.PaperFeed(search=lambda q, n: calls.append(q), embed=fake_embed, index_state=index_state())
+    feed.retry_pause = 0
+    result = feed.run_subscription({'_id': 's', 'name': 'x', 'query': 'q'})
+    assert result['new'] == 0 and result['failed'] is True and len(calls) == 2
+    assert stored == [] and runs == []          # a failed search is not recorded as a run
 
 
 def test_strip_version():

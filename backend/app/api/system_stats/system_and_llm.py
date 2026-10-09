@@ -5,9 +5,10 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime, timezone, timedelta
 import os
 
-from app.paths import RAG_INDEX_PATH, VECTOR_STORE_PATH
+from app.paths import RAG_INDEX_CONCEPTS, VECTOR_STORE_PATH
 from .utils import logger
 from app.repositories import system_stats_system_and_llm_queries as queries
+from app.repositories import scheduled_jobs
 
 router = APIRouter(
     prefix="/api/system",
@@ -20,37 +21,23 @@ async def get_system_statistics():
     try:
         stats, collection_sizes = queries.database_size_stats()
 
-        # RAG index status
-        rag_stats = {
-            "indexed_documents": 0,
-            "index_size_mb": 0,
-            "last_rebuild": None
-        }
-
-        # Check if RAG index exists
-        rag_index_path = str(RAG_INDEX_PATH)
+        # RAG index status — the concept index the RAG search uses
+        # (RAG_INDEX_PATH is the old, unused index: it reported 1 431 documents)
+        rag_stats = {"indexed_documents": 0, "index_size_mb": 0, "last_rebuild": None, "last_update": None}
+        rag_index_path = str(RAG_INDEX_CONCEPTS)
         if os.path.exists(rag_index_path):
             try:
-                import pickle
-                with open(os.path.join(rag_index_path, "metadata.pkl"), "rb") as f:
-                    metadata = pickle.load(f)
-                    rag_stats["indexed_documents"] = len(metadata)
-
-                # Get index size
-                index_size = 0
-                for file in os.listdir(rag_index_path):
-                    file_path = os.path.join(rag_index_path, file)
-                    if os.path.isfile(file_path):
-                        index_size += os.path.getsize(file_path)
-                rag_stats["index_size_mb"] = index_size / (1024 * 1024)
-
-                # Get last modified time
-                index_info_path = os.path.join(rag_index_path, "index_info.json")
-                if os.path.exists(index_info_path):
-                    import json
-                    with open(index_info_path, "r") as f:
+                import json
+                rag_stats["index_size_mb"] = sum(
+                    os.path.getsize(os.path.join(rag_index_path, f)) for f in os.listdir(rag_index_path)
+                    if os.path.isfile(os.path.join(rag_index_path, f))) / (1024 * 1024)
+                info_path = os.path.join(rag_index_path, "index_info.json")
+                if os.path.exists(info_path):
+                    with open(info_path) as f:
                         info = json.load(f)
-                        rag_stats["last_rebuild"] = info.get("created_at")
+                    rag_stats["indexed_documents"] = info.get("total_documents", 0)
+                    rag_stats["last_rebuild"] = info.get("last_updated")
+                    rag_stats["last_update"] = info.get("last_incremental_update") or info.get("last_updated")
             except Exception:
                 pass
 
@@ -213,11 +200,6 @@ async def get_statistics_summary():
                 overview["total_articles"] / overview["unique_substack_authors"]
                 if overview["unique_substack_authors"] > 0 else 0
             ),
-            "content_diversity_score": (
-                len(set([overview["total_tweets"] > 0,
-                        overview["total_articles"] > 0,
-                        overview["total_papers"] > 0])) / 3.0 * 100
-            ),
             "tagging_completion_rate": (
                 (content["tweets"]["tagged"] / content["tweets"]["total"] * 100)
                 if content["tweets"]["total"] > 0 else 0
@@ -273,8 +255,8 @@ async def get_statistics_summary():
             "tags": {
                 "total_concepts": tags.get("total_concepts", 0),
                 "unique_tags": tags.get("total_concepts", 0),
-                "organized": tags.get("root_concepts", 0) + tags.get("leaf_concepts", 0),
-                "unorganized": tags.get("orphaned_tag_instances", 0),
+                "organized": tags.get("organized_concepts", 0),
+                "unorganized": tags.get("total_concepts", 0) - tags.get("organized_concepts", 0),
                 "most_used": tags.get("most_used_tags", [])[:10],
                 "recently_added": recently_added_tags
             },
@@ -296,9 +278,14 @@ async def get_statistics_summary():
             "rag": {
                 "indexed_documents": system.get("rag_index", {}).get("indexed_documents", 0),
                 "last_rebuild": system.get("rag_index", {}).get("last_rebuild"),
+                "last_update": system.get("rag_index", {}).get("last_update"),
                 "status": "ready" if system.get("rag_index", {}).get("indexed_documents", 0) > 0 else "not_ready"
             },
             "insights": insights,
+            "scheduler": [
+                {"job": j["_id"], "last_success": j.get("last_success"), "last_ok": j.get("last_ok")}
+                for j in scheduled_jobs.list_job_states()
+            ],
             "generated_at": datetime.now(timezone.utc).isoformat()
         }
 

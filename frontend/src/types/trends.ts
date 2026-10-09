@@ -49,8 +49,8 @@ export interface AtAGlanceData {
     start: string;
     end: string;
     hours: number;
-    data_through?: string;  // last day whose content is tagged
-    untagged_after?: number;  // newer items not yet tagged
+    data_through?: string;  // last complete day whose content is tagged
+    untagged_after?: number;  // newer items (running day or untagged), not counted
     baseline_windows?: number;
   };
   statistics: {

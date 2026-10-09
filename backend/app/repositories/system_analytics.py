@@ -26,6 +26,9 @@ async def get_tag_statistics():
         stats = {
             "total_concepts": db.tag_concepts_v2.count_documents({}),
             "root_concepts": db.tag_concepts_v2.count_documents({"parents": []}),
+            # organised = placed in the hierarchy (has a parent or children)
+            "organized_concepts": db.tag_concepts_v2.count_documents(
+                {"$or": [{"parents.0": {"$exists": True}}, {"children.0": {"$exists": True}}]}),
             "leaf_concepts": db.tag_concepts_v2.count_documents({"children": []}),
             "verified_concepts": db.tag_concepts_v2.count_documents({"verified": True}),
             "auto_generated_concepts": db.tag_concepts_v2.count_documents({"auto_generated": True}),
@@ -41,6 +44,7 @@ async def get_tag_statistics():
 
         # Most used tags
         most_used = list(db.tag_instances.aggregate([
+            {"$match": {"concept_id": {"$nin": [None, ""]}}},    # null = "no concepts found" marker
             {"$group": {"_id": "$concept_id", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
             {"$limit": 20}
@@ -62,13 +66,13 @@ async def get_tag_statistics():
             {"$sort": {"count": -1}}
         ]))
 
-        # Orphaned tags (instances without valid concepts)
+        # Items tagged "no concepts found" (tag_instances with concept_id null)
         orphaned_count = db.tag_instances.count_documents({"concept_id": None})
 
         return {
             **stats,
             "entity_type_distribution": entity_types,
-            "most_used_tags": most_used,
+            "most_used_tags": [t for t in most_used if t.get("tag")],
             "usage_by_content_type": usage_by_type,
             "orphaned_tag_instances": orphaned_count,
             "concepts_with_multiple_parents": db.tag_concepts_v2.count_documents({
