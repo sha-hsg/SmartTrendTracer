@@ -22,6 +22,7 @@ Afterwards hierarchy references to missing concepts and self references are remo
     venv/bin/python merge_duplicate_concepts.py                  # dry run, report to logs/
     venv/bin/python merge_duplicate_concepts.py --apply          # live (take a backup first)
     venv/bin/python merge_duplicate_concepts.py --apply --db stt_merge_check --no-rag   # rehearsal
+    venv/bin/python merge_duplicate_concepts.py --reslug         # canonical slugs (after a merge)
 """
 from __future__ import annotations
 
@@ -176,13 +177,43 @@ def remap_rag(merges):
     return changed
 
 
+def reslug(db):
+    """Rewrite slugs to the canonical rule (concept_slug of the display name)
+    so lookups by the one slug function find existing concepts. Run after the
+    merge: re-slugging first would collide on exactly the pairs being merged."""
+    from pymongo.errors import DuplicateKeyError
+    from app.repositories.concepts import concept_slug
+    pending = [(d['_id'], concept_slug(d.get('display_name') or d.get('slug') or ''))
+               for d in db.tag_concepts_v2.find({}, {'slug': 1, 'display_name': 1})
+               if d.get('slug') != concept_slug(d.get('display_name') or d.get('slug') or '')]
+    done, skipped = 0, []
+    for _ in range(3):                    # a target may be held by a concept that moves later
+        retry = []
+        for cid, slug in pending:
+            if not slug:
+                continue
+            try:
+                db.tag_concepts_v2.update_one({'_id': cid}, {'$set': {'slug': slug}})
+                done += 1
+            except DuplicateKeyError:
+                retry.append((cid, slug))
+        pending = retry
+    skipped = [s for _, s in pending]
+    return done, skipped
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--apply', action='store_true')
     ap.add_argument('--db', default=settings.mongodb_db)
     ap.add_argument('--no-rag', action='store_true', help='do not touch the RAG index metadata')
+    ap.add_argument('--reslug', action='store_true', help='only rewrite slugs to the canonical rule')
     args = ap.parse_args()
     db = MongoClient(settings.mongodb_uri)[args.db]
+    if args.reslug:
+        done, skipped = reslug(db)
+        print(f'slugs rewritten: {done}; skipped (slug taken): {len(skipped)} {skipped[:10]}')
+        return
     merges = plan(db)
     n_losers = sum(len(m['losers']) for m in merges)
     LOG_DIR.mkdir(exist_ok=True)

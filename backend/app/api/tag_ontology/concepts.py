@@ -318,16 +318,13 @@ def get_concept_detail(concept_id: str):
 def create_concept(concept_data: dict):
     """Create a new concept in MongoDB"""
 
-    # Collision-free, schema-compliant IDs: ObjectId as _id,
-    # custom id derived from it ("c_" + ObjectId string)
+    from app.repositories.concepts import concept_slug
     new_oid = ObjectId()
-    new_id = f"c_{new_oid}"
 
     # Prepare concept document
     concept = {
         "_id": new_oid,
-        "id": new_id,
-        "slug": concept_data.get("tag", "").lower().replace(" ", "_"),
+        "slug": concept_slug(concept_data.get("tag", "")),
         "display_name": concept_data.get("display_name"),
         "description": concept_data.get("description"),
         "entity_type": concept_data.get("entity_type", "concept"),
@@ -357,7 +354,7 @@ def create_concept(concept_data: dict):
     if parent:
         queries.tag_concepts_v2_update_one__create_concept(parent, new_oid)
 
-    return {"message": "Concept created successfully", "id": new_id}
+    return {"message": "Concept created successfully", "id": str(new_oid)}
 
 
 @router.put("/concept/{concept_id}")

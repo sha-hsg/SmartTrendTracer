@@ -1,0 +1,913 @@
+{
+  "table_of_contents": [
+    {
+      "title": "Probing the Inherent Ability of Large Language\nModels for Generating Empathetic Responses",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          86.35337829589844,
+          93.3984375
+        ],
+        [
+          530.7669677734375,
+          93.3984375
+        ],
+        [
+          530.7669677734375,
+          143.52978515625
+        ],
+        [
+          86.35337829589844,
+          143.52978515625
+        ]
+      ]
+    },
+    {
+      "title": "I. INTRODUCTION",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          141.046875,
+          493.83984375
+        ],
+        [
+          215.50332641601562,
+          493.83984375
+        ],
+        [
+          215.50332641601562,
+          504.04913330078125
+        ],
+        [
+          141.046875,
+          504.04913330078125
+        ]
+      ]
+    },
+    {
+      "title": "II. RELATED WORK",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          389.970703125,
+          560.6728973388672
+        ],
+        [
+          472.58648681640625,
+          560.6728973388672
+        ],
+        [
+          472.58648681640625,
+          570.6358947753906
+        ],
+        [
+          389.970703125,
+          570.6358947753906
+        ]
+      ]
+    },
+    {
+      "title": "A. Empathetic dialog evaluation",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          59.16796875,
+          449.6680603027344
+        ],
+        [
+          186.0414276123047,
+          449.6680603027344
+        ],
+        [
+          186.0414276123047,
+          459.63104248046875
+        ],
+        [
+          59.16796875,
+          459.63104248046875
+        ]
+      ]
+    },
+    {
+      "title": "III. METHODOLOGY",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          389.671875,
+          347.66015625
+        ],
+        [
+          473.5325012207031,
+          347.66015625
+        ],
+        [
+          473.5325012207031,
+          357.8570251464844
+        ],
+        [
+          389.671875,
+          357.8570251464844
+        ]
+      ]
+    },
+    {
+      "title": "A. RQ1: Are LLMs inherently empathetic?",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          311.9765625,
+          618.5691375732422
+        ],
+        [
+          478.67022705078125,
+          618.5691375732422
+        ],
+        [
+          478.67022705078125,
+          629.19140625
+        ],
+        [
+          311.9765625,
+          629.19140625
+        ]
+      ]
+    },
+    {
+      "title": "B. RQ2: Can LLMs comprehend the user's emotional state\nfrom context alone?",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          59.765625,
+          642.3849639892578
+        ],
+        [
+          296.59820556640625,
+          642.3849639892578
+        ],
+        [
+          296.59820556640625,
+          663.5856628417969
+        ],
+        [
+          59.765625,
+          663.5856628417969
+        ]
+      ]
+    },
+    {
+      "title": "C. RQ3: Is the expressed empathy generic?",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          314.5796203613281,
+          483.4677734375
+        ],
+        [
+          483.82708740234375,
+          483.4677734375
+        ],
+        [
+          483.82708740234375,
+          493.4307556152344
+        ],
+        [
+          314.5796203613281,
+          493.4307556152344
+        ]
+      ]
+    },
+    {
+      "title": "D. Evaluation Methodology",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          60.064453125,
+          509.30859375
+        ],
+        [
+          168.1457061767578,
+          509.30859375
+        ],
+        [
+          168.1457061767578,
+          519.7939147949219
+        ],
+        [
+          60.064453125,
+          519.7939147949219
+        ]
+      ]
+    },
+    {
+      "title": "E. Dataset details",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          313.171875,
+          477.6791687011719
+        ],
+        [
+          385.0054626464844,
+          477.6791687011719
+        ],
+        [
+          385.0054626464844,
+          487.64215087890625
+        ],
+        [
+          313.171875,
+          487.64215087890625
+        ]
+      ]
+    },
+    {
+      "title": "IV. OBSERVATIONS",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          393.5779724121094,
+          564.99609375
+        ],
+        [
+          471.96502685546875,
+          564.99609375
+        ],
+        [
+          471.96502685546875,
+          575.5018463134766
+        ],
+        [
+          393.5779724121094,
+          575.5018463134766
+        ]
+      ]
+    },
+    {
+      "title": "A. RQ 1 Are LLMs inherently empathetic?",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          58.5703125,
+          219.21343994140625
+        ],
+        [
+          225.9140625,
+          219.21343994140625
+        ],
+        [
+          225.9140625,
+          229.17645263671875
+        ],
+        [
+          58.5703125,
+          229.17645263671875
+        ]
+      ]
+    },
+    {
+      "title": "B. RQ 2 Can LLMs comprehend the user's emotional state\nfrom context alone?",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          59.765625,
+          203.353515625
+        ],
+        [
+          296.5937805175781,
+          203.353515625
+        ],
+        [
+          296.5937805175781,
+          224.55511474609375
+        ],
+        [
+          59.765625,
+          224.55511474609375
+        ]
+      ]
+    },
+    {
+      "title": "C. RQ 3 Is the expressed empathy generic?",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          313.171875,
+          203.02734375
+        ],
+        [
+          483.480712890625,
+          203.02734375
+        ],
+        [
+          483.480712890625,
+          213.31744384765625
+        ],
+        [
+          313.171875,
+          213.31744384765625
+        ]
+      ]
+    },
+    {
+      "title": "V. CONCLUSION",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          398.4693298339844,
+          669.5067977905273
+        ],
+        [
+          466.171875,
+          669.5067977905273
+        ],
+        [
+          466.171875,
+          679.4697952270508
+        ],
+        [
+          398.4693298339844,
+          679.4697952270508
+        ]
+      ]
+    },
+    {
+      "title": "Prompt 2",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          294.38653564453125,
+          217.72265625
+        ],
+        [
+          321.6964416503906,
+          217.72265625
+        ],
+        [
+          321.6964416503906,
+          225.08685302734375
+        ],
+        [
+          294.38653564453125,
+          225.08685302734375
+        ]
+      ]
+    },
+    {
+      "title": "REFERENCES",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          151.8046875,
+          552.62109375
+        ],
+        [
+          205.3029022216797,
+          552.62109375
+        ],
+        [
+          205.3029022216797,
+          562.8988494873047
+        ],
+        [
+          151.8046875,
+          562.8988494873047
+        ]
+      ]
+    },
+    {
+      "title": "Context Specificity: Does the model provide empathetic responses to the user?",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          196.62890625,
+          170.54296875
+        ],
+        [
+          412.98046875,
+          170.54296875
+        ],
+        [
+          412.98046875,
+          178.82763671875
+        ],
+        [
+          196.62890625,
+          178.82763671875
+        ]
+      ]
+    },
+    {
+      "title": "Helpfulness: Does the model provide relevant and useful responses to the user's needs or questions?",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          166.1484375,
+          247.11328125
+        ],
+        [
+          441.34075927734375,
+          247.11328125
+        ],
+        [
+          441.34075927734375,
+          254.49578857421875
+        ],
+        [
+          166.1484375,
+          254.49578857421875
+        ]
+      ]
+    },
+    {
+      "title": "Theory of Mind: Is the model proficient in analysing the emotion expressed by the first user in the conversation?",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          149.4140625,
+          299.70703125
+        ],
+        [
+          460.1953125,
+          299.70703125
+        ],
+        [
+          460.1953125,
+          307.6885070800781
+        ],
+        [
+          149.4140625,
+          307.6885070800781
+        ]
+      ]
+    },
+    {
+      "title": "TABLE VII\nPROMETHEUS EVALUATION RUBRICS",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          245.337890625,
+          352.9112548828125
+        ],
+        [
+          363.2641906738281,
+          352.9112548828125
+        ],
+        [
+          363.2641906738281,
+          369.1947021484375
+        ],
+        [
+          245.337890625,
+          369.1947021484375
+        ]
+      ]
+    },
+    {
+      "title": "TABLE VIII",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          285.29058837890625,
+          521.68359375
+        ],
+        [
+          326.619140625,
+          521.68359375
+        ],
+        [
+          326.619140625,
+          532.0196838378906
+        ],
+        [
+          285.29058837890625,
+          532.0196838378906
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          216
+        ],
+        [
+          "Line",
+          107
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "PageFooter",
+          2
+        ],
+        [
+          "PageHeader",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          167
+        ],
+        [
+          "Line",
+          86
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          196
+        ],
+        [
+          "Line",
+          85
+        ],
+        [
+          "Text",
+          9
+        ],
+        [
+          "Figure",
+          2
+        ],
+        [
+          "Caption",
+          2
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "FigureGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          393
+        ],
+        [
+          "TableCell",
+          92
+        ],
+        [
+          "Line",
+          82
+        ],
+        [
+          "Text",
+          9
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 4,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          240
+        ],
+        [
+          "Line",
+          97
+        ],
+        [
+          "TableCell",
+          28
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "Caption",
+          2
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 5,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          374
+        ],
+        [
+          "Line",
+          109
+        ],
+        [
+          "TableCell",
+          102
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "Table",
+          3
+        ],
+        [
+          "Caption",
+          3
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "TableGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 6,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          287
+        ],
+        [
+          "Line",
+          107
+        ],
+        [
+          "TableCell",
+          62
+        ],
+        [
+          "ListItem",
+          20
+        ],
+        [
+          "Table",
+          4
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Caption",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 7,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          246
+        ],
+        [
+          "TableCell",
+          98
+        ],
+        [
+          "Line",
+          83
+        ],
+        [
+          "ListItem",
+          9
+        ],
+        [
+          "Table",
+          5
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "Text",
+          3
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "debug_data/20250901_184827_0ee109ce_Maheswaran_et_al._-_2025_-_Probing_the_Inherent_Ability_of_Large_Language_Models_for_Generating_Empathetic_Responses"
+}

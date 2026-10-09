@@ -437,8 +437,8 @@ class EntityExtractionService:
         concepts_col = db_mongo.tag_concepts_v2
 
         # Generate slug
-        slug = entity.normalized.lower().replace(" ", "_").replace("-", "_")
-        slug = re.sub(r'[^a-z0-9_]', '', slug)
+        from app.repositories.concepts import concept_slug
+        slug = concept_slug(entity.normalized)
 
         # Check if exists
         existing = concepts_col.find_one({

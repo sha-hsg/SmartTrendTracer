@@ -3,8 +3,19 @@ from datetime import datetime, timezone
 from bson import ObjectId
 import logging
 import re
+import unicodedata
 
 logger = logging.getLogger(__name__)
+
+
+def concept_slug(text: str) -> str:
+    """The one slug rule for concepts: accents folded (é -> e, other letters
+    kept), lowercase, runs of non-alphanumerics -> "_". There used to be three
+    rules (accents kept / non-ASCII dropped / spaces -> "-"), so the same name
+    produced different slugs and new duplicate concepts."""
+    decomposed = unicodedata.normalize('NFKD', text or '')
+    folded = ''.join(ch for ch in decomposed if unicodedata.category(ch) != 'Mn').lower().strip()
+    return re.sub(r'[^\w]+', '_', folded).strip('_')
 
 
 class ConceptLookupMixin:
@@ -55,17 +66,7 @@ class ConceptLookupMixin:
         return cache[1].get(slug)
 
     def _normalize_to_slug(self, text: str) -> str:
-        """Convert text to snake_case slug"""
-        # Convert to lowercase
-        text = text.lower().strip()
-        # Replace spaces and hyphens with underscores
-        text = re.sub(r'[\s\-]+', '_', text)
-        # Remove non-alphanumeric characters except underscores
-        text = re.sub(r'[^\w_]', '', text)
-        # Remove duplicate underscores
-        text = re.sub(r'_+', '_', text)
-        # Strip underscores from ends
-        return text.strip('_')
+        return concept_slug(text)
 
     def _generate_display_name(self, slug: str) -> str:
         """Generate a proper display name from a slug"""

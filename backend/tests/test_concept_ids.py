@@ -34,3 +34,11 @@ def test_new_concepts_get_no_custom_id():
     cid = svc.find_or_create_concept('Kimi K3')
     doc = svc.tag_concepts.docs[0]
     assert cid == 'oid0' and 'id' not in doc and doc['slug'] == 'kimi_k3'
+
+
+def test_one_slug_rule_folds_accents_and_punctuation():
+    from app.repositories.concepts import concept_slug
+    assert concept_slug('Clément Delangue') == concept_slug('Clement Delangue') == 'clement_delangue'
+    assert concept_slug('GPT-5.1') == 'gpt_5_1'
+    assert concept_slug('Apple-π') == 'apple_π'          # non-accent letters are kept
+    assert concept_slug('  AI   Safety!! ') == 'ai_safety'

@@ -4,6 +4,7 @@ MongoDB queries of app.api.tag_ontology.aliases_and_search, moved verbatim out o
 """
 import re
 from app.database.mongodb import get_database
+from app.repositories.concepts import concept_slug
 
 db = get_database()
 
@@ -26,6 +27,7 @@ def tag_concepts_v2_find_one__find_concept_by_name(tag_name):
     return db.tag_concepts_v2.find_one({
                 "$or": [
                     {"slug": tag_name.lower()},
+                    {"slug": concept_slug(tag_name)},
                     {"name": tag_name},
                     {"display_name": tag_name},
                     {"slug": tag_name.lower().replace(" ", "-")},

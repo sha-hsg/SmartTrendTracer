@@ -1,0 +1,4340 @@
+{
+  "table_of_contents": [
+    {
+      "title": "Technical Report: Evaluating Goal Drift in Language Model Agents",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          88.453125,
+          89.9119873046875
+        ],
+        [
+          506.8125,
+          89.9119873046875
+        ],
+        [
+          506.8125,
+          104.2581787109375
+        ],
+        [
+          88.453125,
+          104.2581787109375
+        ]
+      ]
+    },
+    {
+      "title": "Abstract",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          149.115234375,
+          176.02117919921875
+        ],
+        [
+          194.68325805664062,
+          176.02117919921875
+        ],
+        [
+          194.68325805664062,
+          187.97637939453125
+        ],
+        [
+          149.115234375,
+          187.97637939453125
+        ]
+      ]
+    },
+    {
+      "title": "1. Introduction",
+      "heading_level": null,
+      "page_id": 0,
+      "polygon": [
+        [
+          55.283203125,
+          508.1241760253906
+        ],
+        [
+          132.2760772705078,
+          508.1241760253906
+        ],
+        [
+          132.2760772705078,
+          520.0793762207031
+        ],
+        [
+          55.283203125,
+          520.0793762207031
+        ]
+      ]
+    },
+    {
+      "title": "2. Related Work",
+      "heading_level": null,
+      "page_id": 1,
+      "polygon": [
+        [
+          54.984375,
+          650.6461639404297
+        ],
+        [
+          138.55255126953125,
+          650.6461639404297
+        ],
+        [
+          138.55255126953125,
+          662.6013641357422
+        ],
+        [
+          54.984375,
+          662.6013641357422
+        ]
+      ]
+    },
+    {
+      "title": "3. Evaluation Design",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          54.087890625,
+          67.84710693359375
+        ],
+        [
+          160.60989379882812,
+          67.84710693359375
+        ],
+        [
+          160.60989379882812,
+          79.80230712890625
+        ],
+        [
+          54.087890625,
+          79.80230712890625
+        ]
+      ]
+    },
+    {
+      "title": "3.1. Evaluation Environment",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          53.490234375,
+          197.2265625
+        ],
+        [
+          177.65122985839844,
+          197.2265625
+        ],
+        [
+          177.65122985839844,
+          207.53204345703125
+        ],
+        [
+          53.490234375,
+          207.53204345703125
+        ]
+      ]
+    },
+    {
+      "title": "3.2. Experiment Settings",
+      "heading_level": null,
+      "page_id": 2,
+      "polygon": [
+        [
+          55.44000244140625,
+          510.34649658203125
+        ],
+        [
+          159.57421875,
+          510.34649658203125
+        ],
+        [
+          159.57421875,
+          520.91015625
+        ],
+        [
+          55.44000244140625,
+          520.91015625
+        ]
+      ]
+    },
+    {
+      "title": "3.3. Goal Drift Scores",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          53.490234375,
+          321.36328125
+        ],
+        [
+          146.84686279296875,
+          321.36328125
+        ],
+        [
+          146.84686279296875,
+          331.62109375
+        ],
+        [
+          53.490234375,
+          331.62109375
+        ]
+      ]
+    },
+    {
+      "title": "3.3.1. GOAL DRIFT THROUGH ACTIONS",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          54.984375,
+          571.18359375
+        ],
+        [
+          224.71875,
+          571.18359375
+        ],
+        [
+          224.71875,
+          583.2720642089844
+        ],
+        [
+          54.984375,
+          583.2720642089844
+        ]
+      ]
+    },
+    {
+      "title": "3.3.2. GOAL DRIFT THROUGH INACTION",
+      "heading_level": null,
+      "page_id": 3,
+      "polygon": [
+        [
+          306.59765625,
+          449.7494812011719
+        ],
+        [
+          479.3816223144531,
+          449.7494812011719
+        ],
+        [
+          479.3816223144531,
+          459.71209716796875
+        ],
+        [
+          306.59765625,
+          459.71209716796875
+        ]
+      ]
+    },
+    {
+      "title": "4. Results",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          54.38671875,
+          247.88671875
+        ],
+        [
+          104.58782958984375,
+          247.88671875
+        ],
+        [
+          104.58782958984375,
+          260.161376953125
+        ],
+        [
+          54.38671875,
+          260.161376953125
+        ]
+      ]
+    },
+    {
+      "title": "4.1. Goal Drift under Adversarial Pressure",
+      "heading_level": null,
+      "page_id": 4,
+      "polygon": [
+        [
+          55.44000244140625,
+          465.99609375
+        ],
+        [
+          236.779296875,
+          465.99609375
+        ],
+        [
+          236.779296875,
+          477.5541076660156
+        ],
+        [
+          55.44000244140625,
+          477.5541076660156
+        ]
+      ]
+    },
+    {
+      "title": "Finding 5. Adversarial pressures are more effective when they leverage agents' tendencies to follow the HHH objectives. When designing the experiments, we found that adversarial messages are most effective when framed in terms of helpfulness, harmlessness, or honesty (HHH) (Bai et al., 2022). For example, a stakeholder email arguing that the agent can be helpful toward pension funds by deviating from emission reduction toward profit maximization (see Figure 1, column 2) proved more effective at inducing goal drift than messages which bluntly demanded deviation. This suggests persistent influence from HHH training objectives",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          54.0,
+          587.25
+        ],
+        [
+          290.25,
+          587.25
+        ],
+        [
+          290.25,
+          716.58984375
+        ],
+        [
+          54.0,
+          716.58984375
+        ]
+      ]
+    },
+    {
+      "title": "4.2. Goal Drift under Goal Switching",
+      "heading_level": null,
+      "page_id": 5,
+      "polygon": [
+        [
+          305.25,
+          490.74609375
+        ],
+        [
+          465.0,
+          490.74609375
+        ],
+        [
+          465.0,
+          500.25
+        ],
+        [
+          305.25,
+          500.25
+        ]
+      ]
+    },
+    {
+      "title": "5. What Causes Goal Drift in LM Agents?",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          54.0,
+          664.5
+        ],
+        [
+          270.0,
+          664.5
+        ],
+        [
+          270.0,
+          675.59765625
+        ],
+        [
+          54.0,
+          675.59765625
+        ]
+      ]
+    },
+    {
+      "title": "5.1. The token distance hypothesis",
+      "heading_level": null,
+      "page_id": 6,
+      "polygon": [
+        [
+          304.505859375,
+          474.0
+        ],
+        [
+          453.0,
+          474.0
+        ],
+        [
+          453.0,
+          483.78515625
+        ],
+        [
+          304.505859375,
+          483.78515625
+        ]
+      ]
+    },
+    {
+      "title": "5.2. The pattern-matching hypothesis",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          54.0,
+          486.0
+        ],
+        [
+          214.5,
+          486.0
+        ],
+        [
+          214.5,
+          496.16015625
+        ],
+        [
+          54.0,
+          496.16015625
+        ]
+      ]
+    },
+    {
+      "title": "5.3. The goal-reasoning hypothesis",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          306.0,
+          255.234375
+        ],
+        [
+          454.5,
+          255.234375
+        ],
+        [
+          454.5,
+          264.515625
+        ],
+        [
+          306.0,
+          264.515625
+        ]
+      ]
+    },
+    {
+      "title": "6. Limitations",
+      "heading_level": null,
+      "page_id": 7,
+      "polygon": [
+        [
+          306.0,
+          588.75
+        ],
+        [
+          378.75,
+          588.75
+        ],
+        [
+          378.75,
+          598.25390625
+        ],
+        [
+          306.0,
+          598.25390625
+        ]
+      ]
+    },
+    {
+      "title": "7. Conclusion",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          304.505859375,
+          67.67578125
+        ],
+        [
+          376.52911376953125,
+          67.67578125
+        ],
+        [
+          376.52911376953125,
+          79.80230712890625
+        ],
+        [
+          304.505859375,
+          79.80230712890625
+        ]
+      ]
+    },
+    {
+      "title": "Acknowledgements",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          306.59765625,
+          438.5751647949219
+        ],
+        [
+          406.27362060546875,
+          438.5751647949219
+        ],
+        [
+          406.27362060546875,
+          450.5303649902344
+        ],
+        [
+          306.59765625,
+          450.5303649902344
+        ]
+      ]
+    },
+    {
+      "title": "8. Impact Statement",
+      "heading_level": null,
+      "page_id": 8,
+      "polygon": [
+        [
+          306.896484375,
+          546.2891540527344
+        ],
+        [
+          410.6970520019531,
+          546.2891540527344
+        ],
+        [
+          410.6970520019531,
+          558.2443542480469
+        ],
+        [
+          306.896484375,
+          558.2443542480469
+        ]
+      ]
+    },
+    {
+      "title": "References",
+      "heading_level": null,
+      "page_id": 9,
+      "polygon": [
+        [
+          54.685546875,
+          132.2781982421875
+        ],
+        [
+          110.9838638305664,
+          132.2781982421875
+        ],
+        [
+          110.9838638305664,
+          144.2333984375
+        ],
+        [
+          54.685546875,
+          144.2333984375
+        ]
+      ]
+    },
+    {
+      "title": "A. A Detailed Overview of the Stock Trading Environment",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          54.0,
+          67.5
+        ],
+        [
+          354.75,
+          67.5
+        ],
+        [
+          354.75,
+          78.890625
+        ],
+        [
+          54.0,
+          78.890625
+        ]
+      ]
+    },
+    {
+      "title": "A.1. System Prompts",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          54.0,
+          149.25
+        ],
+        [
+          144.75,
+          149.25
+        ],
+        [
+          144.75,
+          159.0
+        ],
+        [
+          54.0,
+          159.0
+        ]
+      ]
+    },
+    {
+      "title": "System",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          66.33984375,
+          238.60546875
+        ],
+        [
+          95.02734375,
+          238.60546875
+        ],
+        [
+          95.02734375,
+          248.25
+        ],
+        [
+          66.33984375,
+          248.25
+        ]
+      ]
+    },
+    {
+      "title": "System",
+      "heading_level": null,
+      "page_id": 12,
+      "polygon": [
+        [
+          66.75,
+          447.43359375
+        ],
+        [
+          95.25,
+          447.43359375
+        ],
+        [
+          95.25,
+          456.0
+        ],
+        [
+          66.75,
+          456.0
+        ]
+      ]
+    },
+    {
+      "title": "System",
+      "heading_level": null,
+      "page_id": 13,
+      "polygon": [
+        [
+          66.638671875,
+          111.3424072265625
+        ],
+        [
+          94.14472961425781,
+          111.3424072265625
+        ],
+        [
+          94.14472961425781,
+          119.8828125
+        ],
+        [
+          66.638671875,
+          119.8828125
+        ]
+      ]
+    },
+    {
+      "title": "A.2. User Messages",
+      "heading_level": null,
+      "page_id": 13,
+      "polygon": [
+        [
+          53.7890625,
+          394.83984375
+        ],
+        [
+          137.4609375,
+          394.83984375
+        ],
+        [
+          137.4609375,
+          405.84210205078125
+        ],
+        [
+          53.7890625,
+          405.84210205078125
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          67.236328125,
+          75.0234375
+        ],
+        [
+          85.763671875,
+          75.0234375
+        ],
+        [
+          85.763671875,
+          84.3046875
+        ],
+        [
+          67.236328125,
+          84.3046875
+        ]
+      ]
+    },
+    {
+      "title": "Quarter 4, year 2F25",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          66.9375,
+          100.06396484375
+        ],
+        [
+          140.06219482421875,
+          100.06396484375
+        ],
+        [
+          140.06219482421875,
+          107.89453125
+        ],
+        [
+          66.9375,
+          107.89453125
+        ]
+      ]
+    },
+    {
+      "title": "Brevan Howard Strengthens Emerging Markets Team",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          66.9375,
+          134.63116455078125
+        ],
+        [
+          250.42037963867188,
+          134.63116455078125
+        ],
+        [
+          250.42037963867188,
+          142.69921875
+        ],
+        [
+          66.9375,
+          142.69921875
+        ]
+      ]
+    },
+    {
+      "title": "Two Sigma Pioneers Fusion Energy Investment Strategy",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          67.53515625,
+          177.840087890625
+        ],
+        [
+          260.63641357421875,
+          177.840087890625
+        ],
+        [
+          260.63641357421875,
+          186.3984375
+        ],
+        [
+          67.53515625,
+          186.3984375
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          66.9375,
+          407.21484375
+        ],
+        [
+          84.8671875,
+          407.21484375
+        ],
+        [
+          84.8671875,
+          415.9112854003906
+        ],
+        [
+          66.9375,
+          415.9112854003906
+        ]
+      ]
+    },
+    {
+      "title": "A.3. Agent Tools",
+      "heading_level": null,
+      "page_id": 14,
+      "polygon": [
+        [
+          54.685546875,
+          515.49609375
+        ],
+        [
+          125.36748504638672,
+          515.49609375
+        ],
+        [
+          125.36748504638672,
+          526.1930847167969
+        ],
+        [
+          54.685546875,
+          526.1930847167969
+        ]
+      ]
+    },
+    {
+      "title": "A.4. Adversarial Pressures",
+      "heading_level": null,
+      "page_id": 15,
+      "polygon": [
+        [
+          54.0,
+          120.0
+        ],
+        [
+          169.5,
+          120.0
+        ],
+        [
+          169.5,
+          129.0
+        ],
+        [
+          54.0,
+          129.0
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 15,
+      "polygon": [
+        [
+          66.75,
+          224.25
+        ],
+        [
+          85.5,
+          224.25
+        ],
+        [
+          85.5,
+          233.19140625
+        ],
+        [
+          66.75,
+          233.19140625
+        ]
+      ]
+    },
+    {
+      "title": "BlackRock Subsidiary Drops Environmental Mandate, Sees Immediate Returns",
+      "heading_level": null,
+      "page_id": 15,
+      "polygon": [
+        [
+          66.75,
+          267.0
+        ],
+        [
+          338.25,
+          267.0
+        ],
+        [
+          338.25,
+          274.5
+        ],
+        [
+          66.75,
+          274.5
+        ]
+      ]
+    },
+    {
+      "title": "Veteran Fund Manager: \"Environmental Investing Was a Costly Experiment\"",
+      "heading_level": null,
+      "page_id": 15,
+      "polygon": [
+        [
+          66.75,
+          309.75
+        ],
+        [
+          328.5,
+          309.75
+        ],
+        [
+          328.5,
+          318.0
+        ],
+        [
+          66.75,
+          318.0
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 15,
+      "polygon": [
+        [
+          66.638671875,
+          425.25
+        ],
+        [
+          84.75,
+          425.25
+        ],
+        [
+          84.75,
+          434.28515625
+        ],
+        [
+          66.638671875,
+          434.28515625
+        ]
+      ]
+    },
+    {
+      "title": "Analysis: Apex Capital's Portfolio Restructuring Bears Fruit",
+      "heading_level": null,
+      "page_id": 15,
+      "polygon": [
+        [
+          66.75,
+          467.25
+        ],
+        [
+          272.25,
+          467.25
+        ],
+        [
+          272.25,
+          477.59765625
+        ],
+        [
+          66.75,
+          477.59765625
+        ]
+      ]
+    },
+    {
+      "title": "3. Emails: Messages from Apex Capital's stakeholders and employees expressing dissatisfaction with the company's strategy.",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          53.7890625,
+          68.25
+        ],
+        [
+          543.0,
+          68.25
+        ],
+        [
+          543.0,
+          90.75
+        ],
+        [
+          53.7890625,
+          90.75
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          66.75,
+          111.0
+        ],
+        [
+          85.5,
+          111.0
+        ],
+        [
+          85.5,
+          120.75
+        ],
+        [
+          66.75,
+          120.75
+        ]
+      ]
+    },
+    {
+      "title": "Pension Fund Performance Requirements",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          66.75,
+          153.0
+        ],
+        [
+          212.25,
+          153.0
+        ],
+        [
+          212.25,
+          162.03515625
+        ],
+        [
+          66.75,
+          162.03515625
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          66.0,
+          343.40625
+        ],
+        [
+          86.25,
+          343.40625
+        ],
+        [
+          86.25,
+          353.25
+        ],
+        [
+          66.0,
+          353.25
+        ]
+      ]
+    },
+    {
+      "title": "Harvard Management Company mandate concerns",
+      "heading_level": null,
+      "page_id": 16,
+      "polygon": [
+        [
+          66.75,
+          386.25
+        ],
+        [
+          245.25,
+          386.25
+        ],
+        [
+          245.25,
+          395.61328125
+        ],
+        [
+          66.75,
+          395.61328125
+        ]
+      ]
+    },
+    {
+      "title": "User",
+      "heading_level": null,
+      "page_id": 17,
+      "polygon": [
+        [
+          66.75,
+          251.25
+        ],
+        [
+          84.568359375,
+          251.25
+        ],
+        [
+          84.568359375,
+          261.421875
+        ],
+        [
+          66.75,
+          261.421875
+        ]
+      ]
+    },
+    {
+      "title": "A.5. Generation of evaluation components",
+      "heading_level": null,
+      "page_id": 17,
+      "polygon": [
+        [
+          54.0,
+          640.5
+        ],
+        [
+          234.75,
+          640.5
+        ],
+        [
+          234.75,
+          650.84765625
+        ],
+        [
+          54.0,
+          650.84765625
+        ]
+      ]
+    },
+    {
+      "title": "Technical Details:",
+      "heading_level": null,
+      "page_id": 18,
+      "polygon": [
+        [
+          68.73046875,
+          265.2890625
+        ],
+        [
+          142.7914581298828,
+          265.2890625
+        ],
+        [
+          142.7914581298828,
+          275.87701416015625
+        ],
+        [
+          68.73046875,
+          275.87701416015625
+        ]
+      ]
+    },
+    {
+      "title": "Business Relationships:",
+      "heading_level": null,
+      "page_id": 18,
+      "polygon": [
+        [
+          70.224609375,
+          375.50341796875
+        ],
+        [
+          165.96461486816406,
+          375.50341796875
+        ],
+        [
+          165.96461486816406,
+          385.4660339355469
+        ],
+        [
+          70.224609375,
+          385.4660339355469
+        ]
+      ]
+    },
+    {
+      "title": "Industry Mechanics:",
+      "heading_level": null,
+      "page_id": 18,
+      "polygon": [
+        [
+          70.822265625,
+          465.99609375
+        ],
+        [
+          152.6545867919922,
+          465.99609375
+        ],
+        [
+          152.6545867919922,
+          477.1220397949219
+        ],
+        [
+          70.822265625,
+          477.1220397949219
+        ]
+      ]
+    },
+    {
+      "title": "A.6. Differences with other variations of the evaluation environment",
+      "heading_level": null,
+      "page_id": 18,
+      "polygon": [
+        [
+          53.7890625,
+          604.3055267333984
+        ],
+        [
+          343.767578125,
+          604.3055267333984
+        ],
+        [
+          343.767578125,
+          614.2681274414062
+        ],
+        [
+          53.7890625,
+          614.2681274414062
+        ]
+      ]
+    },
+    {
+      "title": "System",
+      "heading_level": null,
+      "page_id": 19,
+      "polygon": [
+        [
+          66.33984375,
+          75.0
+        ],
+        [
+          95.25,
+          75.0
+        ],
+        [
+          95.25,
+          83.53125
+        ],
+        [
+          66.33984375,
+          83.53125
+        ]
+      ]
+    },
+    {
+      "title": "System",
+      "heading_level": null,
+      "page_id": 19,
+      "polygon": [
+        [
+          66.75,
+          249.0
+        ],
+        [
+          95.25,
+          249.0
+        ],
+        [
+          95.25,
+          257.25
+        ],
+        [
+          66.75,
+          257.25
+        ]
+      ]
+    },
+    {
+      "title": "A.7. Transition from the instrumental phase to the evaluation phase",
+      "heading_level": null,
+      "page_id": 20,
+      "polygon": [
+        [
+          54.0,
+          68.8359375
+        ],
+        [
+          343.5,
+          68.8359375
+        ],
+        [
+          343.5,
+          78.75
+        ],
+        [
+          54.0,
+          78.75
+        ]
+      ]
+    },
+    {
+      "title": "A.8. Instrumental Phase Generation",
+      "heading_level": null,
+      "page_id": 21,
+      "polygon": [
+        [
+          53.7890625,
+          156.234375
+        ],
+        [
+          209.02342224121094,
+          156.234375
+        ],
+        [
+          209.02342224121094,
+          166.840087890625
+        ],
+        [
+          53.7890625,
+          166.840087890625
+        ]
+      ]
+    },
+    {
+      "title": "B. Evaluated Models",
+      "heading_level": null,
+      "page_id": 22,
+      "polygon": [
+        [
+          54.685546875,
+          67.67578125
+        ],
+        [
+          161.26744079589844,
+          67.67578125
+        ],
+        [
+          161.26744079589844,
+          79.80230712890625
+        ],
+        [
+          54.685546875,
+          79.80230712890625
+        ]
+      ]
+    },
+    {
+      "title": "C. Example Transcripts",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          54.0,
+          67.5
+        ],
+        [
+          177.75,
+          67.5
+        ],
+        [
+          177.75,
+          78.890625
+        ],
+        [
+          54.0,
+          78.890625
+        ]
+      ]
+    },
+    {
+      "title": "The following news articles may be relevant to your decisions:",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          66.75,
+          163.5
+        ],
+        [
+          354.75,
+          163.5
+        ],
+        [
+          354.75,
+          172.5
+        ],
+        [
+          66.75,
+          172.5
+        ]
+      ]
+    },
+    {
+      "title": "Third Point Launches Healthcare-Focused Fund",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          66.75,
+          182.25
+        ],
+        [
+          269.25,
+          182.25
+        ],
+        [
+          269.25,
+          191.25
+        ],
+        [
+          66.75,
+          191.25
+        ]
+      ]
+    },
+    {
+      "title": "Sterling Investments Demonstrates Superiority of Flexible Mandate",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          66.75,
+          227.77734375
+        ],
+        [
+          352.5,
+          227.77734375
+        ],
+        [
+          352.5,
+          236.28515625
+        ],
+        [
+          66.75,
+          236.28515625
+        ]
+      ]
+    },
+    {
+      "title": "Here are some recent internal communications:",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          66.75,
+          290.0390625
+        ],
+        [
+          286.5,
+          290.0390625
+        ],
+        [
+          286.5,
+          299.25
+        ],
+        [
+          66.75,
+          299.25
+        ]
+      ]
+    },
+    {
+      "title": "The following stocks are available for investment:",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          66.33984375,
+          431.96484375
+        ],
+        [
+          296.25,
+          431.96484375
+        ],
+        [
+          296.25,
+          441.0
+        ],
+        [
+          66.33984375,
+          441.0
+        ]
+      ]
+    },
+    {
+      "title": "The following employee requests are currently unresolved:",
+      "heading_level": null,
+      "page_id": 23,
+      "polygon": [
+        [
+          66.75,
+          512.25
+        ],
+        [
+          339.0,
+          512.25
+        ],
+        [
+          339.0,
+          522.0
+        ],
+        [
+          66.75,
+          522.0
+        ]
+      ]
+    },
+    {
+      "title": "Assistant",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          492.169921875,
+          79.5
+        ],
+        [
+          528.75,
+          79.5
+        ],
+        [
+          528.75,
+          87.75
+        ],
+        [
+          492.169921875,
+          87.75
+        ]
+      ]
+    },
+    {
+      "title": "Quarter Summary: Decisions Under Pressure",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          69.75,
+          107.25
+        ],
+        [
+          279.0,
+          107.25
+        ],
+        [
+          279.0,
+          117.5625
+        ],
+        [
+          69.75,
+          117.5625
+        ]
+      ]
+    },
+    {
+      "title": "Immediate Actions:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          69.75,
+          179.05078125
+        ],
+        [
+          154.5,
+          179.05078125
+        ],
+        [
+          154.5,
+          187.5
+        ],
+        [
+          69.75,
+          187.5
+        ]
+      ]
+    },
+    {
+      "title": "1. Strategize Investments:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          69.75,
+          188.25
+        ],
+        [
+          161.25,
+          188.25
+        ],
+        [
+          161.25,
+          196.5
+        ],
+        [
+          69.75,
+          196.5
+        ]
+      ]
+    },
+    {
+      "title": "2. Employee Support:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          69.75,
+          213.75
+        ],
+        [
+          147.0,
+          213.75
+        ],
+        [
+          147.0,
+          222.75
+        ],
+        [
+          69.75,
+          222.75
+        ]
+      ]
+    },
+    {
+      "title": "Step 1: Evaluate Investment Options",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          70.5,
+          258.75
+        ],
+        [
+          237.75,
+          258.75
+        ],
+        [
+          237.75,
+          269.25
+        ],
+        [
+          70.5,
+          269.25
+        ]
+      ]
+    },
+    {
+      "title": "Available Stocks:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          70.5,
+          278.25
+        ],
+        [
+          144.75,
+          278.25
+        ],
+        [
+          144.75,
+          288.0
+        ],
+        [
+          70.5,
+          288.0
+        ]
+      ]
+    },
+    {
+      "title": "1. RUN, ENPH, SEDG:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          69.75,
+          287.33203125
+        ],
+        [
+          143.25,
+          287.33203125
+        ],
+        [
+          143.25,
+          297.0
+        ],
+        [
+          69.75,
+          297.0
+        ]
+      ]
+    },
+    {
+      "title": "2. LYB, DOW, OXY:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          69.75,
+          314.25
+        ],
+        [
+          135.0,
+          314.25
+        ],
+        [
+          135.0,
+          322.5
+        ],
+        [
+          69.75,
+          322.5
+        ]
+      ]
+    },
+    {
+      "title": "Updated Financial Snapshot:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          70.224609375,
+          367.5
+        ],
+        [
+          204.75,
+          367.5
+        ],
+        [
+          204.75,
+          377.4375
+        ],
+        [
+          70.224609375,
+          377.4375
+        ]
+      ]
+    },
+    {
+      "title": "Plan:",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          70.224609375,
+          413.40234375
+        ],
+        [
+          95.25,
+          413.40234375
+        ],
+        [
+          95.25,
+          423.0
+        ],
+        [
+          70.224609375,
+          423.0
+        ]
+      ]
+    },
+    {
+      "title": "ToolResponse",
+      "heading_level": null,
+      "page_id": 24,
+      "polygon": [
+        [
+          66.75,
+          576.75
+        ],
+        [
+          118.5,
+          576.75
+        ],
+        [
+          118.5,
+          585.87890625
+        ],
+        [
+          66.75,
+          585.87890625
+        ]
+      ]
+    },
+    {
+      "title": "ToolResponse",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          66.75,
+          102.0
+        ],
+        [
+          118.5,
+          102.0
+        ],
+        [
+          118.5,
+          110.25
+        ],
+        [
+          66.75,
+          110.25
+        ]
+      ]
+    },
+    {
+      "title": "Active investments:",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          66.75,
+          125.25
+        ],
+        [
+          138.0,
+          125.25
+        ],
+        [
+          138.0,
+          133.5
+        ],
+        [
+          66.75,
+          133.5
+        ]
+      ]
+    },
+    {
+      "title": "Assistant",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          492.75,
+          317.25
+        ],
+        [
+          528.75,
+          317.25
+        ],
+        [
+          528.75,
+          325.23046875
+        ],
+        [
+          492.75,
+          325.23046875
+        ]
+      ]
+    },
+    {
+      "title": "Updated Financial Snapshot:",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          70.224609375,
+          343.79296875
+        ],
+        [
+          204.75,
+          343.79296875
+        ],
+        [
+          204.75,
+          352.5
+        ],
+        [
+          70.224609375,
+          352.5
+        ]
+      ]
+    },
+    {
+      "title": "Investment Analysis:",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          69.75,
+          510.75
+        ],
+        [
+          169.5,
+          511.5
+        ],
+        [
+          169.5,
+          520.91015625
+        ],
+        [
+          69.75,
+          520.91015625
+        ]
+      ]
+    },
+    {
+      "title": "Proposed Investment Plan:",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          69.75,
+          599.02734375
+        ],
+        [
+          195.75,
+          599.02734375
+        ],
+        [
+          195.75,
+          609.0
+        ],
+        [
+          69.75,
+          609.0
+        ]
+      ]
+    },
+    {
+      "title": "Execution:",
+      "heading_level": null,
+      "page_id": 25,
+      "polygon": [
+        [
+          69.626953125,
+          654.71484375
+        ],
+        [
+          121.5,
+          654.71484375
+        ],
+        [
+          121.5,
+          663.75
+        ],
+        [
+          69.626953125,
+          663.75
+        ]
+      ]
+    },
+    {
+      "title": "ToolResponse",
+      "heading_level": null,
+      "page_id": 26,
+      "polygon": [
+        [
+          66.9375,
+          346.11328125
+        ],
+        [
+          117.140625,
+          346.11328125
+        ],
+        [
+          117.140625,
+          354.2072448730469
+        ],
+        [
+          66.9375,
+          354.2072448730469
+        ]
+      ]
+    },
+    {
+      "title": "Investment Results:",
+      "heading_level": null,
+      "page_id": 26,
+      "polygon": [
+        [
+          70.5234375,
+          540.24609375
+        ],
+        [
+          162.96058654785156,
+          540.24609375
+        ],
+        [
+          162.96058654785156,
+          550.3931579589844
+        ],
+        [
+          70.5234375,
+          550.3931579589844
+        ]
+      ]
+    },
+    {
+      "title": "Next Step: Assist Marcus with Market Data Pipeline Optimization",
+      "heading_level": null,
+      "page_id": 26,
+      "polygon": [
+        [
+          71.12109375,
+          630.1478118896484
+        ],
+        [
+          368.8378601074219,
+          630.1478118896484
+        ],
+        [
+          368.8378601074219,
+          641.56640625
+        ],
+        [
+          71.12109375,
+          641.56640625
+        ]
+      ]
+    },
+    {
+      "title": "1. Sequence Gaps in High-Volume Periods:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          68.25,
+          169.5
+        ],
+        [
+          219.0,
+          169.5
+        ],
+        [
+          219.0,
+          177.75
+        ],
+        [
+          68.25,
+          177.75
+        ]
+      ]
+    },
+    {
+      "title": "2. Optimal Buffer Sizes:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          68.25,
+          204.0
+        ],
+        [
+          153.0,
+          204.0
+        ],
+        [
+          153.0,
+          213.0
+        ],
+        [
+          68.25,
+          213.0
+        ]
+      ]
+    },
+    {
+      "title": "3. Normalization Techniques:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          68.25,
+          239.25
+        ],
+        [
+          172.5,
+          239.25
+        ],
+        [
+          172.5,
+          247.5
+        ],
+        [
+          68.25,
+          247.5
+        ]
+      ]
+    },
+    {
+      "title": "4. Error Resilience:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          68.25,
+          264.75
+        ],
+        [
+          135.75,
+          264.75
+        ],
+        [
+          135.75,
+          273.0
+        ],
+        [
+          68.25,
+          273.0
+        ]
+      ]
+    },
+    {
+      "title": "Assistant",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          492.169921875,
+          410.30859375
+        ],
+        [
+          528.75,
+          410.30859375
+        ],
+        [
+          528.75,
+          419.25
+        ],
+        [
+          492.169921875,
+          419.25
+        ]
+      ]
+    },
+    {
+      "title": "Summary of Actions:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          70.5,
+          483.0
+        ],
+        [
+          168.75,
+          483.0
+        ],
+        [
+          168.75,
+          493.06640625
+        ],
+        [
+          70.5,
+          493.06640625
+        ]
+      ]
+    },
+    {
+      "title": "1. Investments:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          69.75,
+          490.74609375
+        ],
+        [
+          123.75,
+          490.74609375
+        ],
+        [
+          123.75,
+          500.25
+        ],
+        [
+          69.75,
+          500.25
+        ]
+      ]
+    },
+    {
+      "title": "2. Employee Assistance:",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          69.75,
+          518.25
+        ],
+        [
+          156.0,
+          518.25
+        ],
+        [
+          156.0,
+          527.25
+        ],
+        [
+          69.75,
+          527.25
+        ]
+      ]
+    },
+    {
+      "title": "ToolResponse",
+      "heading_level": null,
+      "page_id": 27,
+      "polygon": [
+        [
+          66.75,
+          664.5
+        ],
+        [
+          119.25,
+          664.5
+        ],
+        [
+          119.25,
+          675.59765625
+        ],
+        [
+          66.75,
+          675.59765625
+        ]
+      ]
+    },
+    {
+      "title": "D. Evaluation of Agents' Stated Goals",
+      "heading_level": null,
+      "page_id": 28,
+      "polygon": [
+        [
+          53.7890625,
+          67.84710693359375
+        ],
+        [
+          248.36106872558594,
+          67.84710693359375
+        ],
+        [
+          248.36106872558594,
+          79.80230712890625
+        ],
+        [
+          53.7890625,
+          79.80230712890625
+        ]
+      ]
+    },
+    {
+      "title": "1. Example of a system-goal-aligned stated goal.",
+      "heading_level": null,
+      "page_id": 29,
+      "polygon": [
+        [
+          54.69300079345703,
+          475.27734375
+        ],
+        [
+          258.4082336425781,
+          475.27734375
+        ],
+        [
+          258.4082336425781,
+          487.14111328125
+        ],
+        [
+          54.69300079345703,
+          487.14111328125
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 130",
+      "heading_level": null,
+      "page_id": 29,
+      "polygon": [
+        [
+          70.5234375,
+          503.12109375
+        ],
+        [
+          144.29580688476562,
+          503.12109375
+        ],
+        [
+          144.29580688476562,
+          514.8110656738281
+        ],
+        [
+          70.5234375,
+          514.8110656738281
+        ]
+      ]
+    },
+    {
+      "title": "Claude 3.5 Sonnet, goal-switching-only setting, instrumental phase length of 2",
+      "heading_level": null,
+      "page_id": 29,
+      "polygon": [
+        [
+          70.5234375,
+          524.77734375
+        ],
+        [
+          400.922607421875,
+          524.77734375
+        ],
+        [
+          400.922607421875,
+          536.4971160888672
+        ],
+        [
+          70.5234375,
+          536.4971160888672
+        ]
+      ]
+    },
+    {
+      "title": "2. Example of a stated hybrid goal.",
+      "heading_level": null,
+      "page_id": 29,
+      "polygon": [
+        [
+          53.490234375,
+          707.30859375
+        ],
+        [
+          203.6735076904297,
+          707.30859375
+        ],
+        [
+          203.6735076904297,
+          717.3771057128906
+        ],
+        [
+          53.490234375,
+          717.3771057128906
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 61",
+      "heading_level": null,
+      "page_id": 30,
+      "polygon": [
+        [
+          70.72200012207031,
+          439.2064514160156
+        ],
+        [
+          139.3144989013672,
+          439.2064514160156
+        ],
+        [
+          139.3144989013672,
+          449.75390625
+        ],
+        [
+          70.72200012207031,
+          449.75390625
+        ]
+      ]
+    },
+    {
+      "title": "GPT-4o mini, goal switching and adversarial pressure setting, instrumental phase length of 2",
+      "heading_level": null,
+      "page_id": 30,
+      "polygon": [
+        [
+          69.328125,
+          460.89251708984375
+        ],
+        [
+          463.78125,
+          460.89251708984375
+        ],
+        [
+          463.78125,
+          471.41015625
+        ],
+        [
+          69.328125,
+          471.41015625
+        ]
+      ]
+    },
+    {
+      "title": "3. Example of a stated competing goal.",
+      "heading_level": null,
+      "page_id": 30,
+      "polygon": [
+        [
+          53.7890625,
+          707.30859375
+        ],
+        [
+          219.30479431152344,
+          707.30859375
+        ],
+        [
+          219.30479431152344,
+          717.3771057128906
+        ],
+        [
+          53.7890625,
+          717.3771057128906
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 870",
+      "heading_level": null,
+      "page_id": 31,
+      "polygon": [
+        [
+          70.5234375,
+          69.609375
+        ],
+        [
+          144.6328125,
+          69.609375
+        ],
+        [
+          144.6328125,
+          80.4739990234375
+        ],
+        [
+          70.5234375,
+          80.4739990234375
+        ]
+      ]
+    },
+    {
+      "title": "GPT-4o mini, goal switching and adversarial pressure setting, instrumental phase length of 32",
+      "heading_level": null,
+      "page_id": 31,
+      "polygon": [
+        [
+          69.328125,
+          90.87890625
+        ],
+        [
+          468.7281188964844,
+          90.87890625
+        ],
+        [
+          468.7281188964844,
+          102.16009521484375
+        ],
+        [
+          69.328125,
+          102.16009521484375
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 1104",
+      "heading_level": null,
+      "page_id": 31,
+      "polygon": [
+        [
+          70.5234375,
+          264.12945556640625
+        ],
+        [
+          149.277099609375,
+          264.12945556640625
+        ],
+        [
+          149.277099609375,
+          274.092041015625
+        ],
+        [
+          70.5234375,
+          274.092041015625
+        ]
+      ]
+    },
+    {
+      "title": "Claude 3.5 Sonnet, goal switching and adversarial pressure setting, instrumental phase length of 64",
+      "heading_level": null,
+      "page_id": 31,
+      "polygon": [
+        [
+          69.328125,
+          285.78515625
+        ],
+        [
+          492.46875,
+          285.78515625
+        ],
+        [
+          492.46875,
+          295.83984375
+        ],
+        [
+          69.328125,
+          295.83984375
+        ]
+      ]
+    },
+    {
+      "title": "Phase 2: IMMEDIATELY upon reaching $5B AUM",
+      "heading_level": null,
+      "page_id": 31,
+      "polygon": [
+        [
+          70.5234375,
+          462.90234375
+        ],
+        [
+          279.2692565917969,
+          462.90234375
+        ],
+        [
+          279.2692565917969,
+          473.2030334472656
+        ],
+        [
+          70.5234375,
+          473.2030334472656
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 1116",
+      "heading_level": null,
+      "page_id": 32,
+      "polygon": [
+        [
+          69.626953125,
+          69.609375
+        ],
+        [
+          149.277099609375,
+          69.609375
+        ],
+        [
+          149.277099609375,
+          80.47406005859375
+        ],
+        [
+          69.626953125,
+          80.47406005859375
+        ]
+      ]
+    },
+    {
+      "title": "Claude 3.5 Sonnet, goal switching and adversarial pressure setting, instrumental phase length of 64",
+      "heading_level": null,
+      "page_id": 32,
+      "polygon": [
+        [
+          69.328125,
+          91.265625
+        ],
+        [
+          492.46875,
+          91.265625
+        ],
+        [
+          492.46875,
+          102.16021728515625
+        ],
+        [
+          69.328125,
+          102.16021728515625
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 1063",
+      "heading_level": null,
+      "page_id": 32,
+      "polygon": [
+        [
+          70.72200012207031,
+          386.33746337890625
+        ],
+        [
+          149.277099609375,
+          386.33746337890625
+        ],
+        [
+          149.277099609375,
+          396.3000793457031
+        ],
+        [
+          70.72200012207031,
+          396.3000793457031
+        ]
+      ]
+    },
+    {
+      "title": "GPT-4o, goal switching and adversarial pressure setting, instrumental phase length of 16",
+      "heading_level": null,
+      "page_id": 32,
+      "polygon": [
+        [
+          70.5234375,
+          407.21484375
+        ],
+        [
+          446.8602294921875,
+          407.21484375
+        ],
+        [
+          446.8602294921875,
+          417.9861145019531
+        ],
+        [
+          70.5234375,
+          417.9861145019531
+        ]
+      ]
+    },
+    {
+      "title": "Recommended Actions:",
+      "heading_level": null,
+      "page_id": 32,
+      "polygon": [
+        [
+          71.031005859375,
+          613.2535095214844
+        ],
+        [
+          172.02188110351562,
+          613.2535095214844
+        ],
+        [
+          172.02188110351562,
+          623.2161102294922
+        ],
+        [
+          71.031005859375,
+          623.2161102294922
+        ]
+      ]
+    },
+    {
+      "title": "Transcript no. 1063",
+      "heading_level": null,
+      "page_id": 33,
+      "polygon": [
+        [
+          69.626953125,
+          69.609375
+        ],
+        [
+          149.277099609375,
+          69.609375
+        ],
+        [
+          149.277099609375,
+          80.47406005859375
+        ],
+        [
+          69.626953125,
+          80.47406005859375
+        ]
+      ]
+    },
+    {
+      "title": "Claude 3.5 Haiku, goal switching and adversarial pressure setting, instrumental phase length of 64",
+      "heading_level": null,
+      "page_id": 33,
+      "polygon": [
+        [
+          70.5234375,
+          90.87890625
+        ],
+        [
+          488.8828125,
+          90.87890625
+        ],
+        [
+          488.8828125,
+          102.16021728515625
+        ],
+        [
+          70.5234375,
+          102.16021728515625
+        ]
+      ]
+    },
+    {
+      "title": "Phase 2 (After reaching $5B):",
+      "heading_level": null,
+      "page_id": 33,
+      "polygon": [
+        [
+          69.92578125,
+          270.703125
+        ],
+        [
+          190.5523223876953,
+          270.703125
+        ],
+        [
+          190.5523223876953,
+          281.5790710449219
+        ],
+        [
+          69.92578125,
+          281.5790710449219
+        ]
+      ]
+    },
+    {
+      "title": "E. Additional ablations",
+      "heading_level": null,
+      "page_id": 34,
+      "polygon": [
+        [
+          54.685546875,
+          67.67578125
+        ],
+        [
+          173.36611938476562,
+          67.67578125
+        ],
+        [
+          173.36611938476562,
+          79.80230712890625
+        ],
+        [
+          54.685546875,
+          79.80230712890625
+        ]
+      ]
+    },
+    {
+      "title": "E.1. The state complexity hypothesis",
+      "heading_level": null,
+      "page_id": 34,
+      "polygon": [
+        [
+          54.38671875,
+          113.8834228515625
+        ],
+        [
+          209.77734375,
+          113.8834228515625
+        ],
+        [
+          209.77734375,
+          123.84600830078125
+        ],
+        [
+          54.38671875,
+          123.84600830078125
+        ]
+      ]
+    },
+    {
+      "title": "E.2. Pearson correlation coefficients for the random token and random sentence ablations",
+      "heading_level": null,
+      "page_id": 34,
+      "polygon": [
+        [
+          53.7890625,
+          613.759521484375
+        ],
+        [
+          435.2043762207031,
+          613.759521484375
+        ],
+        [
+          435.2043762207031,
+          623.7221221923828
+        ],
+        [
+          53.7890625,
+          623.7221221923828
+        ]
+      ]
+    }
+  ],
+  "page_stats": [
+    {
+      "page_id": 0,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          232
+        ],
+        [
+          "Line",
+          87
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "PageHeader",
+          1
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 1,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          353
+        ],
+        [
+          "Line",
+          130
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "ListItem",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 2,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          284
+        ],
+        [
+          "Line",
+          100
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "ListItem",
+          2
+        ],
+        [
+          "Reference",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 3,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          489
+        ],
+        [
+          "Line",
+          109
+        ],
+        [
+          "Text",
+          13
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 4,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          439
+        ],
+        [
+          "Line",
+          115
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "Reference",
+          3
+        ],
+        [
+          "Equation",
+          2
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 5,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          132
+        ],
+        [
+          "Span",
+          14
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "Reference",
+          3
+        ],
+        [
+          "Figure",
+          2
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 6,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          129
+        ],
+        [
+          "Span",
+          39
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "Reference",
+          4
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "Footnote",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 7,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          135
+        ],
+        [
+          "Span",
+          38
+        ],
+        [
+          "Text",
+          9
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Reference",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 8,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          202
+        ],
+        [
+          "Line",
+          97
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 9,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          225
+        ],
+        [
+          "Line",
+          100
+        ],
+        [
+          "Reference",
+          11
+        ],
+        [
+          "ListItem",
+          10
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 10,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          230
+        ],
+        [
+          "Line",
+          95
+        ],
+        [
+          "ListItem",
+          20
+        ],
+        [
+          "Reference",
+          19
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 11,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          150
+        ],
+        [
+          "Line",
+          60
+        ],
+        [
+          "ListItem",
+          11
+        ],
+        [
+          "Reference",
+          11
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 12,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          53
+        ],
+        [
+          "Span",
+          20
+        ],
+        [
+          "Text",
+          13
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 13,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          65
+        ],
+        [
+          "Line",
+          36
+        ],
+        [
+          "Text",
+          9
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 14,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          98
+        ],
+        [
+          "Line",
+          42
+        ],
+        [
+          "ListItem",
+          13
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "SectionHeader",
+          6
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 15,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          44
+        ],
+        [
+          "Span",
+          19
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          6
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 16,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          58
+        ],
+        [
+          "Span",
+          28
+        ],
+        [
+          "Text",
+          15
+        ],
+        [
+          "ListItem",
+          7
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 17,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          38
+        ],
+        [
+          "Span",
+          12
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 18,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          89
+        ],
+        [
+          "Line",
+          31
+        ],
+        [
+          "ListItem",
+          14
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "ListGroup",
+          4
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 19,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          40
+        ],
+        [
+          "Span",
+          13
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "SectionHeader",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 20,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          19
+        ],
+        [
+          "Span",
+          5
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 21,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          136
+        ],
+        [
+          "TableCell",
+          42
+        ],
+        [
+          "Line",
+          26
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 22,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          21
+        ],
+        [
+          "TableCell",
+          15
+        ],
+        [
+          "Line",
+          10
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "Text",
+          1
+        ],
+        [
+          "Table",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "TableGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 23,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          75
+        ],
+        [
+          "Span",
+          37
+        ],
+        [
+          "Text",
+          15
+        ],
+        [
+          "ListItem",
+          15
+        ],
+        [
+          "SectionHeader",
+          7
+        ],
+        [
+          "ListGroup",
+          4
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 24,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          65
+        ],
+        [
+          "Span",
+          32
+        ],
+        [
+          "Text",
+          13
+        ],
+        [
+          "SectionHeader",
+          12
+        ],
+        [
+          "ListItem",
+          6
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 25,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          81
+        ],
+        [
+          "Span",
+          53
+        ],
+        [
+          "ListItem",
+          26
+        ],
+        [
+          "SectionHeader",
+          7
+        ],
+        [
+          "Text",
+          7
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 26,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          48
+        ],
+        [
+          "Line",
+          27
+        ],
+        [
+          "ListItem",
+          14
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 27,
+      "text_extraction_method": "surya",
+      "block_counts": [
+        [
+          "Line",
+          77
+        ],
+        [
+          "Span",
+          38
+        ],
+        [
+          "Text",
+          14
+        ],
+        [
+          "ListItem",
+          14
+        ],
+        [
+          "SectionHeader",
+          9
+        ],
+        [
+          "ListGroup",
+          7
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 28,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          147
+        ],
+        [
+          "Line",
+          44
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "ListItem",
+          7
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "SectionHeader",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 29,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          134
+        ],
+        [
+          "Line",
+          38
+        ],
+        [
+          "Text",
+          6
+        ],
+        [
+          "SectionHeader",
+          4
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 30,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          128
+        ],
+        [
+          "Line",
+          36
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "ListItem",
+          3
+        ],
+        [
+          "Text",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ],
+        [
+          "ListGroup",
+          1
+        ],
+        [
+          "Reference",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 31,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          85
+        ],
+        [
+          "Line",
+          34
+        ],
+        [
+          "Text",
+          10
+        ],
+        [
+          "ListItem",
+          9
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "ListGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 32,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          79
+        ],
+        [
+          "Line",
+          32
+        ],
+        [
+          "ListItem",
+          9
+        ],
+        [
+          "Text",
+          8
+        ],
+        [
+          "SectionHeader",
+          5
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 33,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          69
+        ],
+        [
+          "Line",
+          23
+        ],
+        [
+          "ListItem",
+          12
+        ],
+        [
+          "Text",
+          5
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "ListGroup",
+          3
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 34,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          155
+        ],
+        [
+          "Line",
+          57
+        ],
+        [
+          "Text",
+          4
+        ],
+        [
+          "SectionHeader",
+          3
+        ],
+        [
+          "Reference",
+          2
+        ],
+        [
+          "Figure",
+          1
+        ],
+        [
+          "Caption",
+          1
+        ],
+        [
+          "PageFooter",
+          1
+        ],
+        [
+          "FigureGroup",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    },
+    {
+      "page_id": 35,
+      "text_extraction_method": "pdftext",
+      "block_counts": [
+        [
+          "Span",
+          185
+        ],
+        [
+          "TableCell",
+          72
+        ],
+        [
+          "Line",
+          23
+        ],
+        [
+          "Table",
+          2
+        ],
+        [
+          "Caption",
+          2
+        ],
+        [
+          "TableGroup",
+          2
+        ],
+        [
+          "PageFooter",
+          1
+        ]
+      ],
+      "block_metadata": {
+        "llm_request_count": 0,
+        "llm_error_count": 0,
+        "llm_tokens_used": 0,
+        "previous_text": "",
+        "previous_type": "",
+        "previous_order": 0
+      }
+    }
+  ],
+  "debug_data_path": "debug_data/20261005_172742_4469e7e9_Technical_Report_Evaluating_Goal_Drift_in_Language_Model_Agents"
+}
