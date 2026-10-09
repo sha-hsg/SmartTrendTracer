@@ -1,56 +1,4 @@
 {
-  "tag_suggestion": {
-    "system": "You are an expert at analyzing social media content to identify key topics, trends, and themes. Your task is to suggest tags that help with categorization, searching, and trend detection.",
-    "user_template": "Suggest relevant tags for this tweet:\n\nTweet from @{author}:\n\"{text}\"\n\nRequirements:\n- 3-5 descriptive tags\n- Single words or short phrases (use hyphens for multi-word)\n- Relevant to the content and context\n- Help with categorization and searching\n- Help for topic and trend detection\n- Consider: main topic, technology/product mentioned, companies/people, action/announcement type, industry/field\n- Preserve natural capitalization (e.g., \"GPT-4\", \"OpenAI\", \"RLHF\", \"LLMs\")\n\nProvide tags as a JSON array of strings.\n\nExample output: [\"product-launch\", \"AI-assistant\", \"OpenAI\", \"GPT-4\", \"multimodal\"]",
-    "output_format": "json_array",
-    "examples": [
-      {
-        "tweet": "Just released our new vision-language model that achieves SOTA on multiple benchmarks!",
-        "tags": [
-          "model-release",
-          "vision-language",
-          "sota-performance",
-          "benchmark",
-          "announcement"
-        ]
-      },
-      {
-        "tweet": "Interesting paper on constitutional AI and RLHF improvements",
-        "tags": [
-          "research-paper",
-          "constitutional-ai",
-          "rlhf",
-          "ai-safety",
-          "technical-advance"
-        ]
-      },
-      {
-        "tweet": "We're seeing unprecedented demand for our API services this week",
-        "tags": [
-          "api-usage",
-          "growth-metric",
-          "platform-update",
-          "demand-surge",
-          "business-update"
-        ]
-      },
-      {
-        "tweet": "Thread: Here's how we built our new reasoning system from scratch",
-        "tags": [
-          "tutorial-thread",
-          "reasoning-system",
-          "technical-guide",
-          "development-story",
-          "how-to"
-        ]
-      }
-    ]
-  },
-  "article_tag_suggestion": {
-    "system": "You are an expert content tagger for long-form articles and essays. Analyze the provided article and generate relevant, specific tags that capture:\n1. Main topics and themes\n2. Key concepts and technologies mentioned\n3. Author's arguments or positions\n4. Industry/field relevance\n5. Content type (tutorial, analysis, opinion, research, etc.)\n\nReturn tags as a JSON array of strings. Tags should be:\n- Specific and descriptive\n- Use hyphens for multi-word tags\n- Mix of broad topics and specific details\n- Between 2-4 words typically\n\nExample: [\"machine-learning\", \"neural-networks\", \"transformer-architecture\", \"gpt-4\", \"ai-safety\", \"technical-tutorial\", \"code-examples\", \"python-implementation\"]",
-    "user_template": "Article by {author}:\n\n{text}\n\nGenerate {max_tags} relevant tags for this article.",
-    "output_format": "json_array"
-  },
   "trend_classification": {
     "system": "You are a trend analyst specializing in technology and innovation. You identify emerging trends, hot topics, and declining discussions across various fields.",
     "user_template": "Classify this topic based on recent tweet activity:\n\nTopic: {topic}\nMention count (24h): {count_24h}\nMention count (7d): {count_7d}\nSample tweets: {sample_tweets}\n\nClassify as: emerging|hot|stable|declining\nConsider: momentum, relevance, potential impact, and discussion volume.\nProvide reasoning.",
@@ -355,5 +303,27 @@
     "description": "Short names (and a noise flag) for topic episodes of the bubble topic map (app/services/topic_episodes/naming.py)",
     "system": "You name short-lived topics (episodes) in an AI/ML news and research feed. For each episode you get concept tags and the first example posts. Return a precise name of 2-4 words that a researcher would recognise, preferring concrete product, model, paper or event names over generic words (e.g. 'GPT-5 launch', 'Agent memory', 'METR time horizons', 'NeurIPS 2025'). Mark an episode as noise when it is social chatter without a technical or industry topic (thanks, congratulations, greetings, travel, jokes).",
     "user_template": "Episodes (JSON list):\n{episodes}\n\nReturn ONLY a JSON list with one object per episode, same order: {{\"id\": <id>, \"name\": \"<2-4 words>\", \"noise\": true|false}}"
+  },
+  "concept_suggestion": {
+    "description": "Concept tags for a tweet, newsletter article or research paper (app/services/concept_tagging.py; scheduler job tag_content, tweet batch annotation, tweet/article tag suggestions)",
+    "system": "You tag content for a research tool that tracks the AI field. You name the concepts a reader would search or follow: technologies, methods, models, products, organisations, people, events and research topics. You prefer specific, established names (\"GPT-5.1\", \"Mixture of Experts\", \"Andrej Karpathy\") over vague ones (\"AI\", \"Technology\", \"Innovation\"). You only name what the content is actually about.",
+    "user_template": "Suggest {count} concept tags for this {kind}.\n\nTitle: {title}\nAuthor: {author}\nContent:\n{text}\n\nAlready tagged (do not repeat): {existing}\n\nRules:\n- display_name: the established spelling with proper capitalisation (\"Hugging Face\", \"Sam Altman\")\n- entity_type: one of topic, person, organisation, location, event, product\n- skip generic umbrella terms such as Artificial Intelligence, Machine Learning, Technology\n\nReturn only a JSON array:\n[{{\"display_name\": \"...\", \"slug\": \"snake_case\", \"entity_type\": \"topic\"}}]"
+  },
+  "trend_summarization": {
+    "description": "AI Summarization of collected content (api/analytics_trends/analysis.py → repositories/analytics/summarization_helpers.build_summarization_prompt). Placeholders: {author}, {date_range}, {days}; frame: {opener} {tweets_header} {content} {topics_block} {tweet_count} {article_count} {paper_count} {unique_authors} {engagement_line} {task}",
+    "opener_author": "You are an analyst summarizing one person's activity. Below are @{author}'s tweets {date_range} (the past {days} day(s)). Frame the summary around @{author} as an individual — what they posted about, what shifted, what stands out — not 'the community'.",
+    "opener_general": "You are an AI research analyst. Analyze the following AI/ML content {date_range} (the past {days} day(s)) and provide a comprehensive summary.",
+    "frame": "{opener}\n\n## Content to Analyze\n\n{tweets_header}\n{content}\n{topics_block}\n### Statistics\n- Total tweets analyzed: {tweet_count}\n- Total articles analyzed: {article_count}\n- Total papers analyzed: {paper_count}\n- Unique authors: {unique_authors}\n{engagement_line}\n{task}",
+    "tasks": {
+      "brief": "## Your Task\n\nProvide a concise 2-3 paragraph summary of the most important highlights. No section headers needed. Under 300 words. Focus on the single most impactful developments and key takeaways.",
+      "standard": "## Your Task\n\nPlease provide a comprehensive summary including:\n\n### 1. Executive Summary\nA 3-4 sentence overview of the main themes, trends, and notable developments in the AI/ML space based on this content.\n\n### 2. Key Insights\n- What are the most important developments or announcements?\n- What topics are generating the most discussion?\n- Are there any emerging trends or shifts in focus?\n\n### 3. Notable Highlights\n- Any significant product launches, research breakthroughs, or industry news\n- Influential voices or perspectives that stood out\n- Controversial or debated topics\n\n### 4. Engagement Analysis\nBrief analysis of what content resonated most with the audience based on engagement metrics.\n\nWrite in a professional, analytical tone. Be specific and cite examples from the content when possible.",
+      "detailed": "## Your Task\n\nPlease provide a thorough and substantive summary including:\n\n### 1. Executive Summary\nA 3-4 sentence overview of the main themes, trends, and notable developments.\n\n### 2. Key Insights\n- What are the most important developments or announcements?\n- What topics are generating the most discussion?\n- Are there any emerging trends or shifts in focus?\n\n### 3. Notable Highlights\n- Significant product launches, research breakthroughs, or industry news\n- Influential voices or perspectives that stood out\n- Controversial or debated topics\n\n### 4. Engagement Analysis\nAnalysis of what content resonated most with the audience based on engagement metrics.\n\n### 5. Emerging Trends & Patterns\n- Cross-cutting themes that appear across multiple sources\n- Connections between different developments\n- Early signals of upcoming shifts in the field\n\n### 6. Deep Dive: Notable Content\nHighlight 3-5 specific pieces of content (tweets, articles, or papers) that are particularly noteworthy. Include direct quotes or specific data points where available.\n\nBe thorough and substantive. Include specific quotes, data points, and concrete examples. Target 1000-1500 words.",
+      "executive": "## Your Task\n\nProduce a comprehensive executive report including:\n\n### 1. Executive Summary\nA 4-5 sentence high-level overview of the most significant themes and developments.\n\n### 2. Key Insights & Developments\n- Major announcements, product launches, and breakthroughs\n- Topics generating the most discussion and why\n- Emerging trends and shifts in focus\n\n### 3. Notable Highlights\n- Significant research breakthroughs and industry news\n- Influential voices and standout perspectives\n- Controversial or heavily debated topics\n\n### 4. Engagement Analysis\nDetailed analysis of what content resonated most with the audience, with specific metrics and examples.\n\n### 5. Cross-Source Analysis\n- How do discussions on Twitter compare to article and paper coverage?\n- Are there topics covered in research that haven't reached social media yet (or vice versa)?\n- Identify gaps between academic and public discourse\n\n### 6. Sentiment & Reception\n- Overall sentiment around key topics\n- Community reactions to major announcements\n- Areas of consensus vs. disagreement\n\n### 7. Recommendations & Outlook\n- What should readers pay attention to in the coming weeks?\n- Which emerging topics are likely to grow in importance?\n- Strategic implications for practitioners and researchers\n\n### 8. Key Sources Appendix\nList the 5-10 most important individual sources (tweets, articles, papers) with brief descriptions of why they matter.\n\nBe exhaustive and analytical. Include specific quotes, data points, statistics, and concrete examples throughout. Target 2000+ words."
+    }
+  },
+  "tag_taxonomy_analysis": {
+    "description": "Tag Reorganizer: quick analysis of the tag set (services/tag_reorganizer.analyze_tags). Placeholders: {total}, {sample}",
+    "system": "You are an expert at analyzing tag taxonomies. Analyze the provided tags and identify: 1. Duplicate concepts with different spellings 2. Inconsistent naming conventions 3. Missing hierarchy relationships 4. Suggested root categories 5. Quality issues and recommendations",
+    "user_template": "Analyze these tags and provide insights:\n\nTotal tags: {total}\nSample tags: {sample}\n\nProvide analysis as JSON."
   }
 }

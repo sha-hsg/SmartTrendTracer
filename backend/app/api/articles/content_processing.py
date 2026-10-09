@@ -159,100 +159,16 @@ async def suggest_tags_for_article(article_id: str, request: dict = Body({})):
     new_suggestions = []
     model_used = model if model else 'default'
     try:
-        from app.services.llm_manager import get_llm_manager
-        llm_manager = get_llm_manager()
-
-        # Prepare article text for LLM
-        article_text_for_llm = f"Title: {article.get('title', '')}\n"
-        article_text_for_llm += f"Author: {article.get('author_name', 'Unknown')}\n\n"
-
-        content = article.get('content_markdown', '') or article.get('content', '') or ''
-        if content:
-            article_text_for_llm += f"Article Content:\n{content[:12000]}"
-            logger.info(f"Sending article content to LLM: {min(len(content), 12000)} characters")
-        else:
-            logger.warning(f"Article {article_id} has no content, using title only")
-
-        existing_slugs = [t['slug'] for t in already_tagged]
-
-        prompt = f"""Analyze this article and suggest relevant concept tags.
-
-{article_text_for_llm}
-
-Instructions:
-1. Suggest 5-8 relevant concepts for this article
-2. Focus on main topics, technologies, people, organizations mentioned
-3. Use snake_case for slugs (e.g., machine_learning, sam_altman)
-4. Use proper capitalization for display names (e.g., "Machine Learning", "Sam Altman")
-5. Avoid concepts already tagged: {', '.join(existing_slugs)}
-
-Return as JSON array with format:
-[
-  {{"display_name": "Proper Name", "slug": "snake_case_slug", "entity_type": "topic|person|organisation|location|event|product"}}
-]
-"""
-
-        # Frontend model choice -> routable model name (central resolver);
-        # None keeps the tag_suggestion route default
-        actual_model = llm_manager.resolve_model_override(model)
-
-        logger.info(f"Article concept suggestion using model: {actual_model}")
-
-        messages = [{"role": "user", "content": prompt}]
-
-        llm_response = await llm_manager.completion(
-            task_type='tag_suggestion',
-            messages=messages,
-            user_id='default',
-            override_params={'model': actual_model} if actual_model else None
-        )
-
-        response = llm_response.choices[0].message.content
-        model_used = llm_response.model
-
-        logger.info(f"LLM response from {model_used}: {len(response)} chars")
-
-        # Parse JSON response (handle markdown code blocks)
-        if response:
-            json_text = response.strip()
-            if json_text.startswith("```json"):
-                json_text = json_text[7:]
-            if json_text.startswith("```"):
-                json_text = json_text[3:]
-            if json_text.endswith("```"):
-                json_text = json_text[:-3]
-
-            try:
-                suggested = json.loads(json_text.strip())
-                if not isinstance(suggested, list):
-                    logger.error(f"LLM returned non-list response: {type(suggested)}")
-                    suggested = []
-            except json.JSONDecodeError:
-                # Try to extract JSON array from response
-                json_match = re.search(r'\[[\s\S]*\]', response)
-                if json_match:
-                    try:
-                        suggested = json.loads(json_match.group())
-                    except json.JSONDecodeError:
-                        logger.error(f"Failed to parse extracted JSON: {response[:200]}")
-                        suggested = []
-                else:
-                    logger.error(f"No JSON array found in response: {response[:200]}")
-                    suggested = []
-
-            # Filter out already tagged and existing suggestions
-            already_tagged_slugs = {t['slug'] for t in already_tagged}
-            existing_suggestion_slugs = {s['slug'] for s in existing_suggestions}
-
-            for concept in suggested:
-                slug = concept.get('slug', '')
-                if slug not in already_tagged_slugs and slug not in existing_suggestion_slugs:
-                    new_suggestions.append({
-                        'display_name': concept.get('display_name', slug),
-                        'slug': slug,
-                        'entity_type': concept.get('entity_type', 'topic'),
-                        'type': 'new'
-                    })
+        from app.services import concept_tagging
+        item = {'title': article.get('title', ''), 'author': article.get('author_name') or '',
+                'text': article.get('content_markdown', '') or article.get('content', '') or ''}
+        already_tagged_slugs = {t['slug'] for t in already_tagged}
+        suggested, model_used = await concept_tagging.suggest_async(
+            'article', item, sorted(already_tagged_slugs), model=model)
+        existing_suggestion_slugs = {s['slug'] for s in existing_suggestions}
+        for concept in suggested:
+            if concept['slug'] not in already_tagged_slugs and concept['slug'] not in existing_suggestion_slugs:
+                new_suggestions.append({**concept, 'type': 'new'})
 
         logger.info(f"Generated {len(new_suggestions)} new tag suggestions for article {article_id}")
 

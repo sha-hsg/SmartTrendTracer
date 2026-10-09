@@ -7,18 +7,14 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from datetime import datetime, timezone
-from bson import ObjectId
 import uuid
-import json
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .utils import (
-    logger, db, concept_service, llm_manager,
+    logger, concept_service,
     batch_annotation_tasks, BatchAnnotateRequest,
 )
-from app.repositories import tweets_annotation_queries as queries
-from app.repositories import tweets as tweets_repo
 
 router = APIRouter()
 
@@ -32,69 +28,15 @@ class LLMSuggestionError(Exception):
 
 
 def generate_tag_suggestions_for_text(text: str, model: Optional[str] = None) -> List[Dict]:
-    """
-    Generate tag suggestions for a given text using LLM.
-    Returns list of suggested concepts with display_name, slug, and entity_type.
-    Raises LLMSuggestionError on transport/model errors — do NOT mark the tweet as
-    annotated when this fires; the sentinel write is only correct when the model
-    genuinely returned an empty list.
-
-    Model resolution: if `model` is None, llm_manager routes via the 'tag_suggestion'
-    task_type — respecting the user preference in llm_preferences and the fallback
-    chain in litellm_config.yaml. Do not hardcode model IDs here.
-    """
-    prompt = f"""Analyze this tweet and suggest relevant concept tags.
-
-Tweet: {text}
-
-Instructions:
-1. Suggest 3-5 relevant concepts for this tweet
-2. Focus on main topics, technologies, people, organizations mentioned
-3. Use snake_case for slugs (e.g., machine_learning, sam_altman)
-4. Use proper capitalization for display names (e.g., "Machine Learning", "Sam Altman")
-
-Return as JSON array with format:
-[
-  {{
-    "display_name": "Proper Name",
-    "slug": "snake_case_slug",
-    "entity_type": "topic|person|organisation|location|event|product"
-  }}
-]
-"""
-
+    """Concept suggestions for a tweet text (app.services.concept_tagging).
+    Raises LLMSuggestionError on transport/model errors — do NOT mark the tweet
+    as annotated then."""
+    from app.services import concept_tagging
     try:
-        messages = [{"role": "user", "content": prompt}]
-
-        response = llm_manager.completion_sync(
-            task_type='tag_suggestion',
-            messages=messages,
-            user_id='default',
-            override_params={'model': model} if model else None
-        )
-
-        response_text = response.choices[0].message.content
-    except Exception as e:
-        logger.error(f"Error generating tag suggestions: {e}")
+        suggestions, _ = concept_tagging.suggest('tweet', {'text': text}, [], model=model)
+    except concept_tagging.SuggestionError as e:
         raise LLMSuggestionError(str(e)) from e
-
-    if not response_text:
-        return []
-
-    # Extract JSON from response (handle markdown code blocks)
-    json_text = response_text.strip()
-    if json_text.startswith("```json"):
-        json_text = json_text[7:]
-    if json_text.startswith("```"):
-        json_text = json_text[3:]
-    if json_text.endswith("```"):
-        json_text = json_text[:-3]
-
-    try:
-        return json.loads(json_text.strip())
-    except json.JSONDecodeError as e:
-        logger.warning(f"Failed to parse LLM tag response as JSON: {e}; text={json_text[:200]!r}")
-        return []
+    return suggestions
 
 
 MAX_FINISHED_TASKS = 20
@@ -148,58 +90,16 @@ def run_batch_annotation(task_id: str, tweet_ids: List[str], model: Optional[str
         result = None
 
         try:
-            tweet = tweets_repo.find_tweet(tweet_id)
-            if not tweet:
-                result = {"error": "not_found"}
+            from app.services import concept_tagging
+            outcome = concept_tagging.tag_item('tweet', str(tweet_id), model=model, concept_service=concept_service)
+            if 'error' in outcome:
+                result = outcome          # LLM failure or unknown tweet: stays in the unannotated pool
                 local_error = 1
             else:
-                existing_concepts = concept_service.get_tags_for_content('tweet', tweet_id)
-                existing_slugs = {c['slug'] for c in existing_concepts}
-
-                tweet_text = tweet.get('full_text', '') or tweet.get('text', '')
-                try:
-                    suggestions = generate_tag_suggestions_for_text(tweet_text, model)
-                except LLMSuggestionError as e:
-                    # LLM call failed — do NOT write a sentinel; the tweet must remain
-                    # in the unannotated pool so a retry can pick it up.
-                    result = {"error": f"llm_failed: {e}"}
-                    local_error = 1
-                    suggestions = None
-
-                if suggestions is not None:
-                    new_concepts = []
-                    skipped = 0
-                    add_failures = 0
-                    for suggestion in suggestions:
-                        slug = suggestion.get('slug', '')
-                        if slug and slug not in existing_slugs:
-                            success, concept_id = concept_service.add_tag(
-                                content_type='tweet',
-                                content_id=tweet_id,
-                                text=suggestion['display_name'],
-                                preserve_display_name=True
-                            )
-                            if success:
-                                new_concepts.append(suggestion['display_name'])
-                                existing_slugs.add(slug)
-                            else:
-                                add_failures += 1
-                        else:
-                            skipped += 1
-
-                    if add_failures:
-                        local_error = 1
-
-                    # Sentinel only when the LLM genuinely returned no useful concepts
-                    # AND the tweet had none before AND nothing failed — a tweet whose
-                    # add_tag calls all failed must stay in the unannotated pool.
-                    if not new_concepts and not existing_concepts and add_failures == 0:
-                        queries.tag_instances_update_one__annotate_one(tweet_id)
-
-                    result = {"status": "success", "new_concepts": new_concepts, "skipped": skipped}
-                    local_new = len(new_concepts)
-                    local_skipped = skipped
-
+                result = {"status": "success", "new_concepts": outcome['new'], "skipped": outcome['skipped']}
+                local_new = len(outcome['new'])
+                local_skipped = outcome['skipped']
+                local_error = 1 if outcome['failed'] else 0
         except Exception as e:
             logger.error(f"Error annotating tweet {tweet_id}: {e}")
             result = {"error": str(e)}
@@ -344,27 +244,8 @@ async def batch_annotate_all_unannotated(
                 detail=f"An annotate-all task is already running (task_id={tid})"
             )
 
-    # Get all annotated tweet IDs from tag_instances
-    annotated_pipeline = [
-        {'$match': {'content_type': 'tweet'}},
-        {'$group': {'_id': '$content_id'}},
-        {'$project': {'content_id': '$_id', '_id': 0}}
-    ]
-    annotated_results = list(queries.tag_instances_aggregate__batch_annotate_all_unannotated(annotated_pipeline))
-    annotated_ids = set()
-    for r in annotated_results:
-        tid = r['content_id']
-        annotated_ids.add(tid)
-        # Also add as ObjectId if it's a valid string
-        if isinstance(tid, str) and len(tid) == 24:
-            try:
-                annotated_ids.add(ObjectId(tid))
-            except Exception:
-                pass
-
-    # Get all tweet IDs that are NOT annotated
-    all_tweet_ids = queries.tweets_distinct__batch_annotate_all_unannotated()
-    unannotated_ids = [tid for tid in all_tweet_ids if tid not in annotated_ids and str(tid) not in annotated_ids]
+    from app.services import concept_tagging
+    unannotated_ids = concept_tagging.untagged_ids('tweet')
 
     if not unannotated_ids:
         return {

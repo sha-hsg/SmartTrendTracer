@@ -307,8 +307,9 @@ red line per failure. Run it any time: `cd backend && venv/bin/python smoke_chec
 
 `start_stt.sh` also starts `backend/stt_scheduler.py` (log `logs/scheduler.log`): periodic
 jobs without fixed clock times, caught up after each start because the Mac is not always
-on — `tag_tweets` (every 6 h, via `POST /api/tweets/batch-annotate-all`: concept tags for new
-tweets, LLM task `tag_suggestion`; trend views count only tagged days), `paper_feed` (daily),
+on — `tag_content` (every 6 h: concept tags for untagged tweets, articles and processed papers via
+`app/services/concept_tagging.py`, LLM task `tag_suggestion`, prompt `concept_suggestion` — the same
+path as "Annotate all" and the tweet/article tag suggestions; trend views count only tagged days), `paper_feed` (daily),
 `rag_update` (daily, via `POST /api/rag/update`), `topic_map` (weekly, after the RAG update),
 `weekly_digest` (weekly; uses feed and topic map), `backup` (weekly `mongodump` gzip archive to
 `STT_BACKUP_DIR`, default `~/Backups/SmartTrendTracer`, newest 8 kept; restore:

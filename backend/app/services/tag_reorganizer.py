@@ -429,8 +429,10 @@ class LLMStrategy(ReorganizationStrategy):
 
     def analyze_tags(self, tags_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         try:
-            system_prompt = "You are an expert at analyzing tag taxonomies. Analyze the provided tags and identify: 1. Duplicate concepts with different spellings 2. Inconsistent naming conventions 3. Missing hierarchy relationships 4. Suggested root categories 5. Quality issues and recommendations"
-            user_prompt = f"Analyze these tags and provide insights:\n\nTotal tags: {len(tags_data)}\nSample tags: {json.dumps(tags_data[:100], indent=2)}\n\nProvide analysis as JSON."
+            from app.services.llm_manager import get_llm_manager
+            prompt = get_llm_manager().get_prompt('tag_taxonomy_analysis')
+            system_prompt = prompt['system']
+            user_prompt = prompt['user_template'].format(total=len(tags_data), sample=json.dumps(tags_data[:100], indent=2))
             result_text = self._call_llm(system_prompt, user_prompt, None, len(tags_data))
             if result_text:
                 try:

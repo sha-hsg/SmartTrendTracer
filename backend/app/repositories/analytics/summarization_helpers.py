@@ -147,199 +147,49 @@ def prepare_content_sample(
     return content_sample
 
 
-def _get_task_instructions(detail_level: str) -> str:
-    """Return level-specific task instructions for the LLM prompt."""
-    if detail_level == 'brief':
-        return """## Your Task
-
-Provide a concise 2-3 paragraph summary of the most important highlights. No section headers needed. Under 300 words. Focus on the single most impactful developments and key takeaways."""
-
-    if detail_level == 'detailed':
-        return """## Your Task
-
-Please provide a thorough and substantive summary including:
-
-### 1. Executive Summary
-A 3-4 sentence overview of the main themes, trends, and notable developments.
-
-### 2. Key Insights
-- What are the most important developments or announcements?
-- What topics are generating the most discussion?
-- Are there any emerging trends or shifts in focus?
-
-### 3. Notable Highlights
-- Significant product launches, research breakthroughs, or industry news
-- Influential voices or perspectives that stood out
-- Controversial or debated topics
-
-### 4. Engagement Analysis
-Analysis of what content resonated most with the audience based on engagement metrics.
-
-### 5. Emerging Trends & Patterns
-- Cross-cutting themes that appear across multiple sources
-- Connections between different developments
-- Early signals of upcoming shifts in the field
-
-### 6. Deep Dive: Notable Content
-Highlight 3-5 specific pieces of content (tweets, articles, or papers) that are particularly noteworthy. Include direct quotes or specific data points where available.
-
-Be thorough and substantive. Include specific quotes, data points, and concrete examples. Target 1000-1500 words."""
-
-    if detail_level == 'executive':
-        return """## Your Task
-
-Produce a comprehensive executive report including:
-
-### 1. Executive Summary
-A 4-5 sentence high-level overview of the most significant themes and developments.
-
-### 2. Key Insights & Developments
-- Major announcements, product launches, and breakthroughs
-- Topics generating the most discussion and why
-- Emerging trends and shifts in focus
-
-### 3. Notable Highlights
-- Significant research breakthroughs and industry news
-- Influential voices and standout perspectives
-- Controversial or heavily debated topics
-
-### 4. Engagement Analysis
-Detailed analysis of what content resonated most with the audience, with specific metrics and examples.
-
-### 5. Cross-Source Analysis
-- How do discussions on Twitter compare to article and paper coverage?
-- Are there topics covered in research that haven't reached social media yet (or vice versa)?
-- Identify gaps between academic and public discourse
-
-### 6. Sentiment & Reception
-- Overall sentiment around key topics
-- Community reactions to major announcements
-- Areas of consensus vs. disagreement
-
-### 7. Recommendations & Outlook
-- What should readers pay attention to in the coming weeks?
-- Which emerging topics are likely to grow in importance?
-- Strategic implications for practitioners and researchers
-
-### 8. Key Sources Appendix
-List the 5-10 most important individual sources (tweets, articles, papers) with brief descriptions of why they matter.
-
-Be exhaustive and analytical. Include specific quotes, data points, statistics, and concrete examples throughout. Target 2000+ words."""
-
-    # standard (default)
-    return """## Your Task
-
-Please provide a comprehensive summary including:
-
-### 1. Executive Summary
-A 3-4 sentence overview of the main themes, trends, and notable developments in the AI/ML space based on this content.
-
-### 2. Key Insights
-- What are the most important developments or announcements?
-- What topics are generating the most discussion?
-- Are there any emerging trends or shifts in focus?
-
-### 3. Notable Highlights
-- Any significant product launches, research breakthroughs, or industry news
-- Influential voices or perspectives that stood out
-- Controversial or debated topics
-
-### 4. Engagement Analysis
-Brief analysis of what content resonated most with the audience based on engagement metrics.
-
-Write in a professional, analytical tone. Be specific and cite examples from the content when possible."""
-
-
 def build_summarization_prompt(
     content_sample: List[str],
     key_topics: Counter,
     stats: Dict[str, Any],
     date_range_str: str,
     days: int,
+    prompt: Dict[str, Any],
     detail_level: str = 'standard',
     full_content: bool = False,
     author: str | None = None,
 ) -> str:
     """
-    Build the summarization prompt for LLM.
+    Build the summarization prompt from the texts in prompts_config.json
+    (key trend_summarization, passed in as `prompt` by the caller).
 
-    Args:
-        content_sample: List of content descriptions
-        key_topics: Counter of key topics
-        stats: Statistics dict
-        date_range_str: Human-readable date range
-        days: Number of days
-        detail_level: Controls prompt complexity and output length
-        full_content: If True, do not cap the content list inside the prompt.
-        author: Single-author filter (Twitter username, no @). When set, the
-            prompt frames the summary around that person instead of "the AI/ML
-            community".
-
-    Returns:
-        Formatted prompt string
+    full_content: do not cap the content list (else the first 15 lines).
+    author: single-author filter (Twitter username, no @) — frames the summary
+        around that person instead of "the AI/ML community".
     """
-    task_instructions = _get_task_instructions(detail_level)
-    # Hard cap of 15 lines is the historical brief default; bypass when caller
-    # asked for full content.
-    sample_for_prompt = content_sample if full_content else content_sample[:15]
+    sample = content_sample if full_content else content_sample[:15]
     tweet_count = stats.get('tweet_count', 0)
-    total_likes = stats.get('total_likes', 0)
-    total_retweets = stats.get('total_retweets', 0)
-
-    # 1) Author-aware framing.
     if author:
-        opener = (
-            f"You are an analyst summarizing one person's activity. Below are "
-            f"@{author}'s tweets {date_range_str} (the past {days} day(s)). "
-            f"Frame the summary around @{author} as an individual — what they "
-            f"posted about, what shifted, what stands out — not 'the community'."
-        )
+        opener = prompt['opener_author'].format(author=author, date_range=date_range_str, days=days)
         tweets_header = f"### Tweets by @{author} ({tweet_count} total, chronological)"
     else:
-        opener = (
-            f"You are an AI research analyst. Analyze the following AI/ML content "
-            f"{date_range_str} (the past {days} day(s)) and provide a comprehensive summary."
-        )
+        opener = prompt['opener_general'].format(date_range=date_range_str, days=days)
         tweets_header = f"### Tweets ({tweet_count} total, chronological)"
-
-    # 3) Skip the Key Topics block when the LLM has the raw tweets in plain sight
-    #    anyway. The block can bias the model toward our concept taxonomy
-    #    instead of what the tweets actually emphasize.
+    # Key topics only when the raw tweets are too many to read: the block biases
+    # the model toward the concept taxonomy instead of what the tweets emphasise
     topics_block = ""
     if tweet_count > 100 and key_topics:
-        topics_block = (
-            "\n### Key Topics (by frequency, for context only)\n"
-            + ', '.join(f"**{topic}** ({count})" for topic, count in key_topics.most_common(10))
-            + "\n"
-        )
-
-    # 2) Likes data is unreliable (collector doesn't always populate); only show
-    #    when non-zero. Retweets are populated for retweeted tweets, so it's
-    #    safer — but still skip if zero to avoid noise.
-    engagement_parts = []
-    if total_likes > 0:
-        engagement_parts.append(f"{total_likes:,} likes")
-    if total_retweets > 0:
-        engagement_parts.append(f"{total_retweets:,} retweets")
-    engagement_line = (
-        f"- Total engagement: {', '.join(engagement_parts)}\n"
-        if engagement_parts else ""
-    )
-
-    return f"""{opener}
-
-## Content to Analyze
-
-{tweets_header}
-{chr(10).join(sample_for_prompt)}
-{topics_block}
-### Statistics
-- Total tweets analyzed: {tweet_count}
-- Total articles analyzed: {stats.get('article_count', 0)}
-- Total papers analyzed: {stats.get('paper_count', 0)}
-- Unique authors: {stats.get('unique_authors', 0)}
-{engagement_line}
-{task_instructions}"""
+        topics_block = ("\n### Key Topics (by frequency, for context only)\n"
+                        + ', '.join(f"**{t}** ({c})" for t, c in key_topics.most_common(10)) + "\n")
+    # likes are not always populated by the collector: only show non-zero engagement
+    parts = [f"{stats.get(k, 0):,} {label}" for k, label in (('total_likes', 'likes'), ('total_retweets', 'retweets'))
+             if stats.get(k, 0) > 0]
+    engagement_line = f"- Total engagement: {', '.join(parts)}\n" if parts else ""
+    tasks = prompt['tasks']
+    return prompt['frame'].format(
+        opener=opener, tweets_header=tweets_header, content='\n'.join(sample), topics_block=topics_block,
+        tweet_count=tweet_count, article_count=stats.get('article_count', 0),
+        paper_count=stats.get('paper_count', 0), unique_authors=stats.get('unique_authors', 0),
+        engagement_line=engagement_line, task=tasks.get(detail_level, tasks['standard']))
 
 
 def build_fallback_summary(

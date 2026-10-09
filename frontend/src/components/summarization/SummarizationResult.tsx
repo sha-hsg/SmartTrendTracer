@@ -45,6 +45,7 @@ interface SummaryData {
     author: string | null
   }
   model_used?: string
+  summary_error?: string | null
   data_truncated?: boolean
   truncation_warning?: string | null
 }
@@ -178,6 +179,11 @@ export default function SummarizationResult({
               {wordCount > 0 && (
                 <Badge variant="secondary" className="text-xs">
                   ~{wordCount} words
+                </Badge>
+              )}
+              {summaryData.summary_error && (
+                <Badge variant="destructive" className="text-xs" title={summaryData.summary_error}>
+                  LLM failed — statistical fallback
                 </Badge>
               )}
               {summaryData.model_used && (

@@ -6,9 +6,7 @@ Generates suggestions with proper concept structure (display_name, slug).
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Optional
 from pydantic import BaseModel
-import json
 import logging
-from bson import ObjectId
 
 from app.services.concept_only_tag_service import ConceptOnlyTagService
 from app.services.llm_manager import get_llm_manager
@@ -69,82 +67,12 @@ async def suggest_concepts_for_tweet(tweet_id: str, request: ConceptSuggestionRe
     new_concepts = []
     actual_model = "unknown"  # Will be set to actual model used or "error" on exception
     try:
-        # Prepare prompt for LLM
-        prompt = f"""Analyze this tweet and suggest relevant concept tags.
-
-Tweet: {tweet['text']}
-
-Instructions:
-1. Suggest 3-5 relevant concepts for this tweet
-2. Focus on main topics, technologies, people, organizations mentioned
-3. Use snake_case for slugs (e.g., machine_learning, sam_altman)
-4. Use proper capitalization for display names (e.g., "Machine Learning", "Sam Altman")
-5. Avoid concepts already tagged: {', '.join(existing_slugs)}
-
-Return as JSON array with format:
-[
-  {{
-    "display_name": "Proper Name",
-    "slug": "snake_case_slug",
-    "entity_type": "topic|person|organisation|location|event|product"
-  }}
-]
-"""
-        
-        # Resolve deprecated model aliases centrally (MODEL_MIGRATION_MAP);
-        # without an explicit model the tag_suggestion task route decides.
-        selected_model = request.model
-        actual_model = (
-            llm_manager.MODEL_MIGRATION_MAP.get(selected_model, selected_model)
-            if selected_model else None
-        )
-
-        logger.info(f"Concept suggestion using LLMManager with tag_suggestion task type and model: {actual_model}")
-
-        # Convert to OpenAI message format
-        messages = [
-            {"role": "user", "content": prompt}
-        ]
-
-        # Call LLM Manager async with tag_suggestion task type and selected model
-        llm_response = await llm_manager.completion(
-            task_type='tag_suggestion',
-            messages=messages,
-            user_id='default',
-            override_params={'model': actual_model} if actual_model else None
-        )
-
-        response = llm_response.choices[0].message.content
-
-        # Get the actual model used from the response
-        actual_model = llm_response.model
-
-        # Parse JSON response
-        if response:
-            try:
-                # Extract JSON from response (handle markdown code blocks)
-                json_text = response.strip()
-                if json_text.startswith("```json"):
-                    json_text = json_text[7:]
-                if json_text.startswith("```"):
-                    json_text = json_text[3:]
-                if json_text.endswith("```"):
-                    json_text = json_text[:-3]
-
-                suggested = json.loads(json_text.strip())
-
-                # Filter out existing concepts and format
-                for concept in suggested:
-                    if concept['slug'] not in existing_slugs:
-                        new_concepts.append({
-                            "display_name": concept['display_name'],
-                            "slug": concept['slug'],
-                            "entity_type": concept.get('entity_type', 'topic'),
-                            "type": "new"
-                        })
-            except (json.JSONDecodeError, KeyError) as e:
-                logger.error(f"Error parsing LLM response: {e}")
-                logger.debug(f"Raw response: {response}")
+        from app.services import concept_tagging
+        suggested, actual_model = await concept_tagging.suggest_async(
+            'tweet', {'text': tweet.get('full_text') or tweet['text']}, list(existing_slugs), model=request.model)
+        for concept in suggested:
+            if concept['slug'] not in existing_slugs:
+                new_concepts.append({**concept, "type": "new"})
     except Exception as e:
         logger.error(f"Error generating concept suggestions: {e}")
         actual_model = "error"
@@ -211,69 +139,13 @@ async def suggest_concepts_for_reddit(post_id: str, request: ConceptSuggestionRe
         content_text = post.get('title', '')
         if post.get('selftext'):
             content_text += f"\n\n{post['selftext']}"
-
-        prompt = f"""Analyze this Reddit post and suggest relevant concept tags.
-
-Reddit Post (r/{post.get('subreddit', 'unknown')}): {content_text}
-
-Instructions:
-1. Suggest 3-5 relevant concepts for this post
-2. Focus on main topics, technologies, people, organizations mentioned
-3. Use snake_case for slugs (e.g., machine_learning, sam_altman)
-4. Use proper capitalization for display names (e.g., "Machine Learning", "Sam Altman")
-5. Avoid concepts already tagged: {', '.join(existing_slugs)}
-
-Return as JSON array with format:
-[
-  {{
-    "display_name": "Proper Name",
-    "slug": "snake_case_slug",
-    "entity_type": "topic|person|organisation|location|event|product"
-  }}
-]
-"""
-        # Resolve deprecated model aliases centrally (MODEL_MIGRATION_MAP);
-        # without an explicit model the tag_suggestion task route decides.
-        selected_model = request.model
-        actual_model = (
-            llm_manager.MODEL_MIGRATION_MAP.get(selected_model, selected_model)
-            if selected_model else None
-        )
-
-        logger.info(f"Reddit concept suggestion using LLMManager with model: {actual_model}")
-
-        messages = [{"role": "user", "content": prompt}]
-        llm_response = await llm_manager.completion(
-            task_type='tag_suggestion',
-            messages=messages,
-            user_id='default',
-            override_params={'model': actual_model} if actual_model else None
-        )
-
-        response = llm_response.choices[0].message.content
-        actual_model = llm_response.model
-
-        if response:
-            try:
-                json_text = response.strip()
-                if json_text.startswith("```json"):
-                    json_text = json_text[7:]
-                if json_text.startswith("```"):
-                    json_text = json_text[3:]
-                if json_text.endswith("```"):
-                    json_text = json_text[:-3]
-
-                suggested = json.loads(json_text.strip())
-                for concept in suggested:
-                    if concept['slug'] not in existing_slugs:
-                        new_concepts.append({
-                            "display_name": concept['display_name'],
-                            "slug": concept['slug'],
-                            "entity_type": concept.get('entity_type', 'topic'),
-                            "type": "new"
-                        })
-            except (json.JSONDecodeError, KeyError) as e:
-                logger.error(f"Error parsing LLM response for Reddit: {e}")
+        from app.services import concept_tagging
+        suggested, actual_model = await concept_tagging.suggest_async(
+            'reddit', {'title': f"r/{post.get('subreddit', 'unknown')}", 'text': content_text},
+            list(existing_slugs), model=request.model)
+        for concept in suggested:
+            if concept['slug'] not in existing_slugs:
+                new_concepts.append({**concept, "type": "new"})
     except Exception as e:
         logger.error(f"Error generating Reddit concept suggestions: {e}")
         actual_model = "error"

@@ -52,37 +52,15 @@ def test_tagging_runs_every_six_hours():
 
 
 def test_tagging_runs_first(monkeypatch):
-    assert list(sch.JOBS)[:1] == ['tag_tweets']
+    assert list(sch.JOBS)[:1] == ['tag_content']
     assert list(sch.JOBS).index('rag_update') < list(sch.JOBS).index('topic_map') < list(sch.JOBS).index('weekly_digest')
 
 
-class _Resp:
-    def __init__(self, code, body):
-        self.status_code, self._body = code, body
-
-    def json(self):
-        return self._body
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise RuntimeError(self.status_code)
-
-
-def test_tag_job_polls_until_done(monkeypatch):
-    import httpx
-    calls = []
-    monkeypatch.setattr(httpx, 'post', lambda url, **kw: calls.append(url) or _Resp(200, {'task_id': 't1', 'total': 3}))
-    states = iter([{'status': 'running'}, {'status': 'completed', 'total': 3, 'processed': 3,
-                                           'new_tags_count': 9, 'error_count': 0}])
-    monkeypatch.setattr(httpx, 'get', lambda url, **kw: _Resp(200, next(states)))
-    assert sch.job_tag_tweets(poll_seconds=0) == {'total': 3, 'processed': 3, 'new_tags_count': 9, 'error_count': 0}
-    assert calls[0].endswith('/api/tweets/batch-annotate-all')
-
-
-def test_tag_job_skips_when_a_ui_run_is_active(monkeypatch):
-    import httpx
-    monkeypatch.setattr(httpx, 'post', lambda url, **kw: _Resp(409, {}))
-    assert sch.job_tag_tweets(poll_seconds=0) == {'skipped': 'annotate-all already running'}
+def test_tag_content_covers_all_types(monkeypatch):
+    import app.services.concept_tagging as ct
+    seen = []
+    monkeypatch.setattr(ct, 'tag_untagged', lambda t: seen.append(t) or {'items': 0})
+    assert set(sch.job_tag_content()) == {'tweet', 'article', 'paper'} and seen == ['tweet', 'article', 'paper']
 
 
 def test_failed_job_waits_for_the_backoff(monkeypatch):

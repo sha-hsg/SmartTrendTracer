@@ -1,7 +1,7 @@
 """
 Concept Organization Service
 Organizes unorganized concepts into the hierarchy or identifies them as aliases.
-Uses configuration from llm.json and prompts_config.json
+Uses the LLM router (litellm_config.yaml) and prompts_config.json
 """
 
 import json

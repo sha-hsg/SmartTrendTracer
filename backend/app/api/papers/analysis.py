@@ -79,7 +79,7 @@ def get_saved_analyses(paper_id: str) -> Dict[str, Any]:
 
 @router.post("/{paper_id}/analyses")
 async def create_analysis(paper_id: str, analysis_type: str = Body(...), regenerate: bool = Body(False), model: Optional[str] = None) -> Dict[str, Any]:
-    """Create a new analysis for a paper using prompts_config.json and llm.json"""
+    """Create a new analysis for a paper (prompt from prompts_config.json, model via the LLM router)"""
 
     paper = papers_repo.find_paper_by_any_id(paper_id)
 
@@ -120,11 +120,8 @@ async def create_analysis(paper_id: str, analysis_type: str = Body(...), regener
     analysis_config = paper_analyses.get(analysis_type)
 
     if not analysis_config:
-        # Fallback configuration
-        analysis_config = {
-            'system': 'You are an expert at analyzing research papers.',
-            'user_template': 'Analyze this paper:\n\n{paper_content}'
-        }
+        raise HTTPException(status_code=400, detail=f"Unknown analysis type '{analysis_type}' "
+                                                    f"(not in prompts_config.json paper_analyses)")
 
     # Prepare prompts
     system_prompt = analysis_config.get('system', '')

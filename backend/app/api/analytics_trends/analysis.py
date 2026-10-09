@@ -290,6 +290,7 @@ def generate_summary(
     # Generate summary using LLM
     summary_text = ""
     model_used = model or "articleSummarization"
+    summary_error = None
 
     if content_sample:
         try:
@@ -297,37 +298,30 @@ def generate_summary(
             date_range_str = f"from {start_date.strftime('%B %d, %Y')} to {end_date.strftime('%B %d, %Y')}"
             prompt = build_summarization_prompt(
                 content_sample, key_topics, stats, date_range_str, days,
+                prompt=llm_manager.get_prompt('trend_summarization'),
                 detail_level=detail_level,
                 full_content=full_content,
                 # Only frame as single-author when the filter was actually applied
                 # (i.e. only tweets selected and author given).
                 author=author_filter_for_tweets,
             )
-
-            messages = [{"role": "user", "content": prompt}]
-
-            if model:
-                logger.info(f"Using selected model for summarization: {model}")
-                response = llm_manager.completion_sync(
-                    task_type=model,
-                    messages=messages,
-                    user_id='default'
-                )
-            else:
-                response = llm_manager.completion_sync(
-                    task_type='articleSummarization',
-                    messages=messages,
-                    user_id='default'
-                )
-
+            # a UI model choice is a model, not a task: route it via the central resolver
+            routed = llm_manager.resolve_model_override(model)
+            response = llm_manager.completion_sync(
+                task_type='articleSummarization',
+                messages=[{"role": "user", "content": prompt}],
+                user_id='default',
+                override_params={'model': routed} if routed else None,
+            )
             summary_text = response.choices[0].message.content
+            model_used = getattr(response, 'model', None) or model_used
             logger.info(f"Successfully generated summary using model: {model_used}")
 
         except Exception as e:
-            logger.error(f"Error generating LLM summary with model '{model_used}': {e}")
-            import traceback
-            logger.error(f"Traceback: {traceback.format_exc()}")
+            logger.exception(f"Error generating LLM summary with model '{model_used}'")
+            summary_error = f"{type(e).__name__}: {e}"[:300]
             summary_text = build_fallback_summary(key_topics, stats, days)
+            model_used = None          # the text below is the statistical fallback, not an LLM answer
     else:
         # No content even after auto-extending — truly empty for this filter combo
         if author:
@@ -381,6 +375,7 @@ def generate_summary(
             "author": author
         },
         "model_used": model_used,
+        "summary_error": summary_error,
         "data_truncated": data_truncated,
         "truncation_warning": truncation_warning,
         "limits_used": {

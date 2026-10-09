@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-STT scheduler: runs periodic jobs (tweet tagging every few hours, daily paper
+STT scheduler: runs periodic jobs (content tagging every few hours, daily paper
 feed and RAG index update, weekly topic map, digest and database backup)
 while STT is running.
 
@@ -30,7 +30,6 @@ CHECK_EVERY_SECONDS = 300
 DAILY_AFTER = timedelta(hours=20)
 TAGGING_EVERY = timedelta(hours=6)
 FAILURE_BACKOFF = timedelta(hours=2)   # after a failed run, wait before retrying (no retry storm)
-TAGGING_TIMEOUT_SECONDS = 3600
 
 
 def due_daily(last_success: Optional[datetime], now: datetime) -> bool:
@@ -64,31 +63,12 @@ def job_rag_update():
     return r.json().get('stats')
 
 
-def job_tag_tweets(poll_seconds: float = 10.0):
-    """Concept tags for new tweets via the backend's batch annotation (same
-    path as "Annotate all" in the UI, LLM task tag_suggestion). Trend views
-    only count tagged days, so untagged tweets would otherwise be missing."""
-    import time
-    import httpx
-    from app.config import settings
-    base = f'http://localhost:{settings.backend_port}/api/tweets'
-    r = httpx.post(f'{base}/batch-annotate-all', json={'concurrency': 4}, timeout=120)
-    if r.status_code == 409:                      # a run started from the UI is still going
-        return {'skipped': 'annotate-all already running'}
-    r.raise_for_status()
-    started = r.json()
-    if not started.get('task_id'):
-        return {'tagged': 0, 'untagged': 0}
-    deadline = time.monotonic() + TAGGING_TIMEOUT_SECONDS
-    status = {}
-    while time.monotonic() < deadline:
-        time.sleep(poll_seconds)
-        status = httpx.get(f"{base}/batch-annotate/{started['task_id']}/status", timeout=30).json()
-        if status.get('status') in ('completed', 'cancelled', 'failed'):
-            break
-    if status.get('status') != 'completed':
-        raise RuntimeError(f"tagging ended with status {status.get('status', 'timeout')}")
-    return {k: status.get(k) for k in ('total', 'processed', 'new_tags_count', 'error_count')}
+def job_tag_content():
+    """Concept tags for untagged tweets, articles and processed papers
+    (app.services.concept_tagging, LLM task tag_suggestion). Trend views only
+    count tagged days; untagged papers/articles were missing from search."""
+    from app.services import concept_tagging
+    return {t: concept_tagging.tag_untagged(t) for t in ('tweet', 'article', 'paper')}
 
 
 def job_paper_feed():
@@ -124,7 +104,7 @@ def job_weekly_digest():
 # trend views count only tagged days), the topic map uses the freshly updated
 # RAG index, the digest uses the feed and the topic map.
 JOBS: Dict[str, Dict] = {
-    'tag_tweets': {'run': job_tag_tweets, 'due': due_tagging},
+    'tag_content': {'run': job_tag_content, 'due': due_tagging},
     'paper_feed': {'run': job_paper_feed, 'due': due_daily},
     'rag_update': {'run': job_rag_update, 'due': due_daily},
     'topic_map': {'run': job_topic_map, 'due': due_weekly},

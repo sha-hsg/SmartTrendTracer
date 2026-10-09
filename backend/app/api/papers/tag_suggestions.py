@@ -90,15 +90,8 @@ async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dic
         if isinstance(authors, list):
             authors = ', '.join(authors)
 
-        # Load prompts configuration
-        import json
-        import os
-        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
-        with open(os.path.join(backend_dir, 'prompts_config.json'), 'r') as f:
-            prompts_config = json.load(f)
-
-        # Get paper tag suggestion prompt
-        tag_config = prompts_config.get('paper_tag_suggestion', {})
+        # Paper tag suggestion prompt (prompts_config.json via the LLM manager)
+        tag_config = llm_manager.get_prompt('paper_tag_suggestion') or {}
         system_prompt = tag_config.get('system', '')
         user_template = tag_config.get('user_template', '')
         max_tags = tag_config.get('max_tags', 30)
@@ -163,13 +156,18 @@ async def get_tag_suggestions(paper_id: str, model: Optional[str] = None) -> Dic
         already_tagged_names = {t.lower() for t in already_tagged}
         existing_suggestion_names = {s['display_name'].lower() for s in existing_suggestions}
 
+        from app.repositories.concepts import concept_slug
         for tag in llm_tags:
+            if isinstance(tag, dict):                 # tolerate {display_name: ...} items
+                tag = tag.get('display_name', '')
+            if not isinstance(tag, str) or not tag.strip():
+                continue
             tag_lower = tag.lower()
             if tag_lower not in already_tagged_names and tag_lower not in existing_suggestion_names:
                 # It's a genuinely new suggestion from LLM
                 new_suggestions.append({
                     'display_name': tag,
-                    'slug': tag.lower().replace(' ', '-'),
+                    'slug': concept_slug(tag),
                     'is_new': True
                 })
 
