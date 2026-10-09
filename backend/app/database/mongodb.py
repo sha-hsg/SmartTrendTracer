@@ -220,7 +220,7 @@ def _ensure_indexes(db: Database) -> None:
         ("papers", [("conference", ASCENDING)]),
         ("papers", [("concept_ids", ASCENDING)]),
         ("papers", [("authors_detailed.name", ASCENDING)]),  # PERF-002: Index for author name searches
-        ("tag_instances", [("content_type", ASCENDING), ("content_id", ASCENDING), ("concept_id", ASCENDING)]),
+        # (content_type, content_id, concept_id) is covered by the unique index unique_tag_assignment
         ("tag_instances", [("concept_id", ASCENDING)]),
         ("articles", [("created_at", DESCENDING)]),
         ("articles", [("author_id", ASCENDING)]),
@@ -229,6 +229,8 @@ def _ensure_indexes(db: Database) -> None:
         ("books", [("processing_status", ASCENDING)]),
         ("books", [("concept_ids", ASCENDING)]),
         ("topic_maps", [("created_at", DESCENDING)]),
+        ("llm_usage", [("timestamp", DESCENDING)]),            # system stats aggregate by time
+        ("book_processing_jobs", [("status", ASCENDING), ("created_at", ASCENDING)]),
         ("books", [("file_type", ASCENDING)]),
         ("books", [("publisher", ASCENDING)]),
         ("books", [("publication_year", ASCENDING)]),
@@ -236,6 +238,22 @@ def _ensure_indexes(db: Database) -> None:
 
     # Text indexes for full-text search (PERF-002)
     # Note: MongoDB allows only ONE text index per collection, so we combine fields
+    # Redundant indexes (2026-10 review): duplicates of another index, prefixes of the unique
+    # tag index, or on fields no document has. Dropped if present; each costs write time.
+    redundant_indexes = [
+        ("papers", "doi_unique"), ("papers", "arxiv_id_unique"), ("papers", "created_at_1"),
+        ("tag_instances", "content_type_1_content_id_1_concept_id_1"),
+        ("tag_instances", "content_type_1_content_id_1"), ("tag_instances", "content_type_1"),
+        ("tag_instances", "tag_text_1"), ("tag_instances", "original_text_1"),
+    ]
+    for collection_name, index_name in redundant_indexes:
+        try:
+            if index_name in db[collection_name].index_information():
+                db[collection_name].drop_index(index_name)
+                logger.info("Dropped redundant index %s.%s", collection_name, index_name)
+        except Exception as exc:
+            logger.warning("Could not drop index %s.%s: %s", collection_name, index_name, exc)
+
     text_index_definitions = [
         # Papers: search across title, abstract, and content
         ("papers", [("title", TEXT), ("abstract", TEXT), ("content_markdown", TEXT)], "papers_text_search"),

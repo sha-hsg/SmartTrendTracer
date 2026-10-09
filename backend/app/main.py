@@ -14,7 +14,6 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import os
 import logging
-from pymongo import ASCENDING
 from app.database.mongodb import get_client, get_database
 
 # Configure logging to both file and console
@@ -303,12 +302,6 @@ async def startup_event():
                 logger.info(f"Dropped legacy text index {collection_name}.{index_name}")
         except Exception as e:
             logger.warning(f"Could not drop legacy text index {collection_name}.{index_name}: {e}")
-
-    try:
-        # Not covered by app.database.mongodb._ensure_indexes
-        db.book_processing_jobs.create_index([("status", ASCENDING), ("created_at", ASCENDING)])
-    except Exception as e:
-        logger.warning(f"Could not create book_processing_jobs index: {e}")
 
     if dropped_legacy:
         # Re-run the central index creation now that the conflicting legacy
