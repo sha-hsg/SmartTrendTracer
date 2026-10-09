@@ -29,7 +29,8 @@ export interface Paper {
   is_flagged?: boolean
   flag_notes?: string
   tei_content?: string
-  analyses?: Array<any>
+  analyses?: Array<any>  // list view: only the Mollick summary
+  analysis_count?: number
   ai_summary?: string
   key_findings?: string[]
   readability?: {

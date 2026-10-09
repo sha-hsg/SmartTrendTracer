@@ -2,6 +2,7 @@
 Concept CRUD operations and hierarchy views.
 Tree, list, detail, create, update, delete endpoints.
 """
+from typing import Dict, Optional
 from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timezone
 from bson import ObjectId
@@ -18,85 +19,76 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+TREE_LOOSE_LIMIT = 500   # parentless, childless concepts shown without a search (of ~26k)
+
+
 @router.get("/tree")
-def get_tree():
-    """Get the complete tag tree - returns array for frontend compatibility"""
-    try:
+def get_tree(q: Optional[str] = Query(None, description="Name/slug/alias search over all concepts"),
+             limit: int = Query(TREE_LOOSE_LIMIT, ge=1, le=5000)):
+    """Concept tree, built from `parents` (the `children` lists are stale).
 
-        # Get all concepts
-        all_concepts = list(queries.find_active_concepts())
+    Without q: every concept placed in the hierarchy plus the `limit` most used
+    loose concepts (was: all 28k concepts, 7.8 MB, and the ~2000 concepts with a
+    parent were missing). With q: the matching concepts (most used first, up to
+    `limit`) and their ancestors."""
+    concepts = {str(c["_id"]): c for c in queries.find_active_concepts()}
+    usage = ontology_repo.usage_counts()
+    synonyms: Dict[str, list] = {}
+    for alias in ontology_repo.find_all_aliases():
+        if alias.get("alias_text"):
+            synonyms.setdefault(str(alias.get("concept_id")), []).append(alias["alias_text"])
 
-        # Get all aliases in one query, keyed by the string form of concept_id
-        # (aliases store concept_id as ObjectId; legacy rows may hold "c_..." strings)
-        all_aliases = list(ontology_repo.find_all_aliases())
-        aliases_by_concept = {}
-        for alias in all_aliases:
-            key = str(alias.get("concept_id"))
-            aliases_by_concept.setdefault(key, []).append(alias["alias_text"])
+    parents = {cid: [str(p) for p in c.get("parents") or [] if str(p) in concepts] for cid, c in concepts.items()}
+    children: Dict[str, list] = {}
+    for cid, ps in parents.items():
+        for p in ps:
+            children.setdefault(p, []).append(cid)
 
-        # Build concept map - handle both id and _id fields
-        concept_map = {}
-        for c in all_concepts:
-            # Use 'id' if it exists, otherwise use '_id' converted to string
-            concept_id = c.get("id") or str(c["_id"])
-            c["id"] = concept_id  # Ensure concept has an 'id' field
-            concept_map[concept_id] = c
-            # Also map by ObjectId string representation for child lookups
-            if "_id" in c:
-                concept_map[str(c["_id"])] = c
-            # Merge synonyms stored under either key (ObjectId string or custom id)
-            oid_str = str(c.get("_id"))
-            synonyms = list(aliases_by_concept.get(oid_str, []))
-            if concept_id != oid_str:
-                synonyms += aliases_by_concept.get(concept_id, [])
-            c["_synonyms"] = list(dict.fromkeys(synonyms))
+    def by_usage(ids):
+        return sorted(ids, key=lambda i: (-usage.get(i, 0), (concepts[i].get("display_name") or "").lower()))
 
-        # Find root concepts (no parents)
-        root_concepts = []
-        for concept in all_concepts:
-            if not concept.get("parents") or len(concept["parents"]) == 0:
-                root_concepts.append(concept)
+    if q:
+        needle = q.strip().lower()
+        matches = [cid for cid, c in concepts.items()
+                   if needle in (c.get("display_name") or "").lower() or needle in (c.get("slug") or "").lower()
+                   or any(needle in a.lower() for a in synonyms.get(cid, []))]
+        keep, stack = set(), by_usage(matches)[:limit]
+        while stack:                                   # matches plus all their ancestors
+            cid = stack.pop()
+            if cid not in keep:
+                keep.add(cid)
+                stack.extend(parents[cid])
+    else:
+        placed = {cid for cid in concepts if parents[cid] or cid in children}
+        loose = [cid for cid in concepts if cid not in placed]
+        keep = placed | set(by_usage(loose)[:limit])
 
-        # Build hierarchy recursively
-        def build_hierarchy(concept):
-            """Build hierarchy node with children"""
-            concept_id = concept.get("id", concept.get("_id"))
-            node = {
-                "id": concept_id,
-                "tag": concept["slug"],  # Frontend expects 'tag'
-                "slug": concept["slug"],
-                "display_name": concept["display_name"],
-                "description": concept.get("description"),
-                "entity_type": concept.get("entity_type"),
-                "icon": concept.get("icon"),
-                "color": concept.get("color"),
-                "child_count": len(concept.get("children", [])),
-                "descendant_count": len(concept.get("children", [])),  # Simplified
-                "synonyms": concept.get("_synonyms", [])  # Pre-fetched, both id keys merged
-            }
+    def node(cid, path=()):
+        c = concepts[cid]
+        kids = [k for k in by_usage(children.get(cid, [])) if k in keep and k not in path]
+        n = {
+            "id": cid,
+            "tag": c.get("slug"),  # frontend expects 'tag'
+            "slug": c.get("slug"),
+            "display_name": c.get("display_name") or c.get("slug"),
+            "description": c.get("description"),
+            "entity_type": c.get("entity_type"),
+            "icon": c.get("icon"),
+            "color": c.get("color"),
+            "usage_count": usage.get(cid, 0),
+            "child_count": len(children.get(cid, [])),
+            "descendant_count": len(children.get(cid, [])),
+            "synonyms": list(dict.fromkeys(synonyms.get(cid, []))),
+        }
+        if kids:
+            n["children"] = [node(k, path + (cid,)) for k in kids]
+        return n
 
-            # Add children recursively
-            if concept.get("children"):
-                node["children"] = []
-                for child_id in concept["children"]:
-                    # Convert ObjectId to string for lookup
-                    child_id_str = str(child_id) if isinstance(child_id, ObjectId) else child_id
-                    if child_id_str in concept_map:
-                        child_node = build_hierarchy(concept_map[child_id_str])
-                        node["children"].append(child_node)
-
-            return node
-
-        # Build tree from roots - sort by priority first, then by display_name
-        tree = [build_hierarchy(root) for root in sorted(root_concepts, key=lambda x: (x.get("priority", 999), x["display_name"]))]
-
-        return tree
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in get_tree: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching tree: {str(e)}")
+    roots = [cid for cid in keep if not any(p in keep for p in parents[cid])]
+    # hierarchy roots first (by priority, name), then loose concepts by usage
+    roots.sort(key=lambda i: (i not in children, concepts[i].get("priority", 999) if i in children else 0,
+                              -usage.get(i, 0), (concepts[i].get("display_name") or "").lower()))
+    return [node(r) for r in roots]
 
 
 @router.get("/concepts")

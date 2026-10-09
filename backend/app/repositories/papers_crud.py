@@ -50,6 +50,12 @@ def _format_paper_list_item(paper: dict, concept_refs: list) -> dict:
         elif isinstance(paper['analyses'], list):
             analyses_data = paper['analyses']
 
+    # The list shows only the Mollick summary and a count; the full analyses (up to
+    # ~1 MB per 100 papers) are loaded by the paper viewer via GET /{paper_id}.
+    analysis_count = len(analyses_data)
+    analyses_data = [a for a in analyses_data if isinstance(a, dict) and 'mollick_summary' in
+                     (a.get('analysis_type'), a.get('analysis_name'), a.get('type'))]
+
     return {
         'id': str(paper['_id']),
         'title': paper.get('title'),
@@ -78,6 +84,7 @@ def _format_paper_list_item(paper: dict, concept_refs: list) -> dict:
         'readability': readability_metrics,
         'paper_type': paper.get('paper_type', 'research'),
         'analyses': analyses_data,
+        'analysis_count': analysis_count,
     }
 
 
@@ -204,19 +211,21 @@ def get_papers(page, page_size, search, search_mode, concept_id, concept_ids, au
     total = db.papers.count_documents(query)
     skip = (page - 1) * page_size
     sort_direction = DESCENDING if sort_order == "desc" else ASCENDING
+    # full text / TEI are not part of the list item; do not read them from MongoDB
+    heavy = {'content': 0, 'tei_content': 0, 'tei_xml': 0, 'markdown_content': 0}
 
     if sort_by == "rating":
         sort_criteria = [
             ('user_rating', DESCENDING if sort_order == "desc" else ASCENDING),
             ('created_at', DESCENDING),
         ]
-        cursor = db.papers.find(query).sort(sort_criteria).skip(skip).limit(page_size)
+        cursor = db.papers.find(query, heavy).sort(sort_criteria).skip(skip).limit(page_size)
     elif sort_by == "title":
-        cursor = db.papers.find(query).sort('title', sort_direction).skip(skip).limit(page_size)
+        cursor = db.papers.find(query, heavy).sort('title', sort_direction).skip(skip).limit(page_size)
     elif sort_by == "publication_date":
-        cursor = db.papers.find(query).sort('publication_date', sort_direction).skip(skip).limit(page_size)
+        cursor = db.papers.find(query, heavy).sort('publication_date', sort_direction).skip(skip).limit(page_size)
     else:
-        cursor = db.papers.find(query).sort('created_at', sort_direction).skip(skip).limit(page_size)
+        cursor = db.papers.find(query, heavy).sort('created_at', sort_direction).skip(skip).limit(page_size)
 
     papers = list(cursor)
 

@@ -43,6 +43,7 @@ interface ConceptFacet {
   aggregate_count?: number
   entity_type?: string
   children?: ConceptFacet[]
+  hidden_children?: number  // used children beyond the per-level cap
   parents?: string[]
 }
 

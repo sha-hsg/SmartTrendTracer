@@ -46,6 +46,7 @@ interface ConceptFacet {
   aggregate_count?: number
   entity_type?: string
   children?: ConceptFacet[]
+  hidden_children?: number  // used children beyond the per-level cap
   parents?: string[]
 }
 
@@ -159,6 +160,9 @@ export default function TweetFilterPanel({
                 {renderHierarchicalConcept(child, level + 1)}
               </React.Fragment>
             ))}
+            {!!concept.hidden_children && (
+              <div className="ml-6 text-xs text-muted-foreground">+{concept.hidden_children} less used</div>
+            )}
           </div>
         )}
       </div>

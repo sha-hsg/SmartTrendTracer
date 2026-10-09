@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import http from '@/services/http'
 import type { ConceptTreeNode } from './ConceptTreePanel'
 import type { Concept, UnorganizedConcept, OrganizationSuggestion, OntologyStats } from './types'
@@ -42,11 +42,22 @@ export default function useConceptManagement() {
     }
   }, [activeTab])
 
+  useEffect(() => {
+    searchRef.current = searchQuery
+    const t = setTimeout(() => { fetchTreeData() }, 350)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery])
+
   // Fetch functions
+  // The tree holds the hierarchy plus the most used loose concepts; a search
+  // asks the server, which looks through all ~28k concepts (and aliases)
+  const searchRef = useRef('')
   const fetchTreeData = async () => {
     setLoading(true)
     try {
-      const response = await http.get('/api/ontology/tree')
+      const q = searchRef.current.trim()
+      const response = await http.get('/api/ontology/tree', { params: q.length >= 2 ? { q } : {} })
       setTreeData(response.data)
     } catch (err: any) {
       setError('Failed to load concept hierarchy')

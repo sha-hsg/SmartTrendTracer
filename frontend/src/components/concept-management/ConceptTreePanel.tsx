@@ -28,6 +28,8 @@ interface ConceptTreeNode {
   auto_generated?: boolean
   verified?: boolean
   quality_score?: number
+  synonyms?: string[]
+  usage_count?: number
 
   children?: ConceptTreeNode[]
   children_details?: ConceptTreeNode[]
@@ -68,8 +70,10 @@ export default function ConceptTreePanel({
 
     const filterNodes = (nodes: ConceptTreeNode[]): ConceptTreeNode[] => {
       return nodes.reduce((acc: ConceptTreeNode[], node) => {
-        const matchesSearch = node.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             node.slug.toLowerCase().includes(searchQuery.toLowerCase())
+        const needle = searchQuery.toLowerCase()
+        const matchesSearch = node.display_name.toLowerCase().includes(needle) ||
+                             (node.slug || '').toLowerCase().includes(needle) ||
+                             (node.synonyms || []).some((a: string) => a.toLowerCase().includes(needle))
 
         const children = node.children || node.children_details || []
         const filteredChildren = children.length > 0 ? filterNodes(children) : []

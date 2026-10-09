@@ -65,6 +65,9 @@ export function usePaperEventListeners({
             return {
               ...paper,
               analyses: updatedAnalyses,
+              // the list holds only the Mollick summary: a new type raises the count
+              analysis_count: (paper.analysis_count ?? paper.analyses?.length ?? 0)
+                + (analysisIndex >= 0 ? 0 : 1),
             };
           }
           return paper;

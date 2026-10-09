@@ -307,7 +307,7 @@ def format_article_for_faceted(article: dict, author: Optional[dict], concepts: 
         'subtitle': article.get('subtitle'),
         'url': article.get('url'),
         'preview': article.get('preview'),
-        'content': content,
+        # no full text in the list (~14 KB per article); the viewer loads it by id
         'content_length': len(content) if content else 0,
         'author': {
             'name': author.get('name') if author else None,

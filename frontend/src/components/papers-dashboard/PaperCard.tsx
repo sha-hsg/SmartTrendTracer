@@ -98,6 +98,8 @@ const PaperCard: React.FC<PaperCardProps> = ({
     a.analysis_name === 'mollick_summary' ||
     a.type === 'mollick_summary'
   )
+  // the list carries only the Mollick summary; analysis_count is the full number
+  const analysisCount: number = paper.analysis_count ?? paper.analyses?.length ?? 0
   const summaryContent = mollickSummary?.content || mollickSummary?.analysis_content || ''
 
   return (
@@ -222,7 +224,7 @@ const PaperCard: React.FC<PaperCardProps> = ({
             </div>
 
             {/* Additional Metadata */}
-            {(paper.tei_content || (paper.analyses && paper.analyses.length > 0)) && (
+            {(paper.tei_content || analysisCount > 0) && (
               <div className="flex items-center gap-2 mb-2">
                 {paper.tei_content && (
                   <div className="flex items-center text-xs text-blue-600 dark:text-blue-400" title="TEI/XML available">
@@ -230,10 +232,10 @@ const PaperCard: React.FC<PaperCardProps> = ({
                     XML
                   </div>
                 )}
-                {paper.analyses && paper.analyses.length > 0 && (
-                  <div className="flex items-center text-xs text-purple-600 dark:text-purple-400" title={`${paper.analyses.length} ${paper.analyses.length === 1 ? 'analysis' : 'analyses'} available`}>
+                {analysisCount > 0 && (
+                  <div className="flex items-center text-xs text-purple-600 dark:text-purple-400" title={`${analysisCount} ${analysisCount === 1 ? 'analysis' : 'analyses'} available`}>
                     <BarChart3 className="h-3 w-3 mr-1" />
-                    {paper.analyses.length} {paper.analyses.length === 1 ? 'Analysis' : 'Analyses'}
+                    {analysisCount} {analysisCount === 1 ? 'Analysis' : 'Analyses'}
                   </div>
                 )}
               </div>

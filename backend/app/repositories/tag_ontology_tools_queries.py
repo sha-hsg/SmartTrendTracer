@@ -22,13 +22,6 @@ def tag_instances_find__rebuild_mappings():
     return db.tag_instances.find({"concept_id": None})
 
 
-def tag_instances_aggregate__get_ontology_graph():
-    """tag_instances.aggregate from tag_ontology.tools.get_ontology_graph()"""
-    return db.tag_instances.aggregate([
-                {"$group": {"_id": "$concept_id", "count": {"$sum": 1}}}
-            ])
-
-
 def tag_instances_update_one__rebuild_mappings(orphan, concept_id):
     """tag_instances.update_one from tag_ontology.tools.rebuild_mappings()"""
     return db.tag_instances.update_one(

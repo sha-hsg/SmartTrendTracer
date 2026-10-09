@@ -1,7 +1,8 @@
 """
 Ontology tools: statistics, graph visualization, export, and mapping rebuild.
 """
-from fastapi import APIRouter, HTTPException
+from typing import Dict
+from fastapi import APIRouter, HTTPException, Query
 from datetime import datetime, timezone
 from bson import ObjectId
 import logging
@@ -99,121 +100,60 @@ def get_stats():
 
 
 @router.get("/graph")
-async def get_ontology_graph(include_synonyms: bool = False):
-    """Get concept hierarchy as graph data for visualization"""
-    try:
+async def get_ontology_graph(include_synonyms: bool = False,
+                             limit: int = Query(300, ge=0, le=5000, description="loose concepts, most used first")):
+    """Concept hierarchy as graph data: every concept placed in the hierarchy plus
+    the `limit` most used loose concepts. Links come from `parents` (the `children`
+    lists are stale). Was: all 28k concepts as nodes, 9 MB, almost no links."""
+    concepts = {str(c["_id"]): c for c in queries.find_all_concepts()}
+    usage = ontology_repo.usage_counts()
+    parents = {cid: [str(p) for p in c.get("parents") or [] if str(p) in concepts] for cid, c in concepts.items()}
+    child_count: Dict[str, int] = {}
+    for ps in parents.values():
+        for p in ps:
+            child_count[p] = child_count.get(p, 0) + 1
 
-        # Get all concepts
-        concepts = list(queries.find_all_concepts())
+    placed = [cid for cid in concepts if parents[cid] or cid in child_count]
+    loose = sorted((cid for cid in concepts if not parents[cid] and cid not in child_count),
+                   key=lambda i: -usage.get(i, 0))[:limit]
+    graph_ids = {cid: f"c_{idx}" for idx, cid in enumerate(placed + loose)}
 
-        # Usage counts in ONE aggregation (tag_instances stores concept_id as
-        # ObjectId with a small legacy remainder as strings - merge by str key)
-        usage_by_concept = {}
-        for row in queries.tag_instances_aggregate__get_ontology_graph():
-            key = str(row["_id"])
-            usage_by_concept[key] = usage_by_concept.get(key, 0) + row["count"]
+    nodes = []
+    for cid, simple_id in graph_ids.items():
+        c = concepts[cid]
+        nodes.append({
+            "id": simple_id,
+            "concept_id": cid,
+            "name": c.get("display_name") or c.get("slug"),
+            "display_name": c.get("display_name") or c.get("slug"),
+            "slug": c.get("slug"),
+            "hierarchy_level": 1 if parents[cid] else 0,
+            "usage_count": usage.get(cid, 0),
+            "entity_type": c.get("entity_type", "concept"),
+            "description": c.get("description"),
+            "verified": c.get("verified", False),
+            "quality_score": c.get("quality_score", 0.5),
+            "child_count": child_count.get(cid, 0),
+            "descendant_count": child_count.get(cid, 0),
+            "is_synonym": False,
+        })
+    links = [{"source": graph_ids[p], "target": graph_ids[cid], "strength": 1.0, "type": "parent-child"}
+             for cid in graph_ids for p in parents[cid] if p in graph_ids]
 
-        # Build nodes
-        nodes = []
-        concept_id_map = {}  # Map MongoDB _id to simple numeric ID for graph
-
-        for idx, concept in enumerate(concepts):
-            concept_id = str(concept["_id"])
-            simple_id = f"c_{idx}"
-            concept_id_map[concept_id] = simple_id
-
-            # Look up usage under both id representations
-            usage_count = usage_by_concept.get(concept_id, 0)
-            custom_id = concept.get("id")
-            if custom_id and custom_id != concept_id:
-                usage_count += usage_by_concept.get(custom_id, 0)
-
-            # Determine hierarchy level
-            hierarchy_level = 0
-            if concept.get("parents"):
-                hierarchy_level = 1
-                # Could calculate deeper levels if needed
-
-            node = {
-                "id": simple_id,
-                "name": concept["display_name"],
-                "display_name": concept["display_name"],
-                "slug": concept["slug"],
-                "hierarchy_level": hierarchy_level,
-                "usage_count": usage_count,
-                "entity_type": concept.get("entity_type", "concept"),
-                "description": concept.get("description"),
-                "verified": concept.get("verified", False),
-                "quality_score": concept.get("quality_score", 0.5),
-                "child_count": len(concept.get("children", [])),
-                "descendant_count": concept.get("descendant_count", 0),
-                "is_synonym": False
-            }
-            nodes.append(node)
-
-        # Add synonym nodes if requested
-        if include_synonyms:
-            aliases = list(ontology_repo.find_all_aliases())
-            for idx, alias in enumerate(aliases):
-                alias_id = f"a_{idx}"
-                concept_id = str(alias["concept_id"])
-                if concept_id in concept_id_map:
-                    node = {
-                        "id": alias_id,
-                        "name": alias["alias_text"],
-                        "display_name": alias["alias_text"],
-                        "slug": alias["alias_text"].lower().replace(" ", "-"),
-                        "hierarchy_level": 2,
-                        "usage_count": 0,
-                        "entity_type": "synonym",
-                        "is_synonym": True,
-                        "parent_concept": concept_id_map[concept_id]
-                    }
-                    nodes.append(node)
-
-        # Build links
-        links = []
-
-        # Parent-child relationships
-        for concept in concepts:
-            concept_id = str(concept["_id"])
-            if concept_id not in concept_id_map:
+    if include_synonyms:
+        for idx, alias in enumerate(ontology_repo.find_all_aliases()):
+            owner = graph_ids.get(str(alias.get("concept_id")))
+            text = alias.get("alias_text")
+            if not owner or not text:
                 continue
+            alias_id = f"a_{idx}"
+            nodes.append({"id": alias_id, "name": text, "display_name": text,
+                          "slug": text.lower().replace(" ", "-"), "hierarchy_level": 2, "usage_count": 0,
+                          "entity_type": "synonym", "is_synonym": True, "parent_concept": owner})
+            links.append({"source": owner, "target": alias_id, "strength": 0.5, "type": "synonym"})
 
-            source_id = concept_id_map[concept_id]
-
-            # Add links to children
-            if concept.get("children"):
-                for child_id in concept["children"]:
-                    child_id_str = str(child_id)
-                    if child_id_str in concept_id_map:
-                        links.append({
-                            "source": source_id,
-                            "target": concept_id_map[child_id_str],
-                            "strength": 1.0,
-                            "type": "parent-child"
-                        })
-
-        # Synonym relationships if included
-        if include_synonyms:
-            for idx, alias in enumerate(aliases):
-                alias_id = f"a_{idx}"
-                concept_id = str(alias["concept_id"])
-                if concept_id in concept_id_map:
-                    links.append({
-                        "source": concept_id_map[concept_id],
-                        "target": alias_id,
-                        "strength": 0.5,
-                        "type": "synonym"
-                    })
-
-        return {
-            "nodes": nodes,
-            "links": links
-        }
-    except Exception as e:
-        logger.error(f"Error generating graph data: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    return {"nodes": nodes, "links": links, "total_concepts": len(concepts),
+            "hidden_concepts": len(concepts) - len(graph_ids)}
 
 
 @router.get("/export")

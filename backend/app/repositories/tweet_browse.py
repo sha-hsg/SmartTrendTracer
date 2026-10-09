@@ -291,61 +291,71 @@ def tweet_to_response_dict(tweet: Dict, profile_images: Dict,
     return tweet_dict
 
 
+HIERARCHY_ROOT_LIMIT = 200      # the facet sidebar lists these; the concept search covers the rest
+HIERARCHY_CHILD_LIMIT = 50
+
+
 def build_hierarchy_tree() -> Dict:
-    all_concepts = db.tag_concepts_v2.find().limit(5000)
+    """Concept tree for the tweet facets: only branches that contain tagged
+    tweets, most used first, capped per level. (Was: the first 5000 of 28k concepts, unpruned — 1.1 MB with only
+    16 % of the used concepts in it.)"""
+    count_map: Dict[str, int] = {}
+    for c in db.tag_instances.aggregate([
+            {'$match': {'content_type': 'tweet'}},
+            {'$group': {'_id': '$concept_id', 'count': {'$sum': 1}}}]):
+        if c['_id'] is not None:                      # mixed id forms: sum them
+            count_map[str(c['_id'])] = count_map.get(str(c['_id']), 0) + c['count']
 
     concepts_by_id = {}
-    root_concepts = []
-
-    for concept in all_concepts:
+    for concept in db.tag_concepts_v2.find({}, {'slug': 1, 'display_name': 1, 'name': 1,
+                                                'entity_type': 1, 'parents': 1}):
         concept_id = str(concept['_id'])
         concepts_by_id[concept_id] = {
             'concept_id': concept_id,
-            'id': str(concept['_id']),
+            'id': concept_id,
             'slug': concept.get('slug'),
             'display_name': concept.get('display_name', concept.get('name')),
             'entity_type': concept.get('entity_type'),
-            'parents': [str(p) if hasattr(p, '__str__') else p for p in concept.get('parents', [])],
+            'parents': [str(p) for p in concept.get('parents') or []],
             'children': [],
-            'count': 0
+            'count': count_map.get(concept_id, 0),
         }
 
-    for concept_id, concept in concepts_by_id.items():
-        if not concept['parents']:
+    root_concepts = []
+    for concept in concepts_by_id.values():
+        parents = [p for p in concept['parents'] if p in concepts_by_id]
+        if not parents:                              # no (existing) parent: a root
             root_concepts.append(concept)
-        else:
-            for parent_id in concept['parents']:
-                if parent_id in concepts_by_id:
-                    concepts_by_id[parent_id]['children'].append(concept)
+        for parent_id in parents:
+            concepts_by_id[parent_id]['children'].append(concept)
 
-    pipeline = [
-        {'$match': {'content_type': 'tweet'}},
-        {'$group': {
-            '_id': '$concept_id',
-            'count': {'$sum': 1}
-        }}
-    ]
+    def aggregate(concept, path=()):
+        if 'aggregate_count' not in concept:         # poly-hierarchy: shared nodes once
+            if concept['id'] in path:                # guard against parent cycles
+                return 0
+            concept['aggregate_count'] = concept['count'] + sum(
+                aggregate(child, path + (concept['id'],)) for child in concept['children'])
+        return concept['aggregate_count']
 
-    counts = list(db.tag_instances.aggregate(pipeline))
-    count_map = {str(c['_id']): c['count'] for c in counts}
+    def prune(concept):
+        if not concept.get('_pruned'):
+            concept['_pruned'] = True
+            used = sorted((c for c in concept['children'] if aggregate(c) > 0), key=lambda c: -c['aggregate_count'])
+            concept['children'] = used[:HIERARCHY_CHILD_LIMIT]
+            concept['hidden_children'] = len(used) - len(concept['children'])
+            for child in concept['children']:
+                prune(child)
 
-    for concept_id, concept in concepts_by_id.items():
-        concept['count'] = count_map.get(concept_id, 0)
-
-    def calculate_aggregate_count(concept):
-        total = concept['count']
-        for child in concept['children']:
-            total += calculate_aggregate_count(child)
-        concept['aggregate_count'] = total
-        return total
-
-    for root in root_concepts:
-        calculate_aggregate_count(root)
-
-    root_concepts.sort(key=lambda x: x.get('aggregate_count', 0), reverse=True)
+    used_roots = sorted((r for r in root_concepts if aggregate(r) > 0), key=lambda r: -r['aggregate_count'])
+    hierarchy = used_roots[:HIERARCHY_ROOT_LIMIT]
+    for root in hierarchy:
+        prune(root)
+    for concept in concepts_by_id.values():
+        concept.pop('_pruned', None)
 
     return {
-        'hierarchy': root_concepts,
+        'hierarchy': hierarchy,
         'total_concepts': len(concepts_by_id),
-        'concepts_with_tweets': len([c for c in concepts_by_id.values() if c['count'] > 0])
+        'concepts_with_tweets': sum(1 for c in concepts_by_id.values() if c['count'] > 0),
+        'hidden_roots': len(used_roots) - len(hierarchy),
     }
