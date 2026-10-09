@@ -236,6 +236,8 @@ class GmailSubstackCollector:
             'deleted': False,
         }
 
+        from app.services.author_service import AuthorService
+        article_doc.update(AuthorService(self.db).attribute(article_doc.get('author_name') or ''))
         result = self.db.articles.insert_one(article_doc)
         article_doc['_id'] = result.inserted_id
         return article_doc

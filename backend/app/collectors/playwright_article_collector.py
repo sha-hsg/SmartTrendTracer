@@ -240,6 +240,8 @@ def save_article_to_db(article_data: dict) -> Optional[str]:
             'created_at': datetime.now(timezone.utc),
         }
 
+        from app.services.author_service import AuthorService
+        doc.update(AuthorService(db).attribute(doc.get('author_name') or ''))   # primary_author_id etc.
         result = db.articles.insert_one(doc)
         return str(result.inserted_id)
 

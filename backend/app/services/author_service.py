@@ -43,6 +43,8 @@ class AuthorService:
         # Pattern matches: , PhD | , Ph.D. | , MD | , Dr. | PhD | Ph.D. at end of string
         suffixes_pattern = r',?\s*(PhD|Ph\.D\.|MD|M\.D\.|Dr\.?|Esq\.?)\s*$'
         name = re.sub(suffixes_pattern, '', name, flags=re.IGNORECASE)
+        # trailing publication in parentheses: "Pascal Biese (LLM Watch)" -> "Pascal Biese"
+        name = re.sub(r'\s*\([^)]*\)\s*$', '', name)
 
         # Remove extra whitespace and normalize
         name = ' '.join(name.split())
@@ -205,6 +207,7 @@ class AuthorService:
 
         # Create new author
         author_doc = {
+            'name': normalized_name,          # the field every author view and count reads
             'canonical_name': normalized_name,
             'display_name': name,  # Keep original formatting for display
             'name_variations': [name, normalized_name],
@@ -264,6 +267,46 @@ class AuthorService:
             return self.authors_collection.find_one({'_id': similar[0]['_id']})
 
         return None
+
+    def attribute(self, raw_author: str) -> Dict:
+        """primary_author_id / primary_author_name / co_author_ids fields for an
+        article by this author string (authors created when unknown). Every
+        article writer uses this, so all counts can rely on primary_author_id."""
+        primary, co_authors = self.parse_author_string(raw_author or '')
+        if not primary:
+            return {}
+        author_id = self.find_or_create_author(primary, auto_create=True)
+        doc = self.authors_collection.find_one({'_id': author_id}, {'name': 1, 'canonical_name': 1}) or {}
+        fields = {'primary_author_id': author_id,
+                  'primary_author_name': doc.get('name') or doc.get('canonical_name') or primary}
+        co_ids = [cid for cid in (self.find_or_create_author(c, auto_create=True) for c in co_authors if c) if cid]
+        if co_ids:
+            fields['co_author_ids'] = co_ids
+        return fields
+
+    def attribute_unattributed(self) -> Dict[str, int]:
+        """Attribute articles without primary_author_id (2026-10: 179 of 610 —
+        the Playwright and Gmail collectors wrote only author_name) and give
+        nameless authors their canonical name. Idempotent."""
+        stats = {'articles': 0, 'names_fixed': 0}
+        for a in self.authors_collection.find({'$or': [{'name': None}, {'name': ''}, {'name': {'$exists': False}}]},
+                                              {'canonical_name': 1, 'display_name': 1}):
+            name = a.get('canonical_name') or a.get('display_name')
+            if name:
+                self.authors_collection.update_one({'_id': a['_id']}, {'$set': {'name': name}})
+                stats['names_fixed'] += 1
+        touched = set()
+        for art in self.articles_collection.find(
+                {'$or': [{'primary_author_id': {'$exists': False}}, {'primary_author_id': None}]},
+                {'author_name': 1, 'author': 1}):
+            fields = self.attribute(art.get('author_name') or art.get('author') or '')
+            if fields:
+                self.articles_collection.update_one({'_id': art['_id']}, {'$set': fields})
+                touched.add(fields['primary_author_id'])
+                stats['articles'] += 1
+        for author_id in touched:
+            self.update_author_stats(author_id)
+        return stats
 
     def update_author_stats(self, author_id: ObjectId) -> bool:
         """

@@ -219,14 +219,7 @@ def update_article(article_id, updates):
 def get_articles_without_author(page, page_size):
     """Get articles that don't have an author assigned"""
 
-    query = {
-        '$or': [
-            {'author_id': None},
-            {'author_id': {'$exists': False}},
-            {'author_name': None},
-            {'author_name': ''}
-        ]
-    }
+    query = {'$or': [{'primary_author_id': None}, {'primary_author_id': {'$exists': False}}]}
 
     total = db.articles.count_documents(query)
     skip = (page - 1) * page_size

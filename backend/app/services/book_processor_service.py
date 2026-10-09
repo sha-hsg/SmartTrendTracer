@@ -11,6 +11,7 @@ from app.config import settings
 import os
 import asyncio
 import logging
+import time
 import json
 import requests
 from pathlib import Path
@@ -18,6 +19,9 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+MARKER_BUSY_RETRIES = 60      # x MARKER_BUSY_WAIT = up to 1 h waiting for a free Marker
+MARKER_BUSY_WAIT = 60
 
 class BookProcessorService:
     def __init__(self):
@@ -124,13 +128,20 @@ class BookProcessorService:
             data = {"timeout": str(int(self.marker_timeout))}
 
             logger.info(f"Sending book PDF to Marker service (6-hour timeout): {Path(pdf_path).name}")
-            with open(pdf_path, "rb") as pdf_file:
-                response = requests.post(
-                    f"{self.marker_service_url}/convert",
-                    files={"file": pdf_file},
-                    data=data,
-                    timeout=self.marker_timeout,  # 6 hours for large books
-                )
+            # Marker converts one PDF at a time and answers 409 while busy (a paper,
+            # another book): wait and retry instead of failing the job.
+            for attempt in range(MARKER_BUSY_RETRIES + 1):
+                with open(pdf_path, "rb") as pdf_file:
+                    response = requests.post(
+                        f"{self.marker_service_url}/convert",
+                        files={"file": pdf_file},
+                        data=data,
+                        timeout=self.marker_timeout,  # 6 hours for large books
+                    )
+                if response.status_code != 409 or attempt == MARKER_BUSY_RETRIES:
+                    break
+                logger.info(f"Marker busy (409), retry {attempt + 1}/{MARKER_BUSY_RETRIES} in {MARKER_BUSY_WAIT}s")
+                time.sleep(MARKER_BUSY_WAIT)
 
             if response.status_code != 200:
                 logger.error(f"Marker service error ({response.status_code}): {response.text[:500]}")

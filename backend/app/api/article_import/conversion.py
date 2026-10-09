@@ -197,6 +197,9 @@ async def service_import_url_playwright(url: str) -> Dict[str, Any]:
             'created_at': datetime.now(timezone.utc),
         }
 
+        from app.database.mongodb import get_database
+        from app.services.author_service import AuthorService
+        doc.update(AuthorService(get_database()).attribute(doc.get('author_name') or ''))
         insert_result = queries.articles_insert_one__service_import_url_playwright(doc)
 
         return {

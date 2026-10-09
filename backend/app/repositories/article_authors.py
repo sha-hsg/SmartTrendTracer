@@ -22,19 +22,9 @@ def get_all_authors():
 
     result = []
     for author in authors:
-        # Count articles - check multiple fields since IDs are mixed
-        article_count = 0
-
-        # Check by author name (most reliable)
-        article_count += db.articles.count_documents({'author_name': author.get('name')})
-
-        # Check by old SQLite ID if it exists
-        if author.get('old_sqlite_id'):
-            article_count += db.articles.count_documents({'author_id': author['old_sqlite_id']})
-            article_count += db.articles.count_documents({'author_sqlite_id': author['old_sqlite_id']})
-
-        # Check by MongoDB ObjectId (for newer articles)
-        article_count += db.articles.count_documents({'author_id': author['_id']})
+        # Every article carries primary_author_id (AuthorService.attribute); the old
+        # sum over author_name / author_id / sqlite ids counted articles twice
+        article_count = db.articles.count_documents({'primary_author_id': author['_id']})
 
         result.append({
             'id': str(author['_id']),

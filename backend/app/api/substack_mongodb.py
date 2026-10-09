@@ -92,7 +92,7 @@ async def get_substack_trends(
         # Author analysis
         author_stats = defaultdict(lambda: {"articles": 0, "total_words": 0, "snippets": 0, "topics": set()})
         for article in articles:
-            author = article.get('author', 'Unknown')
+            author = article.get('primary_author_name') or article.get('author_name') or 'Unknown'
             author_stats[author]["articles"] += 1
             
             # Use the stored word_count; fall back to counting the markdown
