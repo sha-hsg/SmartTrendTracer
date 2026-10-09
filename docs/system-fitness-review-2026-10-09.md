@@ -84,7 +84,7 @@ Speichern, Verarbeiten, Scheduler, RAG, Tests) ist besser als bei persönlichen 
 | 29 | Paper-Tagging | 210 von 441 Papern getaggt; Scheduler taggt nur Tweets | Paper fehlen in Konzeptsuche und Trends | Tagging-Job für Paper und Artikel (gleicher Mechanismus wie `tag_tweets`) | ✅ M |
 | 30 | Smoke-Check | LLM-Check prüft nur Schlüssel; Scheduler-Check ignoriert Teilausfälle/Alter; keine Prüfung auf Tweet-Aktualität, Book-Worker, Plattenplatz | Abgelaufene Keys, X-402, hängende Feeds bleiben grün | Alters- und Teilausfall-Prüfung, „neuester Tweet > 1 Tag“ | ✅ M |
 
-### P3 — Pflege (Kosmetik, Performance, Hygiene)
+### P3 — Pflege (Kosmetik, Performance, Hygiene) — ✔ umgesetzt am 2026-10-10 (#34: Reorganizer stillgelegt; offen: git-Historie nicht umgeschrieben (Pack 1,06 GB), keine TTL auf `llm_usage` — Nutzerentscheid)
 
 | # | Element | Problem | Massnahme | Status |
 |---|---|---|---|---|
