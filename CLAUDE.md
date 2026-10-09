@@ -25,7 +25,10 @@ stored with their full text (`note_tweet`).
 (Interconnects), Sebastian Raschka (Ahead of AI). Scheduler job `newsletters` runs the collector
 daily without ever opening a browser; when the Gmail token (`backend/databases/token.pickle`) is
 revoked it fails with the login command: `cd backend && venv/bin/python -m
-app.collectors.gmail_substack_collector --setup`. Most articles come from URL import and the
+app.collectors.gmail_substack_collector --setup`. Only senders listed in `backend/newsletter_sources.json`
+are kept (sender/publication → person; unknown senders are skipped and reported in the job result as
+`skipped_senders`); posts already imported another way (same title ±3 days) are skipped. Most articles
+come from URL import and the
 Playwright collector. Every article gets `primary_author_id` via `AuthorService.attribute()` (all
 writers); author counts use only that field. ~23 authors.
 

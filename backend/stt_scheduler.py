@@ -84,7 +84,9 @@ def job_newsletters():
     from app.collectors.gmail_substack_collector import GmailSubstackCollector
     collector = GmailSubstackCollector()
     collector.authenticate(interactive=False)
-    return {'new_articles': collector.collect_newsletters(max_results=50)}
+    saved = collector.collect_newsletters(max_results=50)
+    # senders not in backend/newsletter_sources.json: add them there to keep them
+    return {'new_articles': saved, 'skipped_senders': sorted(collector.skipped_senders)}
 
 
 def job_paper_feed():

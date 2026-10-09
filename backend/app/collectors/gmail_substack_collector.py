@@ -17,6 +17,35 @@ from app.collectors.substack_parser import SubstackParser, remove_substack_foote
 from app.database.mongodb import get_database
 
 
+def _newsletter_sources() -> Dict:
+    from app.paths import BACKEND_ROOT
+    path = BACKEND_ROOT / 'newsletter_sources.json'
+    return json.loads(path.read_text()).get('senders', {}) if path.exists() else {}
+
+
+def match_newsletter_source(sender: str) -> Optional[Dict]:
+    """Config entry whose key occurs in the sender text (longest key wins, so
+    "The Substack Post" beats "Substack")."""
+    text = (sender or '').lower()
+    hits = [(k, v) for k, v in _newsletter_sources().items() if k.lower() in text]
+    return max(hits, key=lambda kv: len(kv[0]))[1] if hits else None
+
+
+def is_duplicate_article(db, title: str, date) -> bool:
+    """Same title (normalised) within 3 days — the same post imported another way.
+    The date window keeps recurring titles ("Papers You Should Know About") apart."""
+    import re
+    from datetime import timedelta
+    key = re.sub(r'[^a-z0-9]', '', (title or '').lower())
+    if not key or not isinstance(date, datetime):
+        return False
+    lo, hi = date - timedelta(days=3), date + timedelta(days=3)
+    for a in db.articles.find({'published_at': {'$gte': lo, '$lte': hi}}, {'title': 1}):
+        if re.sub(r'[^a-z0-9]', '', (a.get('title') or '').lower()) == key:
+            return True
+    return False
+
+
 class GmailSubstackCollector:
     """Collect Substack newsletters from Gmail"""
 
@@ -24,6 +53,7 @@ class GmailSubstackCollector:
         self.service = None
         self.parser = SubstackParser()
         self.db = get_database()
+        self.skipped_senders: set = set()
 
     def authenticate(self, credentials_file=None, token_file=None, interactive: bool = True):
         """Gmail service (paths default to app.paths GMAIL_CREDENTIALS / GMAIL_TOKEN)."""
@@ -123,17 +153,16 @@ class GmailSubstackCollector:
         if not email_data or not email_data.get('article'):
             return None
 
-        # Validate that this is from an expected author (configured authors + direct Substack subscriptions)
+        # Allow-list (backend/newsletter_sources.json): the sender name is often the
+        # publication ("LLM Watch"), and a Substack inbox also holds politics,
+        # platform mail etc. Unknown senders are skipped and reported.
         author_info = email_data['author']
-        expected_emails = ['robotic@substack.com', 'garymarcus@substack.com', 'sebastianraschka@substack.com']
-
-        # Also allow direct Substack subscriptions (emails ending with @substack.com)
-        is_direct_substack = author_info['email'].endswith('@substack.com')
-        is_configured_forwarded = author_info['email'] in expected_emails
-
-        if not (is_direct_substack or is_configured_forwarded):
-            print(f"  ⚠️  Skipping article from unexpected author: {author_info['name']} ({author_info['email']})")
+        source = match_newsletter_source(f"{author_info.get('name', '')} {author_info.get('email', '')} "
+                                         f"{email_data.get('sender', '')}")
+        if not source or not source.get('include'):
+            self.skipped_senders.add(author_info.get('name') or author_info.get('email') or '?')
             return None
+        person = source.get('author') or author_info.get('name')
 
         # Get or create author
         author_info = email_data['author']
@@ -158,6 +187,9 @@ class GmailSubstackCollector:
         substack_id = f"gmail_{email_data['id']}"
 
         existing = self.db.articles.find_one({'substack_id': substack_id})
+        if not existing and is_duplicate_article(self.db, article_data.get('title') or email_data.get('subject'),
+                                                 email_data.get('date')):
+            return None       # already imported via URL import / Playwright
 
         if existing:
             if existing.get('deleted'):
@@ -227,7 +259,7 @@ class GmailSubstackCollector:
             'word_count': article_data.get('word_count', 0),
             'reading_time_minutes': article_data.get('reading_time_minutes', 1),
             'author_id': author['_id'],
-            'author_name': author['name'],
+            'author_name': person,
             'published_at': email_data['date'],
             'collected_at': datetime.now(timezone.utc),
             'created_at': datetime.now(timezone.utc),
@@ -237,6 +269,7 @@ class GmailSubstackCollector:
 
         from app.services.author_service import AuthorService
         article_doc.update(AuthorService(self.db).attribute(article_doc.get('author_name') or ''))
+        article_doc['author_id'] = article_doc.get('primary_author_id')   # the person, not the publication
         result = self.db.articles.insert_one(article_doc)
         article_doc['_id'] = result.inserted_id
         return article_doc
