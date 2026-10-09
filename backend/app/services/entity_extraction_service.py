@@ -467,13 +467,6 @@ class EntityExtractionService:
 
         parent = concepts_col.find_one({"_id": parent_concept_id}) if parent_concept_id else None
 
-        # Generate unique ID
-        concept_id = f"c_{parent_type}_{slug}"
-        counter = 1
-        while concepts_col.find_one({"id": concept_id}):
-            concept_id = f"c_{parent_type}_{slug}_{counter}"
-            counter += 1
-
         # Get entity info
         entity_info = {}
         for category in self.ontology_schema.get('entity_types', {}).values():
@@ -485,11 +478,9 @@ class EntityExtractionService:
                 break
 
         # Create concept. _id must be a native ObjectId — assigning the slug
-        # string as _id created the mixed-type tag_instances.concept_id data
-        # (the legacy custom id stays available in the "id" field).
+        # string as _id created the mixed-type tag_instances.concept_id data.
         new_oid = ObjectId()
         concept = {
-            "id": concept_id,
             "_id": new_oid,
             "slug": slug,
             "display_name": entity.text,
@@ -520,12 +511,12 @@ class EntityExtractionService:
         # Update parent
         if parent_concept_id:
             concepts_col.update_one(
-                {"id": parent_concept_id},
-                {"$addToSet": {"children": concept_id}}
+                {"_id": parent_concept_id},
+                {"$addToSet": {"children": new_oid}}
             )
 
         return {
-            "id": concept_id,
+            "id": str(new_oid),
             "_id": new_oid,  # Include _id for compatibility with tag_instances
             "tag": slug,
             "slug": slug,

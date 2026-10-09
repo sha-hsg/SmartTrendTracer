@@ -54,22 +54,6 @@ class ConceptLookupMixin:
             type(self)._alias_cache = cache
         return cache[1].get(slug)
 
-    def _generate_concept_id(self) -> str:
-        """Generate a unique concept ID in format c_XXXXX.
-        Caches the counter in memory to avoid repeated regex scans."""
-        if not hasattr(self, '_concept_id_counter'):
-            last_concept = self.tag_concepts.find_one(
-                {"id": {"$regex": "^c_\\d+$"}},
-                sort=[("id", -1)]
-            )
-            if last_concept and 'id' in last_concept:
-                self._concept_id_counter = int(last_concept['id'].split('_')[1])
-            else:
-                self._concept_id_counter = 999
-
-        self._concept_id_counter += 1
-        return f"c_{self._concept_id_counter:05d}"
-
     def _normalize_to_slug(self, text: str) -> str:
         """Convert text to snake_case slug"""
         # Convert to lowercase
@@ -146,7 +130,6 @@ class ConceptLookupMixin:
             display_name = self._generate_display_name(slug)
 
         new_concept = {
-            "id": self._generate_concept_id(),
             "slug": slug,
             "name": display_name,
             "display_name": display_name,
@@ -159,7 +142,7 @@ class ConceptLookupMixin:
         }
 
         result = self.tag_concepts.insert_one(new_concept)
-        logger.info(f"Created concept: {display_name} (id: {new_concept['id']})")
+        logger.info(f"Created concept: {display_name} (id: {result.inserted_id})")
 
         return str(result.inserted_id)
 
@@ -176,9 +159,9 @@ class ConceptLookupMixin:
             # If it's a string that looks like an ObjectId
             elif isinstance(concept_id, str) and len(concept_id) == 24:
                 return self.tag_concepts.find_one({"_id": ObjectId(concept_id)})
-            # Otherwise treat as custom ID
+            # Otherwise a legacy string _id (e.g. 'c_method_...')
             else:
-                return self.tag_concepts.find_one({"id": concept_id})
+                return self.tag_concepts.find_one({"_id": concept_id})
         except Exception:
             return None
 
@@ -217,17 +200,11 @@ class ConceptLookupMixin:
             id_clauses.append({"_id": {"$in": object_ids}})
         if string_ids:
             id_clauses.append({"_id": {"$in": string_ids}})
-            id_clauses.append({"id": {"$in": string_ids}})
+            id_clauses.append({"_id": {"$in": string_ids}})
         concepts = list(self.tag_concepts.find(
             id_clauses[0] if len(id_clauses) == 1 else {"$or": id_clauses}))
 
-        # Build lookup dict (key both _id and legacy id string forms)
-        lookup = {}
-        for c in concepts:
-            lookup[str(c['_id'])] = c
-            if c.get('id'):
-                lookup[str(c['id'])] = c
-        return lookup
+        return {str(c['_id']): c for c in concepts}
 
     def search_concepts(self, query: str, limit: int = 10) -> List[Dict]:
         """
@@ -251,7 +228,7 @@ class ConceptLookupMixin:
             for concept in concepts:
                 results.append({
                     'concept_id': str(concept['_id']),
-                    'id': concept.get('id', f"c_{str(concept['_id'])[:4]}"),
+                    'id': str(concept['_id']),
                     'slug': concept.get('slug', ''),
                     'display_name': concept.get('display_name', concept.get('name', '')),
                     'entity_type': concept.get('entity_type', 'topic')

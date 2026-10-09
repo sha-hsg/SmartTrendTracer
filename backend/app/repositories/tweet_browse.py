@@ -157,7 +157,7 @@ def build_facets(query: Dict, search: Optional[str], exclude_retweets: bool,
             if concept:
                 concept_facets.append({
                     'concept_id': str(cc['_id']),
-                    'id': concept.get('id'),
+                    'id': str(concept['_id']),
                     'slug': concept.get('slug'),
                     'display_name': concept.get('display_name'),
                     'count': cc['count']
@@ -220,7 +220,7 @@ def tweet_to_response_dict(tweet: Dict, profile_images: Dict,
             if concept:
                 concepts.append({
                     'concept_id': str(cid),
-                    'id': concept.get('id'),
+                    'id': str(concept['_id']),
                     'slug': concept.get('slug'),
                     'display_name': concept.get('display_name'),
                     'entity_type': concept.get('entity_type')
@@ -301,7 +301,7 @@ def build_hierarchy_tree() -> Dict:
         concept_id = str(concept['_id'])
         concepts_by_id[concept_id] = {
             'concept_id': concept_id,
-            'id': concept.get('id'),
+            'id': str(concept['_id']),
             'slug': concept.get('slug'),
             'display_name': concept.get('display_name', concept.get('name')),
             'entity_type': concept.get('entity_type'),

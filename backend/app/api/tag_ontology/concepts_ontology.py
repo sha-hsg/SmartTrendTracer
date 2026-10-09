@@ -49,11 +49,9 @@ async def create_concept_ontology(concept_data: Dict[str, Any]):
             except Exception:
                 new_concept["parents"] = [concept_data["parent_id"]]
 
-        # Collision-free, schema-compliant IDs: ObjectId as _id,
-        # custom id derived from it ("c_" + ObjectId string)
+        # ObjectId as _id (the custom "id" field is no longer used)
         new_oid = ObjectId()
         new_concept["_id"] = new_oid
-        new_concept["id"] = f"c_{new_oid}"
 
         # Insert the concept
         result = queries.tag_concepts_v2_insert_one__create_concept_ontology(new_concept)

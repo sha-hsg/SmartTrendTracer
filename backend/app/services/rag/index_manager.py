@@ -120,7 +120,7 @@ PAPER_INDEX_QUERY = {'processed': True, 'paper_type': {'$ne': 'review'}}
 
 def _concept_fields(concepts):
     names = [c['display_name'] for c in concepts]
-    ids = sorted({str(v) for c in concepts for v in (c.get('id'), c.get('concept_id')) if v})
+    ids = sorted({str(c['concept_id']) for c in concepts if c.get('concept_id')})
     return names, ids
 
 

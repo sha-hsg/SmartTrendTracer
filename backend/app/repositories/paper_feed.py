@@ -99,11 +99,9 @@ def set_candidate_status(cand_id: ObjectId, status: str, paper_id: Optional[str]
 def paper_ids_for_concept(name: str) -> List[str]:
     """Ids of papers tagged with the concept of this display name (all id forms)."""
     concept = db.tag_concepts_v2.find_one(
-        {'display_name': {'$regex': f'^{re.escape(name.strip())}$', '$options': 'i'}}, {'_id': 1, 'id': 1})
+        {'display_name': {'$regex': f'^{re.escape(name.strip())}$', '$options': 'i'}}, {'_id': 1})
     if not concept:
         return []
     variants = concept_id_query_variants(concept['_id'])
-    if concept.get('id'):
-        variants = list(variants) + [concept['id']]
     return [str(t['content_id']) for t in db.tag_instances.find(
         {'content_type': 'paper', 'concept_id': {'$in': variants}}, {'content_id': 1})]

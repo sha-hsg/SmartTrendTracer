@@ -76,10 +76,9 @@ class ConceptBasedRAGService:
     def _expand_concept_filter(self, concept_filter: Optional[List[str]]) -> Optional[List[str]]:
         """Expand incoming concept ids to all stored id forms.
 
-        The FAISS metadata stores the legacy short id (concept['id']), while
-        every concept API hands out the ObjectId string — without expansion an
-        ObjectId-based filter matches nothing. Resolves each incoming id via
-        tag_concepts_v2 and returns the union of ObjectId string and legacy id.
+        Resolves each incoming id (ObjectId string or legacy string _id) via
+        tag_concepts_v2 to the stored _id string. (Older index entries also held
+        the custom "id" field, which was not unique; it is no longer used.)
         """
         if not concept_filter:
             return concept_filter
@@ -96,11 +95,9 @@ class ConceptBasedRAGService:
                     except Exception:
                         doc = None
                 if doc is None:
-                    doc = self.db.tag_concepts_v2.find_one({'$or': [{'_id': cid}, {'id': cid}]})
+                    doc = self.db.tag_concepts_v2.find_one({'_id': cid})      # legacy string _id
                 if doc:
                     expanded.add(str(doc['_id']))
-                    if doc.get('id'):
-                        expanded.add(str(doc['id']))
             except Exception:
                 logger.warning(f"Could not expand concept filter id {cid}")
         return list(expanded)

@@ -146,7 +146,6 @@ class ConceptTaggingMixin:
                     display_name = self._generate_display_name(slug)
 
                 new_concept = {
-                    "id": self._generate_concept_id(),
                     "slug": slug,
                     "name": display_name,
                     "display_name": display_name,
@@ -164,7 +163,7 @@ class ConceptTaggingMixin:
                 try:
                     result = self.tag_concepts.insert_one(new_concept)
                     concept_id = str(result.inserted_id)
-                    logger.info(f"Created concept: {display_name} (id: {new_concept['id']})")
+                    logger.info(f"Created concept: {display_name} (id: {concept_id})")
                 except Exception as e:
                     winner = self.tag_concepts.find_one({"slug": slug})
                     if winner is not None:
@@ -491,7 +490,7 @@ class ConceptTaggingMixin:
                     results.append({
                         '_id': str(concept['_id']),
                         'concept_id': concept_id_str,
-                        'id': concept.get('id', f"c_{concept_id_str[:4]}"),
+                        'id': concept_id_str,
                         'slug': concept.get('slug', ''),
                         'display_name': concept.get('display_name', concept.get('name', '')),
                         'count': count,
@@ -559,13 +558,8 @@ class ConceptTaggingMixin:
 
             # Query for string ID-based concepts
             if string_ids:
-                for concept in self.tag_concepts.find({'id': {'$in': string_ids}}):
-                    # Use the 'id' field as the key for string-based IDs
-                    # BUT also check if this concept is already in the map by its ObjectId
-                    obj_id_str = str(concept['_id'])
-                    if obj_id_str not in concepts_map:
-                        # Only add if not already present via ObjectId lookup
-                        concepts_map[concept['id']] = concept
+                for concept in self.tag_concepts.find({'_id': {'$in': string_ids}}):
+                    concepts_map[str(concept['_id'])] = concept     # legacy string _id
 
             # Combine results
             results = []
@@ -585,7 +579,7 @@ class ConceptTaggingMixin:
                         seen_concepts.add(unique_key)
                         results.append({
                             'concept_id': unique_key,  # Use the actual ObjectId as string
-                            'id': concept.get('id', f"c_{unique_key[:4]}"),
+                            'id': unique_key,
                             'slug': concept.get('slug', ''),
                             'display_name': concept.get('display_name', concept.get('name', '')),
                             'count': count_doc['count'],

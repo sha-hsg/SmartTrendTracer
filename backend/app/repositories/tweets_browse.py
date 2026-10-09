@@ -192,7 +192,7 @@ def get_tweet(tweet_id, include_concepts):
             if concept:
                 concepts.append({
                     'concept_id': str(cid),
-                    'id': concept.get('id'),
+                    'id': str(concept['_id']),
                     'slug': concept.get('slug'),
                     'display_name': concept.get('display_name')
                 })

@@ -43,7 +43,7 @@ def add_concept_to_tweet(tweet_id, text):
         "message": "Concept added successfully",
         "concept": {
             "concept_id": concept_id,
-            "id": concept.get('id'),
+            "id": str(concept['_id']),
             "slug": concept.get('slug'),
             "display_name": concept.get('display_name')
         }

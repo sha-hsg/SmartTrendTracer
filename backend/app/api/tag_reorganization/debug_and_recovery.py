@@ -50,7 +50,7 @@ async def get_debug_concepts():
                 stats["unorganized"] += 1
                 if len(stats["unorganized_samples"]) < 10:
                     stats["unorganized_samples"].append({
-                        "id": concept.get('id'),
+                        "id": str(concept['_id']),
                         "slug": concept.get('slug'),
                         "display_name": concept.get('display_name'),
                         "count": concept.get('count', 0),
@@ -81,7 +81,7 @@ async def get_debug_concepts():
             # Get samples
             if len(stats["sample_concepts"]) < 5:
                 stats["sample_concepts"].append({
-                    "id": concept.get('id'),
+                    "id": str(concept['_id']),
                     "slug": concept.get('slug'),
                     "display_name": concept.get('display_name'),
                     "parents": concept.get('parents', []),

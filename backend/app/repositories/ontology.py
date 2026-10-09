@@ -6,10 +6,14 @@ db = get_database()
 
 
 def find_concept_by_any_id(concept_id: str):
-    """Find a concept by its custom id field ("c_...") or its ObjectId string."""
-    concept = db.tag_concepts_v2.find_one({"id": concept_id})
-    if concept is None and ObjectId.is_valid(concept_id):
+    """Find a concept by its ObjectId string or a legacy string _id. (The
+    custom "id" field was not unique — 627 values shared by 10 726 concepts —
+    and is no longer used.)"""
+    concept = None
+    if ObjectId.is_valid(concept_id):
         concept = db.tag_concepts_v2.find_one({"_id": ObjectId(concept_id)})
+    if concept is None:
+        concept = db.tag_concepts_v2.find_one({"_id": concept_id})
     return concept
 
 
