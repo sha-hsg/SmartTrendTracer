@@ -43,7 +43,7 @@ def load_documents() -> Tuple[List[Dict[str, Any]], np.ndarray]:
     index, metadata, doc_map = load_index(get_index_paths(RAG_INDEX_CONCEPTS))
     if index is None:
         raise RuntimeError('RAG index not found — build it first (rebuild_rag_index.py)')
-    paper_dates = repo.paper_import_dates()
+    paper_dates = repo.paper_dates()
     article_meta = repo.article_meta()
     docs = []
     for pos, m in enumerate(metadata):

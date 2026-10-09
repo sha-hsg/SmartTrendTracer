@@ -52,8 +52,8 @@ class FakeRepo:
     def __init__(self, cache):
         self.cache, self.added = cache, []
 
-    def episode_names(self):
-        return [dict(c) for c in self.cache]
+    def episode_names(self, version):
+        return [dict(c) for c in self.cache if c.get('v') == version]
 
     def add_episode_names(self, items):
         self.added += items
@@ -73,7 +73,7 @@ class FakeLLM:
 
 def test_cached_name_reused_when_documents_overlap(monkeypatch):
     docs = [{'key': f'tweet:{i}'} for i in range(20)]
-    repo = FakeRepo([{'name': 'Agent memory', 'noise': False, 'start': 'w0',
+    repo = FakeRepo([{'v': naming.VERSION, 'name': 'Agent memory', 'noise': False, 'start': 'w0',
                       'doc_keys': [f'tweet:{i}' for i in range(8)]}])
     monkeypatch.setattr(naming, 'repo', repo)
     llm = FakeLLM()
@@ -99,3 +99,41 @@ def test_digest_news_new_running_faded():
     assert [e['name'] for e in news['new']] == ['new'] and news['new'][0]['from'] == ['continued']
     assert [e['name'] for e in news['running']] == ['old running']
     assert [e['name'] for e in news['faded']] == ['faded']
+
+
+def test_names_of_an_older_naming_version_are_not_reused(monkeypatch):
+    docs = [{'key': f'tweet:{i}'} for i in range(10)]
+    repo = FakeRepo([{'v': naming.VERSION - 1, 'name': 'Old name', 'noise': False, 'start': 'w0',
+                      'doc_keys': [f'tweet:{i}' for i in range(10)]}])
+    monkeypatch.setattr(naming, 'repo', repo)
+    e = {**_episode((0, 3), range(10)), 'tags': 't', 'examples': []}
+    naming.name_episodes([e], docs, llm=FakeLLM())
+    assert e['name'] == 'Fresh name'
+
+
+def _weekly_docs(counts, other=20):
+    """Docs for one topic (counts per week) plus `other` background tweets per week."""
+    weeks = [f'2026-01-{d:02d}' for d in range(1, 1 + len(counts))]
+    docs, mem = [], []
+    for w, n in zip(weeks, counts):
+        for k in range(n):
+            mem.append(len(docs))
+            docs.append({'week': w, 'type': 'tweet', 'concepts': ['x'], 'date': w, 'author': f'a{k}', 'text': 't'})
+        for k in range(other):
+            docs.append({'week': w, 'type': 'tweet', 'concepts': ['y'], 'date': w, 'author': 'b', 'text': 'u'})
+    totals = {w: {'tweet': n + other, 'article': 0, 'paper': 0} for w, n in zip(weeks, counts)}
+    return docs, mem, weeks, totals
+
+
+def test_single_week_burst_starts_in_its_week_not_a_week_early():
+    counts = [1, 1, 1, 1, 1, 1, 20, 1, 1, 1, 1, 1]
+    docs, mem, weeks, totals = _weekly_docs(counts)
+    eps = ep.detect_episodes(mem, docs, weeks, totals, set())
+    assert [(e['start'], e['end']) for e in eps] == [(weeks[6], weeks[6])]
+
+
+def test_burst_in_the_last_week_is_detected():
+    counts = [1] * 11 + [12]
+    docs, mem, weeks, totals = _weekly_docs(counts)
+    eps = ep.detect_episodes(mem, docs, weeks, totals, set())
+    assert eps and eps[-1]['end'] == weeks[-1]

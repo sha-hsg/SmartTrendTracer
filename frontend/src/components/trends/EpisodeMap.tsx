@@ -74,6 +74,7 @@ const EpisodeMap: React.FC = () => {
     try {
       const { data } = await http.get('/api/analytics/trends/episodes');
       setMap(data.available ? data.map : null);
+      setSelected(null);   // episode ids change with every rebuild
       setRebuilding(Boolean(data.rebuild?.running));
       setError(null);
     } catch (e) {
@@ -130,10 +131,10 @@ const EpisodeMap: React.FC = () => {
   const layout = useMemo(() => {
     if (!map) return null;
     const nWeeks = map.weeks.length;
-    const plotW = width - LABEL_W - 130;
+    const plotW = width - LABEL_W - 16;
     const xw = (i: number) => LABEL_W + (i / nWeeks) * plotW;
     const famIndex = new Map(map.families.map((f, i) => [f.id, i]));
-    const pos: Record<number, { x0: number; x1: number; y: number; inside: boolean; text: string }> = {};
+    const pos: Record<number, { x0: number; x1: number; y: number; labelX: number; anchor: 'start' | 'end'; text: string }> = {};
     const rows: { name: string; y: number; h: number; color: string }[] = [];
     let y = 4;
     map.families.forEach((f, fi) => {
@@ -145,11 +146,15 @@ const EpisodeMap: React.FC = () => {
         const x1 = Math.max(x0 + 4, xw(e.wi[1] + 1));
         const text = label(e);
         const tw = text.length * CHAR_W + 6;
+        // label inside the bar if it fits, else right of it, else (at the right edge) left of it
         const inside = x1 - x0 >= tw;
-        const reach = inside ? x1 : x1 + tw;
-        let lane = lanes.findIndex(end => end + 4 <= x0);
+        const left = !inside && x1 + tw > width - 4 && x0 - tw >= LABEL_W;
+        const from = left ? x0 - tw : x0;
+        const reach = inside || left ? x1 : x1 + tw;
+        let lane = lanes.findIndex(end => end + 4 <= from);
         if (lane < 0) { lane = lanes.length; lanes.push(reach); } else lanes[lane] = reach;
-        pos[e.id] = { x0, x1, y: y + lane * LANE_H, inside, text };
+        const labelX = inside ? x0 + 3 : left ? x0 - 3 : x1 + 3;
+        pos[e.id] = { x0, x1, y: y + lane * LANE_H, labelX, anchor: left ? 'end' : 'start', text };
       });
       const h = Math.max(1, lanes.length) * LANE_H;
       rows.push({ name: familyName(f.name), y, h, color: PALETTE[fi % PALETTE.length] });
@@ -283,7 +288,7 @@ const EpisodeMap: React.FC = () => {
                     <rect x={p.x0} y={p.y} width={p.x1 - p.x0} height={LANE_H - 3} rx={3} fill={layout.color(e)}
                       opacity={0.35 + 0.65 * Math.log(e.intensity) / layout.maxI}
                       stroke={selected?.id === e.id ? 'currentColor' : undefined} />
-                    <text x={p.inside ? p.x0 + 3 : p.x1 + 3} y={p.y + 10.5} fontSize={10} fill="currentColor"
+                    <text x={p.labelX} textAnchor={p.anchor} y={p.y + 10.5} fontSize={10} fill="currentColor"
                       pointerEvents="none">{p.text}</text>
                   </g>
                 );

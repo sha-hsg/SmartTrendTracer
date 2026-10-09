@@ -67,8 +67,8 @@ def compute_topic_map(llm=None) -> Dict[str, Any]:
 
     episodes = []
     for t in topics:
-        for e in detect_episodes(t['members'], docs, weeks, week_totals, skip):
-            e.update({'family': t['family'], 'topic': t['label']})
+        for e in detect_episodes(t['members'], docs, weeks, week_totals, skip, vecs):
+            e.update({'family': t['family'], 'topic': t['label'], 'topic_id': t['id']})
             episodes.append(e)
     episodes.sort(key=lambda e: (e['start'], e['end']))
     lap('episodes')

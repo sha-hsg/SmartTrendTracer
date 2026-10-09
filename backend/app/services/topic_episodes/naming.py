@@ -15,6 +15,7 @@ from app.repositories import topic_maps as repo
 logger = logging.getLogger(__name__)
 
 BATCH = 6
+VERSION = 2                   # bump when the naming input changes (v2: peak-week, central examples)
 REUSE_JACCARD = 0.5           # same episode, grown or shrunk a little
 REUSE_CONTAINED = 0.8         # ... or the cached episode lies mostly inside the new one, same start
 
@@ -34,7 +35,7 @@ def _match(keys: set, start: str, cache: List[Dict[str, Any]], by_key) -> Dict[s
 
 def name_episodes(episodes: List[Dict[str, Any]], docs: List[Dict[str, Any]], llm=None) -> Dict[str, int]:
     """Sets e['name'] and e['noise'] for every episode; returns counts."""
-    cache = repo.episode_names()
+    cache = repo.episode_names(VERSION)
     by_key = defaultdict(list)
     for ci, c in enumerate(cache):
         c['_keys'] = set(c.get('doc_keys', []))
@@ -76,7 +77,7 @@ def name_episodes(episodes: List[Dict[str, Any]], docs: List[Dict[str, Any]], ll
                 if 0 <= n < len(chunk) and str(it.get('name', '')).strip():
                     e, keys = chunk[n]
                     e['name'], e['noise'] = str(it['name']).strip(), bool(it.get('noise'))
-                    new.append({'name': e['name'], 'noise': e['noise'], 'start': e['start'],
+                    new.append({'v': VERSION, 'name': e['name'], 'noise': e['noise'], 'start': e['start'],
                                 'doc_keys': sorted(keys)})
             repo.add_episode_names(new)
             named += len(new)

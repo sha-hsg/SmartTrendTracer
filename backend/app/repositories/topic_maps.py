@@ -12,9 +12,16 @@ db = get_database()
 KEEP_MAPS = 8
 
 
-def paper_import_dates() -> Dict[str, Any]:
-    """Paper id -> import date (papers enter the bubble when imported)."""
-    return {str(p['_id']): p.get('created_at') for p in db.papers.find({}, {'created_at': 1})}
+def paper_dates() -> Dict[str, Any]:
+    """Paper id -> publication date (a bulk import of old papers is not a
+    burst); papers without a usable date are absent."""
+    from app.repositories.analytics import paper_publication_date
+    out = {}
+    for p in db.papers.find({'paper_type': {'$ne': 'review'}}, {'publication_date': 1, 'published_date': 1}):
+        date = paper_publication_date(p)
+        if date:
+            out[str(p['_id'])] = date
+    return out
 
 
 def article_meta() -> Dict[str, Dict[str, Any]]:
@@ -44,9 +51,9 @@ def latest_episode(episode_id: int) -> Dict[str, Any]:
     return doc['episodes'][0]
 
 
-def episode_names() -> List[Dict[str, Any]]:
-    """Name cache: {name, noise, doc_keys} per named episode."""
-    return list(db.episode_names.find({}, {'_id': 0}))
+def episode_names(version: int) -> List[Dict[str, Any]]:
+    """Name cache of one naming version: {name, noise, start, doc_keys}."""
+    return list(db.episode_names.find({'v': version}, {'_id': 0}))
 
 
 def add_episode_names(items: List[Dict[str, Any]]) -> None:
