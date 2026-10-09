@@ -117,7 +117,7 @@ SmartTrendTracer/
 │   │   ├── api/                    # routers; larger areas are packages
 │   │   │   │                       #   (tweets/, papers/, books/, articles/, article_import/,
 │   │   │   │                       #    twitter_accounts/, statistics/, system_stats/,
-│   │   │   │                       #    analytics_trends/, tag_ontology/, tag_reorganization/)
+│   │   │   │                       #    analytics_trends/, tag_ontology/)
 │   │   ├── config.py               # Settings singleton — the ONLY place env vars are read
 │   │   ├── paths.py                # data paths (+ *_REL forms as persisted in MongoDB)
 │   │   ├── collectors/             # gmail_substack_collector, reddit_collector, playwright
