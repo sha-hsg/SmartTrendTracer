@@ -304,8 +304,10 @@ red line per failure. Run it any time: `cd backend && venv/bin/python smoke_chec
 
 `start_stt.sh` also starts `backend/stt_scheduler.py` (log `logs/scheduler.log`): periodic
 jobs without fixed clock times, caught up after each start because the Mac is not always
-on — `paper_feed` (daily), `rag_update` (daily, via `POST /api/rag/update`), `topic_map`
-(weekly, after the RAG update), `weekly_digest` (weekly, last; uses feed and topic map). State in `scheduled_jobs`. Manual: `venv/bin/python
+on — `tag_tweets` (every 6 h, via `POST /api/tweets/batch-annotate-all`: concept tags for new
+tweets, LLM task `tag_suggestion`; trend views count only tagged days), `paper_feed` (daily),
+`rag_update` (daily, via `POST /api/rag/update`), `topic_map` (weekly, after the RAG update),
+`weekly_digest` (weekly, last; uses feed and topic map). State in `scheduled_jobs`. Manual: `venv/bin/python
 stt_scheduler.py --run NAME` or `--once`.
 
 After port/env changes: hard-reload the browser (Cmd+Shift+R) so Vite picks up `.env`.
