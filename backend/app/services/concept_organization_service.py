@@ -14,6 +14,7 @@ from bson import ObjectId
 from pathlib import Path
 
 from app.services.llm_manager import get_llm_manager
+from app.repositories import ontology as ontology_repo
 
 logger = logging.getLogger(__name__)
 
@@ -36,53 +37,22 @@ class ConceptOrganizationService:
         with open(prompts_path, "r") as f:
             self.prompts_config = json.load(f)
     
-    def get_unorganized_concepts(self, limit: int = 50) -> List[Dict]:
-        """Get concepts that need organization"""
-        # Find concepts that are:
-        # 1. Explicitly marked as not organized
-        # 2. Marked as needs review
-        # 3. Have no parents (orphaned) - regardless of who created them
-        # But exclude root categories that have children
-        
-        # First, get all concepts with no parents
-        orphaned = list(self.db.tag_concepts_v2.find(
-            {"parents": {"$size": 0}},
-            {"_id": 1}
-        ))
-        
-        # Filter out root categories (those with children)
-        orphaned_ids = []
-        for concept in orphaned:
-            children_count = self.db.tag_concepts_v2.count_documents(
-                {"parents": concept["_id"]}
-            )
-            if children_count == 0:
-                # This is truly orphaned, not a root category
-                orphaned_ids.append(concept["_id"])
-        
-        # Now get the unorganized concepts
-        concepts = list(self.db.tag_concepts_v2.find(
-            {"$or": [
-                {"is_organized": False},
-                {"needs_review": True},
-                {"_id": {"$in": orphaned_ids}}  # Include all orphaned concepts
-            ]},
-            {"_id": 1, "display_name": 1, "slug": 1, "description": 1, "created_at": 1}
-        ).limit(limit))
-        
-        # Convert ObjectId to string for JSON serialization
+    def get_unorganized_concepts(self, limit: int = 50, offset: int = 0) -> List[Dict]:
+        """Concepts that need organization, most used first (one definition:
+        repositories.ontology.unorganized_concepts)."""
+        concepts, _ = ontology_repo.unorganized_concepts(limit, offset)
         for concept in concepts:
             concept["_id"] = str(concept["_id"])
-            if "created_at" in concept and hasattr(concept["created_at"], "isoformat"):
+            if hasattr(concept.get("created_at"), "isoformat"):
                 concept["created_at"] = concept["created_at"].isoformat()
-        
         return concepts
-    
+
     def get_hierarchy_structure(self) -> str:
         """Get a text representation of the current hierarchy"""
         # Get root concepts
+        # roots = top-level concepts that actually have children (not the ~26k parentless ones)
         roots = list(self.db.tag_concepts_v2.find(
-            {"parents": [], "is_organized": {"$ne": False}},
+            {"_id": {"$in": ontology_repo.hierarchy_parent_ids()}, "parents.0": {"$exists": False}},
             {"_id": 1, "display_name": 1}
         ))
         

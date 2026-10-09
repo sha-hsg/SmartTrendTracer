@@ -39,17 +39,7 @@ def tag_instances_update_one__rebuild_mappings(orphan, concept_id):
 
 def tag_concepts_v2_count_documents__get_stats_2():
     """tag_concepts_v2.count_documents from tag_ontology.tools.get_stats()"""
-    return db.tag_concepts_v2.count_documents({"status": "active"})
-
-
-def tag_concepts_v2_count_documents__get_stats_3():
-    """tag_concepts_v2.count_documents from tag_ontology.tools.get_stats()"""
-    return db.tag_concepts_v2.count_documents({"parents": []})
-
-
-def tag_concepts_v2_count_documents__get_stats_4():
-    """tag_concepts_v2.count_documents from tag_ontology.tools.get_stats()"""
-    return db.tag_concepts_v2.count_documents({"children": {"$ne": []}})
+    return db.tag_concepts_v2.count_documents({"status": {"$ne": "deprecated"}})  # status is unset on most concepts
 
 
 def tag_aliases_v2_count_documents__get_stats():

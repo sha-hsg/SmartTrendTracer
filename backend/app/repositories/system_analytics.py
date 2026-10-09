@@ -23,13 +23,14 @@ async def get_tag_statistics():
     """Comprehensive tag and concept statistics (used internally by /statistics/summary)"""
     try:
         # Basic tag stats
+        from app.repositories.ontology import organization_stats
+        organization = organization_stats()
         stats = {
-            "total_concepts": db.tag_concepts_v2.count_documents({}),
-            "root_concepts": db.tag_concepts_v2.count_documents({"parents": []}),
-            # organised = placed in the hierarchy (has a parent or children)
-            "organized_concepts": db.tag_concepts_v2.count_documents(
-                {"$or": [{"parents.0": {"$exists": True}}, {"children.0": {"$exists": True}}]}),
-            "leaf_concepts": db.tag_concepts_v2.count_documents({"children": []}),
+            "total_concepts": organization["total_concepts"],
+            # organised/root: one definition, repositories.ontology.organization_stats
+            "root_concepts": organization["root_concepts"],
+            "organized_concepts": organization["organized_concepts"],
+            "leaf_concepts": organization["total_concepts"] - organization["with_children"],
             "verified_concepts": db.tag_concepts_v2.count_documents({"verified": True}),
             "auto_generated_concepts": db.tag_concepts_v2.count_documents({"auto_generated": True}),
             "total_aliases": db.tag_aliases_v2.count_documents({}),

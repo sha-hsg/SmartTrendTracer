@@ -3,10 +3,9 @@ Concept Organization API
 Organizes unorganized concepts into the hierarchy or identifies them as aliases
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
 from typing import Dict, List, Optional
 from pydantic import BaseModel
-from bson import ObjectId
 import logging
 
 from app.services.concept_organization_service import ConceptOrganizationService
@@ -45,46 +44,14 @@ class ConceptOrganizationResponse(BaseModel):
 
 
 @router.get("/unorganized")
-async def get_unorganized_concepts(limit: int = 50) -> Dict:
-    """
-    Get concepts that need organization
-    
-    Returns concepts that are:
-    - Marked as not organized
-    - Need review
-    - Root concepts not created by the reorganizer
-    """
-    try:
-        service = ConceptOrganizationService()
-        concepts = service.get_unorganized_concepts(limit)
-        
-        # Add usage counts via ONE aggregation. The service serializes _id to
-        # string, while tag_instances stores concept_id as ObjectId (plus a
-        # small legacy remainder as strings) - match both representations.
-        if concepts:
-            id_variants = []
-            for concept in concepts:
-                cid = concept["_id"]
-                id_variants.append(cid)
-                if ObjectId.is_valid(cid):
-                    id_variants.append(ObjectId(cid))
-
-            counts = {}
-            for row in queries.count_tag_instances_by_concept(id_variants):
-                key = str(row["_id"])
-                counts[key] = counts.get(key, 0) + row["count"]
-
-            for concept in concepts:
-                concept["usage_count"] = counts.get(concept["_id"], 0)
-        
-        return {
-            "success": True,
-            "count": len(concepts),
-            "concepts": concepts
-        }
-    except Exception as e:
-        logger.error(f"Error getting unorganized concepts: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+async def get_unorganized_concepts(limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0)) -> Dict:
+    """Concepts outside the hierarchy, most used first (with usage_count)."""
+    concepts, total = ontology_repo.unorganized_concepts(limit, offset)
+    for concept in concepts:
+        concept["_id"] = str(concept["_id"])
+        if hasattr(concept.get("created_at"), "isoformat"):
+            concept["created_at"] = concept["created_at"].isoformat()
+    return {"success": True, "count": len(concepts), "total": total, "concepts": concepts}
 
 
 @router.post("/organize")
@@ -211,10 +178,9 @@ async def get_organization_stats() -> Dict:
     try:
         service = ConceptOrganizationService()
         
-        # Count different states
-        total = ontology_repo.count_concepts()
-        organized = queries.tag_concepts_v2_count_documents__get_organization_stats_2()
-        unorganized = queries.tag_concepts_v2_count_documents__get_organization_stats_3()
+        stats = ontology_repo.organization_stats()
+        total, organized = stats["total_concepts"], stats["organized_concepts"]
+        unorganized = stats["unorganized_concepts"]
         
         # Count aliases
         aliases = queries.count_aliases()

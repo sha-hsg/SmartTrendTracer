@@ -72,13 +72,16 @@ def rebuild_mappings():
 @router.get("/stats")
 def get_stats():
     """Get tag system statistics"""
+    org = ontology_repo.organization_stats()
 
     return {
         "concepts": {
             "total": ontology_repo.count_concepts(),
             "active": queries.tag_concepts_v2_count_documents__get_stats_2(),
-            "root": queries.tag_concepts_v2_count_documents__get_stats_3(),
-            "with_children": queries.tag_concepts_v2_count_documents__get_stats_4()
+            # same definition as /api/concepts/organization/stats
+            **{k: org[k] for k in ("organized_concepts", "unorganized_concepts")},
+            "root": org["root_concepts"],
+            "with_children": org["with_children"]
         },
         "aliases": {
             "total": queries.tag_aliases_v2_count_documents__get_stats(),
