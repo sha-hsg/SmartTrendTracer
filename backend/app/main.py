@@ -77,14 +77,11 @@ from app.api import articles  # Articles API (modular package)
 from app.api import substack_mongodb as substack  # Full MongoDB substack API
 from app.api import reddit_mongodb as reddit  # Full MongoDB reddit API
 from app.api import statistics  # MongoDB statistics (package)
-from app.api import trends_mongodb as trends  # MongoDB trends API
 from app.api import user_trends_mongodb as user_trends  # MongoDB user trends
 from app.api import analytics_trends  # MongoDB analytics trends (package)
-from app.api import trend_analysis_mongodb as trend_analysis  # Comprehensive trend analysis
 from app.api import topic_explorer  # Topic Explorer for frequency and correlation analysis
 from app.api import rag_concepts  # Concept-based RAG
 from app.api import tag_ontology as ontology  # MongoDB ontology (package)
-from app.api import ontology_graph  # Ontology visualization
 from app.api import concepts_suggestions_mongodb as concepts_suggestions  # MongoDB concept suggestions
 
 # Additional APIs that might need updating
@@ -95,7 +92,6 @@ from app.api import acm_import  # ACM Digital Library import
 from app.api import direct_url_import  # Direct URL import
 from app.api import openreview_import  # OpenReview paper import
 from app.api import jair_import  # JAIR import
-from app.api import article_clustering_mongodb as article_clustering  # Article clustering (MongoDB)
 from app.api import concept_organization  # Concept organization for unorganized concepts
 from app.api import article_import  # MongoDB Article URL import (package)
 from app.api import article_preview  # Article preview regeneration
@@ -190,14 +186,11 @@ app.include_router(twitter_accounts.router, prefix="/api/twitter-accounts", tags
 app.include_router(substack.router, prefix="/api/substack", tags=["substack"])
 app.include_router(reddit.router, prefix="/api/reddit", tags=["reddit"])
 app.include_router(statistics.router, prefix="/api/statistics", tags=["statistics"])
-app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
 app.include_router(user_trends.router, prefix="/api/user-trends", tags=["user_trends"])
 app.include_router(analytics_trends.router, prefix="/api/analytics/trends", tags=["analytics_trends"])
-app.include_router(trend_analysis.router, prefix="/api/trends/analysis", tags=["trend_analysis"])
 app.include_router(topic_explorer.router, prefix="/api/topics", tags=["topic_explorer"])
 app.include_router(rag_concepts.router, prefix="/api/rag", tags=["rag"])
 app.include_router(ontology.router, prefix="/api/ontology", tags=["ontology"])
-app.include_router(ontology_graph.router, prefix="/api/ontology-graph", tags=["ontology_graph"])
 app.include_router(concepts_suggestions.router, prefix="/api/concepts/suggestions", tags=["suggestions"])
 app.include_router(concept_organization.router, prefix="/api/concepts/organization", tags=["concept_organization"])
 app.include_router(system_stats.router)  # Comprehensive system statistics (package)
@@ -209,7 +202,6 @@ app.include_router(acm_import.router, tags=["acm"])  # ACM Digital Library impor
 app.include_router(direct_url_import.router, prefix="/api/papers", tags=["direct-url"])  # Direct URL import
 app.include_router(openreview_import.router, tags=["openreview"])  # OpenReview paper import
 app.include_router(jair_import.router, prefix="/api/jair", tags=["jair"])  # JAIR import
-app.include_router(article_clustering.router, prefix="/api/article-clustering", tags=["clustering"])
 app.include_router(article_import.router, prefix="/api/v2/articles", tags=["article-import"])
 app.include_router(article_preview.router, prefix="/api/article-preview", tags=["article-preview"])
 app.include_router(pdf_export.router, prefix="/api/pdf", tags=["pdf-export"])  # MongoDB migrated

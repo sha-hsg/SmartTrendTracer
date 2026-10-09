@@ -3,21 +3,17 @@ import { Button } from "@/components/ui/button"
 import {
   Twitter,
   FileText,
-  Tags,
   Search,
-  TrendingUp,
   BarChart3,
-  Sparkles,
   ChevronRight,
   BookOpen,
-  MessageSquare,
+  BookOpenCheck,
   Library,
-  GitCompare,
-  Layers,
-  ScrollText,
   Brain,
   Flame,
-  Users
+  Newspaper,
+  Rss,
+  Tags,
 } from 'lucide-react'
 import type { ViewType } from './ModernNavigation'
 import { cn } from "@/lib/utils"
@@ -64,424 +60,79 @@ function QuickAccessCard({ title, heading, description, icon, onClick, className
   )
 }
 
+const QUICK: { title: string; heading: string; description: string; icon: React.ReactNode; view: ViewType; className?: string }[] = [
+  { title: 'Trend Detection', heading: 'Trends', description: 'What is new, growing or fading in your bubble',
+    icon: <Flame className="h-4 w-4 text-orange-500" />, view: 'trend-dashboard',
+    className: 'bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 dark:border-orange-800' },
+  { title: 'Weekly Digest', heading: 'Digest', description: 'Briefing on the last 7 days',
+    icon: <Newspaper className="h-4 w-4 text-indigo-500" />, view: 'weekly-digest',
+    className: 'bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950' },
+  { title: 'AI Search', heading: 'RAG Search', description: 'Ask questions across all content',
+    icon: <Search className="h-4 w-4 text-green-500" />, view: 'rag-search' },
+  { title: 'Paper Q&A', heading: 'Ask Papers', description: 'Answers with cited paper sections',
+    icon: <BookOpenCheck className="h-4 w-4 text-orange-500" />, view: 'paper-qa' },
+  { title: 'Paper Feed', heading: 'New on arXiv', description: 'Candidates ranked by your topics',
+    icon: <Rss className="h-4 w-4 text-amber-500" />, view: 'papers-feed' },
+  { title: 'System Overview', heading: 'Statistics', description: 'Collection, tagging and index status',
+    icon: <BarChart3 className="h-4 w-4 text-blue-500" />, view: 'statistics' },
+]
+
+const SECTIONS: { title: string; icon: React.ReactNode; links: { label: string; view: ViewType }[] }[] = [
+  { title: 'Twitter/X Analytics', icon: <Twitter className="h-5 w-5 text-blue-400" />, links: [
+    { label: 'Browse Tweets', view: 'twitter-faceted' }, { label: 'TweetDeck', view: 'twitter-deck' },
+    { label: 'Media Gallery', view: 'twitter-media' }, { label: 'User Analysis', view: 'twitter-users' },
+    { label: 'Account Manager', view: 'twitter-accounts' }] },
+  { title: 'Articles & Authors', icon: <FileText className="h-5 w-5 text-purple-500" />, links: [
+    { label: 'Browse Articles', view: 'articles-faceted' }, { label: 'Article Trends', view: 'articles-trends' },
+    { label: 'Manage Authors', view: 'author-management' }] },
+  { title: 'Research Papers', icon: <BookOpen className="h-5 w-5 text-orange-500" />, links: [
+    { label: 'Browse Papers', view: 'papers-dashboard' }, { label: 'Paper Reviews', view: 'reviews-dashboard' },
+    { label: 'References', view: 'papers-references' }, { label: 'Paper Feed', view: 'papers-feed' },
+    { label: 'Paper Q&A', view: 'paper-qa' }] },
+  { title: 'Book Library', icon: <Library className="h-5 w-5 text-emerald-500" />, links: [
+    { label: 'Browse Books', view: 'books-dashboard' }] },
+  { title: 'Analysis', icon: <Brain className="h-5 w-5 text-indigo-600" />, links: [
+    { label: 'Trend Dashboard', view: 'trend-dashboard' }, { label: 'Topic Explorer', view: 'topic-explorer' },
+    { label: 'AI Summarization', view: 'twitter-summary' }, { label: 'Weekly Digest', view: 'weekly-digest' }] },
+  { title: 'Concepts & Search', icon: <Tags className="h-5 w-5 text-teal-500" />, links: [
+    { label: 'AI Search', view: 'rag-search' }, { label: 'Concept Management', view: 'concept-management' },
+    { label: 'Concept Graph', view: 'concept-graph' }] },
+]
+
 export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
   return (
     <div className="container mx-auto p-6 space-y-6">
-      {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-white">
         <h1 className="text-4xl font-bold mb-2">Welcome to SmartTrendTracer</h1>
-        <p className="text-xl opacity-90">
-          AI-powered content monitoring and trend analysis system
-        </p>
+        <p className="text-xl opacity-90">Your AI bubble — collected, tagged, searchable, and watched for trends</p>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <QuickAccessCard title="System Overview" heading="Statistics" description="View system metrics"
-          icon={<BarChart3 className="h-4 w-4 text-blue-500" />} onClick={() => onNavigate('statistics')} />
-        <QuickAccessCard title="AI Search" heading="RAG Search" description="Search all content"
-          icon={<Search className="h-4 w-4 text-green-500" />} onClick={() => onNavigate('rag-search')} />
-        <QuickAccessCard title="Twitter/X" heading="Tweets" description="Browse tweets"
-          icon={<Twitter className="h-4 w-4 text-blue-400" />} onClick={() => onNavigate('twitter-faceted')} />
-        <QuickAccessCard title="Articles" heading="Articles" description="Browse web articles"
-          icon={<FileText className="h-4 w-4 text-purple-500" />} onClick={() => onNavigate('articles-faceted')} />
-        <QuickAccessCard title="Reddit Posts" heading="Reddit" description="AI/ML discussions"
-          icon={<MessageSquare className="h-4 w-4 text-red-500" />} onClick={() => onNavigate('reddit-faceted')} />
-        <QuickAccessCard title="Research Papers" heading="Papers" description="Analyze PDFs"
-          icon={<BookOpen className="h-4 w-4 text-orange-500" />} onClick={() => onNavigate('papers-dashboard')} />
-        <QuickAccessCard title="Book Library" heading="Books" description="Browse long-form content"
-          icon={<Library className="h-4 w-4 text-emerald-500" />} onClick={() => onNavigate('books-dashboard')} />
-        <QuickAccessCard title="AI Summary" heading="Summarize" description="AI-powered insights"
-          icon={<ScrollText className="h-4 w-4 text-purple-500" />} onClick={() => onNavigate('twitter-summary')}
-          className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950 dark:to-blue-950" />
-        <QuickAccessCard title="Trend Detection" heading="Trends" description="Real-time trend analysis"
-          icon={<Flame className="h-4 w-4 text-orange-500" />} onClick={() => onNavigate('trend-dashboard')}
-          className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950 dark:to-red-950 border-orange-200 dark:border-orange-800" />
+        {QUICK.map(q => (
+          <QuickAccessCard key={q.view} title={q.title} heading={q.heading} description={q.description}
+            icon={q.icon} onClick={() => onNavigate(q.view)} className={q.className} />
+        ))}
       </div>
 
-      {/* Analysis & Insights Section */}
-      <Card className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950 dark:to-purple-950 border-indigo-200 dark:border-indigo-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-indigo-600" />
-            Analysis & Insights
-          </CardTitle>
-          <CardDescription>
-            Cross-source analysis, trend comparison, and topic clustering
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
-              onClick={() => onNavigate('trend-dashboard')}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Flame className="h-5 w-5 text-orange-500" />
-                <span className="font-semibold">Trend Dashboard</span>
-              </div>
-              <span className="text-xs text-muted-foreground text-left">
-                Trends, associations and topic episodes of your bubble
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
-              onClick={() => onNavigate('twitter-summary')}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <ScrollText className="h-5 w-5 text-purple-500" />
-                <span className="font-semibold">AI Summarization</span>
-              </div>
-              <span className="text-xs text-muted-foreground text-left">
-                Generate intelligent summaries from tweets, articles, and papers
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
-              onClick={() => onNavigate('analysis-unified')}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
-                <span className="font-semibold">Unified Trends</span>
-              </div>
-              <span className="text-xs text-muted-foreground text-left">
-                Combined insights across all content sources
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
-              onClick={() => onNavigate('analysis-compare')}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <GitCompare className="h-5 w-5 text-green-500" />
-                <span className="font-semibold">Compare Sources</span>
-              </div>
-              <span className="text-xs text-muted-foreground text-left">
-                Twitter vs Articles vs Papers comparison
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
-              onClick={() => onNavigate('analysis-clustering')}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Layers className="h-5 w-5 text-orange-500" />
-                <span className="font-semibold">Topic Clustering</span>
-              </div>
-              <span className="text-xs text-muted-foreground text-left">
-                Discover related topics and content groups
-              </span>
-            </Button>
-
-            <Button
-              variant="outline"
-              className="h-auto py-4 flex-col items-start gap-2 whitespace-normal bg-white dark:bg-gray-900"
-              onClick={() => onNavigate('topic-explorer')}
-            >
-              <div className="flex items-center gap-2 w-full">
-                <Sparkles className="h-5 w-5 text-indigo-500" />
-                <span className="font-semibold">Topic Explorer</span>
-              </div>
-              <span className="text-xs text-muted-foreground text-left">
-                Analyze topic frequency and correlations
-              </span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Feature Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Twitter className="h-5 w-5" />
-              Twitter/X Analytics
-            </CardTitle>
-            <CardDescription>
-              Real-time monitoring of AI-related tweets from key accounts
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('twitter-faceted')}
-              >
-                Browse Tweets
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('twitter-trends')}
-              >
-                Trending Topics
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('twitter-deck')}
-              >
-                TweetDeck
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('twitter-media')}
-              >
-                Media Gallery
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Article Analysis
-            </CardTitle>
-            <CardDescription>
-              Analyze web articles from various sources
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('articles-faceted')}
-              >
-                Browse Articles
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('articles-trends')}
-              >
-                Article Trends
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('articles-charts')}
-              >
-                Article Analytics
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('articles-clustering')}
-              >
-                Article Clustering
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Reddit Analytics
-            </CardTitle>
-            <CardDescription>
-              AI/ML discussions from key subreddits
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('reddit-faceted')}
-              >
-                Browse Posts
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('reddit-trends')}
-              >
-                Reddit Trends
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Authors
-            </CardTitle>
-            <CardDescription>
-              View and organize article authors
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('author-management')}
-              >
-                Manage Authors
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('author-analytics')}
-              >
-                Author Analytics
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('author-merge')}
-              >
-                Merge Duplicates
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Research Papers
-            </CardTitle>
-            <CardDescription>
-              Upload and analyze PDF research papers with AI
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('papers-dashboard')}
-              >
-                Manage Papers
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('reviews-dashboard')}
-              >
-                Paper Reviews
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('papers-references')}
-              >
-                References
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Library className="h-5 w-5" />
-              Book Library
-            </CardTitle>
-            <CardDescription>
-              Browse and analyze long-form content
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('books-dashboard')}
-              >
-                Browse Books
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('books-analysis')}
-              >
-                Book Analytics
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tags className="h-5 w-5" />
-              Concepts & Search
-            </CardTitle>
-            <CardDescription>
-              AI search and concept organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-2">
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('rag-search')}
-              >
-                AI Search
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('concept-management')}
-              >
-                Concept Management
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-between"
-                onClick={() => onNavigate('concept-graph')}
-              >
-                Concept Graph
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {SECTIONS.map(section => (
+          <Card key={section.title}>
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">{section.icon}{section.title}</CardTitle>
+              <CardDescription className="sr-only">{section.title}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              {section.links.map(link => (
+                <Button key={link.view + link.label} variant="ghost" className="w-full justify-between h-8 px-2"
+                  onClick={() => onNavigate(link.view)}>
+                  <span className="text-sm">{link.label}</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
     </div>
   )
 }

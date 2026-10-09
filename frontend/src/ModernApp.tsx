@@ -6,14 +6,8 @@ import DashboardHome from './components/layout/DashboardHome'
 import { StatisticsDashboard } from './components/statistics'
 import FacetedTweetsDashboardModern from './components/tweets/FacetedTweetsDashboardModern'
 import FacetedArticlesDashboardModern from './components/articles'
-import { FacetedRedditDashboardModern } from './components/reddit'
-import TrendAnalysisModern from './components/trend-analysis'
-import TrendAnalysisOverview from './components/trend-overview'
 import UserTrendAnalysisModern from './components/trends/UserTrendAnalysisModern'
-import TrendVisualizationModern from './components/trends/TrendVisualizationModern'
 import SummarizationModern from './components/summarization'
-import TagOntologyModern from './components/tag-ontology'
-import ConceptOrganizer from './components/concept-management/ConceptOrganizer'
 import ConceptManagementCenter from './components/concept-management'
 import ConceptGraph from './components/concept-management/ConceptGraph'
 import SubstackTrendsModern from './components/substack-trends/SubstackTrendsModern'
@@ -25,14 +19,12 @@ import ReferenceManager from './components/reference-manager'
 import PaperFeed from './components/paper-feed'
 import WeeklyDigest from './components/weekly-digest'
 import PaperQA from './components/paper-qa'
-import { ArticleClusteringDashboard } from './components/clustering'
 import AuthorManagementModern from './components/authors/AuthorManagementModern'
 import TwitterAccountManager from './components/twitter'
 import TweetDeckView from './components/tweets/TweetDeckView'
 import TopicExplorerModern from './components/topic-explorer'
 import { TrendDashboardMain } from './components/trends'
 import ErrorBoundary from './components/layout/ErrorBoundary'
-import { BookOpen } from 'lucide-react'
 import { Toaster } from 'sonner'
 import './index.css'
 
@@ -60,12 +52,8 @@ export default function ModernApp() {
         return <TweetDeckView />
       case 'twitter-media':
         return <TwitterMediaGalleryModern />
-      case 'twitter-trends':
-        return <TrendAnalysisOverview />
       case 'twitter-users':
         return <UserTrendAnalysisModern />
-      case 'twitter-charts':
-        return <TrendVisualizationModern />
       case 'twitter-summary':
         return <SummarizationModern />
       case 'twitter-accounts':
@@ -82,34 +70,9 @@ export default function ModernApp() {
             <SubstackTrendsModern />
           </ErrorBoundary>
         )
-      case 'articles-charts':
-        return <TrendVisualizationModern contentType="articles" />
-      case 'articles-clustering':
-        return <ArticleClusteringDashboard />
       // Author views
       case 'author-management':
         return <AuthorManagementModern />
-      case 'author-analytics':
-        return <div className="p-6"><h2 className="text-2xl font-bold">Author Analytics - Coming Soon</h2></div>
-      case 'author-merge':
-        return <div className="p-6"><h2 className="text-2xl font-bold">Author Merge - Coming Soon</h2></div>
-      // Reddit views
-      case 'reddit-faceted':
-        return <FacetedRedditDashboardModern />
-      case 'reddit-trends':
-        return (
-          <ErrorBoundary
-            fallbackTitle="Reddit Trends Error"
-            fallbackMessage="Reddit trends analysis is not yet implemented. This feature will show trending topics across monitored subreddits."
-          >
-            <div className="container mx-auto p-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold mb-4">Reddit Trends</h2>
-                <p className="text-muted-foreground">Coming soon - Reddit trend analysis</p>
-              </div>
-            </div>
-          </ErrorBoundary>
-        )
       // Papers views
       case 'papers-dashboard':
         return <FacetedPapersDashboard />
@@ -122,23 +85,9 @@ export default function ModernApp() {
       // Books views
       case 'books-dashboard':
         return <FacetedBooksDashboard />
-      case 'books-analysis':
-        // TODO: Implement book analytics dashboard
-        return (
-          <div className="p-8 text-center">
-            <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Book Analytics</h2>
-            <p className="text-muted-foreground">Coming soon - Reading statistics and insights</p>
-          </div>
-        )
       // Analysis views
-      case 'analysis-unified':
       case 'trend-dashboard':
         return <TrendDashboardMain onConceptClick={(conceptId) => { setExplorerConcept(conceptId); setActiveView('topic-explorer') }} />
-      case 'analysis-compare':
-        return <TrendVisualizationModern />
-      case 'analysis-clustering':
-        return <TrendAnalysisModern />
       case 'topic-explorer':
         return <TopicExplorerModern initialConceptId={explorerConcept} />
       // New unified concept management
@@ -146,11 +95,6 @@ export default function ModernApp() {
         return <ConceptManagementCenter />
       case 'concept-graph':
         return <ConceptGraph />
-      // Legacy (to be removed)
-      case 'tags-organisation':
-        return <TagOntologyModern />
-      case 'concept-organizer':
-        return <ConceptOrganizer />
       default:
         return <DashboardHome onNavigate={setActiveView} />
     }

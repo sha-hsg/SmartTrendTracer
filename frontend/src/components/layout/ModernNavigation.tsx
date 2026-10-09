@@ -19,17 +19,13 @@ import {
   Database,
   Image,
   Users,
-  PieChart,
   ScrollText,
   Flame,
   Brain,
-  GitCompare,
   Layers,
   Columns,
-  Activity,
   BookOpen,
   GitBranch,
-  MessageSquare,
   FileSearch,
   Library,
   LineChart,
@@ -48,24 +44,15 @@ export type ViewType =
   // Twitter views
   | 'twitter-faceted'
   | 'twitter-media'
-  | 'twitter-trends'
   | 'twitter-users'
-  | 'twitter-charts'
   | 'twitter-summary'
   | 'twitter-accounts'
   | 'twitter-deck'
   // Article views
   | 'articles-faceted'
   | 'articles-trends'
-  | 'articles-charts'
-  | 'articles-clustering'
   // Author views
   | 'author-management'
-  | 'author-analytics'
-  | 'author-merge'
-  // Reddit views
-  | 'reddit-faceted'
-  | 'reddit-trends'
   // Papers views
   | 'papers-dashboard'
   | 'papers-references'
@@ -73,19 +60,12 @@ export type ViewType =
   | 'reviews-dashboard'
   // Books views
   | 'books-dashboard'
-  | 'books-analysis'
   // Analysis views
-  | 'analysis-unified'
-  | 'analysis-compare'
-  | 'analysis-clustering'
   | 'topic-explorer'
   | 'trend-dashboard'
   // Concept management
   | 'concept-management'
   | 'concept-graph'
-  // Legacy (to be removed)
-  | 'tags-organisation'
-  | 'concept-organizer'
 
 interface ModernNavigationProps {
   activeView: ViewType
@@ -158,22 +138,10 @@ const navigationItems = [
         description: 'Images and videos'
       },
       { 
-        title: 'Trending Topics', 
-        view: 'twitter-trends' as ViewType, 
-        icon: TrendingUp,
-        description: 'Hot topics and trends'
-      },
-      { 
         title: 'User Analysis', 
         view: 'twitter-users' as ViewType, 
         icon: Users,
         description: 'Per-user insights'
-      },
-      {
-        title: 'Visualizations',
-        view: 'twitter-charts' as ViewType,
-        icon: PieChart,
-        description: 'Charts and graphs'
       },
       {
         title: 'Account Manager',
@@ -199,18 +167,6 @@ const navigationItems = [
         icon: Flame,
         description: 'Hot topics in articles'
       },
-      {
-        title: 'Article Analytics',
-        view: 'articles-charts' as ViewType,
-        icon: BarChart3,
-        description: 'Article statistics'
-      },
-      {
-        title: 'Topic Clustering',
-        view: 'articles-clustering' as ViewType,
-        icon: Layers,
-        description: 'Cluster articles by tags'
-      }
     ]
   },
   {
@@ -223,36 +179,6 @@ const navigationItems = [
         icon: Users,
         description: 'View and organize article authors'
       },
-      {
-        title: 'Author Analytics',
-        view: 'author-analytics' as ViewType,
-        icon: BarChart3,
-        description: 'Publishing statistics and insights'
-      },
-      {
-        title: 'Merge Duplicates',
-        view: 'author-merge' as ViewType,
-        icon: GitCompare,
-        description: 'Find and merge duplicate authors'
-      }
-    ]
-  },
-  {
-    title: 'Reddit',
-    icon: MessageSquare,
-    items: [
-      { 
-        title: 'Browse Posts', 
-        view: 'reddit-faceted' as ViewType, 
-        icon: FileText,
-        description: 'Filter and explore Reddit posts'
-      },
-      { 
-        title: 'Reddit Trends', 
-        view: 'reddit-trends' as ViewType, 
-        icon: TrendingUp,
-        description: 'Trending topics on Reddit'
-      }
     ]
   },
   {
@@ -295,36 +221,12 @@ const navigationItems = [
         icon: BookOpen,
         description: 'Personal book collection'
       },
-      {
-        title: 'Book Analytics',
-        view: 'books-analysis' as ViewType,
-        icon: BarChart3,
-        description: 'Reading statistics and insights'
-      }
     ]
   },
   {
     title: 'Analysis',
     icon: LineChart,
     items: [
-      { 
-        title: 'Unified Trends', 
-        view: 'analysis-unified' as ViewType, 
-        icon: Activity,
-        description: 'Combined insights'
-      },
-      { 
-        title: 'Compare Sources', 
-        view: 'analysis-compare' as ViewType, 
-        icon: GitCompare,
-        description: 'Twitter vs Articles'
-      },
-      {
-        title: 'Topic Clustering',
-        view: 'analysis-clustering' as ViewType,
-        icon: Layers,
-        description: 'Related topics'
-      },
       {
         title: 'Topic Explorer',
         view: 'topic-explorer' as ViewType,

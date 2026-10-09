@@ -376,19 +376,18 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/articles` | `api/articles/` | browse/faceted-search, concepts/snippets, **author management** (`/authors/...`), extract-metadata, tags/suggest, summarize, recollect. (Old `/api/substack/articles` paths are gone.) |
 | `/api/v2/articles` | `article_import/` | URL import: smart dispatch, cookies, Playwright, batch |
 | `/api/article-preview` | `article_preview` | regenerate / beautify previews |
-| `/api/article-clustering` | `article_clustering_mongodb` | k-means/topic clustering |
 | `/api/substack` | `substack_mongodb` | `/trends` (concept-based tags/growth/velocity), `/health` |
 | `/api/reddit` | `reddit_mongodb` | faceted-search, facets, tags, collect, stats |
 | `/api/twitter-accounts` | `api/twitter_accounts/` | account CRUD, lookup, stats/dashboard/usage (10k budget), collector-status, toggle/refresh/collect |
 | `/api/authors` | `authors_management` | author merge/analytics endpoints — **UI not built yet** (see AUTHOR_UI_DESIGN.md) |
 | `/api/statistics`, `/api/system` | `statistics/`, `system_stats/` | statistics dashboards |
-| `/api/trends`, `/api/trends/analysis`, `/api/user-trends` | trends modules | trend queries and analysis |
+| `/api/user-trends` | `user_trends_mongodb` | per-account tweet analysis (User Analysis) |
 | `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data — all concept views from `services/trend_core` (one cached concept-activity cube): at-a-glance, heatmap, bubble-chart, network (NPMI associations + pair list), animated-timeline (rolling 7-day race); AI summarization (`/summarize`); `episodes` (bubble topic map from `services/topic_episodes`: families, episodes, lineage; `/episodes/{id}`, `POST /episodes/rebuild` + `/rebuild/status`) |
 | `/api/topics` | `topic_explorer` | frequency / correlation / popular topics |
 | `/api/paper-feed` | `paper_feed` | arXiv feed: subscriptions (query + optional concept) CRUD, candidates (new/imported/dismissed, ranked by similarity to the concept's papers via FAISS vectors), `run`, import/dismiss |
 | `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_core.overview` + topic-map episode news + LLM prompt `weekly_digest`) |
 | `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, `update` (incremental: new/changed/deleted content only), `rebuild` (full), sample-questions |
-| `/api/ontology`, `/api/ontology-graph` | `tag_ontology/`, `ontology_graph` | concept ontology CRUD + visualization |
+| `/api/ontology` | `tag_ontology/` | concept ontology CRUD, tree, graph data |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
 | `/api/concepts/organization` | `concept_organization` | organizing unorganized concepts |
 | `/api/tags/reorganize` | `tag_reorganization/` | async ontology reorganization (SSE + apply) |
@@ -461,8 +460,9 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    deliberately; UI design in `AUTHOR_UI_DESIGN.md`.
 5. **Reddit UI gaps** — frontend only uses `faceted-search` + `facets`; the collect
    trigger and stats endpoints are kept but have no UI.
-6. **"Coming Soon" views** in navigation (author-analytics, author-merge, reddit-trends,
-   books-analysis) are placeholders.
+6. **Navigation consolidated (2026-10-09)**: duplicate and old trend views (Unified Trends, Compare
+   Sources, Topic Clustering, Trending Topics, Visualizations, Article Analytics, article clustering),
+   "Coming soon" placeholders and Reddit (no collector credentials) removed from menu and home.
 7. **Semantic concept search is lexical** (text + alias matching with relevance tiers);
    an embedding-based search would reuse the existing FAISS stack.
 8. **No inline MongoDB queries in `app/api/`** (arch audit 2026-09, AST guard at 0; 12 API
