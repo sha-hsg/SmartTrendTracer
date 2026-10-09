@@ -24,9 +24,10 @@ def _newsletter_sources() -> Dict:
 
 
 def match_newsletter_source(sender: str) -> Optional[Dict]:
-    """Config entry whose key occurs in the sender text (longest key wins, so
-    "The Substack Post" beats "Substack")."""
-    text = (sender or '').lower()
+    """Config entry whose key occurs in the sender's display name (longest key
+    wins, so "The Substack Post" beats "Substack"). The address is ignored:
+    every sender is @substack.com, so a "Substack" key would match them all."""
+    text = (sender or '').split('<')[0].lower()
     hits = [(k, v) for k, v in _newsletter_sources().items() if k.lower() in text]
     return max(hits, key=lambda kv: len(kv[0]))[1] if hits else None
 
@@ -157,8 +158,8 @@ class GmailSubstackCollector:
         # publication ("LLM Watch"), and a Substack inbox also holds politics,
         # platform mail etc. Unknown senders are skipped and reported.
         author_info = email_data['author']
-        source = match_newsletter_source(f"{author_info.get('name', '')} {author_info.get('email', '')} "
-                                         f"{email_data.get('sender', '')}")
+        source = (match_newsletter_source(author_info.get('name', ''))
+                  or match_newsletter_source(email_data.get('sender', '')))
         if not source or not source.get('include'):
             self.skipped_senders.add(author_info.get('name') or author_info.get('email') or '?')
             return None

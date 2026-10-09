@@ -10,11 +10,15 @@ def test_allow_list_maps_publication_to_person_and_longest_key_wins(monkeypatch)
         'Substack': {'include': False},
         'The Substack Post': {'include': False},
         'Import AI': {'author': 'Jack Clark', 'include': True},
+        'elvis': {'author': 'elvis', 'include': True},
     })
+    # the address must not decide: "Substack" would otherwise beat "elvis"
+    assert g.match_newsletter_source('elvis <elvis@substack.com>')['include'] is True
     assert g.match_newsletter_source('LLM Watch <llmwatch@substack.com>')['author'] == 'Pascal Biese'
     assert g.match_newsletter_source('Jack Clark from Import AI <x@substack.com>')['author'] == 'Jack Clark'
     assert g.match_newsletter_source('The Substack Post <post@substack.com>')['include'] is False
     assert g.match_newsletter_source('Silver Bulletin <x@substack.com>') is None   # unknown: skipped
+    assert g.match_newsletter_source('Substack <no-reply@substack.com>')['include'] is False
 
 
 class FakeArticles:
