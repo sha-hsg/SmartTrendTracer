@@ -1,6 +1,7 @@
 """Paper lookups shared by the papers API package."""
 from app.database.mongodb import safe_object_id
 import logging
+import re
 from typing import Any, Dict, Optional
 
 from bson import ObjectId
@@ -106,7 +107,8 @@ def save_arxiv_import(result: Dict[str, Any]) -> str:
     with the same arxiv_id is reused instead of duplicated.
     """
     from datetime import datetime, timezone
-    existing = db.papers.find_one({'arxiv_id': result['arxiv_id']})
+    key = arxiv_key(result['arxiv_id'])
+    existing = find_paper_by_arxiv_id(key)
     if existing:
         return str(existing['_id'])
     paper_data = {
@@ -114,7 +116,7 @@ def save_arxiv_import(result: Dict[str, Any]) -> str:
         'authors': ', '.join(result['metadata']['authors']),
         'authors_detailed': [{'name': author, 'affiliation': '', 'email': ''} for author in result['metadata']['authors']],
         'abstract': result['metadata']['abstract'],
-        'arxiv_id': result['arxiv_id'],
+        'arxiv_id': key,
         'pdf_url': result['metadata']['pdf_url'],
         'publication_date': result['metadata'].get('published'),
         'categories': result['metadata'].get('categories', []),
@@ -130,6 +132,31 @@ def save_arxiv_import(result: Dict[str, Any]) -> str:
         'paper_type': 'research',
     }
     return str(db.papers.insert_one(paper_data).inserted_id)
+
+
+def arxiv_key(arxiv_id: str) -> str:
+    """Canonical arXiv id: no 'arXiv:' prefix, no version ('arXiv:2512.24601v1' -> '2512.24601')."""
+    return re.sub(r'v\d+$', '', re.sub(r'^arxiv:', '', (arxiv_id or '').strip(), flags=re.I))
+
+
+def find_paper_by_arxiv_id(arxiv_id: str) -> Optional[Dict[str, Any]]:
+    """Paper with this arXiv id in any stored form (prefix / version)."""
+    key = arxiv_key(arxiv_id)
+    if not key:
+        return None
+    return db.papers.find_one({'arxiv_id': {'$regex': f'^(arxiv:)?{re.escape(key)}(v\\d+)?$', '$options': 'i'}})
+
+
+def find_paper_by_file_md5(md5: str) -> Optional[Dict[str, Any]]:
+    return db.papers.find_one({'file_md5': md5}, {'_id': 1, 'title': 1})
+
+
+def attach_pdf(paper_id, pdf_path: str, md5: str) -> None:
+    """Store an uploaded PDF on an existing paper (e.g. a metadata-only DOI import)."""
+    from bson import ObjectId
+    oid = ObjectId(paper_id) if ObjectId.is_valid(str(paper_id)) else paper_id
+    db.papers.update_one({'_id': oid}, {'$set': {'pdf_path': pdf_path, 'file_md5': md5, 'pdf_missing': False,
+                                                  'processing_status': 'not_started', 'processing_error': None}})
 
 
 def insert_paper(paper_doc):

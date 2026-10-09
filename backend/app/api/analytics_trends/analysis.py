@@ -81,45 +81,8 @@ def generate_summary(
 
     # Paper filter based on date type selection
     if paper_date_type == "published":
-        # Use publication_date (canonical field) with published_date and year fallbacks
-        # publication_date is the standard field; published_date kept for backwards compatibility
-        paper_filter = {
-            '$or': [
-                # Has publication_date in range (canonical field)
-                {
-                    'publication_date': {
-                        '$exists': True,
-                        '$nin': [None, ''],
-                        '$gte': start_date.isoformat(),
-                        '$lte': end_date.isoformat()
-                    }
-                },
-                # Has published_date as ISO string (legacy/backwards compatibility)
-                {
-                    'published_date': {
-                        '$exists': True,
-                        '$ne': None,
-                        '$gte': start_date.isoformat(),
-                        '$lte': end_date.isoformat()
-                    }
-                },
-                # No publication_date/published_date but has year in range
-                {
-                    '$and': [
-                        {'$or': [
-                            {'publication_date': {'$exists': False}},
-                            {'publication_date': None},
-                            {'publication_date': ''}
-                        ]},
-                        {'$or': [
-                            {'published_date': {'$exists': False}},
-                            {'published_date': None}
-                        ]},
-                        {'year': {'$gte': start_date.year, '$lte': end_date.year}}
-                    ]
-                }
-            ]
-        }
+        # publication_date is an ISO string (repositories.paper_dates), so a string range works
+        paper_filter = {'publication_date': {'$gte': start_date.date().isoformat(), '$lte': end_date.date().isoformat()}}
         logger.info(f"Using publication date filter for papers (years {start_date.year}-{end_date.year})")
     else:
         # Default: use created_at (import date)

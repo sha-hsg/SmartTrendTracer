@@ -130,46 +130,8 @@ def fetch_papers_in_range(
     review_filter = {'paper_type': {'$ne': 'review'}}
 
     if date_type == "published":
-        # Use publication_date (canonical field) with published_date and year fallbacks
-        # publication_date is the standard field; published_date kept for backwards compatibility
-        query = {
-            '$or': [
-                # Has publication_date in range (canonical field)
-                {
-                    'publication_date': {
-                        '$exists': True,
-                        '$ne': None,
-                        '$ne': '',
-                        '$gte': start_date.isoformat(),
-                        '$lte': end_date.isoformat()
-                    }
-                },
-                # Has published_date as ISO string in range (legacy/backwards compatibility)
-                {
-                    'published_date': {
-                        '$exists': True,
-                        '$ne': None,
-                        '$gte': start_date.isoformat(),
-                        '$lte': end_date.isoformat()
-                    }
-                },
-                # No publication_date/published_date but has year in range
-                {
-                    '$and': [
-                        {'$or': [
-                            {'publication_date': {'$exists': False}},
-                            {'publication_date': None},
-                            {'publication_date': ''}
-                        ]},
-                        {'$or': [
-                            {'published_date': {'$exists': False}},
-                            {'published_date': None}
-                        ]},
-                        {'year': {'$gte': start_date.year, '$lte': end_date.year}}
-                    ]
-                }
-            ]
-        }
+        # publication_date is an ISO string (repositories.paper_dates), so a string range works
+        query = {'publication_date': {'$gte': start_date.date().isoformat(), '$lte': end_date.date().isoformat()}}
         sort_field = 'created_at'  # Sort by created_at since published dates may be in different formats
     else:
         # Default: use created_at (import date)

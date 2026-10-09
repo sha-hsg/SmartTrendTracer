@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict
 
 from bson import ObjectId
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
 
 from .utils import (
     db,
@@ -54,6 +54,32 @@ def get_paper_content(paper_id: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # POST /{paper_id}/process-with-marker
 # ---------------------------------------------------------------------------
+
+@router.post("/{paper_id}/pdf")
+async def attach_pdf_to_paper(paper_id: str, file: UploadFile = File(...)) -> Dict[str, Any]:
+    """Attach a PDF to an existing paper — the way to complete a metadata-only
+    DOI/publisher import (pdf_missing); uploading via /upload made a duplicate."""
+    import hashlib
+    from app.paths import PAPERS_DIR_REL
+    paper = papers_repo.find_paper_by_any_id(paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+    contents = await file.read()
+    if len(contents) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds 50MB limit")
+    md5 = hashlib.md5(contents).hexdigest()
+    other = papers_repo.find_paper_by_file_md5(md5)
+    if other and str(other['_id']) != str(paper['_id']):
+        raise HTTPException(status_code=409, detail=f"This PDF belongs to another paper: {other.get('title', '')}")
+    PAPERS_DIR_REL.mkdir(parents=True, exist_ok=True)
+    name = f"{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{md5[:8]}_{file.filename.replace(' ', '_')}"
+    path = PAPERS_DIR_REL / name
+    path.write_bytes(contents)
+    papers_repo.attach_pdf(paper['_id'], str(path), md5)
+    return {"id": str(paper['_id']), "pdf_path": str(path), "message": "PDF attached — process it with Marker or MinerU."}
+
 
 @router.post("/{paper_id}/process-with-marker")
 async def process_paper_with_marker(paper_id: str, background_tasks: BackgroundTasks) -> Dict[str, Any]:

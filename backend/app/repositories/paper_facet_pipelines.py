@@ -66,16 +66,10 @@ def build_year_pipeline(base_match: Optional[dict]) -> list:
             '$addFields': {
                 'year': {
                     '$cond': {
-                        'if': {
-                            '$and': [
-                                {'$ne': ['$publication_date', None]},
-                                {'$ne': ['$publication_date', '']},
-                                {'$eq': [{'$type': '$publication_date'}, 'string']},
-                                {'$gt': [{'$strLenCP': '$publication_date'}, 4]}
-                            ]
-                        },
-                        'then': {'$year': {'$dateFromString': {'dateString': '$publication_date', 'onError': None}}},
-                        'else': {'$year': '$created_at'}
+                        'if': {'$and': [{'$eq': [{'$type': '$publication_date'}, 'string']},
+                                        {'$gte': [{'$strLenCP': '$publication_date'}, 4]}]},
+                        'then': {'$toInt': {'$substrCP': ['$publication_date', 0, 4]}},
+                        'else': None    # unknown year stays unknown (no fallback to the import year)
                     }
                 }
             }
@@ -183,10 +177,9 @@ def build_combined_counts_pipeline(base_match: Optional[dict]) -> list:
             'has_doi': [{'$match': {'doi': {'$exists': True, '$nin': [None, '']}}}, {'$count': 'n'}],
             'has_repository': [{'$match': {'repository': {'$exists': True, '$nin': [None, '']}}}, {'$count': 'n'}],
             'no_processor': [{'$match': {'$or': [{'processor_used': None}, {'processor_used': ''}, {'processor_used': {'$exists': False}}]}}, {'$count': 'n'}],
-            'no_year': [{'$match': {'$and': [
-                {'$or': [{'publication_date': None}, {'publication_date': ''}, {'publication_date': {'$exists': False}}]},
-                {'$or': [{'year': None}, {'year': ''}, {'year': {'$exists': False}}]}
-            ]}}, {'$count': 'n'}],
+            # publication_date is the only date field (paper_hygiene folds published_date/year into it)
+            'no_year': [{'$match': {'$or': [{'publication_date': None}, {'publication_date': ''},
+                                            {'publication_date': {'$exists': False}}]}}, {'$count': 'n'}],
             'no_conference': [{'$match': {'$and': [
                 {'$or': [{'conference': None}, {'conference': ''}, {'conference': {'$exists': False}}]},
                 {'$or': [{'venue': None}, {'venue': ''}, {'venue': {'$exists': False}}]}

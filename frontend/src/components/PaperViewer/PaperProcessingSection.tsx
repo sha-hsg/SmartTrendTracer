@@ -1,11 +1,12 @@
 import React from "react";
-import http from '@/services/http'
+import http, { apiErrorMessage } from '@/services/http'
 import {
   Loader2,
   PlayCircle,
   RotateCcw,
   Cpu,
   GraduationCap,
+  FileUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +54,47 @@ const PaperProcessingSection: React.FC<PaperProcessingSectionProps> = ({
   pollProcessingStatus,
   pollingIntervalRef,
 }) => {
+  const [attaching, setAttaching] = React.useState(false);
+  const attachPdf = async (file: File) => {
+    setAttaching(true);
+    setProcessingError(null);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      await http.post(`/api/papers/${paperId}/pdf`, form);
+      loadPaperDetails();
+    } catch (error) {
+      setProcessingError(apiErrorMessage(error, 'Could not attach the PDF'));
+    } finally {
+      setAttaching(false);
+    }
+  };
+
+  if (!paper.pdf_path) {
+    // metadata-only import (e.g. DOI without an open PDF): attach the PDF to this paper
+    return (
+      <div className="bg-amber-50 dark:bg-amber-950 rounded-lg p-3 border border-amber-200 dark:border-amber-900 space-y-2">
+        <div className="flex items-center gap-2">
+          <FileUp className="h-4 w-4 text-amber-600" />
+          <span className="text-sm font-medium">PDF missing</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          This paper was imported without a PDF (publisher pages often block downloads). Attach the PDF to
+          extract its text — it stays this paper, no duplicate is created.
+        </p>
+        <label className="inline-flex">
+          <input type="file" accept="application/pdf" className="hidden" disabled={attaching}
+            onChange={e => { const f = e.target.files?.[0]; if (f) attachPdf(f); e.target.value = ''; }} />
+          <span className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm cursor-pointer bg-background hover:bg-muted">
+            {attaching ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
+            Attach PDF
+          </span>
+        </label>
+        {processingError && <p className="text-xs text-red-600">{processingError}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 border dark:border-gray-800">
       <div className="flex items-center gap-2 mb-2">

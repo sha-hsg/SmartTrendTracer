@@ -77,6 +77,17 @@ export const ProcessingStatus: React.FC<{
     )
   }
 
+  if (!paper.pdf_path && !paper.processed) {
+    // metadata-only import: the PDF is attached in the paper view (no processing possible yet)
+    return (
+      <div className="mb-2">
+        <Badge className="bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900 text-xs">
+          PDF missing — open the paper to attach it
+        </Badge>
+      </div>
+    )
+  }
+
   if (!paper.processed && !paper.processing_error) {
     return (
       <div className="mb-2 flex items-center gap-2">

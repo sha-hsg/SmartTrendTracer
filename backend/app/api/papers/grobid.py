@@ -48,60 +48,7 @@ async def process_with_grobid(paper_id: str) -> Dict[str, Any]:
         # Process with GROBID (not async)
         result = grobid_service.process_pdf(pdf_path)
 
-        # Extract TEI XML from the result
-        tei_xml = None
-        if result.get('success') and result.get('full_document', {}).get('tei_xml'):
-            tei_xml = result['full_document']['tei_xml']
-
-        # Store GROBID data in paper
-        update_data = {
-            'grobid_metadata': result,
-            'grobid_processed': True,
-            'grobid_processed_at': datetime.now(timezone.utc)
-        }
-
-        # Store TEI XML if available
-        if tei_xml:
-            update_data['tei_xml'] = tei_xml
-
-        # Store BibTeX if available
-        if result.get('metadata', {}).get('bibtex_raw'):
-            update_data['bibtex'] = result['metadata']['bibtex_raw']
-
-        # Store extracted authors if available
-        if result.get('metadata', {}).get('authors'):
-            authors = result['metadata']['authors']
-            if isinstance(authors, list) and authors:
-                # GROBID may return authors as plain strings or as objects.
-                # Normalize authors_detailed to {'name': ...} objects — it must
-                # never become a list of strings.
-                author_names = []
-                authors_detailed = []
-                for author in authors:
-                    if isinstance(author, dict) and 'name' in author:
-                        author_names.append(author['name'])
-                        authors_detailed.append(author)
-                    elif isinstance(author, str) and author.strip():
-                        author_names.append(author.strip())
-                        authors_detailed.append({'name': author.strip()})
-
-                if author_names:  # Only update if we have valid author names
-                    update_data['authors'] = ', '.join(author_names)  # Store as comma-separated string for compatibility
-                    update_data['authors_detailed'] = authors_detailed  # Normalized object array
-
-        # Store extracted references in dedicated field
-        if result.get('references'):
-            update_data['references'] = result['references']
-
-        # Store extracted sections in dedicated field
-        if result.get('sections'):
-            update_data['sections'] = result['sections']
-
-        # Store citation contexts in dedicated field
-        if result.get('citation_contexts'):
-            update_data['citation_contexts'] = result['citation_contexts']
-
-        papers_repo.set_fields_on_paper(update_data, paper)
+        repo.store_grobid_result(paper, result, overwrite_authors=True)   # explicit user action
 
         # Format response for frontend
         response = {

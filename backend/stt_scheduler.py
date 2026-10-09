@@ -71,6 +71,12 @@ def job_tag_content():
     return {t: concept_tagging.tag_untagged(t) for t in ('tweet', 'article', 'paper')}
 
 
+def job_paper_hygiene():
+    """Paper publication dates in one ISO form; missing ones from arXiv/Crossref."""
+    from app.services import paper_hygiene
+    return paper_hygiene.run()
+
+
 def job_paper_feed():
     """Check all paper feed subscriptions for new arXiv papers."""
     from app.services.paper_feed_service import run_feed
@@ -105,6 +111,7 @@ def job_weekly_digest():
 # RAG index, the digest uses the feed and the topic map.
 JOBS: Dict[str, Dict] = {
     'tag_content': {'run': job_tag_content, 'due': due_tagging},
+    'paper_hygiene': {'run': job_paper_hygiene, 'due': due_daily},
     'paper_feed': {'run': job_paper_feed, 'due': due_daily},
     'rag_update': {'run': job_rag_update, 'due': due_daily},
     'topic_map': {'run': job_topic_map, 'due': due_weekly},

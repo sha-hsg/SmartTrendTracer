@@ -141,10 +141,22 @@ export default function PaperFeed() {
   const importCandidate = async (c: Candidate) => {
     setBusyId(c.id)
     try {
-      await http.post(`/api/paper-feed/candidates/${c.id}/import`)
-      toast.success(`Imported: ${c.title}`)
+      const { data } = await http.post<{ paper_id: string; already_imported?: boolean }>(
+        `/api/paper-feed/candidates/${c.id}/import`)
+      // extract the text right away, so the paper reaches tagging, search and Q&A
+      // (an import alone left it as an empty shell)
+      let processing = false
+      if (data.paper_id && !data.already_imported) {
+        try {
+          await http.post(`/api/papers/${data.paper_id}/process-with-marker`)
+          processing = true
+        } catch (err) {
+          toast.warning(`Imported, but text extraction did not start: ${apiErrorMessage(err, 'Marker unavailable')}`)
+        }
+      }
+      toast.success(processing ? `Imported — extracting text: ${c.title}` : `Imported: ${c.title}`)
       setCandidates(prev => prev.filter(x => x.id !== c.id))
-      setImported(prev => [{ ...c, status: 'imported' }, ...prev])
+      setImported(prev => [{ ...c, status: 'imported', paper_id: data.paper_id }, ...prev])
     } catch (err) {
       toast.error(apiErrorMessage(err, 'Import failed'))
     } finally {

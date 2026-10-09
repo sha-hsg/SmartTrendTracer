@@ -291,3 +291,52 @@ def mark_reference_imported(ref, paper_id):
             'reference_id': ref['_id'],
             'created_at': datetime.now(timezone.utc)
         })
+
+
+def _normalize_title(title: str) -> str:
+    return ' '.join(re.sub(r'[^\w\s]', '', (title or '').lower()).split())
+
+
+def reference_hash(ref: dict) -> str:
+    """Dedup key: DOI, else arXiv id, else title(+year) — as in the original migration."""
+    import hashlib
+    if (ref.get('doi') or '').strip():
+        return f"doi:{ref['doi'].strip().lower()}"
+    if (ref.get('arxiv_id') or '').strip():
+        return f"arxiv:{ref['arxiv_id'].strip().lower()}"
+    title, year = _normalize_title(ref.get('title', '')), str(ref.get('year') or '').strip()
+    if title:
+        return 'title:' + hashlib.md5((f'{title}:{year}' if year else title).encode()).hexdigest()
+    return 'raw:' + hashlib.md5(str(sorted(ref.items())).encode()).hexdigest()
+
+
+def sync_paper_references(paper_id, refs) -> int:
+    """Upsert a paper's extracted references into the references collection
+    (cited_by gets the paper) and link them on the paper. The collection was
+    built once by a migration (2025-09) and never updated afterwards."""
+    ids = []
+    now = datetime.now(timezone.utc)
+    for ref in refs or []:
+        if not isinstance(ref, dict):
+            continue
+        h = reference_hash(ref)
+        existing = db.references.find_one({'reference_hash': h}, {'_id': 1, 'cited_by': 1})
+        if existing:
+            if paper_id not in (existing.get('cited_by') or []):
+                db.references.update_one({'_id': existing['_id']},
+                                         {'$addToSet': {'cited_by': paper_id}, '$inc': {'citation_count': 1},
+                                          '$set': {'updated_at': now}})
+            ids.append(existing['_id'])
+            continue
+        authors = ref.get('authors') or []
+        if isinstance(authors, str):
+            authors = [a.strip() for a in authors.split(',') if a.strip()]
+        ids.append(db.references.insert_one({
+            'reference_hash': h, 'title': ref.get('title', ''), 'normalized_title': _normalize_title(ref.get('title', '')),
+            'authors': authors, 'year': ref.get('year'), 'venue': ref.get('venue', ''), 'doi': ref.get('doi', ''),
+            'arxiv_id': ref.get('arxiv_id', ''), 'pages': ref.get('pages', ''), 'url': ref.get('url', ''),
+            'bibtex': ref.get('bibtex', ''), 'raw_citation': ref.get('raw_citation', ''), 'cited_by': [paper_id],
+            'citation_count': 1, 'is_in_system': False, 'created_at': now, 'updated_at': now,
+            'source': 'grobid', 'grobid_id': ref.get('id', '')}).inserted_id)
+    db.papers.update_one({'_id': paper_id}, {'$set': {'reference_ids': ids, 'references_migrated': True}})
+    return len(ids)

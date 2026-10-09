@@ -100,16 +100,10 @@ def build_year_filter(query: Dict, year: Optional[int], years: Optional[List[int
 
     year_cond = {
         '$cond': {
-            'if': {
-                '$and': [
-                    {'$ne': ['$publication_date', None]},
-                    {'$ne': ['$publication_date', '']},
-                    {'$eq': [{'$type': '$publication_date'}, 'string']},
-                    {'$gt': [{'$strLenCP': '$publication_date'}, 4]}
-                ]
-            },
-            'then': {'$year': {'$dateFromString': {'dateString': '$publication_date', 'onError': None}}},
-            'else': {'$year': '$created_at'}
+            'if': {'$and': [{'$eq': [{'$type': '$publication_date'}, 'string']},
+                            {'$gte': [{'$strLenCP': '$publication_date'}, 4]}]},
+            'then': {'$toInt': {'$substrCP': ['$publication_date', 0, 4]}},
+            'else': None    # unknown year stays unknown (no fallback to the import year)
         }
     }
 

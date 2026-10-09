@@ -179,9 +179,16 @@ async def upload_paper(
     if len(contents) > 50 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File size exceeds 50MB limit")
 
+    full_md5 = hashlib.md5(contents).hexdigest()
+    duplicate = papers_repo.find_paper_by_file_md5(full_md5)
+    if duplicate:              # the same PDF was uploaded before: do not create a second paper
+        return {"id": str(duplicate['_id']), "title": duplicate.get('title', ''), "duplicate": True,
+                "message": "This PDF is already in the library — opened the existing paper.",
+                "extracted_sections": 0, "extracted_authors": 0}
+
     try:
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-        file_hash = hashlib.md5(contents).hexdigest()[:8]
+        file_hash = full_md5[:8]
         safe_filename = file.filename.replace(' ', '_').replace('.pdf', '')
         new_filename = f"{timestamp}_{file_hash}_{safe_filename}.pdf"
 
@@ -199,7 +206,8 @@ async def upload_paper(
             "paper_type": paper_type,
             "authors": "",
             "authors_detailed": [],
-            "abstract": "PDF uploaded. Click 'Use Marker' or 'Use MinerU' button to extract content.",
+            "abstract": "",          # filled from the content after processing (paper_hygiene)
+            "file_md5": full_md5,
             "content": "",
             "sections": [],
             "pdf_path": str(pdf_path),

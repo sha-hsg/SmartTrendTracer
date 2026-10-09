@@ -23,9 +23,18 @@ class GROBIDService:
     """Service for extracting structured metadata using GROBID"""
 
     def __init__(self):
-        # Using the HuggingFace GROBID Space
-        self.grobid_url = "https://kermitt2-grobid.hf.space"
+        from app.config import settings
+        self.grobid_url = settings.grobid_service_url.rstrip('/')     # GROBID_SERVICE_URL, default: huggingface space
         self.timeout = 60  # seconds
+
+    def is_alive(self) -> bool:
+        """True only if the server answers its API (a paused huggingface space
+        answers every URL with an HTML page and status 206)."""
+        try:
+            r = requests.get(f"{self.grobid_url}/api/isalive", timeout=10)
+            return r.status_code == 200 and r.text.strip().lower() == 'true'
+        except Exception:
+            return False
 
     def process_pdf(self, pdf_path: str) -> Dict[str, Any]:
         """
