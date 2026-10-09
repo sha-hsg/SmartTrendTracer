@@ -84,7 +84,10 @@ def job_newsletters():
     from app.collectors.gmail_substack_collector import GmailSubstackCollector
     collector = GmailSubstackCollector()
     collector.authenticate(interactive=False)
-    saved = collector.collect_newsletters(max_results=50)
+    from app.database.mongodb import get_database
+    before = get_database().articles.count_documents({'source': 'email'})
+    collector.collect_newsletters(max_results=50)       # its count includes already stored mails
+    saved = get_database().articles.count_documents({'source': 'email'}) - before
     # senders not in backend/newsletter_sources.json: add them there to keep them
     return {'new_articles': saved, 'skipped_senders': sorted(collector.skipped_senders)}
 

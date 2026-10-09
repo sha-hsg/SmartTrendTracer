@@ -161,7 +161,8 @@ class GmailSubstackCollector:
         source = (match_newsletter_source(author_info.get('name', ''))
                   or match_newsletter_source(email_data.get('sender', '')))
         if not source or not source.get('include'):
-            self.skipped_senders.add(author_info.get('name') or author_info.get('email') or '?')
+            if not source:                       # report only senders nobody decided on yet
+                self.skipped_senders.add(author_info.get('name') or author_info.get('email') or '?')
             return None
         person = source.get('author') or author_info.get('name')
 
