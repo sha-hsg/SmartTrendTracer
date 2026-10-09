@@ -22,10 +22,10 @@ from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-
 from app.repositories import topic_maps as repo
+from app.services.trend_core import author_specific_concepts
 
-from .documents import author_specific_concepts, load_documents, week_of
+from .documents import load_documents, week_of
 from .episodes import LINK_MAX_GAP, detect_episodes, lineage_events, link_episodes
 from .naming import name_episodes
 from .topics import describe_topics, global_topics, group_families

@@ -84,7 +84,7 @@ const TrendCard: React.FC<{
       </div>
       <div className="flex items-center justify-between mt-1">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span>{trend.count} mentions</span>
+          <span title="items now · usual level for a window of this length">{trend.count} items · usual {trend.previous_count}</span>
           {trend.content_breakdown && (
             <span className="text-[10px]">
               ({trend.content_breakdown.tweets}T/{trend.content_breakdown.articles}A/{trend.content_breakdown.papers}P)
@@ -163,7 +163,7 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
               Hot Topics
               <Badge variant="secondary" className="ml-auto">{hotTopics.length}</Badge>
             </CardTitle>
-            <p className="text-xs text-muted-foreground">&gt;50% increase in 24-48h</p>
+            <p className="text-xs text-muted-foreground">≥2× its usual level · z ≥ 3 · ≥5 items</p>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[240px]">
@@ -195,7 +195,7 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
               Declining
               <Badge variant="secondary" className="ml-auto">{declining.length}</Badge>
             </CardTitle>
-            <p className="text-xs text-muted-foreground">&gt;30% decrease</p>
+            <p className="text-xs text-muted-foreground">≤½ its usual level · z ≤ −2</p>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[240px]">
@@ -227,7 +227,7 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
               Stable
               <Badge variant="secondary" className="ml-auto">{stable.length}</Badge>
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Consistent evergreens</p>
+            <p className="text-xs text-muted-foreground">At its usual level, present every period</p>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[240px]">
@@ -259,7 +259,7 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
               Anomalies
               <Badge variant="secondary" className="ml-auto">{anomalies.length}</Badge>
             </CardTitle>
-            <p className="text-xs text-muted-foreground">Z-score &gt;2.5 spikes</p>
+            <p className="text-xs text-muted-foreground">Single-day spikes against the baseline days</p>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[240px]">

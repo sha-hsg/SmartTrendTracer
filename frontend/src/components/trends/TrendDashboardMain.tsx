@@ -215,6 +215,15 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
         </Alert>
       )}
 
+      {atAGlance.data?.time_range.data_through && (
+        <p className="text-xs text-muted-foreground">
+          Data through {atAGlance.data.time_range.data_through}
+          {(atAGlance.data.time_range.untagged_after ?? 0) > 0 &&
+            ` · ${atAGlance.data.time_range.untagged_after} newer items are not tagged yet and not counted`}
+          {' · '}generic concepts (AI, LLM, ML, big labs) are left out of rankings
+        </p>
+      )}
+
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
         <TabsList className="grid grid-cols-8 w-full max-w-5xl">
@@ -270,7 +279,7 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
                 <CardContent className="pt-4">
                   <div className="text-center">
                     <p className="text-3xl font-bold">{atAGlance.data.statistics.total_content}</p>
-                    <p className="text-sm text-muted-foreground">Content items in {timeRange}h</p>
+                    <p className="text-sm text-muted-foreground">Tagged items in {atAGlance.data.time_range.hours}h</p>
                   </div>
                 </CardContent>
               </Card>
@@ -288,7 +297,7 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
                     <p className={`text-3xl font-bold ${atAGlance.data.statistics.avg_velocity > 0 ? 'text-green-600' : atAGlance.data.statistics.avg_velocity < 0 ? 'text-red-600' : ''}`}>
                       {atAGlance.data.statistics.avg_velocity > 0 ? '+' : ''}{atAGlance.data.statistics.avg_velocity}%
                     </p>
-                    <p className="text-sm text-muted-foreground">Average velocity</p>
+                    <p className="text-sm text-muted-foreground">Median change vs. baseline</p>
                   </div>
                 </CardContent>
               </Card>

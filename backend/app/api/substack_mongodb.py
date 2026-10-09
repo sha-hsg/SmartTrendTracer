@@ -200,8 +200,8 @@ async def get_substack_trends(
         # Tag relationships from the existing co-occurrence service
         tag_relationships = []
         try:
-            from app.services.anomaly_detection import get_concept_cooccurrence
-            cooc = get_concept_cooccurrence(db, days=days, min_cooccurrence=2, top_n=25)
+            from app.services.trend_core import associations
+            cooc = associations(days=max(7, min(days, 90)), top_n=25)
             related_by_tag = defaultdict(list)
             for pair in cooc.get('pairs', []):
                 related_by_tag[pair['concept_a']].append(

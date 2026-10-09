@@ -76,3 +76,10 @@ __all__ = [
     'build_summarization_prompt',
     'build_fallback_summary',
 ]
+
+from app.repositories.analytics.activity import (
+    load_documents as load_activity_documents,
+    load_tag_instances as load_activity_tag_instances,
+    load_concepts as load_activity_concepts,
+    paper_publication_date,
+)

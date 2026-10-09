@@ -2,7 +2,7 @@
 Weekly digest: one briefing per week from data STT already has.
 
 Collects the week's trend overview (rising/declining/stable concepts and
-anomalies, from trend_overview_service), new papers and articles, the
+anomalies, from trend_core), new papers and articles, the
 most-liked tweets, new paper-feed suggestions and the episode news of the
 topic map (new / running / faded topics, from topic_episodes), then asks the LLM (task
 trend_analysis, prompt weekly_digest) for a short narrative. The raw data is
@@ -31,7 +31,7 @@ def _trend_item(t: Dict[str, Any]) -> Dict[str, Any]:
 
 def collect_week(now: Optional[datetime] = None) -> Dict[str, Any]:
     """Facts of the 7 days before `now` (JSON-serializable)."""
-    from app.services.trend_overview_service import compute_at_a_glance
+    from app.services.trend_core import overview as compute_at_a_glance
     now = now or datetime.now(timezone.utc)
     since = now - timedelta(days=7)
     overview = compute_at_a_glance(hours=168, limit=10)

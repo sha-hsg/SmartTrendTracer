@@ -395,17 +395,14 @@ def generate_summary(
 
 @router.get("/at-a-glance")
 def get_trends_at_a_glance(
-    hours: int = Query(48, ge=24, le=168, description="Time window in hours"),
-    anomaly_threshold: float = Query(2.5, ge=1.0, le=5.0, description="Z-score threshold for anomalies"),
+    hours: int = Query(48, ge=24, le=168, description="Time window in hours (whole days)"),
+    anomaly_threshold: float = Query(2.5, ge=1.0, le=5.0, description="Z-score threshold for day-level spikes"),
     limit: int = Query(10, ge=5, le=25, description="Max items per category")
 ):
     """
-    Get at-a-glance trend summary with hot topics, declining topics, stable evergreens, and anomalies.
-
-    Hot Topics: >50% increase in activity
-    Declining: >30% decrease in activity
-    Stable: Consistent activity with <20% change
-    Anomalies: Z-score > threshold indicating spikes
+    Hot / declining / stable concepts and spikes for the last `hours`, each
+    judged against the concept's own baseline (median of the 8 preceding
+    windows, volume-normalised, Poisson z-score with minimum counts).
     """
-    from app.services.trend_overview_service import compute_at_a_glance
-    return compute_at_a_glance(hours=hours, anomaly_threshold=anomaly_threshold, limit=limit)
+    from app.services import trend_core
+    return trend_core.overview(hours=hours, anomaly_threshold=anomaly_threshold, limit=limit)

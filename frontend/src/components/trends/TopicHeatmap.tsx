@@ -8,7 +8,7 @@ import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Grid3X3, Calendar, Hash } from 'lucide-react';
+import { Grid3X3, Hash } from 'lucide-react';
 import { HeatmapData } from '../../types/trends';
 
 interface TopicHeatmapProps {
@@ -35,7 +35,7 @@ const getTextColor = (value: number, maxValue: number): string => {
 };
 
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T12:00:00`);  // local noon: no off-by-one across time zones
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
@@ -43,6 +43,9 @@ const TopicHeatmap: React.FC<TopicHeatmapProps> = ({ data, loading, onCellClick 
   const [hoveredCell, setHoveredCell] = useState<{ concept: string; date: string; value: number } | null>(null);
 
   const maxValue = useMemo(() => data?.max_value || 0, [data]);
+  // per-row scale shows each concept's own rhythm; global scale compares sizes
+  const [perRow, setPerRow] = useState(true);
+  const rowMax = useMemo(() => (data?.matrix || []).map(row => Math.max(1, ...row)), [data]);
 
   if (loading) {
     return (
@@ -83,9 +86,24 @@ const TopicHeatmap: React.FC<TopicHeatmapProps> = ({ data, loading, onCellClick 
           <Grid3X3 className="w-5 h-5" />
           Activity Heatmap
         </CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Concept activity over time. Darker = more activity. Click cells for details.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            Items per day for the window's most active concepts{data.data_through ? `, through ${data.data_through}` : ''}.
+            Click a cell to open the concept in the Topic Explorer.
+          </p>
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-muted-foreground">Colour scale:</span>
+            {(['row', 'global'] as const).map(mode => (
+              <button key={mode} onClick={() => setPerRow(mode === 'row')}
+                className={`px-2 py-0.5 rounded border ${perRow === (mode === 'row') ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+                {mode === 'row' ? 'per concept' : 'all concepts'}
+              </button>
+            ))}
+          </div>
+        </div>
+        {!!data.excluded_hubs?.length && (
+          <p className="text-[11px] text-muted-foreground">Left out as generic: {data.excluded_hubs.join(', ')}</p>
+        )}
       </CardHeader>
       <CardContent>
         <TooltipProvider>
@@ -125,23 +143,24 @@ const TopicHeatmap: React.FC<TopicHeatmapProps> = ({ data, loading, onCellClick 
 
               {/* Data rows */}
               {data.concepts.map((concept, rowIdx) => (
-                <div key={concept} className="flex items-center">
+                <div key={data.concept_ids?.[rowIdx] || concept} className="flex items-center">
                   <div
                     className="w-32 flex-shrink-0 p-1 text-xs truncate font-medium"
-                    title={concept}
+                    title={`${concept} · ${data.row_totals?.[rowIdx] ?? ''} items in the window`}
                   >
                     {concept}
                   </div>
                   {data.dates.map((date, colIdx) => {
                     const value = data.matrix[rowIdx]?.[colIdx] || 0;
                     const conceptId = data.concept_ids?.[rowIdx] || '';
+                    const scale = perRow ? rowMax[rowIdx] : maxValue;
 
                     return (
                       <Tooltip key={`${concept}-${date}`}>
                         <TooltipTrigger asChild>
                           <button
                             className={`w-10 h-8 flex-shrink-0 text-[10px] font-medium transition-all
-                              ${getHeatColor(value, maxValue)} ${getTextColor(value, maxValue)}
+                              ${getHeatColor(value, scale)} ${getTextColor(value, scale)}
                               hover:ring-2 hover:ring-blue-400 hover:z-10 rounded-sm m-[1px]`}
                             onClick={() => onCellClick?.(conceptId, date)}
                             onMouseEnter={() => setHoveredCell({ concept, date, value })}
@@ -154,7 +173,7 @@ const TopicHeatmap: React.FC<TopicHeatmapProps> = ({ data, loading, onCellClick 
                           <div className="text-xs">
                             <p className="font-semibold">{concept}</p>
                             <p className="text-muted-foreground">{formatDate(date)}</p>
-                            <p className="mt-1">{value} {value === 1 ? 'mention' : 'mentions'}</p>
+                            <p className="mt-1">{value} {value === 1 ? 'item' : 'items'}</p>
                           </div>
                         </TooltipContent>
                       </Tooltip>
@@ -179,7 +198,7 @@ const TopicHeatmap: React.FC<TopicHeatmapProps> = ({ data, loading, onCellClick 
               <div className="w-4 h-4 bg-blue-500 rounded" />
               <div className="w-4 h-4 bg-blue-600 rounded" title={`${maxValue}`} />
             </div>
-            <span className="text-xs text-muted-foreground">0 → {maxValue}</span>
+            <span className="text-xs text-muted-foreground">{perRow ? '0 → each concept\'s busiest day' : `0 → ${maxValue}`}</span>
           </div>
 
           {hoveredCell && (

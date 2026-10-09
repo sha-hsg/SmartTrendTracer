@@ -13,9 +13,10 @@ export interface ConceptTrend {
   slug: string;
   count: number;
   previous_count: number;
-  velocity: number;  // Percentage change
+  velocity: number;  // % change against the concept's own baseline (previous_count = expected)
+  z_score?: number;  // Poisson z of count against the baseline
   trend: TrendStatus;
-  sparkline: number[];  // Last 7 days counts
+  sparkline: number[];  // documents per window: baseline windows (oldest first) + current
   entity_type?: string;
   color?: string;
   content_breakdown?: {
@@ -48,6 +49,9 @@ export interface AtAGlanceData {
     start: string;
     end: string;
     hours: number;
+    data_through?: string;  // last day whose content is tagged
+    untagged_after?: number;  // newer items not yet tagged
+    baseline_windows?: number;
   };
   statistics: {
     total_content: number;
@@ -64,6 +68,9 @@ export interface HeatmapData {
   matrix: number[][];  // [concept_idx][date_idx] = count
   max_value: number;
   min_value: number;
+  row_totals?: number[];
+  data_through?: string;
+  excluded_hubs?: string[];
 }
 
 // Bubble chart data point
@@ -71,8 +78,12 @@ export interface BubbleDataPoint {
   concept_id: string;
   display_name: string;
   x: number;  // Days since first occurrence
-  y: number;  // Velocity (% change)
-  z: number;  // Volume (total count)
+  y: number;  // Growth factor against the concept's own baseline (1 = usual)
+  z: number;  // Documents in the window
+  growth?: number;
+  expected?: number;
+  z_score?: number;
+  channel?: 'tweet' | 'article' | 'paper';
   entity_type: string;
   color: string;
   first_seen: string;
@@ -84,6 +95,7 @@ export interface BubbleChartData {
   x_range: { min: number; max: number };
   y_range: { min: number; max: number };
   z_range: { min: number; max: number };
+  data_through?: string;
 }
 
 // Co-occurrence / Correlation data
@@ -93,15 +105,21 @@ export interface CooccurrencePair {
   concept_b: string;
   concept_b_id: string;
   count: number;
-  strength: number;  // 0-1 normalized (Jaccard similarity)
+  strength: number;  // NPMI (0 = chance, 1 = always together)
+  npmi?: number;
+  new?: boolean;  // not seen together in the previous window
 }
 
 export interface CooccurrenceData {
   concepts: string[];  // Display names for matrix axes
   concept_ids: string[];
-  matrix: number[][];  // Symmetric matrix of co-occurrence counts
-  pairs: CooccurrencePair[];  // Top pairs sorted by strength
+  matrix: number[][];  // Symmetric matrix of NPMI values
+  counts?: Record<string, number>;  // documents per concept
+  pairs: CooccurrencePair[];  // Top pairs (NPMI weighted by support)
+  total_pairs?: number;
   total_documents: number;
+  data_through?: string;
+  excluded_hubs?: string[];
 }
 
 // Network graph data
@@ -118,8 +136,9 @@ export interface NetworkNode {
 export interface NetworkLink {
   source: string;
   target: string;
-  value: number;  // Edge thickness (co-occurrence count)
-  strength: number;  // 0-1 normalized
+  value: number;  // documents with both concepts
+  strength: number;  // NPMI
+  new?: boolean;
 }
 
 export interface NetworkGraphData {
@@ -136,7 +155,9 @@ export interface NetworkGraphData {
     total_edges: number;
     avg_connections: number;
     density: number;
+    significant_pairs?: number;
   };
+  data_through?: string;
 }
 
 // Animated timeline data
@@ -179,6 +200,8 @@ export interface AnimatedTimelineData {
     start: string;
     end: string;
   };
+  window_days?: number;
+  data_through?: string;
 }
 
 // Filter/query parameters

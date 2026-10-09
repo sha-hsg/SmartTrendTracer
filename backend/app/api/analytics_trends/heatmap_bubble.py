@@ -1,12 +1,10 @@
 """
-Heatmap and bubble chart endpoints for analytics trends.
-Split from visualizations.py.
+Heatmap and bubble chart endpoints for analytics trends (app.services.trend_core).
 """
 
 from fastapi import APIRouter, Query
 
-
-from app.repositories import analytics_trends_heatmap_bubble as repo
+from app.services import trend_core
 
 router = APIRouter()
 
@@ -16,11 +14,9 @@ def get_trends_heatmap(
     days: int = Query(14, ge=7, le=90, description="Number of days to analyze"),
     top_n: int = Query(20, ge=5, le=50, description="Number of top concepts")
 ):
-    """
-    Get heatmap data for concept activity over time.
-    Returns a matrix of concepts x dates with activity counts.
-    """
-    return repo.get_trends_heatmap(days=days, top_n=top_n)
+    """Daily document counts of the window's most active concepts (hub
+    concepts such as "AI" left out), up to the last tagged day."""
+    return trend_core.heatmap(days=days, top_n=top_n)
 
 
 @router.get("/bubble-chart")
@@ -29,10 +25,9 @@ def get_bubble_chart_data(
     limit: int = Query(50, ge=10, le=100, description="Maximum bubbles to return")
 ):
     """
-    Get bubble chart data for concept importance and growth.
-    X = Days since first occurrence
-    Y = Velocity (% change)
-    Size = Total count
-    Color = Entity type
+    Concept age against growth:
+    X = days since the concept first occurred
+    Y = growth factor of the window against the concept's own baseline
+    Size = documents in the window, colour = dominant channel
     """
-    return repo.get_bubble_chart_data(days=days, limit=limit)
+    return trend_core.bubbles(days=days, limit=limit)

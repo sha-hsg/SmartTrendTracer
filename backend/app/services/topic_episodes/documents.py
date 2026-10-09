@@ -13,12 +13,10 @@ import numpy as np
 from app.paths import RAG_INDEX_CONCEPTS
 from app.repositories import topic_maps as repo
 from app.services.rag import get_index_paths, load_index
+from app.services.trend_core import GENERIC
 
 START = datetime(2025, 1, 1, tzinfo=timezone.utc)
 AUTHOR_DEBIAS = 1.0           # subtract the author's mean direction (voice), keep content
-AUTHOR_CONCENTRATION = 0.6    # concept counts as author-specific above this share for one author
-GENERIC = {'large language model', 'large language models', 'llm', 'llms', 'ai', 'artificial intelligence',
-           'machine learning', 'deep learning', 'openai', 'google', 'anthropic', 'empirical study'}
 
 
 def _aware(dt):
@@ -76,21 +74,6 @@ def load_documents() -> Tuple[List[Dict[str, Any]], np.ndarray]:
             vecs[ids] -= AUTHOR_DEBIAS * (vecs[ids].mean(axis=0) - global_mean)
     faiss.normalize_L2(vecs)
     return docs, vecs
-
-
-def author_specific_concepts(docs) -> Set[str]:
-    """Concepts mostly attached to one author describe the author, not a topic."""
-    per = defaultdict(Counter)
-    for d in docs:
-        for c in set(d['concepts']):
-            per[c][d['author']] += 1
-    names = {d['author'].lower() for d in docs}
-    out = set()
-    for c, authors in per.items():
-        total = sum(authors.values())
-        if c.lower() in names or (total >= 5 and authors.most_common(1)[0][1] / total > AUTHOR_CONCENTRATION):
-            out.add(c)
-    return out
 
 
 def concept_label(member_docs, ref_freq, n_ref, skip: Set[str], min_support: float, top: int = 3,
