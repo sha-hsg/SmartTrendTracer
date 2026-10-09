@@ -2,7 +2,6 @@ import ReactDOM from 'react-dom'
 import {
   Loader2,
   Copy,
-  Highlighter,
   MessageSquare,
   Tag as TagIcon,
 } from 'lucide-react'
@@ -57,13 +56,6 @@ export function AnalysisContextMenu({
         <span>Create Snippet</span>
       </button>
 
-      <button
-        className="w-full px-4 py-2 text-left text-sm hover:bg-yellow-50 flex items-center gap-2 transition-colors"
-        onClick={() => onMenuAction('highlight')}
-      >
-        <Highlighter className="h-4 w-4 text-yellow-600" />
-        <span>Highlight</span>
-      </button>
 
       <button
         className="w-full px-4 py-2 text-left text-sm hover:bg-purple-50 flex items-center gap-2 transition-colors"

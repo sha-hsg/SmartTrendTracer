@@ -5,6 +5,7 @@ Covers: get_facets (filter facets for papers dashboard), get_statistics
 (paper collection overview), and search_dblp (DBLP bibliography search).
 """
 
+from typing import Literal
 from .utils import Any, Dict, List, Optional, APIRouter, Query
 
 from app.repositories.paper_facet_pipelines import (
@@ -45,8 +46,8 @@ def get_facets(
     affiliations: Optional[List[str]] = Query(None),
     processor: Optional[str] = None,
     processors: Optional[List[str]] = Query(None),
-    search_mode: Optional[str] = Query("title", regex="^(title|content|all)$"),
-    paper_type: str = Query("research", description="Paper type: research or review"),
+    search_mode: Optional[str] = Query("title", pattern="^(title|content|all)$"),
+    paper_type: Literal["research", "review"] = Query("research", description="Paper type: research or review"),
 ) -> Dict[str, Any]:
     """Get facets for filtering papers - facets update based on current filters"""
     return repo.get_facets(search=search, concept_ids=concept_ids, author=author, conference=conference, conferences=conferences, year=year, years=years, affiliation=affiliation, affiliations=affiliations, processor=processor, processors=processors, search_mode=search_mode, paper_type=paper_type, get_concepts_with_counts=concept_service.get_all_concepts_with_counts)
@@ -54,7 +55,7 @@ def get_facets(
 
 @router.get("/stats/overview")
 def get_statistics(
-    paper_type: str = Query("research", description="Paper type: research or review"),
+    paper_type: Literal["research", "review"] = Query("research", description="Paper type: research or review"),
 ) -> Dict[str, Any]:
     """Get paper statistics from MongoDB"""
     return repo.get_statistics(paper_type=paper_type, get_concepts_with_counts=concept_service.get_all_concepts_with_counts)

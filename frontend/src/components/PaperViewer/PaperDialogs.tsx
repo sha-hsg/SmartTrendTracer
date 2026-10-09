@@ -7,7 +7,6 @@ import {
   Copy,
   Loader2,
   MessageSquare,
-  Highlighter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -157,13 +156,6 @@ export function PaperDialogs({
               <span>Create Snippet</span>
             </button>
 
-            <button
-              className="w-full px-4 py-2 text-left text-sm hover:bg-yellow-50 flex items-center gap-2 transition-colors"
-              onClick={() => handleMarkdownMenuAction("highlight")}
-            >
-              <Highlighter className="h-4 w-4 text-yellow-600" />
-              <span>Highlight</span>
-            </button>
 
             <button
               className="w-full px-4 py-2 text-left text-sm hover:bg-purple-50 flex items-center gap-2 transition-colors"

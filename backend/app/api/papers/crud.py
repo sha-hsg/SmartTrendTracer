@@ -4,6 +4,7 @@ Paper CRUD route handlers.
 Covers: list papers, get single paper, upload, and delete.
 """
 
+from typing import Literal
 from app.paths import PAPERS_DIR_REL
 from .utils import (
     hashlib,
@@ -50,7 +51,7 @@ def get_papers(
     page: int = Query(1, ge=1, le=10000),
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = None,
-    search_mode: Optional[str] = Query("title", regex="^(title|content|all)$"),
+    search_mode: Optional[str] = Query("title", pattern="^(title|content|all)$"),
     concept_id: Optional[str] = None,
     concept_ids: Optional[List[str]] = Query(None),
     author: Optional[str] = None,
@@ -76,9 +77,9 @@ def get_papers(
     rating: Optional[int] = Query(None, ge=1, le=5, description="Exact rating (1-5)"),
     unrated_only: bool = Query(False, description="Show only unrated papers"),
     # Sort options
-    sort_by: str = Query("created_at", description="Sort field: created_at, publication_date, title, rating"),
-    sort_order: str = Query("desc", description="Sort order: asc or desc"),
-    paper_type: str = Query("research", description="Paper type: research or review"),
+    sort_by: Literal["created_at", "publication_date", "title", "rating"] = Query("created_at", description="Sort field"),
+    sort_order: Literal["asc", "desc"] = Query("desc", description="Sort order"),
+    paper_type: Literal["research", "review"] = Query("research", description="Paper type: research or review"),
 ) -> Dict[str, Any]:
     """Get papers with filtering and pagination from MongoDB"""
     return repo.get_papers(page=page, page_size=page_size, search=search, search_mode=search_mode, concept_id=concept_id, concept_ids=concept_ids, author=author, conference=conference, conferences=conferences, journal=journal, institution=institution, affiliations=affiliations, processor=processor, processors=processors, year=year, years=years, special_filter=special_filter, is_flagged=is_flagged, no_processor=no_processor, no_year=no_year, no_conference=no_conference, no_affiliation=no_affiliation, no_annotations=no_annotations, no_mollick_summary=no_mollick_summary, min_rating=min_rating, rating=rating, unrated_only=unrated_only, sort_by=sort_by, sort_order=sort_order, paper_type=paper_type)
@@ -168,7 +169,7 @@ def delete_paper(paper_id: str) -> Dict[str, Any]:
 async def upload_paper(
     background_tasks: BackgroundTasks,  # noqa: ARG001 - Reserved for future background processing
     file: UploadFile = File(...),
-    paper_type: str = Query("research", description="Paper type: research or review"),
+    paper_type: Literal["research", "review"] = Query("research", description="Paper type: research or review"),
 ) -> Dict[str, Any]:
     """Upload and process a PDF research paper (MongoDB version)"""
 

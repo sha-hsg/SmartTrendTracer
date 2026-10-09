@@ -172,9 +172,6 @@ export function usePaperAnnotations(
       case "snippet":
         setSelectedText(text);
         break;
-      case "highlight":
-        console.log("Highlight:", text);
-        break;
       case "tag":
         setMarkdownTagText(text.trim());
         setShowMarkdownTagDialog(true);

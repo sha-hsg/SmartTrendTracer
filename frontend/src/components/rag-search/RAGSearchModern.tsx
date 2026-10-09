@@ -233,6 +233,9 @@ export default function RAGSearchModern() {
   }
 
   const rebuildIndex = async () => {
+    // A full rebuild re-embeds every document (~30 min, ~0.50 $); Update Index is the daily path
+    if (!window.confirm('Re-embed all documents? This takes about 30 minutes and costs about $0.50. '
+      + 'For new content, "Update Index" is enough.')) return
     setRebuildingIndex(true)
     const rebuild = http.post('/api/rag/rebuild').finally(() => {
       setRebuildingIndex(false)

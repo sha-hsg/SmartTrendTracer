@@ -32,7 +32,7 @@ def get_articles(
     author_id: Optional[str] = None,
     concept_id: Optional[str] = None,
     search: Optional[str] = None,
-    search_mode: Optional[str] = Query("title", regex="^(title|content|all)$")
+    search_mode: Optional[str] = Query("title", pattern="^(title|content|all)$")
 ):
     # Build query
     return repo.get_articles(page=page, page_size=page_size, author_id=author_id, concept_id=concept_id, search=search, search_mode=search_mode)
@@ -45,7 +45,7 @@ def faceted_search(
     concept_ids: Optional[List[str]] = Query(None),
     years: Optional[List[int]] = Query(None),
     search: Optional[str] = None,
-    search_mode: Optional[str] = Query("title", regex="^(title|content|all)$")
+    search_mode: Optional[str] = Query("title", pattern="^(title|content|all)$")
 ):
     # Build query
     return repo.faceted_search(page=page, page_size=page_size, authors=authors, concept_ids=concept_ids, years=years, search=search, search_mode=search_mode)

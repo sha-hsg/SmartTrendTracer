@@ -131,9 +131,6 @@ export function usePaperAnalysis({
       case 'snippet':
         if (onSnippetCreate) onSnippetCreate(text)
         break
-      case 'highlight':
-        console.log('Highlight:', text)
-        break
       case 'tag':
         setTagText(text.trim())
         setShowTagDialog(true)

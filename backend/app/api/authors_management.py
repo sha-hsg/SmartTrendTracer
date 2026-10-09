@@ -64,8 +64,8 @@ def list_authors(
     page: int = Query(1, ge=1, le=10000),
     page_size: int = Query(50, ge=1, le=200),
     search: Optional[str] = None,
-    sort_by: str = Query("article_count", regex="^(name|article_count|last_article_date|created_at)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$")
+    sort_by: str = Query("article_count", pattern="^(name|article_count|last_article_date|created_at)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$")
 ):
     """
     List all authors with pagination, search, and sorting

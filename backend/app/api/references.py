@@ -21,19 +21,19 @@ async def get_all_references(
     has_doi: Optional[bool] = Query(None, description="Filter by DOI availability"),
     in_system: Optional[bool] = Query(None, description="Filter by whether paper exists in system"),
     min_citations: Optional[int] = Query(None, description="Minimum citation count"),
-    limit: int = Query(100, le=1000),
+    limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0)
 ):
     """Get all unique references across all papers with filtering and search"""
     return repo.get_all_references(search=search, year=year, has_doi=has_doi, in_system=in_system, min_citations=min_citations, limit=limit, offset=offset)
 
 @router.get("/top-cited")
-async def get_top_cited_references(limit: int = Query(20, le=100)):
+async def get_top_cited_references(limit: int = Query(20, ge=1, le=100)):
     """Get the most cited references across all papers"""
     return repo.get_top_cited_references(limit=limit)
 
 @router.get("/importable")
-async def get_importable_references(limit: int = Query(50, le=200)):
+async def get_importable_references(limit: int = Query(50, ge=1, le=200)):
     """Get references that can be imported as new papers (have DOI/ArXiv but not in system)"""
     return repo.get_importable_references(limit=limit)
 

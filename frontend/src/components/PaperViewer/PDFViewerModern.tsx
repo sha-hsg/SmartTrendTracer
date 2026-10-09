@@ -18,7 +18,6 @@ import {
   Maximize2,
   Minimize2,
   Loader2,
-  Highlighter,
   Tag,
   Copy,
   MessageSquare
@@ -148,10 +147,6 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
         if (onTextSelect) {
           onTextSelect(text, pageNumber)
         }
-        break
-      case 'highlight':
-        // Could be extended to highlight in PDF
-        console.log('Highlight:', text)
         break
       case 'tag':
         setTagText(text.trim())
@@ -392,13 +387,6 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
             <span>Create Snippet</span>
           </button>
           
-          <button
-            className="w-full px-4 py-2 text-left text-sm hover:bg-yellow-50 flex items-center gap-2 transition-colors"
-            onClick={() => handleMenuAction('highlight')}
-          >
-            <Highlighter className="h-4 w-4 text-yellow-600" />
-            <span>Highlight</span>
-          </button>
           
           <button
             className="w-full px-4 py-2 text-left text-sm hover:bg-purple-50 flex items-center gap-2 transition-colors"

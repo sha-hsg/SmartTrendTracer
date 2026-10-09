@@ -50,9 +50,12 @@ async def get_index_stats():
             "tweets": stats.get('tweets', 0),
             "articles": stats.get('articles', 0),
             "papers": stats.get('papers', 0),
-            "last_updated": stats.get('last_updated'),
+            # the newer of full rebuild and incremental update
+            "last_updated": max(filter(None, [stats.get('last_updated'), stats.get('last_incremental_update')]),
+                                default=None),
+            "last_rebuild": stats.get('last_updated'),
+            "stale_entries": stats.get('stale_entries', 0),
             "uses_concepts": stats.get('uses_concepts', True),
-            "total_concepts": 0,  # Would need to query MongoDB for this
             "embedding_model": stats.get('embedding_model', 'all-MiniLM-L6-v2')
         }
     except Exception as e:
