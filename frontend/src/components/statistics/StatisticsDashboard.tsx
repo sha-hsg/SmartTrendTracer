@@ -12,7 +12,8 @@ import { StatsCharts } from './StatsCharts'
 
 // Tweets are collected continuously; everything else runs in stt_scheduler.py
 const JOB_LABELS: Record<string, string> = {
-  tag_tweets: 'tagging (6 h)', paper_feed: 'paper feed (daily)', rag_update: 'RAG update (daily)',
+  newsletters: 'newsletters (daily)', tag_content: 'tagging (6 h)', paper_hygiene: 'paper hygiene (daily)',
+  paper_feed: 'paper feed (daily)', rag_update: 'RAG update (daily)',
   topic_map: 'topic map (weekly)', weekly_digest: 'digest (weekly)', backup: 'backup (weekly)',
 }
 
