@@ -377,7 +377,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
             <span>Copy Text</span>
           </button>
           
-          <div className="border-t border-gray-100 my-1" />
+          <div className="border-t border-border my-1" />
           
           <button
             className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 transition-colors"
@@ -413,7 +413,7 @@ const PDFViewerModern: React.FC<PDFViewerModernProps> = React.memo(({
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label htmlFor="tagText" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="tagText" className="block text-sm font-medium text-foreground mb-2">
                 Tag Text
               </label>
               <Input

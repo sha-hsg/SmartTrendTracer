@@ -245,7 +245,7 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
 
         {/* Error Message */}
         {error && (
-          <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+          <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm dark:bg-red-950/40 dark:text-red-300">
             {error}
           </div>
         )}
@@ -269,7 +269,7 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
                   <h4 className="font-medium text-sm mb-1">{result.title}</h4>
                   
                   {/* Authors */}
-                  <p className="text-xs text-gray-600 mb-2">
+                  <p className="text-xs text-muted-foreground mb-2">
                     {result.author_string}
                   </p>
                   
@@ -399,10 +399,10 @@ export const DBLPSearchModal: React.FC<DBLPSearchModalProps> = ({
             {loadingBibtex ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span className="text-sm text-gray-500">Loading BibTeX...</span>
+                <span className="text-sm text-muted-foreground">Loading BibTeX...</span>
               </div>
             ) : (
-              <pre className="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto max-h-40">
+              <pre className="bg-muted p-3 rounded text-xs font-mono overflow-x-auto max-h-40">
                 {bibtex || 'BibTeX not available'}
               </pre>
             )}

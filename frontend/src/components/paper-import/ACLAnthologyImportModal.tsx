@@ -111,8 +111,8 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:bg-opacity-950/40">
+      <div className="bg-background rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b flex items-center justify-between">
           <div className="flex items-center gap-3">
             <BookOpen className="w-6 h-6 text-blue-600" />
@@ -120,7 +120,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
           </div>
           <button
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-muted rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -129,7 +129,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* URL Input */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               ACL Anthology URL
             </label>
             <div className="flex gap-2">
@@ -138,7 +138,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://aclanthology.org/2025.acl-long.5/"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={isValidating || isImporting}
               />
               <button
@@ -159,17 +159,17 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
                 )}
               </button>
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Enter a URL from aclanthology.org (e.g., https://aclanthology.org/2025.acl-long.5/)
             </p>
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 dark:bg-red-950/40 dark:border-red-800">
               <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
               <div className="flex-1">
-                <p className="text-red-800">{error}</p>
+                <p className="text-red-800 dark:text-red-300">{error}</p>
                 {importedPaperId && (
                   <button
                     onClick={() => window.open(`/api/papers/${importedPaperId}/pdf`, '_blank')}
@@ -184,10 +184,10 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
 
           {/* Success Display */}
           {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3 dark:bg-green-950/40 dark:border-green-800">
               <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
               <div>
-                <p className="text-green-800">Paper imported successfully!</p>
+                <p className="text-green-800 dark:text-green-300">Paper imported successfully!</p>
                 {importedPaperId && (
                   <button
                     onClick={() => window.open(`/api/papers/${importedPaperId}/pdf`, '_blank')}
@@ -203,13 +203,13 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
           {/* Metadata Display */}
           {metadata && !success && (
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/40 dark:border-blue-800">
                 <h3 className="font-semibold text-lg mb-3">{metadata.title}</h3>
                 
                 {metadata.authors && metadata.authors.length > 0 && (
                   <div className="flex items-start gap-2 mb-2">
-                    <Users className="w-4 h-4 text-gray-500 mt-1" />
-                    <p className="text-sm text-gray-700">
+                    <Users className="w-4 h-4 text-muted-foreground mt-1" />
+                    <p className="text-sm text-foreground">
                       {metadata.authors.join(', ')}
                     </p>
                   </div>
@@ -217,29 +217,29 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
 
                 {metadata.venue && (
                   <div className="flex items-start gap-2 mb-2">
-                    <BookOpen className="w-4 h-4 text-gray-500 mt-1" />
-                    <p className="text-sm text-gray-700">{metadata.venue}</p>
+                    <BookOpen className="w-4 h-4 text-muted-foreground mt-1" />
+                    <p className="text-sm text-foreground">{metadata.venue}</p>
                   </div>
                 )}
 
                 {metadata.year && (
                   <div className="flex items-start gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-gray-500 mt-1" />
-                    <p className="text-sm text-gray-700">{metadata.year}</p>
+                    <Calendar className="w-4 h-4 text-muted-foreground mt-1" />
+                    <p className="text-sm text-foreground">{metadata.year}</p>
                   </div>
                 )}
 
                 {metadata.doi && (
                   <div className="flex items-start gap-2 mb-2">
-                    <Link className="w-4 h-4 text-gray-500 mt-1" />
-                    <p className="text-sm text-gray-700">DOI: {metadata.doi}</p>
+                    <Link className="w-4 h-4 text-muted-foreground mt-1" />
+                    <p className="text-sm text-foreground">DOI: {metadata.doi}</p>
                   </div>
                 )}
 
                 {metadata.pages && (
                   <div className="flex items-start gap-2 mb-2">
-                    <FileText className="w-4 h-4 text-gray-500 mt-1" />
-                    <p className="text-sm text-gray-700">Pages: {metadata.pages}</p>
+                    <FileText className="w-4 h-4 text-muted-foreground mt-1" />
+                    <p className="text-sm text-foreground">Pages: {metadata.pages}</p>
                   </div>
                 )}
               </div>
@@ -247,7 +247,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
               {metadata.abstract && (
                 <div>
                   <h4 className="font-medium mb-2">Abstract</h4>
-                  <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg max-h-32 overflow-y-auto">
+                  <p className="text-sm text-foreground bg-muted p-3 rounded-lg max-h-32 overflow-y-auto">
                     {metadata.abstract}
                   </p>
                 </div>
@@ -255,7 +255,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
 
               {/* Import Options */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Tags (optional, comma-separated)
                 </label>
                 <input
@@ -263,7 +263,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
                   placeholder="nlp, fairness, llm"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   disabled={isImporting}
                 />
               </div>
@@ -275,7 +275,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
         <div className="p-6 border-t flex justify-end gap-3">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-muted transition-colors"
             disabled={isImporting}
           >
             Cancel

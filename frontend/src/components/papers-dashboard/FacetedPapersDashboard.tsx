@@ -410,7 +410,7 @@ const FacetedPapersDashboard: React.FC<FacetedPapersDashboardProps> = ({ paperTy
 
       {/* Upload Modal */}
       {dashboard.showUploadModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4 dark:bg-opacity-950/40">
           <div className="bg-white dark:bg-gray-950 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -435,7 +435,7 @@ const FacetedPapersDashboard: React.FC<FacetedPapersDashboardProps> = ({ paperTy
 
       {/* Paper Viewer Modal - Lazy loaded */}
       {dashboard.selectedPaperId && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4 dark:bg-opacity-950/40">
           <div className="bg-white dark:bg-gray-950 rounded-lg w-full max-w-7xl max-h-[90vh] overflow-auto shadow-2xl">
             <Suspense fallback={
               <div className="flex items-center justify-center h-96">

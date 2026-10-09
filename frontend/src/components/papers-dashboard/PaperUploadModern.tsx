@@ -156,11 +156,11 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
   const getStatusBadge = (status: UploadedFile['status']) => {
     switch (status) {
       case 'uploading':
-        return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Uploading</Badge>
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">Uploading</Badge>
       case 'success':
-        return <Badge variant="secondary" className="bg-green-100 text-green-800">Success</Badge>
+        return <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300">Success</Badge>
       case 'error':
-        return <Badge variant="secondary" className="bg-red-100 text-red-800">Error</Badge>
+        return <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300">Error</Badge>
     }
   }
 
@@ -187,24 +187,24 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
               relative border-2 border-dashed rounded-lg p-8 text-center transition-colors
               ${isDragging 
                 ? 'border-blue-500 bg-blue-50' 
-                : 'border-gray-300 hover:border-gray-400'
+                : 'border-border hover:border-gray-400'
               }
               ${isUploading ? 'opacity-50 pointer-events-none' : ''}
-            `}
+             dark:bg-blue-950/40`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="space-y-4">
-              <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-gray-100">
-                <Upload className="h-8 w-8 text-gray-500" />
+              <div className="mx-auto w-16 h-16 flex items-center justify-center rounded-full bg-muted">
+                <Upload className="h-8 w-8 text-muted-foreground" />
               </div>
               
               <div>
-                <p className="text-lg font-medium text-gray-900">
+                <p className="text-lg font-medium text-foreground">
                   {isDragging ? 'Drop PDF files here' : 'Upload research papers'}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Drag and drop PDF files here, or click to browse
                 </p>
               </div>
@@ -267,17 +267,17 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
             {/* Summary badges */}
             <div className="flex gap-2">
               {successCount > 0 && (
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300">
                   {successCount} successful
                 </Badge>
               )}
               {uploadingCount > 0 && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
                   {uploadingCount} uploading
                 </Badge>
               )}
               {errorCount > 0 && (
-                <Badge variant="secondary" className="bg-red-100 text-red-800">
+                <Badge variant="secondary" className="bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300">
                   {errorCount} failed
                 </Badge>
               )}
@@ -300,13 +300,13 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
                           {getStatusBadge(uploadedFile.status)}
                         </div>
                         
-                        <p className="text-xs text-gray-500 mb-2">
+                        <p className="text-xs text-muted-foreground mb-2">
                           {formatFileSize(uploadedFile.file.size)}
                         </p>
                         
                         {/* Progress bar for uploading files */}
                         {uploadedFile.status === 'uploading' && uploadedFile.progress !== undefined && (
-                          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                          <div className="w-full bg-muted rounded-full h-1.5 mb-2">
                             <div 
                               className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
                               style={{ width: `${uploadedFile.progress}%` }}
@@ -317,13 +317,13 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
                         {/* Success details */}
                         {uploadedFile.status === 'success' && uploadedFile.response && (
                           <div className="text-xs space-y-1">
-                            <p className="text-green-700 font-medium">
+                            <p className="text-green-700 font-medium dark:text-green-300">
                               ✓ {uploadedFile.response.message}
                             </p>
-                            <div className="text-gray-600">
+                            <div className="text-muted-foreground">
                               <span className="font-medium">Title:</span> {uploadedFile.response.title}
                             </div>
-                            <div className="flex gap-4 text-gray-500">
+                            <div className="flex gap-4 text-muted-foreground">
                               <span>{uploadedFile.response.extracted_sections} sections</span>
                               <span>{uploadedFile.response.extracted_authors} authors</span>
                             </div>
@@ -360,9 +360,9 @@ const PaperUploadModern: React.FC<PaperUploadModernProps> = ({ onUploadComplete,
       
       {/* Success message */}
       {successCount > 0 && (
-        <Alert className="border-green-200 bg-green-50">
+        <Alert className="border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800">
           <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+          <AlertDescription className="text-green-800 dark:text-green-300">
             Successfully uploaded {successCount} paper{successCount !== 1 ? 's' : ''}. 
             You can now browse and analyze them in the Papers section.
           </AlertDescription>

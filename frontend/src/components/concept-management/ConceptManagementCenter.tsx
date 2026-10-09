@@ -122,9 +122,9 @@ export default function ConceptManagementCenter() {
       )}
 
       {cm.success && (
-        <Alert className="bg-green-50 border-green-200">
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-800">
           <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">{cm.success}</AlertDescription>
+          <AlertDescription className="text-green-800 dark:text-green-300">{cm.success}</AlertDescription>
         </Alert>
       )}
 

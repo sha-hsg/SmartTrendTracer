@@ -210,10 +210,10 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
 
   if (uploaded) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 dark:bg-opacity-950/40">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4 dark:bg-green-950/40">
               <Check className="w-6 h-6 text-green-600" />
             </div>
             <CardTitle>Upload Successful!</CardTitle>
@@ -227,7 +227,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 dark:bg-opacity-950/40">
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
@@ -254,20 +254,20 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
                   ? 'border-blue-400 bg-blue-50'
                   : file
                   ? 'border-green-400 bg-green-50'
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}
+                  : 'border-border hover:border-gray-400'
+              } dark:bg-blue-950/40`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
               {file ? (
                 <div className="space-y-2">
-                  <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center dark:bg-green-950/40">
                     {React.createElement(getFileTypeIcon(file.name), { className: "w-6 h-6 text-green-600" })}
                   </div>
                   <div>
                     <p className="text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                    <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => setFile(null)}>
                     Remove
@@ -277,7 +277,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
                 <div className="space-y-2">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto" />
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Drag and drop your book file here, or{' '}
                       <label className="text-blue-600 hover:text-blue-700 cursor-pointer underline">
                         browse
@@ -289,7 +289,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
                         />
                       </label>
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       Supports PDF and EPUB files (max 100MB)
                     </p>
                   </div>
@@ -308,7 +308,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
                   <BookOpen className="w-4 h-4 mr-1" />
                   Title *
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {title.length}/200
                 </span>
               </Label>
@@ -338,7 +338,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
                   <User className="w-4 h-4 mr-1" />
                   Authors
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {authors.length}/500
                 </span>
               </Label>
@@ -369,7 +369,7 @@ const BookUploadModal: React.FC<BookUploadModalProps> = ({ onClose, onUpload }) 
                     <Building2 className="w-4 h-4 mr-1" />
                     Publisher
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-muted-foreground">
                     {publisher.length}/200
                   </span>
                 </Label>

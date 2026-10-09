@@ -110,23 +110,23 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
   // Show source selection
   if (selectedSource === 'selection') {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-full max-w-2xl">
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:bg-opacity-950/40">
+        <div className="bg-background rounded-lg w-full max-w-2xl">
           <div className="p-6 border-b flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <FileDown className="w-6 h-6 text-gray-700" />
+              <FileDown className="w-6 h-6 text-foreground" />
               <h2 className="text-xl font-semibold">Import Paper</h2>
             </div>
             <button
               onClick={handleClose}
-              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1 hover:bg-muted rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           <div className="p-6">
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               Choose a source to import your research paper from:
             </p>
 
@@ -139,22 +139,22 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
                   className={`
                     p-4 rounded-lg border-2 text-left transition-all
                     ${option.available 
-                      ? 'hover:border-blue-500 hover:bg-blue-50 cursor-pointer border-gray-200' 
-                      : 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'}
+                      ? 'hover:border-blue-500 hover:bg-blue-50 cursor-pointer border-border' 
+                      : 'border-border bg-muted cursor-not-allowed opacity-60'}
                   `}
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-1">{option.icon}</div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">{option.name}</h3>
+                        <h3 className="font-semibold text-foreground">{option.name}</h3>
                         {option.comingSoon && (
-                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full dark:bg-yellow-950/40 dark:text-yellow-300">
                             Coming Soon
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{option.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
                     </div>
                     {option.available && (
                       <ChevronRight className="w-5 h-5 text-gray-400 mt-2" />
@@ -164,10 +164,10 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
               ))}
             </div>
 
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-6 p-4 bg-muted rounded-lg">
               <div className="flex items-start gap-2">
-                <FileText className="w-5 h-5 text-gray-500 mt-0.5" />
-                <div className="text-sm text-gray-600">
+                <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div className="text-sm text-muted-foreground">
                   <p className="font-medium mb-1">Direct PDF Upload</p>
                   <p>
                     You can also upload PDF files directly using the{' '}
@@ -192,7 +192,7 @@ export default function UnifiedImportDialog({ isOpen, onClose, onImportSuccess }
           <div className="p-6 border-t flex justify-end">
             <button
               onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-muted transition-colors"
             >
               Cancel
             </button>

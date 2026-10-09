@@ -111,8 +111,8 @@ const PaperListRenderer: React.FC<PaperListRendererProps> = ({
 
       {/* Error */}
       {error && (
-        <Alert className="border-red-200 bg-red-50 dark:bg-red-950">
-          <AlertDescription className="text-red-800">
+        <Alert className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
+          <AlertDescription className="text-red-800 dark:text-red-300">
             {error}
           </AlertDescription>
         </Alert>
@@ -145,7 +145,7 @@ const PaperListRenderer: React.FC<PaperListRendererProps> = ({
                 Select all ({papers.length}) for batch analysis
               </label>
               {selectedPapersForAnalysis.size > 0 && (
-                <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700">
+                <Badge variant="secondary" className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300">
                   {selectedPapersForAnalysis.size} selected
                 </Badge>
               )}

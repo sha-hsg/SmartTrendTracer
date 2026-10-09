@@ -273,7 +273,7 @@ export default function PaperTagSuggestionModal({
                 <div className="text-center space-y-3">
                   <Loader2 className="h-10 w-10 animate-spin mx-auto text-purple-600" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       Analyzing paper with {
                         selectedModel === 'gpt-5' ? 'GPT-5' :
                         selectedModel === 'gpt-4o' ? 'GPT-4o' :
@@ -290,7 +290,7 @@ export default function PaperTagSuggestionModal({
                       Please wait while we generate comprehensive tag suggestions
                     </p>
                   </div>
-                  <div className="w-64 mx-auto bg-gray-200 rounded-full h-1.5">
+                  <div className="w-64 mx-auto bg-muted rounded-full h-1.5">
                     <div className="bg-purple-600 h-1.5 rounded-full animate-pulse" style={{width: '60%'}}></div>
                   </div>
                   <Button
@@ -328,9 +328,9 @@ export default function PaperTagSuggestionModal({
                                 setSelectedTags(new Set(allNames))
                               }
                             }}
-                            className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            className="h-4 w-4 rounded border-border text-purple-600 focus:ring-purple-500"
                           />
-                          <span className="text-sm text-gray-700">
+                          <span className="text-sm text-foreground">
                             Select all ({allNames.length})
                           </span>
                         </label>
@@ -342,15 +342,15 @@ export default function PaperTagSuggestionModal({
                 {/* Existing Tags Section */}
                 {suggestions.existing_suggestions.length > 0 && (
                   <div className="mb-6">
-                    <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-green-800">
+                    <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200 dark:bg-green-950/40 dark:border-green-800">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-green-800 dark:text-green-300">
                         <Search className="h-4 w-4" />
                         <span>Existing Tags</span>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300">
                           {suggestions.existing_suggestions.length}
                         </Badge>
                       </h3>
-                      <p className="text-xs text-green-700 mb-3">
+                      <p className="text-xs text-green-700 mb-3 dark:text-green-300">
                         These tags already exist in your system and are similar to this paper's content
                       </p>
                     </div>
@@ -405,15 +405,15 @@ export default function PaperTagSuggestionModal({
                 {/* AI-Generated Tags Section */}
                 {suggestions.new_suggestions.length > 0 && (
                   <div className="mb-6">
-                    <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-purple-800">
+                    <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200 dark:bg-purple-950/40 dark:border-purple-800">
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2 text-purple-800 dark:text-purple-300">
                         <Sparkles className="h-4 w-4" />
                         <span>AI-Generated Tags</span>
-                        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300">
                           {suggestions.new_suggestions.length}
                         </Badge>
                       </h3>
-                      <p className="text-xs text-purple-700 mb-3">
+                      <p className="text-xs text-purple-700 mb-3 dark:text-purple-300">
                         New concept tags suggested by AI analysis of this paper's content
                       </p>
                     </div>
@@ -455,16 +455,16 @@ export default function PaperTagSuggestionModal({
                   <div className="text-center py-12 px-4">
                     <div className="max-w-md mx-auto">
                       <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Suggestions Found</h3>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <h3 className="text-lg font-medium text-foreground mb-2">No Suggestions Found</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
                         The AI couldn't generate relevant tag suggestions for this paper. This might happen if:
                       </p>
-                      <ul className="text-xs text-gray-500 text-left space-y-1 mb-4">
+                      <ul className="text-xs text-muted-foreground text-left space-y-1 mb-4">
                         <li>• The paper content is very technical or niche</li>
                         <li>• The abstract or content is incomplete</li>
                         <li>• All relevant tags are already applied</li>
                       </ul>
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-muted-foreground">
                         You can still add custom tags manually or try again later.
                       </p>
                     </div>
@@ -473,8 +473,8 @@ export default function PaperTagSuggestionModal({
 
                 {/* Model Info */}
                 {suggestions.model_used && (
-                  <div className="mt-6 pt-4 border-t border-gray-200">
-                    <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="mt-6 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Brain className="h-3 w-3" />
                         <span>Analysis by {suggestions.model_used}</span>
@@ -504,14 +504,14 @@ export default function PaperTagSuggestionModal({
             ) : null}
         </ScrollArea>
 
-        <DialogFooter className="mt-4 p-4 border-t bg-gray-50">
+        <DialogFooter className="mt-4 p-4 border-t bg-muted">
           {/* Selection Summary */}
           {selectedTags.size > 0 && (
-            <div className="w-full mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="w-full mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200 dark:bg-blue-950/40 dark:border-blue-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
                     {selectedTags.size} tag{selectedTags.size !== 1 ? 's' : ''} selected
                   </span>
                 </div>
@@ -525,12 +525,12 @@ export default function PaperTagSuggestionModal({
               </div>
               <div className="mt-2 flex flex-wrap gap-1">
                 {Array.from(selectedTags).slice(0, 5).map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                  <Badge key={tag} variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
                     {tag.length > 20 ? `${tag.slice(0, 20)}...` : tag}
                   </Badge>
                 ))}
                 {selectedTags.size > 5 && (
-                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                  <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
                     +{selectedTags.size - 5} more
                   </Badge>
                 )}

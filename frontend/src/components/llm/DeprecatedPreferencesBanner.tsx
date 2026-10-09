@@ -75,7 +75,7 @@ export default function DeprecatedPreferencesBanner() {
             <button
               onClick={migrate}
               disabled={migrating}
-              className="flex items-center gap-1.5 bg-white text-amber-700 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 rounded text-sm font-medium"
+              className="flex items-center gap-1.5 bg-background text-amber-700 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1 rounded text-sm font-medium dark:text-amber-300"
             >
               {migrating ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

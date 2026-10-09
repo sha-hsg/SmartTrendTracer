@@ -97,7 +97,7 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
   conceptError,
 }) => {
   return (
-    <div className="w-80 bg-white shadow-lg overflow-y-auto">
+    <div className="w-80 bg-background shadow-lg overflow-y-auto">
       <div className="p-4 border-b">
         <Button variant="ghost" onClick={onBack} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -113,21 +113,21 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
           </div>
 
           {book.authors && book.authors.length > 0 && (
-            <div className="flex items-center text-sm text-gray-600">
+            <div className="flex items-center text-sm text-muted-foreground">
               <User className="w-4 h-4 mr-2 flex-shrink-0" />
               <span>{book.authors.join(', ')}</span>
             </div>
           )}
 
           {book.publisher && (
-            <div className="flex items-center text-sm text-gray-600">
+            <div className="flex items-center text-sm text-muted-foreground">
               <Building2 className="w-4 h-4 mr-2 flex-shrink-0" />
               <span>{book.publisher}</span>
             </div>
           )}
 
           {book.publication_year && (
-            <div className="flex items-center text-sm text-gray-600">
+            <div className="flex items-center text-sm text-muted-foreground">
               <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
               <span>{book.publication_year}</span>
             </div>
@@ -145,7 +145,7 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
       <div className="p-4 space-y-4">
         {book.isbn && (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">ISBN</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ISBN</label>
             <p className="text-sm flex items-center">
               <Hash className="w-3 h-3 mr-1" />
               {book.isbn}
@@ -155,7 +155,7 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
 
         {book.language && (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Language</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Language</label>
             <p className="text-sm flex items-center">
               <Globe className="w-3 h-3 mr-1" />
               {book.language}
@@ -165,24 +165,24 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
 
         {book.file_size && (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">File Size</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">File Size</label>
             <p className="text-sm">{formatFileSize(book.file_size)}</p>
           </div>
         )}
 
         {book.page_count && (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Pages</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Pages</label>
             <p className="text-sm">{book.page_count.toLocaleString()}</p>
           </div>
         )}
 
         {book.genre && book.genre.length > 0 && (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Genre</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Genre</label>
             <div className="flex flex-wrap gap-1 mt-1">
               {book.genre.map((genre, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs bg-blue-50">
+                <Badge key={idx} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950/40">
                   {genre}
                 </Badge>
               ))}
@@ -192,10 +192,10 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
 
         {book.subject_areas && book.subject_areas.length > 0 && (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Subject Areas</label>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Subject Areas</label>
             <div className="flex flex-wrap gap-1 mt-1">
               {book.subject_areas.map((area, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs bg-green-50">
+                <Badge key={idx} variant="outline" className="text-xs bg-green-50 dark:bg-green-950/40">
                   {area}
                 </Badge>
               ))}
@@ -204,14 +204,14 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
         )}
 
         <div>
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Concept Tags</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Concept Tags</label>
           {bookConcepts.length > 0 ? (
             <div className="flex flex-wrap gap-1 mt-1">
               {bookConcepts.map((concept, idx) => {
                 const id = concept.concept_id || concept._id || concept.slug || `${idx}`
                 const label = concept.display_name || concept.name || concept.slug || id
                 return (
-                  <Badge key={id} variant="outline" className="text-xs bg-purple-50 flex items-center gap-1">
+                  <Badge key={id} variant="outline" className="text-xs bg-purple-50 flex items-center gap-1 dark:bg-purple-950/40">
                     {label}
                     <button
                       type="button"
@@ -221,7 +221,7 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
                           onRemoveConcept(concept.concept_id || concept._id!)
                         }
                       }}
-                      className="text-purple-700 hover:text-purple-900"
+                      className="text-purple-700 hover:text-purple-900 dark:text-purple-300"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -230,7 +230,7 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
               })}
             </div>
           ) : (
-            <p className="text-xs text-gray-500 mt-1">No concepts yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">No concepts yet.</p>
           )}
 
           <div className="mt-2 flex items-center gap-2">
@@ -253,7 +253,7 @@ const BookMetadataPanel: React.FC<BookMetadataPanelProps> = ({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Uploaded</label>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Uploaded</label>
           <p className="text-sm">{formatDate(book.uploaded_at)}</p>
         </div>
       </div>

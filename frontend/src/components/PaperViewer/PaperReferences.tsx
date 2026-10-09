@@ -147,8 +147,8 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
       <CardContent>
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-            <span className="ml-2 text-gray-600">Loading references...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">Loading references...</span>
           </div>
         )}
         
@@ -187,14 +187,14 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
                         
                         {/* Authors */}
                         {ref.authors && ref.authors.length > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Users className="h-3 w-3" />
                             <span>{Array.isArray(ref.authors) ? ref.authors.join(', ') : ref.authors}</span>
                           </div>
                         )}
                         
                         {/* Venue and Year */}
-                        <div className="flex items-center gap-3 text-xs text-gray-600">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           {ref.venue && (
                             <div className="flex items-center gap-1">
                               <BookOpen className="h-3 w-3" />
@@ -208,7 +208,7 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
                             </div>
                           )}
                           {ref.pages && (
-                            <span className="text-gray-500">pp. {ref.pages}</span>
+                            <span className="text-muted-foreground">pp. {ref.pages}</span>
                           )}
                         </div>
                         
@@ -256,7 +256,7 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
             </ScrollArea>
             
             {filteredReferences.length === 0 && searchTerm && (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 No references found matching "{searchTerm}"
               </div>
             )}
@@ -266,7 +266,7 @@ export default function PaperReferences({ paperId, paperTitle: _paperTitle }: Pa
         {references.length === 0 && !loading && !error && (
           <div className="text-center py-8">
             <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-3">No references extracted yet</p>
+            <p className="text-muted-foreground mb-3">No references extracted yet</p>
             <p className="text-sm text-gray-400">
               Click "Extract with GROBID" to process the paper and extract references
             </p>

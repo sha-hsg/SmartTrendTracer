@@ -14,7 +14,7 @@ export const getProductivityIcon = (productivity: string) => {
     case 'very_high': return <Flame className="h-4 w-4 text-red-500" />
     case 'high': return <Zap className="h-4 w-4 text-orange-500" />
     case 'moderate': return <PenTool className="h-4 w-4 text-blue-500" />
-    case 'low': return <Timer className="h-4 w-4 text-gray-500" />
+    case 'low': return <Timer className="h-4 w-4 text-muted-foreground" />
     default: return <Activity className="h-4 w-4 text-gray-400" />
   }
 }
@@ -33,7 +33,7 @@ export const getTrendIcon = (trend: string) => {
   switch(trend) {
     case 'rising': return <TrendingUp className="h-4 w-4 text-green-500" />
     case 'falling': return <TrendingDown className="h-4 w-4 text-red-500" />
-    default: return <ArrowRight className="h-4 w-4 text-gray-500" />
+    default: return <ArrowRight className="h-4 w-4 text-muted-foreground" />
   }
 }
 

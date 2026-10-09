@@ -375,14 +375,14 @@ export default function MetadataImportDialog({
                         
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <div className="text-xs font-semibold text-gray-500 mb-1">Current</div>
-                            <div className="p-2 bg-gray-50 rounded">
+                            <div className="text-xs font-semibold text-muted-foreground mb-1">Current</div>
+                            <div className="p-2 bg-muted rounded">
                               {renderFieldValue(field.current, field.key)}
                             </div>
                           </div>
                           
                           <div>
-                            <div className="text-xs font-semibold text-gray-500 mb-1">
+                            <div className="text-xs font-semibold text-muted-foreground mb-1">
                               GROBID {field.selected && field.hasChanges && (
                                 <span className="text-green-600">(will import)</span>
                               )}
@@ -390,8 +390,8 @@ export default function MetadataImportDialog({
                             <div className={`p-2 rounded ${
                               field.selected && field.hasChanges 
                                 ? 'bg-green-50 border border-green-200' 
-                                : 'bg-gray-50'
-                            }`}>
+                                : 'bg-muted'
+                            } dark:bg-green-950/40 dark:border-green-800`}>
                               {renderFieldValue(field.grobid, field.key)}
                             </div>
                           </div>

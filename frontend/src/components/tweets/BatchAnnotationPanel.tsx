@@ -117,7 +117,7 @@ export default function BatchAnnotationPanel({
           {batchResult.status === 'completed' && (
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              <span className="text-green-700">
+              <span className="text-green-700 dark:text-green-300">
                 {batchResult.newTagsCount} new tags added
                 {batchResult.skippedCount ? `, ${batchResult.skippedCount} skipped` : ''}
                 {batchResult.errorCount ? `, ${batchResult.errorCount} errors` : ''}
@@ -128,7 +128,7 @@ export default function BatchAnnotationPanel({
           {batchResult.status === 'error' && (
             <div className="flex items-center gap-2 text-sm">
               <AlertCircle className="h-4 w-4 text-red-500" />
-              <span className="text-red-700">{batchResult.message}</span>
+              <span className="text-red-700 dark:text-red-300">{batchResult.message}</span>
             </div>
           )}
         </div>
@@ -147,7 +147,7 @@ export default function BatchAnnotationPanel({
                   size="sm"
                   variant="outline"
                   onClick={onCancelAnnotateAll}
-                  className="h-7 px-3 text-xs border-orange-300 text-orange-700 hover:bg-orange-100"
+                  className="h-7 px-3 text-xs border-orange-300 text-orange-700 hover:bg-orange-100 dark:text-orange-300"
                 >
                   Cancel
                 </Button>

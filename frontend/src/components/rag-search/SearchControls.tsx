@@ -110,7 +110,7 @@ export default function SearchControls({
                   type="checkbox"
                   checked={includeTweets}
                   onChange={(e) => setIncludeTweets(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-border text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm flex items-center gap-1">
                   <Twitter className="h-3 w-3" />
@@ -122,7 +122,7 @@ export default function SearchControls({
                   type="checkbox"
                   checked={includeArticles}
                   onChange={(e) => setIncludeArticles(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-border text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm flex items-center gap-1">
                   <Newspaper className="h-3 w-3" />
@@ -134,7 +134,7 @@ export default function SearchControls({
                   type="checkbox"
                   checked={includePapers}
                   onChange={(e) => setIncludePapers(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-border text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-sm flex items-center gap-1">
                   <GraduationCap className="h-3 w-3" />

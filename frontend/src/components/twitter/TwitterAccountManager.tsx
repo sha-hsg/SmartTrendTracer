@@ -355,8 +355,8 @@ export default function TwitterAccountManager() {
         <div className="flex items-center gap-3">
           <Users className="w-8 h-8 text-blue-500" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Twitter Account Manager</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-foreground">Twitter Account Manager</h1>
+            <p className="text-sm text-muted-foreground">
               Manage monitored Twitter accounts ({dashboard?.overview.enabled_accounts}/{dashboard?.overview.total_accounts} enabled)
             </p>
           </div>
@@ -364,7 +364,7 @@ export default function TwitterAccountManager() {
         <div className="flex items-center gap-2">
           <button
             onClick={fetchAccounts}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
             title="Refresh"
           >
             <RefreshCw className="w-5 h-5" />
@@ -386,7 +386,7 @@ export default function TwitterAccountManager() {
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'dashboard'
               ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -399,7 +399,7 @@ export default function TwitterAccountManager() {
           className={`px-4 py-2 font-medium border-b-2 transition-colors ${
             activeTab === 'accounts'
               ? 'border-blue-500 text-blue-600'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -411,7 +411,7 @@ export default function TwitterAccountManager() {
 
       {/* Error Alert */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300">
           {error}
           <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
         </div>
@@ -423,7 +423,7 @@ export default function TwitterAccountManager() {
           collectionResult.success
             ? 'bg-green-50 border-green-200'
             : 'bg-red-50 border-red-200'
-        }`}>
+        } dark:bg-green-950/40 dark:border-green-800`}>
           <div className="flex items-start gap-3">
             {collectionResult.success ? (
               <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
@@ -431,17 +431,17 @@ export default function TwitterAccountManager() {
               <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
             )}
             <div>
-              <div className={`font-medium ${collectionResult.success ? 'text-green-800' : 'text-red-800'}`}>
+              <div className={`font-medium ${collectionResult.success ? 'text-green-800' : 'text-red-800'} dark:text-green-300`}>
                 {collectionResult.success ? 'Collection Complete' : 'Collection Failed'}
               </div>
-              <div className={`text-sm ${collectionResult.success ? 'text-green-700' : 'text-red-700'}`}>
+              <div className={`text-sm ${collectionResult.success ? 'text-green-700' : 'text-red-700'} dark:text-green-300`}>
                 @{collectionResult.account}: {collectionResult.message}
               </div>
               {collectionResult.success && collectionResult.new_tweets !== undefined && (
                 <div className="text-sm text-green-600 mt-1">
                   <span className="font-medium">{collectionResult.new_tweets}</span> new tweets added
                   {collectionResult.tweets_collected !== undefined && (
-                    <span className="text-gray-500 ml-2">
+                    <span className="text-muted-foreground ml-2">
                       ({collectionResult.tweets_collected} fetched, {collectionResult.tweets_collected - collectionResult.new_tweets} duplicates)
                     </span>
                   )}

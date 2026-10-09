@@ -247,7 +247,7 @@ export default function BibTeXViewer({
     return (
       <Card className={cn("w-full", className)}>
         <CardContent className="pt-6">
-          <div className="flex items-center justify-center text-gray-500 py-8">
+          <div className="flex items-center justify-center text-muted-foreground py-8">
             <FileText className="h-5 w-5 mr-2" />
             <span>No BibTeX citation available for this paper.</span>
           </div>
@@ -263,7 +263,7 @@ export default function BibTeXViewer({
           {/* Header with title and actions */}
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-gray-600" />
+              <BookOpen className="h-5 w-5 text-muted-foreground" />
               <h3 className="text-lg font-semibold">BibTeX Citation</h3>
               {parsedBibTeX && (
                 <Badge className={cn("ml-2", getEntryTypeColor(parsedBibTeX.type))}>
@@ -306,7 +306,7 @@ export default function BibTeXViewer({
           </div>
 
           {/* Citation preview */}
-          <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+          <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
             Use this BibTeX entry to cite this paper in your research
           </div>
 
@@ -330,7 +330,7 @@ export default function BibTeXViewer({
                   <div className="flex items-start gap-3">
                     <Hash className="h-4 w-4 text-gray-400 mt-0.5" />
                     <div className="flex-1">
-                      <div className="text-xs text-gray-500 uppercase">Citation Key</div>
+                      <div className="text-xs text-muted-foreground uppercase">Citation Key</div>
                       <div className="font-mono text-sm">{parsedBibTeX.key}</div>
                     </div>
                   </div>
@@ -340,7 +340,7 @@ export default function BibTeXViewer({
                     <div className="flex items-start gap-3">
                       <FileText className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-500 uppercase">Title</div>
+                        <div className="text-xs text-muted-foreground uppercase">Title</div>
                         <div className="text-sm">{formatFieldValue(parsedBibTeX.fields.title)}</div>
                       </div>
                     </div>
@@ -351,7 +351,7 @@ export default function BibTeXViewer({
                     <div className="flex items-start gap-3">
                       <User className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-500 uppercase">Authors</div>
+                        <div className="text-xs text-muted-foreground uppercase">Authors</div>
                         <div className="text-sm">
                           {formatFieldValue(parsedBibTeX.fields.author)
                             .split(' and ')
@@ -371,7 +371,7 @@ export default function BibTeXViewer({
                     <div className="flex items-start gap-3">
                       <Calendar className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-500 uppercase">Year</div>
+                        <div className="text-xs text-muted-foreground uppercase">Year</div>
                         <div className="text-sm">{parsedBibTeX.fields.year}</div>
                       </div>
                     </div>
@@ -382,7 +382,7 @@ export default function BibTeXViewer({
                     <div className="flex items-start gap-3">
                       <Building className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-500 uppercase">
+                        <div className="text-xs text-muted-foreground uppercase">
                           {parsedBibTeX.fields.journal ? 'Journal' : 'Conference/Book'}
                         </div>
                         <div className="text-sm">
@@ -397,7 +397,7 @@ export default function BibTeXViewer({
                     <div className="flex items-start gap-3">
                       <Link className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-500 uppercase">DOI</div>
+                        <div className="text-xs text-muted-foreground uppercase">DOI</div>
                         <a 
                           href={`https://doi.org/${parsedBibTeX.fields.doi}`}
                           target="_blank"
@@ -415,7 +415,7 @@ export default function BibTeXViewer({
                     <div className="flex items-start gap-3">
                       <BookOpen className="h-4 w-4 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <div className="text-xs text-gray-500 uppercase">Volume</div>
+                        <div className="text-xs text-muted-foreground uppercase">Volume</div>
                         <div className="text-sm">
                           {parsedBibTeX.fields.volume}
                           {parsedBibTeX.fields.number && ` (${parsedBibTeX.fields.number})`}
@@ -426,14 +426,14 @@ export default function BibTeXViewer({
                   )}
                 </div>
               ) : (
-                <pre className="bg-gray-50 p-4 rounded-lg text-xs font-mono overflow-x-auto">
+                <pre className="bg-muted p-4 rounded-lg text-xs font-mono overflow-x-auto">
                   {displayBibTeX}
                 </pre>
               )}
             </TabsContent>
 
             <TabsContent value="raw" className="mt-4">
-              <pre className="bg-gray-50 p-4 rounded-lg text-xs font-mono overflow-x-auto">
+              <pre className="bg-muted p-4 rounded-lg text-xs font-mono overflow-x-auto">
                 {displayBibTeX}
               </pre>
             </TabsContent>
@@ -443,7 +443,7 @@ export default function BibTeXViewer({
           {(dblpKey || dblpUrl) && (
             <div className="pt-2 border-t">
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-500">Source:</span>
+                <span className="text-muted-foreground">Source:</span>
                 {dblpUrl ? (
                   <a 
                     href={dblpUrl}

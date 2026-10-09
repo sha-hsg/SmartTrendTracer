@@ -305,7 +305,7 @@ export default function ReferenceManager() {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Reference Manager</h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Manage and explore all references from your research papers
         </p>
       </div>
@@ -395,7 +395,7 @@ export default function ReferenceManager() {
 
                   {total > limit && (
                     <div className="flex justify-between items-center mt-4">
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         Showing {offset + 1}-{Math.min(offset + limit, total)} of {total} references
                       </div>
                       <div className="flex gap-2">
@@ -490,7 +490,7 @@ export default function ReferenceManager() {
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   No importable references found
                 </div>
               )}

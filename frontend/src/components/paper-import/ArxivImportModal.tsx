@@ -122,14 +122,14 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 dark:bg-opacity-950/40">
+      <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-2xl font-bold">Import from ArXiv</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -142,7 +142,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === 'import'
                 ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Download className="w-4 h-4 inline mr-2" />
@@ -153,7 +153,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
             className={`px-6 py-3 font-medium transition-colors ${
               activeTab === 'search'
                 ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <Search className="w-4 h-4 inline mr-2" />
@@ -167,7 +167,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
             <>
               {/* Import Input */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   ArXiv ID or URL
                 </label>
                 <input
@@ -179,20 +179,20 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
                   disabled={isImporting}
                 />
                 <div className="mt-2 space-y-1">
-                  <p className="text-sm text-gray-600 font-medium">Supported formats:</p>
-                  <ul className="text-sm text-gray-500 space-y-0.5 ml-4">
-                    <li>• Paper ID: <code className="bg-gray-100 px-1 py-0.5 rounded">2508.17669</code></li>
-                    <li>• Abstract URL: <code className="bg-gray-100 px-1 py-0.5 rounded">https://arxiv.org/abs/2508.17669</code></li>
-                    <li>• PDF URL: <code className="bg-gray-100 px-1 py-0.5 rounded">https://arxiv.org/pdf/2508.17669</code></li>
-                    <li>• With version: <code className="bg-gray-100 px-1 py-0.5 rounded">2508.17669v2</code></li>
+                  <p className="text-sm text-muted-foreground font-medium">Supported formats:</p>
+                  <ul className="text-sm text-muted-foreground space-y-0.5 ml-4">
+                    <li>• Paper ID: <code className="bg-muted px-1 py-0.5 rounded">2508.17669</code></li>
+                    <li>• Abstract URL: <code className="bg-muted px-1 py-0.5 rounded">https://arxiv.org/abs/2508.17669</code></li>
+                    <li>• PDF URL: <code className="bg-muted px-1 py-0.5 rounded">https://arxiv.org/pdf/2508.17669</code></li>
+                    <li>• With version: <code className="bg-muted px-1 py-0.5 rounded">2508.17669v2</code></li>
                   </ul>
                 </div>
               </div>
 
               {/* Import Info */}
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">How it works:</h3>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/40 dark:border-blue-800">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2 dark:text-blue-300">How it works:</h3>
+                <ul className="text-sm text-blue-800 space-y-1 dark:text-blue-300">
                   <li>• Paper metadata and PDF will be downloaded immediately</li>
                   <li>• You can view the PDF right away after import</li>
                   <li>• Click "Process PDF" button when you want to extract content with Marker/MinerU</li>
@@ -202,16 +202,16 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
 
               {/* Status Messages */}
               {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start dark:bg-red-950/40 dark:border-red-800">
                   <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5" />
-                  <span className="text-red-800">{error}</span>
+                  <span className="text-red-800 dark:text-red-300">{error}</span>
                 </div>
               )}
 
               {success && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start">
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start dark:bg-green-950/40 dark:border-green-800">
                   <CheckCircle className="w-5 h-5 text-green-600 mr-3 mt-0.5" />
-                  <span className="text-green-800">{success}</span>
+                  <span className="text-green-800 dark:text-green-300">{success}</span>
                 </div>
               )}
 
@@ -221,7 +221,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
                 disabled={isImporting || !arxivInput.trim()}
                 className={`w-full py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center ${
                   isImporting || !arxivInput.trim()
-                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
               >
@@ -242,7 +242,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
             <>
               {/* Search Input */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   Search Query
                 </label>
                 <div className="flex gap-2">
@@ -260,7 +260,7 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
                     disabled={isSearching || !searchQuery.trim()}
                     className={`px-6 py-2 rounded-lg font-medium transition-colors ${
                       isSearching || !searchQuery.trim()
-                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                        ? 'bg-muted text-muted-foreground cursor-not-allowed'
                         : 'bg-blue-600 text-white hover:bg-blue-700'
                     }`}
                   >
@@ -280,20 +280,20 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
                   {searchResults.map((paper: any) => (
                     <div
                       key={paper.arxiv_id}
-                      className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
+                      className="p-4 border rounded-lg hover:bg-muted cursor-pointer"
                       onClick={() => handleSelectPaper(paper.arxiv_id)}
                     >
                       <h4 className="font-medium text-blue-600 hover:underline mb-1">
                         {paper.title}
                       </h4>
-                      <p className="text-sm text-gray-600 mb-2">
+                      <p className="text-sm text-muted-foreground mb-2">
                         {paper.authors.slice(0, 3).join(', ')}
                         {paper.authors.length > 3 && ` +${paper.authors.length - 3} more`}
                       </p>
-                      <p className="text-sm text-gray-500 line-clamp-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2">
                         {paper.summary}
                       </p>
-                      <div className="mt-2 flex items-center text-xs text-gray-500">
+                      <div className="mt-2 flex items-center text-xs text-muted-foreground">
                         <span className="mr-4">ID: {paper.arxiv_id}</span>
                         <span>Published: {paper.published?.substring(0, 10)}</span>
                       </div>
@@ -304,9 +304,9 @@ export const ArxivImportModal: React.FC<ArxivImportModalProps> = ({
 
               {/* Error Message */}
               {error && (
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start dark:bg-red-950/40 dark:border-red-800">
                   <AlertCircle className="w-5 h-5 text-red-600 mr-3 mt-0.5" />
-                  <span className="text-red-800">{error}</span>
+                  <span className="text-red-800 dark:text-red-300">{error}</span>
                 </div>
               )}
             </>

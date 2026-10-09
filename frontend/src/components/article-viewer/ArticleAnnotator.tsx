@@ -425,7 +425,7 @@ function HighlightForm({
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">{'\uD83C\uDFA8'} Highlighting</h3>
           <button type="button" onMouseUp={(e) => { stopEvent(e); onCancel() }}
-            className="h-6 w-6 rounded hover:bg-gray-100 flex items-center justify-center" style={{ cursor: 'pointer' }}>
+            className="h-6 w-6 rounded hover:bg-muted flex items-center justify-center" style={{ cursor: 'pointer' }}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -443,7 +443,7 @@ function HighlightForm({
                 className={`flex-1 px-3 py-2 rounded-md border ${
                   highlightColor === color.value
                     ? 'bg-blue-600 text-white border-blue-600'
-                    : 'bg-white border-gray-300 hover:bg-gray-50'
+                    : 'bg-background border-border hover:bg-muted'
                 }`} style={{ cursor: 'pointer' }}>
                 {color.emoji}
               </button>
@@ -452,7 +452,7 @@ function HighlightForm({
         </div>
         <div className="flex gap-2">
           <button type="button" onMouseUp={(e) => { stopEvent(e); onCancel() }}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50" style={{ cursor: 'pointer' }}>
+            className="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted" style={{ cursor: 'pointer' }}>
             Cancel
           </button>
           <button type="button" onMouseUp={(e) => { stopEvent(e); onSave() }}

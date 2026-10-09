@@ -157,10 +157,10 @@ export default function EntityReviewCard({
           </div>
 
           {entity.context && (
-            <p className="text-sm text-gray-600 italic">"{entity.context}"</p>
+            <p className="text-sm text-muted-foreground italic">"{entity.context}"</p>
           )}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             &rarr; {entity.normalized}
           </p>
         </div>

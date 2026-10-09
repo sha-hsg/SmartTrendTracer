@@ -231,7 +231,7 @@ export function MetadataDialog({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-11 w-11 p-0 touch-manipulation hover:bg-gray-200"
+                          className="h-11 w-11 p-0 touch-manipulation hover:bg-muted"
                           onClick={() => {
                             if (idx > 0) {
                               const newAuthors = [...editedMetadata.authors];
@@ -250,7 +250,7 @@ export function MetadataDialog({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-11 w-11 p-0 touch-manipulation hover:bg-gray-200"
+                          className="h-11 w-11 p-0 touch-manipulation hover:bg-muted"
                           onClick={() => {
                             if (idx < editedMetadata.authors.length - 1) {
                               const newAuthors = [...editedMetadata.authors];
@@ -317,7 +317,7 @@ export function MetadataDialog({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-[104px]">
                       <div className="space-y-1">
-                        <label htmlFor={`author-affiliation-${idx}`} className="text-xs font-medium text-gray-600">
+                        <label htmlFor={`author-affiliation-${idx}`} className="text-xs font-medium text-muted-foreground">
                           Affiliation
                         </label>
                         <Input
@@ -337,7 +337,7 @@ export function MetadataDialog({
                       </div>
 
                       <div className="space-y-1">
-                        <label htmlFor={`author-email-${idx}`} className="text-xs font-medium text-gray-600">
+                        <label htmlFor={`author-email-${idx}`} className="text-xs font-medium text-muted-foreground">
                           Email (optional)
                         </label>
                         <Input

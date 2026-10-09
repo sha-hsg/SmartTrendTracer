@@ -73,8 +73,8 @@ const PaperSearchTab: React.FC<PaperSearchTabProps> = ({
 
   if (!content) {
     return (
-      <div className="h-full bg-white rounded-lg border p-6 flex items-center justify-center">
-        <div className="text-center text-gray-500">
+      <div className="h-full bg-background rounded-lg border p-6 flex items-center justify-center">
+        <div className="text-center text-muted-foreground">
           <FileText className="h-10 w-10 mx-auto mb-3 text-gray-300" />
           <p className="font-medium">No content available to search</p>
           <p className="text-sm mt-1">
@@ -86,7 +86,7 @@ const PaperSearchTab: React.FC<PaperSearchTabProps> = ({
   }
 
   return (
-    <div className="h-full bg-white rounded-lg border p-6 flex flex-col">
+    <div className="h-full bg-background rounded-lg border p-6 flex flex-col">
       <div className="space-y-4 flex-1 flex flex-col min-h-0">
         <div className="flex gap-2">
           <Input
@@ -105,7 +105,7 @@ const PaperSearchTab: React.FC<PaperSearchTabProps> = ({
         </div>
 
         {matches !== null && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant="secondary">
               {matches.length}
               {truncated ? "+" : ""} match{matches.length !== 1 ? "es" : ""}
@@ -120,12 +120,12 @@ const PaperSearchTab: React.FC<PaperSearchTabProps> = ({
         )}
 
         {matches === null ? (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-muted-foreground mt-8">
             Enter at least 2 characters and press Enter to search the paper
             content.
           </div>
         ) : matches.length === 0 ? (
-          <div className="text-center text-gray-500 mt-8">
+          <div className="text-center text-muted-foreground mt-8">
             No matches found.
           </div>
         ) : (
@@ -136,13 +136,13 @@ const PaperSearchTab: React.FC<PaperSearchTabProps> = ({
                 onClick={() => onNavigateToMatch(m, searchedQuery)}
                 className="w-full text-left p-3 border rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors text-sm"
               >
-                <span className="text-gray-500">
+                <span className="text-muted-foreground">
                   &hellip;{m.before.replace(/\s+/g, " ")}
                 </span>
                 <mark className="bg-yellow-200 font-medium px-0.5 rounded">
                   {m.match}
                 </mark>
-                <span className="text-gray-500">
+                <span className="text-muted-foreground">
                   {m.after.replace(/\s+/g, " ")}&hellip;
                 </span>
               </button>

@@ -200,9 +200,9 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
         {/* GROBID Processing Status */}
         <div className="mb-4">
           {grobidProcessed ? (
-            <Alert className="bg-green-50 border-green-200">
+            <Alert className="bg-green-50 border-green-200 dark:bg-green-950/40 dark:border-green-800">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+              <AlertDescription className="text-green-800 dark:text-green-300">
                 <span className="font-semibold">✓ Processed with GROBID</span>
                 {grobidProcessedAt && (
                   <span className="ml-2 text-sm">
@@ -212,9 +212,9 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
               </AlertDescription>
             </Alert>
           ) : (
-            <Alert className="bg-gray-50 border-gray-200">
-              <AlertCircle className="h-4 w-4 text-gray-600" />
-              <AlertDescription className="text-gray-800">
+            <Alert className="bg-muted border-border">
+              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+              <AlertDescription className="text-foreground">
                 <span className="font-semibold">⚠ Not Processed</span>
                 <span className="ml-2 text-sm">
                   Click "Process with GROBID" to extract structured metadata
@@ -232,12 +232,12 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
         )}
         
         {result && (
-          <div className="mb-6 p-4 bg-green-50 rounded-lg">
+          <div className="mb-6 p-4 bg-green-50 rounded-lg dark:bg-green-950/40">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="font-semibold text-green-800">Processing Complete</span>
+              <span className="font-semibold text-green-800 dark:text-green-300">Processing Complete</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-sm text-green-700">
+            <div className="grid grid-cols-2 gap-2 text-sm text-green-700 dark:text-green-300">
               <div>References extracted: {result.references_extracted}</div>
               <div>Sections extracted: {result.sections_extracted}</div>
               <div>Citations extracted: {result.citations_extracted}</div>
@@ -265,7 +265,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
             {/* Title */}
             {metadata.title && (
               <div>
-                <div className="text-xs font-semibold text-gray-500 mb-1">Title</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-1">Title</div>
                 <div className="text-sm">{metadata.title}</div>
               </div>
             )}
@@ -273,21 +273,21 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
             {/* Authors */}
             {metadata.authors && metadata.authors.length > 0 && (
               <div>
-                <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 mb-2">
+                <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground mb-2">
                   <Users className="h-3 w-3" />
                   Authors ({metadata.authors.length})
                 </div>
                 <div className="space-y-2">
                   {metadata.authors.map((author, idx) => (
-                    <div key={idx} className="pl-4 border-l-2 border-gray-200">
+                    <div key={idx} className="pl-4 border-l-2 border-border">
                       <div className="text-sm font-medium">
                         {typeof author === 'string' ? author : author.name}
                       </div>
                       {typeof author === 'object' && author.affiliation && (
-                        <div className="text-xs text-gray-600">{author.affiliation}</div>
+                        <div className="text-xs text-muted-foreground">{author.affiliation}</div>
                       )}
                       {typeof author === 'object' && author.department && (
-                        <div className="text-xs text-gray-500">{author.department}</div>
+                        <div className="text-xs text-muted-foreground">{author.department}</div>
                       )}
                       {typeof author === 'object' && author.email && (
                         <div className="text-xs text-blue-600">{author.email}</div>
@@ -301,49 +301,49 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
             {/* Abstract */}
             {metadata.abstract && (
               <div>
-                <div className="text-xs font-semibold text-gray-500 mb-1">Abstract</div>
-                <div className="text-sm text-gray-700 line-clamp-3">{metadata.abstract}</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-1">Abstract</div>
+                <div className="text-sm text-foreground line-clamp-3">{metadata.abstract}</div>
               </div>
             )}
             
             {/* Publication Info */}
             {(metadata.publication_date || metadata.year || metadata.journal || metadata.eprint) && (
               <div>
-                <div className="text-xs font-semibold text-gray-500 mb-2">Publication Details</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2">Publication Details</div>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   {metadata.publication_date && (
                     <div>
-                      <span className="text-gray-500">Date:</span> {metadata.publication_date}
+                      <span className="text-muted-foreground">Date:</span> {metadata.publication_date}
                     </div>
                   )}
                   {!metadata.publication_date && metadata.year && (
                     <div>
-                      <span className="text-gray-500">Year:</span> {metadata.year}
+                      <span className="text-muted-foreground">Year:</span> {metadata.year}
                     </div>
                   )}
                   {metadata.journal && (
                     <div>
-                      <span className="text-gray-500">Journal:</span> {metadata.journal}
+                      <span className="text-muted-foreground">Journal:</span> {metadata.journal}
                     </div>
                   )}
                   {metadata.volume && (
                     <div>
-                      <span className="text-gray-500">Volume:</span> {metadata.volume}
+                      <span className="text-muted-foreground">Volume:</span> {metadata.volume}
                     </div>
                   )}
                   {metadata.pages && (
                     <div>
-                      <span className="text-gray-500">Pages:</span> {metadata.pages}
+                      <span className="text-muted-foreground">Pages:</span> {metadata.pages}
                     </div>
                   )}
                   {metadata.eprint && (
                     <div className="col-span-2">
-                      <span className="text-gray-500">ePrint:</span> {metadata.eprint}
+                      <span className="text-muted-foreground">ePrint:</span> {metadata.eprint}
                     </div>
                   )}
                   {metadata.doi && (
                     <div className="col-span-2">
-                      <span className="text-gray-500">DOI:</span> 
+                      <span className="text-muted-foreground">DOI:</span> 
                       <a href={`https://doi.org/${metadata.doi}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline ml-1">
                         {metadata.doi}
                       </a>
@@ -356,7 +356,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
             {/* Keywords */}
             {metadata.keywords && metadata.keywords.length > 0 && (
               <div>
-                <div className="text-xs font-semibold text-gray-500 mb-2">Keywords</div>
+                <div className="text-xs font-semibold text-muted-foreground mb-2">Keywords</div>
                 <div className="flex flex-wrap gap-1">
                   {metadata.keywords.map((keyword, idx) => (
                     <Badge key={idx} variant="secondary" className="text-xs">
@@ -371,7 +371,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
             {metadata.bibtex_raw && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="text-xs font-semibold text-gray-500">BibTeX Entry</div>
+                  <div className="text-xs font-semibold text-muted-foreground">BibTeX Entry</div>
                   <div className="flex gap-1">
                     <Button
                       size="sm"
@@ -403,7 +403,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
                     </Button>
                   </div>
                 </div>
-                <pre className="bg-gray-50 p-3 rounded text-xs overflow-x-auto max-h-32">
+                <pre className="bg-muted p-3 rounded text-xs overflow-x-auto max-h-32">
                   {metadata.bibtex_raw}
                 </pre>
               </div>
@@ -414,21 +414,21 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
               {metadata.doi && (
                 <div className="flex items-center gap-1">
                   <Link className="h-3 w-3" />
-                  <span className="text-gray-600">DOI:</span>
+                  <span className="text-muted-foreground">DOI:</span>
                   <span className="font-mono">{metadata.doi}</span>
                 </div>
               )}
               {metadata.arxiv_id && (
                 <div className="flex items-center gap-1">
                   <Hash className="h-3 w-3" />
-                  <span className="text-gray-600">arXiv:</span>
+                  <span className="text-muted-foreground">arXiv:</span>
                   <span className="font-mono">{metadata.arxiv_id}</span>
                 </div>
               )}
               {metadata.publication_date && (
                 <div className="flex items-center gap-1">
                   <Calendar className="h-3 w-3" />
-                  <span className="text-gray-600">Date:</span>
+                  <span className="text-muted-foreground">Date:</span>
                   <span>{metadata.publication_date}</span>
                 </div>
               )}
@@ -439,7 +439,7 @@ export default function GROBIDMetadataPanel({ paperId, onMetadataUpdated, grobid
         {!metadata && !processing && !loadingMetadata && !result && (
           <div className="text-center py-8">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 mb-3">No metadata extracted yet</p>
+            <p className="text-muted-foreground mb-3">No metadata extracted yet</p>
             <p className="text-sm text-gray-400">
               Click "Process with GROBID" to extract structured metadata from the PDF
             </p>

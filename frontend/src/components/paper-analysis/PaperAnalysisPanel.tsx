@@ -39,9 +39,9 @@ export default function PaperAnalysisPanel({ paperId, paperTitle, hasContent = t
   return (
     <Card className="w-full">
       {!hasContent && (
-        <div className="mx-6 mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+        <div className="mx-6 mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2 dark:bg-amber-950/40 dark:border-amber-800">
           <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-800">
+          <p className="text-sm text-amber-800 dark:text-amber-300">
             No extracted content available. Process the PDF with Marker or MinerU first to enable AI analyses.
           </p>
         </div>

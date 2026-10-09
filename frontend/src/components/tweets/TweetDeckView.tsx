@@ -336,7 +336,7 @@ function TweetDeckColumn({
               @{username}
             </div>
             {displayName !== username && (
-              <div className="text-xs text-gray-500 truncate">{displayName}</div>
+              <div className="text-xs text-muted-foreground truncate">{displayName}</div>
             )}
           </div>
           <Badge variant="secondary" className="ml-1 text-xs flex-shrink-0">
@@ -775,7 +775,7 @@ export default function TweetDeckView() {
                         type="checkbox"
                         checked={isActive}
                         readOnly
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 pointer-events-none"
+                        className="h-4 w-4 rounded border-border text-blue-600 pointer-events-none"
                       />
                       {account.profile_image_url ? (
                         <img
@@ -785,14 +785,14 @@ export default function TweetDeckView() {
                         />
                       ) : (
                         <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                          <User className="w-3 h-3 text-gray-500" />
+                          <User className="w-3 h-3 text-muted-foreground" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">
                           @{account.username}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">
+                        <div className="text-xs text-muted-foreground truncate">
                           {account.display_name}
                           {account.tweets_collected > 0 &&
                             ` · ${account.tweets_collected} tweets`}
@@ -871,7 +871,7 @@ export default function TweetDeckView() {
                       <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       <div className="min-w-0">
                         <div className="font-medium">@{account.username}</div>
-                        <div className="text-xs text-gray-500">{account.display_name}</div>
+                        <div className="text-xs text-muted-foreground">{account.display_name}</div>
                       </div>
                     </button>
                   ))}

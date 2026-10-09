@@ -186,7 +186,7 @@ export default function SemanticConceptSearch({
               variant="ghost"
               size="sm"
               onClick={clearSearch}
-              className="h-6 w-6 p-0 hover:bg-gray-100"
+              className="h-6 w-6 p-0 hover:bg-muted"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -196,14 +196,14 @@ export default function SemanticConceptSearch({
 
       {/* Search Results Dropdown */}
       {showResults && (
-        <Card className="absolute top-full left-0 right-0 mt-1 z-50 border shadow-lg bg-white">
+        <Card className="absolute top-full left-0 right-0 mt-1 z-50 border shadow-lg bg-background">
           <CardContent className="p-0">
             {error ? (
               <div className="p-4 text-center text-red-600 text-sm">
                 {error}
               </div>
             ) : results.length === 0 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
+              <div className="p-4 text-center text-muted-foreground text-sm">
                 {loading ? 'Searching...' : 'No concepts found'}
               </div>
             ) : (
@@ -241,7 +241,7 @@ export default function SemanticConceptSearch({
                               </Badge>
                             </div>
                             {concept.description && (
-                              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
                                 {concept.description}
                               </p>
                             )}
@@ -249,7 +249,7 @@ export default function SemanticConceptSearch({
                               {concept.content_types.map(type => (
                                 <span 
                                   key={type}
-                                  className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded"
+                                  className="text-xs px-1.5 py-0.5 bg-muted text-muted-foreground rounded"
                                 >
                                   {type}: {concept.usage_by_type[type] || 0}
                                 </span>

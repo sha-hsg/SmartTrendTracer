@@ -183,10 +183,10 @@ export default function MediaCard({
               )}
             </>
           ) : (
-            <div className="h-full flex items-center justify-center bg-gray-100">
+            <div className="h-full flex items-center justify-center bg-muted">
               <div className="text-center">
                 <ImageOff className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-xs text-gray-500">Media unavailable</p>
+                <p className="text-xs text-muted-foreground">Media unavailable</p>
               </div>
             </div>
           )}
@@ -236,7 +236,7 @@ export default function MediaCard({
                 </div>
               )
             ) : (
-              <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+              <div className="w-full h-full bg-muted rounded flex items-center justify-center">
                 <ImageOff className="h-6 w-6 text-gray-400" />
               </div>
             )}
@@ -246,7 +246,7 @@ export default function MediaCard({
             <div className="flex items-start justify-between mb-1">
               <div>
                 <p className="font-semibold text-sm">@{item.author_username}</p>
-                <p className="text-xs text-gray-500">{formatDate(item.created_at)}</p>
+                <p className="text-xs text-muted-foreground">{formatDate(item.created_at)}</p>
               </div>
               <div className="flex gap-2">
                 <Button
@@ -281,8 +281,8 @@ export default function MediaCard({
                 </Button>
               </div>
             </div>
-            <p className="text-sm text-gray-700 line-clamp-2 mb-2">{item.tweet_text}</p>
-            <div className="flex items-center gap-4 text-xs text-gray-500">
+            <p className="text-sm text-foreground line-clamp-2 mb-2">{item.tweet_text}</p>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Heart className="h-3 w-3" />
                 {item.metrics.like_count || item.metrics.likes || 0}

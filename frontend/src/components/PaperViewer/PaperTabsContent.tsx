@@ -507,7 +507,7 @@ const PaperTabsContent: React.FC<PaperTabsContentProps> = ({
                       className="flex items-center justify-between p-3 border dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
+                        <div className="p-2 bg-blue-100 rounded-lg dark:bg-blue-950/40">
                           <Download className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>

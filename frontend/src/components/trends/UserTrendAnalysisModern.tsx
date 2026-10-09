@@ -125,7 +125,7 @@ export default function UserTrendAnalysisModern() {
     switch(trend) {
       case 'up': return <TrendingUp className="h-4 w-4 text-green-500" />
       case 'down': return <TrendingDown className="h-4 w-4 text-red-500" />
-      default: return <Activity className="h-4 w-4 text-gray-500" />
+      default: return <Activity className="h-4 w-4 text-muted-foreground" />
     }
   }
 
@@ -134,7 +134,7 @@ export default function UserTrendAnalysisModern() {
       <div className="container mx-auto p-4 max-w-7xl">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400 mr-3" />
-          <span className="text-gray-500">Analyzing user trends...</span>
+          <span className="text-muted-foreground">Analyzing user trends...</span>
         </div>
       </div>
     )
@@ -146,7 +146,7 @@ export default function UserTrendAnalysisModern() {
         <Card>
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-            <p className="text-gray-600">Failed to load user trends</p>
+            <p className="text-muted-foreground">Failed to load user trends</p>
           </CardContent>
         </Card>
       </div>
@@ -157,8 +157,8 @@ export default function UserTrendAnalysisModern() {
     <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">User Activity Analysis</h1>
-        <p className="text-gray-600">Track individual user engagement and posting patterns</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">User Activity Analysis</h1>
+        <p className="text-muted-foreground">Track individual user engagement and posting patterns</p>
       </div>
 
       {/* Controls */}
@@ -200,9 +200,9 @@ export default function UserTrendAnalysisModern() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Most Active</p>
+                  <p className="text-sm text-muted-foreground">Most Active</p>
                   <p className="text-lg font-bold">@{userTrends.user_statistics.most_active.username}</p>
-                  <p className="text-sm text-gray-600">{userTrends.user_statistics.most_active.tweet_count} tweets</p>
+                  <p className="text-sm text-muted-foreground">{userTrends.user_statistics.most_active.tweet_count} tweets</p>
                 </div>
                 <Flame className="h-8 w-8 text-orange-500" />
               </div>
@@ -215,9 +215,9 @@ export default function UserTrendAnalysisModern() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Most Diverse</p>
+                  <p className="text-sm text-muted-foreground">Most Diverse</p>
                   <p className="text-lg font-bold">@{userTrends.user_statistics.most_diverse_concepts.username}</p>
-                  <p className="text-sm text-gray-600">{userTrends.user_statistics.most_diverse_concepts.unique_concepts} concepts</p>
+                  <p className="text-sm text-muted-foreground">{userTrends.user_statistics.most_diverse_concepts.unique_concepts} concepts</p>
                 </div>
                 <Target className="h-8 w-8 text-blue-500" />
               </div>
@@ -230,9 +230,9 @@ export default function UserTrendAnalysisModern() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500" title="likes + retweets per own post (retweets of others excluded), as of collection time">Highest Engagement</p>
+                  <p className="text-sm text-muted-foreground" title="likes + retweets per own post (retweets of others excluded), as of collection time">Highest Engagement</p>
                   <p className="text-lg font-bold">@{userTrends.user_statistics.highest_engagement.username}</p>
-                  <p className="text-sm text-gray-600">{userTrends.user_statistics.highest_engagement.engagement_rate} avg</p>
+                  <p className="text-sm text-muted-foreground">{userTrends.user_statistics.highest_engagement.engagement_rate} avg</p>
                 </div>
                 <Heart className="h-8 w-8 text-red-500" />
               </div>
@@ -274,23 +274,23 @@ export default function UserTrendAnalysisModern() {
                               </div>
                               <div>
                                 <p className="font-semibold text-sm">@{user.username}</p>
-                                <p className="text-xs text-gray-500">{activity.level}</p>
+                                <p className="text-xs text-muted-foreground">{activity.level}</p>
                               </div>
                             </div>
                             {getTrendIcon(trend)}
                           </div>
                           
                           <div className="grid grid-cols-3 gap-2 mb-2">
-                            <div className="text-center p-1 bg-gray-50 rounded">
-                              <p className="text-xs text-gray-500">Tweets</p>
+                            <div className="text-center p-1 bg-muted rounded">
+                              <p className="text-xs text-muted-foreground">Tweets</p>
                               <p className="text-sm font-semibold">{user.tweet_count}</p>
                             </div>
-                            <div className="text-center p-1 bg-gray-50 rounded">
-                              <p className="text-xs text-gray-500">Concepts</p>
+                            <div className="text-center p-1 bg-muted rounded">
+                              <p className="text-xs text-muted-foreground">Concepts</p>
                               <p className="text-sm font-semibold">{user.unique_concepts}</p>
                             </div>
-                            <div className="text-center p-1 bg-gray-50 rounded">
-                              <p className="text-xs text-gray-500">Engage</p>
+                            <div className="text-center p-1 bg-muted rounded">
+                              <p className="text-xs text-muted-foreground">Engage</p>
                               <p className="text-sm font-semibold">{user.engagement_rate}</p>
                             </div>
                           </div>
@@ -348,7 +348,7 @@ export default function UserTrendAnalysisModern() {
                       <div>
                         <h3 className="text-sm font-semibold mb-2">Activity Timeline (Last 24 Hours)</h3>
                         {userTrends.timeline && userTrends.timeline.length > 0 ? (
-                          <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="bg-muted rounded-lg p-3">
                             <div className="flex items-end gap-1 h-32">
                               {userTrends.timeline.slice(-24).map((point, idx) => {
                                 const count = point.users[selectedUser] || 0
@@ -373,7 +373,7 @@ export default function UserTrendAnalysisModern() {
                                       />
                                     )}
                                     {showLabel && (
-                                      <span className="text-xs text-gray-500 mt-1">
+                                      <span className="text-xs text-muted-foreground mt-1">
                                         {hour}h
                                       </span>
                                     )}
@@ -381,7 +381,7 @@ export default function UserTrendAnalysisModern() {
                                 )
                               })}
                             </div>
-                            <div className="text-xs text-gray-500 text-center mt-2">
+                            <div className="text-xs text-muted-foreground text-center mt-2">
                               {userTrends.timeline.length > 0 && (
                                 <>
                                   {new Date(userTrends.timeline[Math.max(0, userTrends.timeline.length - 24)].time).toLocaleDateString()} - 
@@ -391,9 +391,9 @@ export default function UserTrendAnalysisModern() {
                             </div>
                           </div>
                         ) : (
-                          <div className="bg-gray-50 rounded-lg p-8 text-center">
+                          <div className="bg-muted rounded-lg p-8 text-center">
                             <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                            <p className="text-sm text-gray-500">No activity data available for this user</p>
+                            <p className="text-sm text-muted-foreground">No activity data available for this user</p>
                           </div>
                         )}
                       </div>
@@ -409,7 +409,7 @@ export default function UserTrendAnalysisModern() {
                               <CardContent className="p-3">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="text-xs text-gray-500">Total Likes</p>
+                                    <p className="text-xs text-muted-foreground">Total Likes</p>
                                     <p className="text-xl font-bold">{userData.total_likes}</p>
                                   </div>
                                   <Heart className="h-5 w-5 text-red-500" />
@@ -421,7 +421,7 @@ export default function UserTrendAnalysisModern() {
                               <CardContent className="p-3">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="text-xs text-gray-500">Total Retweets</p>
+                                    <p className="text-xs text-muted-foreground">Total Retweets</p>
                                     <p className="text-xl font-bold">{userData.total_retweets}</p>
                                   </div>
                                   <Repeat2 className="h-5 w-5 text-green-500" />
@@ -471,19 +471,19 @@ export default function UserTrendAnalysisModern() {
                           <div className="grid grid-cols-3 gap-2">
                             <Card>
                               <CardContent className="p-2 text-center">
-                                <p className="text-xs text-gray-500">Total Tweets</p>
+                                <p className="text-xs text-muted-foreground">Total Tweets</p>
                                 <p className="text-lg font-bold">{userTrends.activity_by_user[selectedUser].total_tweets}</p>
                               </CardContent>
                             </Card>
                             <Card>
                               <CardContent className="p-2 text-center">
-                                <p className="text-xs text-gray-500" title="likes + retweets per own post (retweets of others excluded), as of collection time">Engagement per own post</p>
+                                <p className="text-xs text-muted-foreground" title="likes + retweets per own post (retweets of others excluded), as of collection time">Engagement per own post</p>
                                 <p className="text-lg font-bold">{userTrends.activity_by_user[selectedUser].engagement_rate}</p>
                               </CardContent>
                             </Card>
                             <Card>
                               <CardContent className="p-2 text-center">
-                                <p className="text-xs text-gray-500">Unique Concepts</p>
+                                <p className="text-xs text-muted-foreground">Unique Concepts</p>
                                 <p className="text-lg font-bold">{userTrends.activity_by_user[selectedUser].unique_concepts}</p>
                               </CardContent>
                             </Card>
@@ -535,7 +535,7 @@ export default function UserTrendAnalysisModern() {
               <CardContent className="h-full flex items-center justify-center">
                 <div className="text-center">
                   <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Select a user to view detailed analytics</p>
+                  <p className="text-muted-foreground">Select a user to view detailed analytics</p>
                 </div>
               </CardContent>
             </Card>

@@ -62,15 +62,15 @@ const formatFileSize = (bytes?: number) => {
 const getProcessingStatusBadge = (status?: string) => {
   switch (status) {
     case 'completed':
-      return <Badge variant="outline" className="bg-green-100 text-green-800">Completed</Badge>
+      return <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-950/40 dark:text-green-300">Completed</Badge>
     case 'processing':
-      return <Badge variant="outline" className="bg-blue-100 text-blue-800">Processing</Badge>
+      return <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">Processing</Badge>
     case 'queued':
-      return <Badge variant="outline" className="bg-purple-100 text-purple-800">Queued</Badge>
+      return <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300">Queued</Badge>
     case 'failed':
-      return <Badge variant="outline" className="bg-red-100 text-red-800">Failed</Badge>
+      return <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-300">Failed</Badge>
     case 'pending':
-      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pending</Badge>
+      return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-950/40 dark:text-yellow-300">Pending</Badge>
     default:
       return <Badge variant="outline">Unknown</Badge>
   }
@@ -123,7 +123,7 @@ const BookCard: React.FC<BookCardProps> = ({ book, onClick }) => {
           {book.genre && book.genre.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {book.genre.slice(0, 3).map((genre, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-700">
+                <Badge key={idx} variant="outline" className="text-xs bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
                   {genre}
                 </Badge>
               ))}

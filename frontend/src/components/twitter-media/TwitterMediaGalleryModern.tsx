@@ -173,8 +173,8 @@ export default function TwitterMediaGalleryModern() {
     <div className="container mx-auto p-4 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Media Gallery</h1>
-        <p className="text-gray-600">Browse and analyze media from collected tweets</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Media Gallery</h1>
+        <p className="text-muted-foreground">Browse and analyze media from collected tweets</p>
       </div>
 
       {/* Stats Overview */}
@@ -184,7 +184,7 @@ export default function TwitterMediaGalleryModern() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Media Tweets</p>
+                  <p className="text-sm text-muted-foreground">Media Tweets</p>
                   <p className="text-2xl font-bold">{stats.tweets_with_media}</p>
                 </div>
                 <BarChart3 className="h-8 w-8 text-blue-500" />
@@ -197,7 +197,7 @@ export default function TwitterMediaGalleryModern() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500 capitalize">{type}s</p>
+                    <p className="text-sm text-muted-foreground capitalize">{type}s</p>
                     <p className="text-2xl font-bold">{count}</p>
                   </div>
                   {getMediaIcon(type)}
@@ -238,7 +238,7 @@ export default function TwitterMediaGalleryModern() {
         <Card>
           <CardContent className="py-12 text-center">
             <ImageOff className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">No media found matching your filters</p>
+            <p className="text-muted-foreground">No media found matching your filters</p>
           </CardContent>
         </Card>
       ) : (
@@ -403,7 +403,7 @@ export default function TwitterMediaGalleryModern() {
                         />
                       ) : (
                         <div className="flex items-center justify-center h-96 bg-gray-900">
-                          <Film className="h-16 w-16 text-gray-600" />
+                          <Film className="h-16 w-16 text-muted-foreground" />
                         </div>
                       )}
                       <div className="absolute inset-0 flex items-center justify-center bg-black/60">

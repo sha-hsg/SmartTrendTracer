@@ -343,11 +343,11 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
                 <div className="text-sm font-medium">Import Results:</div>
                 <div className="max-h-64 overflow-y-auto space-y-2 border rounded-lg p-3">
                   {batchResults.map((result, idx) => (
-                    <div key={idx} className={`flex items-start gap-2 p-2 rounded ${result.success ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <div key={idx} className={`flex items-start gap-2 p-2 rounded ${result.success ? 'bg-green-50' : 'bg-red-50'} dark:bg-green-950/40`}>
                       {result.success ? <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /> : <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />}
                       <div className="flex-1 text-sm">
                         <div className="font-medium">{result.success ? result.title : result.url}</div>
-                        <div className="text-gray-600">{result.success ? `${result.author} - ${result.word_count} words` : result.error}</div>
+                        <div className="text-muted-foreground">{result.success ? `${result.author} - ${result.word_count} words` : result.error}</div>
                       </div>
                     </div>
                   ))}
@@ -359,21 +359,21 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
           {/* Playwright Auth Tab */}
           <TabsContent value="auth" className="space-y-4">
             {authRequiredHint && (
-              <Alert className="border-blue-300 bg-blue-50">
+              <Alert className="border-blue-300 bg-blue-50 dark:bg-blue-950/40">
                 <Lock className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-900">
+                <AlertDescription className="text-blue-900 dark:text-blue-300">
                   <div className="font-semibold">Login bei {authRequiredHint.site_name} erforderlich</div>
                   <div className="text-sm mt-1">{authRequiredHint.message}</div>
                 </AlertDescription>
               </Alert>
             )}
             {!playwrightInstalled && (
-              <Alert className="border-amber-200 bg-amber-50">
+              <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800">
                 <Terminal className="h-4 w-4 text-amber-600" />
-                <AlertDescription className="text-amber-800">
+                <AlertDescription className="text-amber-800 dark:text-amber-300">
                   <div className="font-semibold">Playwright not installed</div>
                   <div className="text-sm mt-1">
-                    Run: <code className="bg-amber-100 px-1 rounded">pip install playwright && playwright install chromium</code>
+                    Run: <code className="bg-amber-100 px-1 rounded dark:bg-amber-950/40">pip install playwright && playwright install chromium</code>
                   </div>
                 </AlertDescription>
               </Alert>
@@ -381,7 +381,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
             {loadingAuthSites ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                <span className="ml-2 text-sm text-gray-500">Loading sessions...</span>
+                <span className="ml-2 text-sm text-muted-foreground">Loading sessions...</span>
               </div>
             ) : (
               <div className="space-y-3">
@@ -390,12 +390,12 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
                   {authSites.map((site) => {
                     const authCommand = `cd backend && python -m app.collectors.playwright_article_collector --auth ${site.key}`
                     return (
-                      <div key={site.key} className="p-3 border rounded-lg bg-gray-50">
+                      <div key={site.key} className="p-3 border rounded-lg bg-muted">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {site.has_session ? <ShieldCheck className="h-4 w-4 text-green-600" /> : <ShieldX className="h-4 w-4 text-gray-400" />}
                             <span className="font-medium">{site.name}</span>
-                            {site.has_session && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Authenticated</span>}
+                            {site.has_session && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded dark:bg-green-950/40 dark:text-green-300">Authenticated</span>}
                           </div>
                           <div className="flex items-center gap-2">
                             {site.has_session && (
@@ -412,7 +412,7 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
                               {authenticatingSite === site.key ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Opening browser...</> : <><Key className="h-4 w-4 mr-2" />Authenticate Now</>}
                             </Button>
                             <div className="flex items-center gap-2">
-                              <code className="flex-1 text-xs bg-gray-200 px-2 py-1.5 rounded font-mono overflow-x-auto">{authCommand}</code>
+                              <code className="flex-1 text-xs bg-muted px-2 py-1.5 rounded font-mono overflow-x-auto">{authCommand}</code>
                               <Button variant="outline" size="sm" onClick={() => copyToClipboard(authCommand, site.key)} className="shrink-0">
                                 {copiedCommand === site.key ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
                               </Button>
@@ -439,17 +439,17 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
               </div>
             </div>
             {authInstructions && (
-              <Alert className="border-blue-200 bg-blue-50">
+              <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/40 dark:border-blue-800">
                 <Terminal className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-800">
+                <AlertDescription className="text-blue-800 dark:text-blue-300">
                   <div className="font-semibold">Authentication required for {authInstructions.name}</div>
                   <div className="mt-2 space-y-2">
                     <Button onClick={() => handleStartAuth(authInstructions.site)} disabled={authenticatingSite !== null} className="w-full bg-blue-600 hover:bg-blue-700">
                       {authenticatingSite === authInstructions.site ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Opening browser...</> : <><Key className="h-4 w-4 mr-2" />Authenticate with {authInstructions.name}</>}
                     </Button>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-xs bg-blue-100 px-2 py-1.5 rounded font-mono">cd backend && {authInstructions.cli_command}</code>
-                      <Button variant="outline" size="sm" onClick={() => copyToClipboard(`cd backend && ${authInstructions.cli_command}`, 'auth-instr')} className="shrink-0 bg-white">
+                      <code className="flex-1 text-xs bg-blue-100 px-2 py-1.5 rounded font-mono dark:bg-blue-950/40">cd backend && {authInstructions.cli_command}</code>
+                      <Button variant="outline" size="sm" onClick={() => copyToClipboard(`cd backend && ${authInstructions.cli_command}`, 'auth-instr')} className="shrink-0 bg-background">
                         {copiedCommand === 'auth-instr' ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
                       </Button>
                     </div>
@@ -464,12 +464,12 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
           {/* Cookie String Tab */}
           <TabsContent value="cookies" className="space-y-4">
             {renderCookieUrlInput()}
-            <div className="rounded-lg bg-amber-50 p-3">
+            <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950/40">
               <div className="flex gap-2">
                 <Cookie className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
                 <div className="text-xs space-y-1">
-                  <p className="font-medium text-amber-900">How to get cookies:</p>
-                  <ol className="list-decimal list-inside space-y-0.5 text-amber-700">
+                  <p className="font-medium text-amber-900 dark:text-amber-300">How to get cookies:</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-amber-700 dark:text-amber-300">
                     <li>Open article in browser and sign in</li>
                     <li>Open DevTools (F12) → Application → Cookies</li>
                     <li>Copy cookie string (name=value; name2=value2)</li>
@@ -492,12 +492,12 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
           {/* JSON Cookies Tab */}
           <TabsContent value="json" className="space-y-4">
             {renderCookieUrlInput()}
-            <div className="rounded-lg bg-green-50 p-3">
+            <div className="rounded-lg bg-green-50 p-3 dark:bg-green-950/40">
               <div className="flex gap-2">
                 <FileText className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                 <div className="text-xs space-y-1">
-                  <p className="font-medium text-green-900">Using Copy Cookie Extension:</p>
-                  <ol className="list-decimal list-inside space-y-0.5 text-green-700">
+                  <p className="font-medium text-green-900 dark:text-green-300">Using Copy Cookie Extension:</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-green-700 dark:text-green-300">
                     <li>Install "Copy Cookie" browser extension</li>
                     <li>Sign in to the article</li>
                     <li>Click extension → "Copy All" as JSON</li>
@@ -520,12 +520,12 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
           {/* cURL Tab */}
           <TabsContent value="curl" className="space-y-4">
             {renderCookieUrlInput()}
-            <div className="rounded-lg bg-purple-50 p-3">
+            <div className="rounded-lg bg-purple-50 p-3 dark:bg-purple-950/40">
               <div className="flex gap-2">
                 <Terminal className="h-4 w-4 text-purple-600 mt-0.5 shrink-0" />
                 <div className="text-xs space-y-1">
-                  <p className="font-medium text-purple-900">How to get cURL command:</p>
-                  <ol className="list-decimal list-inside space-y-0.5 text-purple-700">
+                  <p className="font-medium text-purple-900 dark:text-purple-300">How to get cURL command:</p>
+                  <ol className="list-decimal list-inside space-y-0.5 text-purple-700 dark:text-purple-300">
                     <li>Open DevTools (F12) → Network tab</li>
                     <li>Refresh the article page</li>
                     <li>Right-click request → Copy as cURL</li>
@@ -593,13 +593,13 @@ export default function ArticleImportModal({ isOpen, onClose, onImportSuccess }:
   function renderSuccess() {
     if (!importResult?.success) return null
     return (
-      <Alert className="border-green-200 bg-green-50">
+      <Alert className="border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800">
         <CheckCircle className="h-4 w-4 text-green-600" />
-        <AlertDescription className="text-green-800">
+        <AlertDescription className="text-green-800 dark:text-green-300">
           <div className="font-semibold">{importResult.title}</div>
           <div className="text-sm mt-1">
             By {importResult.author} {importResult.word_count && `- ${importResult.word_count} words`}
-            {importResult.content_increase && <span className="ml-2 font-medium text-green-700">({importResult.content_increase})</span>}
+            {importResult.content_increase && <span className="ml-2 font-medium text-green-700 dark:text-green-300">({importResult.content_increase})</span>}
           </div>
         </AlertDescription>
       </Alert>

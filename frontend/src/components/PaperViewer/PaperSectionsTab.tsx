@@ -77,17 +77,17 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
   handleExtractSections,
 }) => {
   return (
-    <div className="h-full bg-white rounded-lg border">
+    <div className="h-full bg-background rounded-lg border">
       <ScrollArea className="h-full p-6">
         {/* Extract Sections Button */}
         {paper && (paper.markdown_content || paper.content) && (!paper.sections || paper.sections.length === 0) && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/40 dark:border-blue-800">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-blue-900">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
                   Extract Key Sections
                 </p>
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-blue-700 dark:text-blue-300">
                   Use AI to extract Abstract, Introduction, and Conclusion from the paper
                 </p>
               </div>
@@ -127,7 +127,7 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
               >
                 <div
                   onClick={() => toggleSection(section.id)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
                     {expandedSections.has(section.id) ? (
@@ -267,31 +267,31 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
                             h1: ({ node, ...props }) => (
                               <h1
                                 {...props}
-                                className="text-2xl font-bold text-gray-900 mb-4 mt-6"
+                                className="text-2xl font-bold text-foreground mb-4 mt-6"
                               />
                             ),
                             h2: ({ node, ...props }) => (
                               <h2
                                 {...props}
-                                className="text-xl font-semibold text-gray-800 mb-3 mt-5"
+                                className="text-xl font-semibold text-foreground mb-3 mt-5"
                               />
                             ),
                             h3: ({ node, ...props }) => (
                               <h3
                                 {...props}
-                                className="text-lg font-medium text-gray-800 mb-2 mt-4"
+                                className="text-lg font-medium text-foreground mb-2 mt-4"
                               />
                             ),
                             h4: ({ node, ...props }) => (
                               <h4
                                 {...props}
-                                className="text-base font-medium text-gray-700 mb-2 mt-3"
+                                className="text-base font-medium text-foreground mb-2 mt-3"
                               />
                             ),
                             p: ({ node, ...props }) => (
                               <p
                                 {...props}
-                                className="text-gray-700 mb-4 leading-relaxed"
+                                className="text-foreground mb-4 leading-relaxed"
                               />
                             ),
                             ul: ({ node, ...props }) => (
@@ -309,13 +309,13 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
                             li: ({ node, ...props }) => (
                               <li
                                 {...props}
-                                className="text-gray-700"
+                                className="text-foreground"
                               />
                             ),
                             strong: ({ node, ...props }) => (
                               <strong
                                 {...props}
-                                className="font-semibold text-gray-900"
+                                className="font-semibold text-foreground"
                               />
                             ),
                             em: ({ node, ...props }) => (
@@ -327,7 +327,7 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
                                 return (
                                   <code
                                     {...props}
-                                    className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm"
+                                    className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm dark:bg-pink-950/40"
                                   />
                                 );
                               }
@@ -336,7 +336,7 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
                             blockquote: ({ node, ...props }) => (
                               <blockquote
                                 {...props}
-                                className="border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4"
+                                className="border-l-4 border-blue-500 pl-4 italic text-muted-foreground my-4"
                               />
                             ),
                             a: ({ node, href, children, ...props }) => {
@@ -406,7 +406,7 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
                               <div {...props} id={id} className={className} />
                             ),
                             think: ({ children }: { node?: unknown; children?: React.ReactNode }) => (
-                              <code className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm">
+                              <code className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm dark:bg-pink-950/40">
                                 {'<think>'}
                                 {children}
                                 {'</think>'}
@@ -425,7 +425,7 @@ const PaperSectionsTab: React.FC<PaperSectionsTabProps> = ({
           </div>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">No sections available</p>
+            <p className="text-muted-foreground">No sections available</p>
           </div>
         )}
       </ScrollArea>

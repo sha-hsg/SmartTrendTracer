@@ -282,19 +282,19 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
 
   if (status === 'processing_with_marker' || status === 'processing_with_mineru' || status === 'processing_pdf') {
     return (
-      <div className="flex items-center gap-3 p-3 border rounded-lg bg-blue-50">
+      <div className="flex items-center gap-3 p-3 border rounded-lg bg-blue-50 dark:bg-blue-950/40">
         <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
         <div className="flex-1">
-          <p className="font-medium text-blue-900">
+          <p className="font-medium text-blue-900 dark:text-blue-300">
             Processing with {status === 'processing_with_marker' ? 'Marker' : 
                            status === 'processing_with_mineru' ? 'MinerU' : 
                            'PDF processor'}...
           </p>
-          <p className="text-sm text-blue-700">
+          <p className="text-sm text-blue-700 dark:text-blue-300">
             {elapsedMinutes ? `${elapsedMinutes} minutes elapsed` : 'Starting...'}
           </p>
           {progressMessage && (
-            <p className="text-sm text-blue-800 mt-1">
+            <p className="text-sm text-blue-800 mt-1 dark:text-blue-300">
               {progressMessage}
             </p>
           )}
@@ -307,9 +307,9 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
             </div>
           )}
           {processHealth && (
-            <div className="mt-3 pt-3 border-t border-blue-200">
-              <p className="text-xs font-semibold text-blue-900 mb-1">📊 Process Health:</p>
-              <div className="grid grid-cols-2 gap-2 text-xs text-blue-700">
+            <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+              <p className="text-xs font-semibold text-blue-900 mb-1 dark:text-blue-300">📊 Process Health:</p>
+              <div className="grid grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
                 {processHealth.pid && (
                   <div>
                     <span className="font-medium">PID:</span> {processHealth.pid}
@@ -410,7 +410,7 @@ export const ProcessingStatusIndicator: React.FC<ProcessingStatusIndicatorProps>
   }
 
   return (
-    <div className="flex items-center gap-2 text-gray-500">
+    <div className="flex items-center gap-2 text-muted-foreground">
       <Clock className="w-4 h-4" />
       <span className="text-sm">Checking status...</span>
     </div>

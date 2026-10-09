@@ -31,7 +31,7 @@ export function AnalysisContextMenu({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed z-[9999] bg-white rounded-lg shadow-2xl border border-gray-200 py-1 min-w-[180px]"
+      className="fixed z-[9999] bg-background rounded-lg shadow-2xl border border-border py-1 min-w-[180px]"
       style={{
         left: `${contextMenuPosition.x}px`,
         top: `${contextMenuPosition.y}px`,
@@ -46,7 +46,7 @@ export function AnalysisContextMenu({
         <span>Copy Text</span>
       </button>
 
-      <div className="border-t border-gray-100 my-1" />
+      <div className="border-t border-border my-1" />
 
       <button
         className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 transition-colors"
@@ -101,7 +101,7 @@ export function TagCreationDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label htmlFor="analysisTagText" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="analysisTagText" className="block text-sm font-medium text-foreground mb-2">
               Tag Text
             </label>
             <Input

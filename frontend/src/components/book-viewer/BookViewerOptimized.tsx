@@ -328,7 +328,7 @@ const BookViewerOptimized: React.FC<BookViewerOptimizedProps> = ({ book, onBack,
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-muted">
       <BookMetadataPanel
         book={book}
         onBack={onBack}

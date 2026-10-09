@@ -224,7 +224,7 @@ export default function ArticleCard({
                   <ChevronRightIcon className="h-4 w-4 text-blue-600" />
                 )}
                 <Sparkles className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-900">AI Summary</span>
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">AI Summary</span>
               </div>
             </div>
 

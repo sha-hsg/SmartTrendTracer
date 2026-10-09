@@ -70,7 +70,7 @@ export default function SubstackTrendsModern() {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading trend analysis...</p>
+            <p className="text-muted-foreground">Loading trend analysis...</p>
           </div>
         </div>
       </div>
@@ -80,9 +80,9 @@ export default function SubstackTrendsModern() {
   if (error) {
     return (
       <div className="container mx-auto p-4 max-w-7xl">
-        <Alert className="bg-red-50 border-red-200">
+        <Alert className="bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800">
           <AlertCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">
+          <AlertDescription className="text-red-800 dark:text-red-300">
             Failed to load trends: {error}
           </AlertDescription>
         </Alert>
@@ -96,8 +96,8 @@ export default function SubstackTrendsModern() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Newsletter Trend Analysis</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-foreground mb-2">Newsletter Trend Analysis</h1>
+            <p className="text-muted-foreground">
               Analyzing {trends?.total_articles || 0} articles from {formatDate(trends?.date_range?.start || '')} to {formatDate(trends?.date_range?.end || '')}
             </p>
           </div>
@@ -132,7 +132,7 @@ export default function SubstackTrendsModern() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">Articles</p>
+                <p className="text-xs text-muted-foreground">Articles</p>
                 <p className="text-2xl font-bold">{trends?.total_articles || 0}</p>
               </div>
               <FileText className="h-8 w-8 text-blue-500 opacity-20" />
@@ -144,7 +144,7 @@ export default function SubstackTrendsModern() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">Authors</p>
+                <p className="text-xs text-muted-foreground">Authors</p>
                 <p className="text-2xl font-bold">{trends?.author_trends?.total_authors || 0}</p>
               </div>
               <Users className="h-8 w-8 text-green-500 opacity-20" />
@@ -156,7 +156,7 @@ export default function SubstackTrendsModern() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">Unique Tags</p>
+                <p className="text-xs text-muted-foreground">Unique Tags</p>
                 <p className="text-2xl font-bold">{trends?.tag_trends?.unique_tags || 0}</p>
               </div>
               <Hash className="h-8 w-8 text-purple-500 opacity-20" />
@@ -168,7 +168,7 @@ export default function SubstackTrendsModern() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">Highlights</p>
+                <p className="text-xs text-muted-foreground">Highlights</p>
                 <p className="text-2xl font-bold">{trends?.snippet_insights?.total_snippets || 0}</p>
               </div>
               <MessageSquare className="h-8 w-8 text-orange-500 opacity-20" />
@@ -223,7 +223,7 @@ export default function SubstackTrendsModern() {
                 <CardContent>
                   <div className="space-y-2">
                     {(trends?.emerging_themes || []).slice(0, 5).map((theme, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted">
                         <div className="flex items-center gap-2">
                           {theme.type === 'new' ? (
                             <Sparkles className="h-4 w-4 text-purple-500" />
@@ -236,7 +236,7 @@ export default function SubstackTrendsModern() {
                           <Badge variant={theme.type === 'new' ? 'secondary' : 'outline'}>
                             {theme.type === 'new' ? 'New' : 'Growing'}
                           </Badge>
-                          <span className="text-xs text-gray-500">{theme.growth}</span>
+                          <span className="text-xs text-muted-foreground">{theme.growth}</span>
                         </div>
                       </div>
                     ))}
@@ -315,13 +315,13 @@ export default function SubstackTrendsModern() {
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline">{snippet.category}</Badge>
-                        <span className="text-xs text-gray-500">{snippet.article}</span>
+                        <span className="text-xs text-muted-foreground">{snippet.article}</span>
                       </div>
-                      <blockquote className="border-l-4 border-gray-200 pl-4 italic text-gray-700">
+                      <blockquote className="border-l-4 border-border pl-4 italic text-foreground">
                         "{snippet.text}"
                       </blockquote>
                       {snippet.annotation && (
-                        <div className="mt-2 text-sm text-gray-600 flex items-start gap-2">
+                        <div className="mt-2 text-sm text-muted-foreground flex items-start gap-2">
                           <BookOpen className="h-4 w-4 mt-0.5 flex-shrink-0" />
                           <span>{snippet.annotation}</span>
                         </div>

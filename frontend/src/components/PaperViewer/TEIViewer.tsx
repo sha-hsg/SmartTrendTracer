@@ -193,8 +193,8 @@ export default function TEIViewer({ paperId, paperTitle: _paperTitle }: TEIViewe
       <CardContent>
         {loading && (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
-            <span className="ml-2 text-gray-600">Loading TEI XML...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <span className="ml-2 text-muted-foreground">Loading TEI XML...</span>
           </div>
         )}
         
@@ -215,11 +215,11 @@ export default function TEIViewer({ paperId, paperTitle: _paperTitle }: TEIViewe
             <TabsContent value="formatted" className="mt-4">
               <div className="space-y-4">
                 {extractSections(teiXml).map((section, idx) => (
-                  <div key={idx} className="border-l-4 border-blue-200 pl-4">
-                    <h3 className="font-semibold text-sm text-gray-700 mb-1">
+                  <div key={idx} className="border-l-4 border-blue-200 pl-4 dark:border-blue-800">
+                    <h3 className="font-semibold text-sm text-foreground mb-1">
                       {section.title}
                     </h3>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                       {section.content}
                     </p>
                   </div>
@@ -229,7 +229,7 @@ export default function TEIViewer({ paperId, paperTitle: _paperTitle }: TEIViewe
             
             <TabsContent value="raw" className="mt-4">
               <ScrollArea className="h-[500px] w-full rounded-md border p-4">
-                <pre className="text-xs font-mono text-gray-700">
+                <pre className="text-xs font-mono text-foreground">
                   {formatXml(teiXml)}
                 </pre>
               </ScrollArea>

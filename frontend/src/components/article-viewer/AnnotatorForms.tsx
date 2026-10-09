@@ -39,7 +39,7 @@ export function AnnotationForm({
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Create Annotation</h3>
           <button type="button" onMouseUp={(e) => { stopEvent(e); onCancel() }}
-            className="h-6 w-6 rounded hover:bg-gray-100 flex items-center justify-center" style={{ cursor: 'pointer' }}>
+            className="h-6 w-6 rounded hover:bg-muted flex items-center justify-center" style={{ cursor: 'pointer' }}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -47,12 +47,12 @@ export function AnnotationForm({
       <div className="p-4 space-y-3">
         <div>
           <Label className="text-sm font-medium">Selected Text:</Label>
-          <div className="mt-1 p-2 bg-gray-50 rounded border text-sm">{selectedText}</div>
+          <div className="mt-1 p-2 bg-muted rounded border text-sm">{selectedText}</div>
         </div>
         <div>
           <Label className="text-sm font-medium">Category:</Label>
           <select value={snippetCategory} onChange={(e) => onCategoryChange(e.target.value)}
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="mt-1 w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             style={{ cursor: 'pointer' }}>
             <option value="insight">{'\uD83D\uDCA1'} Insight</option>
             <option value="question">{'\u2753'} Question</option>
@@ -67,12 +67,12 @@ export function AnnotationForm({
             value={annotation} onChange={(e) => onAnnotationChange(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}
             rows={3}
-            className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            className="mt-1 w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             style={{ cursor: 'text' }} />
         </div>
         <div className="flex gap-2">
           <button type="button" onMouseUp={(e) => { stopEvent(e); onCancel() }}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50" style={{ cursor: 'pointer' }}>
+            className="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted" style={{ cursor: 'pointer' }}>
             Cancel
           </button>
           <button type="button" onMouseUp={(e) => { stopEvent(e); onSave() }}
@@ -110,7 +110,7 @@ export function TagCreationForm({
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">{'\uD83C\uDFF7\uFE0F'} Create Concept from Selection</h3>
           <button type="button" onMouseUp={(e) => { stopEvent(e); onCancel() }}
-            className="h-6 w-6 rounded hover:bg-gray-100 flex items-center justify-center" style={{ cursor: 'pointer' }}>
+            className="h-6 w-6 rounded hover:bg-muted flex items-center justify-center" style={{ cursor: 'pointer' }}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -142,7 +142,7 @@ export function TagCreationForm({
         </div>
         <div className="flex gap-2">
           <button type="button" onMouseUp={(e) => { stopEvent(e); onCancel() }}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50" style={{ cursor: 'pointer' }}>
+            className="flex-1 px-4 py-2 border border-border rounded-md hover:bg-muted" style={{ cursor: 'pointer' }}>
             Cancel
           </button>
           <button type="button" onMouseUp={(e) => { stopEvent(e); onSave() }}

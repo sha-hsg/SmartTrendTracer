@@ -143,7 +143,7 @@ export default function StatisticsDashboard() {
   if (error && !stats) {
     return (
       <div className="container mx-auto p-6">
-        <Card className="border-red-200">
+        <Card className="border-red-200 dark:border-red-800">
           <CardHeader>
             <CardTitle className="text-red-600">Error Loading Statistics</CardTitle>
             <CardDescription>{error}</CardDescription>

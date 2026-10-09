@@ -73,7 +73,7 @@ export function ImportProgressDialog({ open, onOpenChange, progress, importing }
 
         <div className="py-4">
           <Progress value={progress} className="mb-2" />
-          <p className="text-sm text-center text-gray-500">
+          <p className="text-sm text-center text-muted-foreground">
             {Math.round(progress)}% complete
           </p>
         </div>

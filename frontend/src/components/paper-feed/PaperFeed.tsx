@@ -216,7 +216,7 @@ export default function PaperFeed() {
           <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
             <Rss className="w-7 h-7" /> Paper Feed
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             New arXiv papers for your saved searches — checked daily, ranked by similarity to papers you already have
           </p>
         </div>

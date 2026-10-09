@@ -98,8 +98,8 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 dark:bg-opacity-950/40">
+      <div className="bg-background rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Globe className="w-6 h-6 text-green-600" />
@@ -107,7 +107,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
           </div>
           <button
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 hover:bg-muted rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -116,7 +116,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
           {/* URL Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               PDF URL <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
@@ -125,18 +125,18 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/paper.pdf"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 disabled={isImporting}
               />
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Enter a direct URL to a PDF file
             </p>
           </div>
 
           {/* Title Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Paper Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -144,14 +144,14 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter the paper title"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               disabled={isImporting}
             />
           </div>
 
           {/* Authors Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Authors (optional, comma-separated)
             </label>
             <input
@@ -159,14 +159,14 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
               value={authors}
               onChange={(e) => setAuthors(e.target.value)}
               placeholder="John Doe, Jane Smith"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               disabled={isImporting}
             />
           </div>
 
           {/* Tags Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Tags (optional, comma-separated)
             </label>
             <input
@@ -174,17 +174,17 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="machine-learning, nlp, transformers"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               disabled={isImporting}
             />
           </div>
 
           {/* Error Display */}
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 dark:bg-red-950/40 dark:border-red-800">
               <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
               <div className="flex-1">
-                <p className="text-red-800">{error}</p>
+                <p className="text-red-800 dark:text-red-300">{error}</p>
                 {importedPaperId && (
                   <button
                     onClick={() => window.open(`/api/papers/${importedPaperId}/pdf`, '_blank')}
@@ -199,10 +199,10 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
 
           {/* Success Display */}
           {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3 dark:bg-green-950/40 dark:border-green-800">
               <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
               <div>
-                <p className="text-green-800">Paper imported successfully!</p>
+                <p className="text-green-800 dark:text-green-300">Paper imported successfully!</p>
                 {importedPaperId && (
                   <button
                     onClick={() => window.open(`/api/papers/${importedPaperId}/pdf`, '_blank')}
@@ -216,12 +216,12 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
           )}
 
           {/* Info Box */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/40 dark:border-blue-800">
             <div className="flex items-start gap-2">
               <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div className="text-sm text-gray-700">
+              <div className="text-sm text-foreground">
                 <p className="font-medium mb-1">How to use:</p>
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
+                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                   <li>The URL must point directly to a PDF file</li>
                   <li>The PDF will be downloaded and stored locally</li>
                   <li>You can process the PDF content later to extract text and sections</li>
@@ -236,7 +236,7 @@ export default function DirectURLImportModal({ isOpen, onClose, onImportSuccess 
         <div className="p-6 border-t flex justify-end gap-3">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="px-4 py-2 text-foreground bg-muted rounded-lg hover:bg-muted transition-colors"
             disabled={isImporting}
           >
             Cancel

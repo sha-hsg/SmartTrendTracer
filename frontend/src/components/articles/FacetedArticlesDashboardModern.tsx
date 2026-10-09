@@ -361,7 +361,7 @@ export default function FacetedArticlesDashboardModern() {
                   variant="outline"
                   onClick={handleBatchAnnotate}
                   disabled={batchAnnotating}
-                  className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                  className="text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800"
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   {batchAnnotating ? 'Annotating...' : `Annotate All (${unannotatedCount})`}
@@ -374,12 +374,12 @@ export default function FacetedArticlesDashboardModern() {
 
       {/* Batch Annotation Progress Banner */}
       {batchProgress && batchAnnotating && (
-        <Card className="mb-6 border-purple-200 bg-purple-50/50">
+        <Card className="mb-6 border-purple-200 bg-purple-50/50 dark:border-purple-800">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-purple-600 animate-pulse" />
-                <span className="text-sm font-medium text-purple-800">
+                <span className="text-sm font-medium text-purple-800 dark:text-purple-300">
                   Annotating Articles with AI...
                 </span>
               </div>
@@ -398,7 +398,7 @@ export default function FacetedArticlesDashboardModern() {
                 style={{ width: `${(batchProgress.completed / batchProgress.total) * 100}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-xs text-purple-700">
+            <div className="flex items-center justify-between text-xs text-purple-700 dark:text-purple-300">
               <span>{batchProgress.completed} / {batchProgress.total} completed{batchProgress.failed > 0 ? ` (${batchProgress.failed} failed)` : ''}</span>
               {batchProgress.current && (
                 <span className="truncate max-w-xs">Processing: {batchProgress.current}</span>
@@ -539,7 +539,7 @@ export default function FacetedArticlesDashboardModern() {
           }}
         >
           <Suspense fallback={
-            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center dark:bg-opacity-950/40">
               <div className="bg-white dark:bg-gray-950 rounded-lg p-8 flex items-center">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                 <span className="ml-2 text-gray-600 dark:text-gray-400">Loading Article Viewer...</span>

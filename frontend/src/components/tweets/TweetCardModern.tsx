@@ -278,7 +278,7 @@ const TweetCardModern = React.memo(function TweetCardModern({
                               }}
                             >
                               <div className="bg-white/90 rounded-full p-3 shadow-lg transform hover:scale-110 transition-transform">
-                                <Play className="h-8 w-8 text-gray-900 fill-current" />
+                                <Play className="h-8 w-8 text-foreground fill-current" />
                               </div>
                             </div>
                           )}

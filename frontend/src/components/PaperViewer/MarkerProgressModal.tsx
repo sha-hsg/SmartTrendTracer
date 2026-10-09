@@ -234,7 +234,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
       case 'error':
         return <XCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <Cpu className="h-5 w-5 text-gray-500" />;
+        return <Cpu className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
@@ -260,13 +260,13 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
 
         <div className="space-y-4">
           {/* Status Display */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
             <div className="flex items-center gap-2">
               {getStatusIcon()}
               <span className="font-medium">{currentStage}</span>
             </div>
             {status === 'processing' && (
-              <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 <span>{formatTime(elapsedTime)}</span>
               </div>
@@ -276,7 +276,7 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
           {/* Progress Bar */}
           {(status === 'processing' || status === 'success') && (
             <div className="space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Progress</span>
                 <span>{progress}%</span>
               </div>
@@ -286,9 +286,9 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
 
           {/* Error Display */}
           {error && (
-            <Alert className="bg-red-50 border-red-200">
+            <Alert className="bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-800">
               <AlertCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+              <AlertDescription className="text-red-800 dark:text-red-300">
                 {error}
               </AlertDescription>
             </Alert>
@@ -297,14 +297,14 @@ export const MarkerProgressModal: React.FC<MarkerProgressModalProps> = ({
           {/* Processing Logs */}
           {logs.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Processing Log</h4>
+              <h4 className="text-sm font-medium text-foreground">Processing Log</h4>
               <ScrollArea className="h-48 w-full rounded-md border p-3">
                 <div className="space-y-2">
                   {logs.map((log, index) => (
                     <div
                       key={index}
                       className={`text-xs ${
-                        log.error ? 'text-red-600' : 'text-gray-600'
+                        log.error ? 'text-red-600' : 'text-muted-foreground'
                       }`}
                     >
                       <span className="font-mono text-gray-400">

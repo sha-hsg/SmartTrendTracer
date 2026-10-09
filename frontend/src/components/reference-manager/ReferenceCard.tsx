@@ -77,7 +77,7 @@ export function ReferenceCard({
 
           <button
             onClick={() => onToggleExpansion(ref._id)}
-            className="mt-1 text-gray-500 hover:text-gray-700"
+            className="mt-1 text-muted-foreground hover:text-foreground"
           >
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </button>
@@ -89,21 +89,21 @@ export function ReferenceCard({
 
                 <div className="flex flex-wrap gap-2 mb-2">
                   {ref.authors && ref.authors.length > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" />
                       <span>{ref.authors.slice(0, 3).join(', ')}{ref.authors.length > 3 && ' et al.'}</span>
                     </div>
                   )}
 
                   {ref.year && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3" />
                       <span>{ref.year}</span>
                     </div>
                   )}
 
                   {ref.venue && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <BookOpen className="h-3 w-3" />
                       <span>{ref.venue}</span>
                     </div>
@@ -250,7 +250,7 @@ export function ReferenceCard({
                           </div>
                         ))
                       ) : (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {ref.cited_by.length} paper{ref.cited_by.length !== 1 ? 's' : ''}
                         </div>
                       )}

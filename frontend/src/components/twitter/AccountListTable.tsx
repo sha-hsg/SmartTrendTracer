@@ -74,7 +74,7 @@ export function AccountListTable({
 }: AccountListTableProps) {
   const SortHeader = ({ field, label }: { field: SortField; label: string }) => (
     <th
-      className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+      className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer hover:bg-muted"
       onClick={() => onSortChange(field)}
     >
       <div className="flex items-center gap-1">
@@ -91,23 +91,23 @@ export function AccountListTable({
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg border shadow-sm">
-            <div className="text-2xl font-bold text-gray-900">{stats.total_accounts}</div>
-            <div className="text-sm text-gray-500">Total Accounts</div>
+          <div className="bg-background p-4 rounded-lg border shadow-sm">
+            <div className="text-2xl font-bold text-foreground">{stats.total_accounts}</div>
+            <div className="text-sm text-muted-foreground">Total Accounts</div>
           </div>
-          <div className="bg-white p-4 rounded-lg border shadow-sm">
+          <div className="bg-background p-4 rounded-lg border shadow-sm">
             <div className="text-2xl font-bold text-green-600">{stats.enabled_accounts}</div>
-            <div className="text-sm text-gray-500">Enabled</div>
+            <div className="text-sm text-muted-foreground">Enabled</div>
           </div>
-          <div className="bg-white p-4 rounded-lg border shadow-sm">
+          <div className="bg-background p-4 rounded-lg border shadow-sm">
             <div className="text-2xl font-bold text-blue-600">{stats.total_tweets.toLocaleString()}</div>
-            <div className="text-sm text-gray-500">Total Tweets</div>
+            <div className="text-sm text-muted-foreground">Total Tweets</div>
           </div>
-          <div className="bg-white p-4 rounded-lg border shadow-sm">
+          <div className="bg-background p-4 rounded-lg border shadow-sm">
             <div className="text-2xl font-bold text-purple-600">
               {accounts.filter(a => a.tier === 1).length}
             </div>
-            <div className="text-sm text-gray-500">High Priority</div>
+            <div className="text-sm text-muted-foreground">High Priority</div>
           </div>
         </div>
       )}
@@ -147,9 +147,9 @@ export function AccountListTable({
       </div>
 
       {/* Accounts Table */}
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+      <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted">
             <tr>
               <SortHeader field="status" label="Status" />
               <SortHeader field="username" label="Account" />
@@ -158,12 +158,12 @@ export function AccountListTable({
               <SortHeader field="tweets_collected" label="Total" />
               <SortHeader field="last_checked" label="Last Checked" />
               <SortHeader field="last_tweet" label="Latest Tweet" />
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-background divide-y divide-gray-200">
             {filteredAccounts.map((account) => (
               <tr key={account.id} className={!account.enabled ? 'bg-gray-50 opacity-60' : ''}>
                 <td className="px-4 py-3">
@@ -188,13 +188,13 @@ export function AccountListTable({
                         className="w-10 h-10 rounded-full"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <Users className="w-5 h-5 text-gray-500" />
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <Users className="w-5 h-5 text-muted-foreground" />
                       </div>
                     )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">@{account.username}</span>
+                        <span className="font-medium text-foreground">@{account.username}</span>
                         {account.verified && (
                           <span className="text-blue-500" title="Verified">✓</span>
                         )}
@@ -207,17 +207,17 @@ export function AccountListTable({
                           <ExternalLink className="w-4 h-4" />
                         </a>
                       </div>
-                      <div className="text-sm text-gray-500">{account.display_name}</div>
+                      <div className="text-sm text-muted-foreground">{account.display_name}</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">{account.category}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{account.category}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${TIER_COLORS[account.tier]}`}>
                     {TIER_LABELS[account.tier]}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-900 font-medium">
+                <td className="px-4 py-3 text-sm text-foreground font-medium">
                   {account.tweets_collected.toLocaleString()}
                 </td>
                 <td className="px-4 py-3 text-sm">
@@ -318,7 +318,7 @@ export function AccountListTable({
                           : account.enabled
                           ? 'text-blue-500 hover:bg-blue-50 hover:text-blue-600'
                           : 'text-gray-300 cursor-not-allowed'
-                      }`}
+                      } dark:bg-blue-950/40`}
                       title={account.enabled ? "Collect tweets now" : "Enable account first"}
                     >
                       {collectingAccount === account.id ? (
@@ -355,7 +355,7 @@ export function AccountListTable({
           </tbody>
         </table>
         {filteredAccounts.length === 0 && (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-muted-foreground">
             No accounts found matching your filters.
           </div>
         )}

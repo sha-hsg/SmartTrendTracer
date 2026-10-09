@@ -44,7 +44,7 @@ function ArticleSnippetsPanel({ snippets, onDeleteSnippet }: ArticleSnippetsPane
       <CardContent>
         <div className="space-y-3">
           {snippets.map((snippet, index) => (
-            <div key={snippet.id || index} className="border rounded-lg p-3 hover:bg-gray-50">
+            <div key={snippet.id || index} className="border rounded-lg p-3 hover:bg-muted">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -57,11 +57,11 @@ function ArticleSnippetsPanel({ snippets, onDeleteSnippet }: ArticleSnippetsPane
                       </Badge>
                     )}
                   </div>
-                  <div className="text-sm font-medium bg-gray-100 p-2 rounded mb-2">
+                  <div className="text-sm font-medium bg-muted p-2 rounded mb-2">
                     &ldquo;{snippet.text}&rdquo;
                   </div>
                   {snippet.annotation && (
-                    <div className="text-sm text-gray-600 italic">
+                    <div className="text-sm text-muted-foreground italic">
                       {'\uD83D\uDCDD'} {snippet.annotation}
                     </div>
                   )}

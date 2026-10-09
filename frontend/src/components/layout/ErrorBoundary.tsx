@@ -39,14 +39,14 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-[400px] flex items-center justify-center p-8">
           <div className="max-w-md w-full">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 dark:bg-red-950/40 dark:border-red-800">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-red-900 mb-2">
+                  <h3 className="text-lg font-semibold text-red-900 mb-2 dark:text-red-300">
                     {this.props.fallbackTitle || 'Something went wrong'}
                   </h3>
-                  <p className="text-red-700 mb-4">
+                  <p className="text-red-700 mb-4 dark:text-red-300">
                     {this.props.fallbackMessage || 
                      'An unexpected error occurred while loading this component. Please try refreshing the page.'}
                   </p>
@@ -55,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
                       <summary className="text-sm text-red-600 cursor-pointer hover:underline">
                         Show error details
                       </summary>
-                      <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-x-auto">
+                      <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-x-auto dark:bg-red-950/40">
                         {this.state.error.message}
                         {this.state.error.stack && '\n\n' + this.state.error.stack}
                       </pre>

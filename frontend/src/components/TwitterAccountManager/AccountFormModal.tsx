@@ -70,14 +70,14 @@ export function AccountFormModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+      <div className="bg-background rounded-lg shadow-xl w-full max-w-md p-6">
         <h2 className="text-xl font-bold mb-4">{title}</h2>
 
         <div className="space-y-4">
           {/* Username field - only in Add mode */}
           {isAdd && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Username
               </label>
               <div className="flex gap-2">
@@ -91,7 +91,7 @@ export function AccountFormModal({
                 <button
                   onClick={onLookup}
                   disabled={lookingUp || !data.username}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                  className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted disabled:opacity-50"
                 >
                   {lookingUp ? 'Looking up...' : 'Lookup'}
                 </button>
@@ -101,7 +101,7 @@ export function AccountFormModal({
 
           {/* Lookup result - only in Add mode */}
           {isAdd && lookupResult && (
-            <div className={`p-3 rounded-lg ${lookupResult.exists ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+            <div className={`p-3 rounded-lg ${lookupResult.exists ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'} dark:bg-green-950/40 dark:border-green-800`}>
               {lookupResult.exists && lookupResult.user ? (
                 <div className="flex items-center gap-3">
                   {lookupResult.user.profile_image_url && (
@@ -109,18 +109,18 @@ export function AccountFormModal({
                   )}
                   <div>
                     <div className="font-medium">@{lookupResult.user.username}</div>
-                    <div className="text-sm text-gray-600">{lookupResult.user.name}</div>
-                    <div className="text-xs text-gray-500">{lookupResult.user.followers_count?.toLocaleString()} followers</div>
+                    <div className="text-sm text-muted-foreground">{lookupResult.user.name}</div>
+                    <div className="text-xs text-muted-foreground">{lookupResult.user.followers_count?.toLocaleString()} followers</div>
                   </div>
                 </div>
               ) : (
-                <div className="text-red-700">{lookupResult.error || 'User not found'}</div>
+                <div className="text-red-700 dark:text-red-300">{lookupResult.error || 'User not found'}</div>
               )}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Display Name{isAdd ? ' (optional)' : ''}
             </label>
             <input
@@ -133,7 +133,7 @@ export function AccountFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Category
             </label>
             <select
@@ -148,7 +148,7 @@ export function AccountFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Priority Tier
             </label>
             <select
@@ -163,7 +163,7 @@ export function AccountFormModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Description{isAdd ? ' (optional)' : ''}
             </label>
             <textarea
@@ -183,7 +183,7 @@ export function AccountFormModal({
               onChange={(e) => onChange(d => ({ ...d, enabled: e.target.checked }))}
               className="w-4 h-4"
             />
-            <label htmlFor={isAdd ? 'enabled' : 'edit-enabled'} className="text-sm text-gray-700">
+            <label htmlFor={isAdd ? 'enabled' : 'edit-enabled'} className="text-sm text-foreground">
               Enable collection for this account
             </label>
           </div>
@@ -192,7 +192,7 @@ export function AccountFormModal({
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+            className="px-4 py-2 text-foreground hover:bg-muted rounded-lg"
           >
             Cancel
           </button>

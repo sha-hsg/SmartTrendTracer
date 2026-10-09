@@ -104,12 +104,12 @@ const AnomalyCard: React.FC<{
 }> = ({ anomaly, onClick }) => {
   return (
     <div
-      className="p-2 rounded-lg border bg-purple-50 hover:bg-purple-100 border-purple-200 cursor-pointer transition-colors"
+      className="p-2 rounded-lg border bg-purple-50 hover:bg-purple-100 border-purple-200 cursor-pointer transition-colors dark:bg-purple-950/40 dark:border-purple-800"
       onClick={onClick}
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium text-sm truncate flex-1">{anomaly.display_name}</span>
-        <Badge variant="outline" className="text-purple-700 text-xs">
+        <Badge variant="outline" className="text-purple-700 text-xs dark:text-purple-300">
           Z: {anomaly.z_score.toFixed(1)}
         </Badge>
       </div>
@@ -135,12 +135,12 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
-              <div className="h-6 bg-gray-200 rounded w-32" />
+              <div className="h-6 bg-muted rounded w-32" />
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-16 bg-gray-100 rounded" />
+                  <div key={j} className="h-16 bg-muted rounded" />
                 ))}
               </div>
             </CardContent>
@@ -154,9 +154,9 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
     <TooltipProvider>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Hot Topics */}
-        <Card className="border-red-200 bg-gradient-to-br from-red-50 to-white">
+        <Card className="border-red-200 bg-gradient-to-br from-red-50 to-white dark:from-red-950/40 dark:border-red-800">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-red-700">
+            <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-300">
               <Flame className="w-5 h-5" />
               Hot Topics
               <Badge variant="secondary" className="ml-auto">{hotTopics.length}</Badge>
@@ -186,9 +186,9 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
         </Card>
 
         {/* Declining Topics */}
-        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+        <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-white dark:from-orange-950/40 dark:border-orange-800">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-orange-700">
+            <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
               <TrendingDown className="w-5 h-5" />
               Declining
               <Badge variant="secondary" className="ml-auto">{declining.length}</Badge>
@@ -218,9 +218,9 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
         </Card>
 
         {/* Stable Evergreens */}
-        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-white">
+        <Card className="border-green-200 bg-gradient-to-br from-green-50 to-white dark:from-green-950/40 dark:border-green-800">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-green-700">
+            <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <Target className="w-5 h-5" />
               Stable
               <Badge variant="secondary" className="ml-auto">{stable.length}</Badge>
@@ -250,9 +250,9 @@ const TrendAtAGlance: React.FC<TrendAtAGlanceProps> = ({
         </Card>
 
         {/* Anomalies */}
-        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-white dark:from-purple-950/40 dark:border-purple-800">
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-purple-700">
+            <CardTitle className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
               <AlertTriangle className="w-5 h-5" />
               Anomalies
               <Badge variant="secondary" className="ml-auto">{anomalies.length}</Badge>

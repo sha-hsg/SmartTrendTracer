@@ -173,12 +173,12 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-[800px] max-h-[80vh] flex flex-col">
+      <div className="bg-background rounded-lg shadow-xl w-[800px] max-h-[80vh] flex flex-col">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold">Author Management</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-muted-foreground hover:text-foreground"
           >
             ✕
           </button>
@@ -186,25 +186,25 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
         <div className="flex border-b">
           <button
-            className={`px-4 py-2 ${activeTab === 'view' ? 'bg-blue-50 border-b-2 border-blue-500' : ''}`}
+            className={`px-4 py-2 ${activeTab === 'view' ? 'bg-blue-50 border-b-2 border-blue-500' : ''} dark:bg-blue-950/40`}
             onClick={() => setActiveTab('view')}
           >
             View Authors
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'edit' ? 'bg-blue-50 border-b-2 border-blue-500' : ''}`}
+            className={`px-4 py-2 ${activeTab === 'edit' ? 'bg-blue-50 border-b-2 border-blue-500' : ''} dark:bg-blue-950/40`}
             onClick={() => setActiveTab('edit')}
           >
             Edit Author
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'create' ? 'bg-blue-50 border-b-2 border-blue-500' : ''}`}
+            className={`px-4 py-2 ${activeTab === 'create' ? 'bg-blue-50 border-b-2 border-blue-500' : ''} dark:bg-blue-950/40`}
             onClick={() => setActiveTab('create')}
           >
             Create Author
           </button>
           <button
-            className={`px-4 py-2 ${activeTab === 'assign' ? 'bg-blue-50 border-b-2 border-blue-500' : ''}`}
+            className={`px-4 py-2 ${activeTab === 'assign' ? 'bg-blue-50 border-b-2 border-blue-500' : ''} dark:bg-blue-950/40`}
             onClick={() => setActiveTab('assign')}
           >
             Assign Articles
@@ -213,7 +213,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
         <div className="flex-1 overflow-auto p-4">
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
+            <div className="bg-red-50 text-red-600 p-3 rounded mb-4 dark:bg-red-950/40">
               {error}
             </div>
           )}
@@ -221,12 +221,12 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
           {activeTab === 'view' && (
             <div className="space-y-2">
               {authors.map(author => (
-                <div key={author.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
+                <div key={author.id} className="flex justify-between items-center p-3 border rounded hover:bg-muted">
                   <div>
                     <div className="font-medium">{author.name}</div>
-                    {author.email && <div className="text-sm text-gray-500">{author.email}</div>}
-                    {author.subdomain && <div className="text-sm text-gray-500">{author.subdomain}.substack.com</div>}
-                    <div className="text-sm text-gray-500">{author.article_count} articles</div>
+                    {author.email && <div className="text-sm text-muted-foreground">{author.email}</div>}
+                    {author.subdomain && <div className="text-sm text-muted-foreground">{author.subdomain}.substack.com</div>}
+                    <div className="text-sm text-muted-foreground">{author.article_count} articles</div>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -298,7 +298,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
                         onChange={(e) => setEditingAuthor({ ...editingAuthor, subdomain: e.target.value })}
                         className="flex-1 p-2 border rounded-l"
                       />
-                      <span className="px-3 py-2 bg-gray-100 border border-l-0 rounded-r">.substack.com</span>
+                      <span className="px-3 py-2 bg-muted border border-l-0 rounded-r">.substack.com</span>
                     </div>
                   </div>
                   <button
@@ -345,7 +345,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
                     className="flex-1 p-2 border rounded-l"
                     placeholder="authorname"
                   />
-                  <span className="px-3 py-2 bg-gray-100 border border-l-0 rounded-r">.substack.com</span>
+                  <span className="px-3 py-2 bg-muted border border-l-0 rounded-r">.substack.com</span>
                 </div>
               </div>
               <button
@@ -383,7 +383,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
                   </div>
                   <div className="max-h-64 overflow-auto border rounded p-2 space-y-1">
                     {articlesWithoutAuthor.map(article => (
-                      <label key={article.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
+                      <label key={article.id} className="flex items-center space-x-2 p-2 hover:bg-muted rounded">
                         <input
                           type="checkbox"
                           checked={selectedArticles.includes(article.id)}
@@ -398,7 +398,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
                         <div className="flex-1">
                           <div className="text-sm">{article.title}</div>
                           {article.published && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               {new Date(article.published).toLocaleDateString()}
                             </div>
                           )}
@@ -421,7 +421,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
 
         {deleteConfirm && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg shadow-xl">
+            <div className="bg-background p-6 rounded-lg shadow-xl">
               <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
               <p className="mb-4">
                 Delete author "{authors.find(a => a.id === deleteConfirm.authorId)?.name}"?
@@ -447,7 +447,7 @@ const AuthorManagementModal: React.FC<AuthorManagementModalProps> = ({
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => setDeleteConfirm(null)}
-                  className="px-4 py-2 border rounded hover:bg-gray-50"
+                  className="px-4 py-2 border rounded hover:bg-muted"
                 >
                   Cancel
                 </button>

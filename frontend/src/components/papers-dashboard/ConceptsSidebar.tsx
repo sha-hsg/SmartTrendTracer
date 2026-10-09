@@ -111,13 +111,13 @@ const ConceptsSidebar: React.FC<ConceptsSidebarProps> = ({
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm text-blue-800 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded break-words"
+                        <span className="text-sm text-blue-800 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded break-words dark:text-blue-300"
                           title={concept.display_name}>
                           {concept.display_name}
                         </span>
                         <Badge
                           variant="outline"
-                          className="text-xs shrink-0 bg-blue-100 text-blue-700 border-blue-200">
+                          className="text-xs shrink-0 bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300">
                           {concept.count}
                         </Badge>
                       </div>

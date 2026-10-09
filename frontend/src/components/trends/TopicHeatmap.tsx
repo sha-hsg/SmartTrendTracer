@@ -191,8 +191,8 @@ const TopicHeatmap: React.FC<TopicHeatmapProps> = ({ data, loading, onCellClick 
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Activity level:</span>
             <div className="flex items-center gap-1">
-              <div className="w-4 h-4 bg-gray-50 rounded" title="0" />
-              <div className="w-4 h-4 bg-blue-100 rounded" />
+              <div className="w-4 h-4 bg-muted rounded" title="0" />
+              <div className="w-4 h-4 bg-blue-100 rounded dark:bg-blue-950/40" />
               <div className="w-4 h-4 bg-blue-200 rounded" />
               <div className="w-4 h-4 bg-blue-400 rounded" />
               <div className="w-4 h-4 bg-blue-500 rounded" />

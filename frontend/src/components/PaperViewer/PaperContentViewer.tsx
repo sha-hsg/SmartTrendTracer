@@ -166,17 +166,17 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
   };
 
   return (
-    <div className="h-full bg-white rounded-lg border flex flex-col overflow-hidden">
+    <div className="h-full bg-background rounded-lg border flex flex-col overflow-hidden">
       {/* Enhanced Edit/View Toggle Bar */}
-      <div className="p-4 border-b bg-gradient-to-r from-gray-50 to-blue-50 flex justify-between items-center">
+      <div className="p-4 border-b bg-gradient-to-r from-gray-50 to-blue-50 flex justify-between items-center dark:to-blue-950/40">
         <div className="flex items-center gap-2">
           <FileCode className="h-4 w-4 text-blue-600" />
-          <h3 className="font-medium text-gray-700">
+          <h3 className="font-medium text-foreground">
             Extracted Content
           </h3>
           {paper.processor_used &&
             paper.processor_used !== "pypdfium2" && (
-              <Badge className="text-xs bg-green-100 text-green-800 border-green-300">
+              <Badge className="text-xs bg-green-100 text-green-800 border-green-300 dark:bg-green-950/40 dark:text-green-300">
                 Enhanced
               </Badge>
             )}
@@ -184,7 +184,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
         <div className="flex items-center gap-2">
           {!isEditingMarkdown && (
             <div className="flex items-center gap-1">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 Reading mode:
               </span>
               <Button
@@ -202,7 +202,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
               onClick={handleDownloadZip}
               size="sm"
               variant="outline"
-              className="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
+              className="px-3 py-2 text-sm border-border hover:bg-muted"
               title="Download markdown with images as ZIP file"
             >
               <Download className="h-4 w-4 mr-2" />
@@ -261,10 +261,10 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
             {/* Main content area */}
             <div
               ref={markdownContainerRef}
-              className="flex-1 bg-gray-50 overflow-y-auto relative"
+              className="flex-1 bg-muted overflow-y-auto relative"
             >
               {/* Reading progress bar */}
-              <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-10">
+              <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-10">
                 <div
                   className="h-full bg-blue-600 transition-all duration-150"
                   style={{ width: `${readingProgress}%` }}
@@ -279,7 +279,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                     disabled={activeSection === tableOfContents[0]?.id}
                     size="sm"
                     variant="outline"
-                    className="bg-white shadow-lg hover:shadow-xl"
+                    className="bg-background shadow-lg hover:shadow-xl"
                     title="Previous section (k)"
                   >
                     <ChevronUp className="h-4 w-4" />
@@ -289,7 +289,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                     disabled={activeSection === tableOfContents[tableOfContents.length - 1]?.id}
                     size="sm"
                     variant="outline"
-                    className="bg-white shadow-lg hover:shadow-xl"
+                    className="bg-background shadow-lg hover:shadow-xl"
                     title="Next section (j)"
                   >
                     <ChevronDown className="h-4 w-4" />
@@ -319,14 +319,14 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                         <FileCode className="h-16 w-16 text-gray-400 mx-auto mb-6" />
                       )}
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-700 mb-3">
+                    <h3 className="text-xl font-semibold text-foreground mb-3">
                       {isAnyProcessing
                         ? "Processing Content..."
                         : !paper.processed
                           ? "Not Yet Processed"
                           : "No Content Available"}
                     </h3>
-                    <p className="text-gray-500 mb-6 leading-relaxed">
+                    <p className="text-muted-foreground mb-6 leading-relaxed">
                       {isAnyProcessing
                         ? "The paper is being processed to extract readable content. This includes text extraction, formatting, and structure analysis."
                         : !paper.processed
@@ -362,7 +362,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                               );
                             }
                           }}
-                          className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300"
+                          className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-950/40 dark:text-purple-300"
                         >
                           <Cpu className="h-3 w-3 mr-1" />
                           Process with Marker
@@ -383,18 +383,18 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                 )}
               >
                 {/* TOC Header */}
-                <div className="p-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+                <div className="p-3 border-b border-border flex items-center justify-between bg-muted">
                   {showTOC ? (
                     <>
                       <div className="flex items-center gap-2">
-                        <Menu className="h-4 w-4 text-gray-600" />
-                        <span className="font-medium text-sm text-gray-700">Table of Contents</span>
+                        <Menu className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm text-foreground">Table of Contents</span>
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setShowTOC(false)}
-                        className="hover:bg-gray-200"
+                        className="hover:bg-muted"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -404,7 +404,7 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowTOC(true)}
-                      className="mx-auto hover:bg-gray-200"
+                      className="mx-auto hover:bg-muted"
                       title="Show Table of Contents"
                     >
                       <Menu className="h-4 w-4" />
@@ -417,15 +417,15 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                   <ScrollArea className="h-full">
                     <div className="p-4">
                       {/* Reading stats */}
-                      <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                      <div className="mb-4 p-3 bg-blue-50 rounded-lg dark:bg-blue-950/40">
                         <div className="text-xs text-blue-600 mb-1">Reading Progress</div>
-                        <div className="bg-white rounded-full h-2 mb-2">
+                        <div className="bg-background rounded-full h-2 mb-2">
                           <div
                             className="bg-blue-600 h-2 rounded-full transition-all duration-150"
                             style={{ width: `${readingProgress}%` }}
                           />
                         </div>
-                        <div className="text-xs text-gray-600">
+                        <div className="text-xs text-muted-foreground">
                           {calculateReadingTime(paper?.markdown_content || paper?.content || '')} min read
                         </div>
                       </div>
@@ -453,24 +453,24 @@ const PaperContentViewer: React.FC<PaperContentViewerProps> = ({
                       </nav>
 
                       {/* Keyboard shortcuts help */}
-                      <div className="mt-6 p-3 bg-gray-50 rounded-lg">
-                        <div className="text-xs font-medium text-gray-700 mb-2">Keyboard Shortcuts</div>
-                        <div className="space-y-1 text-xs text-gray-600">
+                      <div className="mt-6 p-3 bg-muted rounded-lg">
+                        <div className="text-xs font-medium text-foreground mb-2">Keyboard Shortcuts</div>
+                        <div className="space-y-1 text-xs text-muted-foreground">
                           <div className="flex justify-between">
                             <span>Next section</span>
-                            <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300">j</kbd>
+                            <kbd className="px-1.5 py-0.5 bg-background rounded border border-border">j</kbd>
                           </div>
                           <div className="flex justify-between">
                             <span>Previous section</span>
-                            <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300">k</kbd>
+                            <kbd className="px-1.5 py-0.5 bg-background rounded border border-border">k</kbd>
                           </div>
                           <div className="flex justify-between">
                             <span>Go to top</span>
-                            <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300">g</kbd>
+                            <kbd className="px-1.5 py-0.5 bg-background rounded border border-border">g</kbd>
                           </div>
                           <div className="flex justify-between">
                             <span>Go to bottom</span>
-                            <kbd className="px-1.5 py-0.5 bg-white rounded border border-gray-300">G</kbd>
+                            <kbd className="px-1.5 py-0.5 bg-background rounded border border-border">G</kbd>
                           </div>
                         </div>
                       </div>

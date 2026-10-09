@@ -96,7 +96,7 @@ export default function WeeklyDigest() {
           <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
             <Newspaper className="w-7 h-7" /> Weekly Digest
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             A briefing on the last 7 days — written automatically once a week from your trends, papers and tweets
           </p>
         </div>
@@ -132,7 +132,7 @@ export default function WeeklyDigest() {
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{digest.summary}</ReactMarkdown>
                   </div>
                 ) : (
-                  <p className="text-sm text-amber-700 flex items-center gap-2">
+                  <p className="text-sm text-amber-700 flex items-center gap-2 dark:text-amber-300">
                     <AlertTriangle className="w-4 h-4" />
                     The AI summary failed ({digest.summary_error || 'unknown error'}); the facts below are complete.
                   </p>

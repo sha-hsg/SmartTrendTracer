@@ -168,16 +168,16 @@ export default function ConceptEditModal({
         ) : concept ? (
           <div className="space-y-4">
             {/* Read-only fields */}
-            <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-2 gap-4 p-3 bg-muted rounded-lg">
               <div>
-                <Label className="text-xs text-gray-500 flex items-center gap-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
                   <Hash className="h-3 w-3" />
                   Concept ID
                 </Label>
                 <div className="font-mono text-sm mt-1">{concept.id || 'Not assigned'}</div>
               </div>
               <div>
-                <Label className="text-xs text-gray-500 flex items-center gap-1">
+                <Label className="text-xs text-muted-foreground flex items-center gap-1">
                   <Eye className="h-3 w-3" />
                   MongoDB ID
                 </Label>
@@ -187,7 +187,7 @@ export default function ConceptEditModal({
               </div>
               {concept.entity_type && (
                 <div>
-                  <Label className="text-xs text-gray-500">Entity Type</Label>
+                  <Label className="text-xs text-muted-foreground">Entity Type</Label>
                   <Badge variant="outline" className="mt-1">
                     {concept.entity_type}
                   </Badge>
@@ -195,7 +195,7 @@ export default function ConceptEditModal({
               )}
               {concept.usage_count !== undefined && (
                 <div>
-                  <Label className="text-xs text-gray-500">Usage Count</Label>
+                  <Label className="text-xs text-muted-foreground">Usage Count</Label>
                   <div className="text-sm mt-1">{concept.usage_count}</div>
                 </div>
               )}
@@ -216,7 +216,7 @@ export default function ConceptEditModal({
                     placeholder="url-friendly-name"
                     className="mt-1"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     URL-friendly identifier (lowercase, hyphens)
                   </p>
                 </div>
@@ -233,7 +233,7 @@ export default function ConceptEditModal({
                     placeholder="Concept Name"
                     className="mt-1"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Internal name for the concept
                   </p>
                 </div>
@@ -251,7 +251,7 @@ export default function ConceptEditModal({
                   placeholder="Display Name"
                   className="mt-1"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   How this concept appears in the UI
                 </p>
               </div>
@@ -269,7 +269,7 @@ export default function ConceptEditModal({
                   rows={3}
                   className="mt-1"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Detailed description of what this concept represents
                 </p>
               </div>
@@ -277,10 +277,10 @@ export default function ConceptEditModal({
 
             {/* Info about relationships */}
             {((concept.parents?.length ?? 0) > 0 || (concept.children?.length ?? 0) > 0) && (
-              <div className="p-3 bg-blue-50 rounded-lg">
+              <div className="p-3 bg-blue-50 rounded-lg dark:bg-blue-950/40">
                 <div className="flex items-start gap-2">
                   <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                  <div className="text-sm text-blue-800">
+                  <div className="text-sm text-blue-800 dark:text-blue-300">
                     <div>
                       This concept has {concept.parents?.length || 0} parent(s) 
                       and {concept.children?.length || 0} children in the hierarchy.

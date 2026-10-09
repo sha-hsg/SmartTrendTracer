@@ -21,7 +21,7 @@ const HTML_TAG_COMPONENTS = {
   ),
   empty: () => null,
   figure_caption: ({ children, ...props }: any) => (
-    <figcaption {...props} className="text-sm text-gray-600 mt-2 italic">{children}</figcaption>
+    <figcaption {...props} className="text-sm text-muted-foreground mt-2 italic">{children}</figcaption>
   ),
 };
 
@@ -43,8 +43,8 @@ const MarkdownChunk = React.memo(({ chunk, isLoaded }: {
 }) => {
   if (!isLoaded) {
     return (
-      <div className="my-8 p-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300" data-chunk-id={chunk.id}>
-        <div className="flex flex-col items-center justify-center text-gray-500">
+      <div className="my-8 p-12 bg-muted rounded-lg border-2 border-dashed border-border" data-chunk-id={chunk.id}>
+        <div className="flex flex-col items-center justify-center text-muted-foreground">
           <svg className="w-8 h-8 mb-2 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -71,7 +71,7 @@ const MarkdownChunk = React.memo(({ chunk, isLoaded }: {
             const heading = chunk.headings.find(h => h.text === text && h.level === 1);
             const id = heading?.id || '';
             return (
-              <h1 {...props} data-heading-id={id} className="text-3xl font-bold mt-8 mb-4 text-gray-900 scroll-mt-4">
+              <h1 {...props} data-heading-id={id} className="text-3xl font-bold mt-8 mb-4 text-foreground scroll-mt-4">
                 {children}
               </h1>
             );
@@ -81,7 +81,7 @@ const MarkdownChunk = React.memo(({ chunk, isLoaded }: {
             const heading = chunk.headings.find(h => h.text === text && h.level === 2);
             const id = heading?.id || '';
             return (
-              <h2 {...props} data-heading-id={id} className="text-2xl font-semibold mt-6 mb-3 text-gray-800 scroll-mt-4">
+              <h2 {...props} data-heading-id={id} className="text-2xl font-semibold mt-6 mb-3 text-foreground scroll-mt-4">
                 {children}
               </h2>
             );
@@ -91,7 +91,7 @@ const MarkdownChunk = React.memo(({ chunk, isLoaded }: {
             const heading = chunk.headings.find(h => h.text === text && h.level === 3);
             const id = heading?.id || '';
             return (
-              <h3 {...props} data-heading-id={id} className="text-xl font-medium mt-4 mb-2 text-gray-700 scroll-mt-4">
+              <h3 {...props} data-heading-id={id} className="text-xl font-medium mt-4 mb-2 text-foreground scroll-mt-4">
                 {children}
               </h3>
             );
@@ -104,7 +104,7 @@ const MarkdownChunk = React.memo(({ chunk, isLoaded }: {
               <span className="block my-6">
                 <img {...props} src={src} className="max-w-full h-auto rounded-lg shadow-lg mx-auto block" />
                 {props.alt && (
-                  <span className="block text-sm text-gray-600 mt-2 text-center">
+                  <span className="block text-sm text-muted-foreground mt-2 text-center">
                     {props.alt}
                   </span>
                 )}
@@ -179,7 +179,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
 }) => {
   return (
     <div
-      className="mx-auto my-8 p-8 overflow-x-hidden bg-white shadow-sm rounded-lg border border-gray-200"
+      className="mx-auto my-8 p-8 overflow-x-hidden bg-background shadow-sm rounded-lg border border-border"
       style={{
         width: "100%",
         maxWidth: "800px",
@@ -188,8 +188,8 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       onContextMenu={handleMarkdownContextMenu}
     >
       {isLargeDocument && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2 text-blue-700">
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950/40 dark:border-blue-800">
+          <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -232,7 +232,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   <h1
                     {...props}
                     data-heading-id={id}
-                    className="text-3xl font-bold mt-8 mb-4 text-gray-900 scroll-mt-4"
+                    className="text-3xl font-bold mt-8 mb-4 text-foreground scroll-mt-4"
                   >
                     {children}
                   </h1>
@@ -246,7 +246,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   <h2
                     {...props}
                     data-heading-id={id}
-                    className="text-2xl font-semibold mt-6 mb-3 text-gray-800 scroll-mt-4"
+                    className="text-2xl font-semibold mt-6 mb-3 text-foreground scroll-mt-4"
                   >
                     {children}
                   </h2>
@@ -260,7 +260,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   <h3
                     {...props}
                     data-heading-id={id}
-                    className="text-xl font-medium mt-4 mb-2 text-gray-700 scroll-mt-4"
+                    className="text-xl font-medium mt-4 mb-2 text-foreground scroll-mt-4"
                   >
                     {children}
                   </h3>
@@ -269,13 +269,13 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               h4: ({ node, ...props }) => (
                 <h4
                   {...props}
-                  className="text-lg font-medium mt-3 mb-2 text-gray-600"
+                  className="text-lg font-medium mt-3 mb-2 text-muted-foreground"
                 />
               ),
               p: ({ node, ...props }) => (
                 <p
                   {...props}
-                  className="mb-4 text-gray-700 leading-relaxed"
+                  className="mb-4 text-foreground leading-relaxed"
                 />
               ),
               img: ({ node, ...props }) => {
@@ -290,7 +290,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                       className="max-w-full h-auto rounded-lg shadow-lg mx-auto block"
                     />
                     {props.alt && (
-                      <span className="block text-sm text-gray-600 mt-2 text-center">
+                      <span className="block text-sm text-muted-foreground mt-2 text-center">
                         {props.alt}
                       </span>
                     )}
@@ -336,7 +336,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                   return (
                     <code
                       {...props}
-                      className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm"
+                      className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm dark:bg-pink-950/40"
                     >
                       {children}
                     </code>
@@ -349,7 +349,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 );
               },
               table: ({ node, ...props }) => (
-                <div className="overflow-x-auto my-6 rounded-lg border border-gray-200 max-w-full">
+                <div className="overflow-x-auto my-6 rounded-lg border border-border max-w-full">
                   <table
                     {...props}
                     className="min-w-full divide-y divide-gray-200"
@@ -359,7 +359,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
               blockquote: ({ node, ...props }) => (
                 <blockquote
                   {...props}
-                  className="border-l-4 border-blue-500 pl-4 italic text-gray-600 my-6"
+                  className="border-l-4 border-blue-500 pl-4 italic text-muted-foreground my-6"
                 />
               ),
               sup: ({ node, ...props }) => (
@@ -429,7 +429,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
                 <div {...props} id={id} className={className} />
               ),
               think: ({ children }: { node?: unknown; children?: React.ReactNode }) => (
-                <code className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm">
+                <code className="text-pink-600 bg-pink-50 px-1.5 py-0.5 rounded font-mono text-sm dark:bg-pink-950/40">
                   {'<think>'}
                   {children}
                   {'</think>'}
@@ -442,7 +442,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
         )}
 
         {content && (
-          <div className="mt-8 pt-4 border-t border-gray-200 text-center text-sm text-gray-500">
+          <div className="mt-8 pt-4 border-t border-border text-center text-sm text-muted-foreground">
             Estimated reading time: {calculateReadingTime(content)} minutes
           </div>
         )}

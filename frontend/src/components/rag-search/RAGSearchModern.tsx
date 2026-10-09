@@ -543,7 +543,7 @@ export default function RAGSearchModern() {
       {/* Article Viewer Modal - Lazy loaded for code splitting */}
       {selectedArticleId && (
         <Suspense fallback={
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center dark:bg-opacity-950/40">
             <div className="bg-white dark:bg-gray-900 rounded-lg p-8 flex items-center">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
               <span className="ml-2 text-gray-600 dark:text-gray-300">Loading Article Viewer...</span>
@@ -559,7 +559,7 @@ export default function RAGSearchModern() {
 
       {/* Paper Viewer Modal - same pattern as FacetedPapersDashboard */}
       {selectedPaperId && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4 dark:bg-opacity-950/40">
           <div className="bg-white dark:bg-gray-950 rounded-lg w-full max-w-7xl max-h-[90vh] overflow-auto shadow-2xl">
             <Suspense fallback={
               <div className="flex items-center justify-center h-96">

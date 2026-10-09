@@ -176,7 +176,7 @@ const ProcessingStatusBar: React.FC<ProcessingStatusBarProps> = ({
       </div>
 
       {isProcessingAction && (
-        <div className="mt-2 flex items-center text-xs text-gray-500">
+        <div className="mt-2 flex items-center text-xs text-muted-foreground">
           <Loader2 className="w-3 h-3 animate-spin mr-1" />
           Processing action...
         </div>
@@ -246,7 +246,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
   return (
     <div className="flex-1 flex flex-col">
       <Tabs value={activeTab} onValueChange={onActiveTabChange} className="h-full flex flex-col">
-        <div className="border-b bg-white px-4">
+        <div className="border-b bg-background px-4">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
@@ -268,7 +268,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                   {book.summary && (
                     <div>
                       <h3 className="font-medium mb-2">Summary</h3>
-                      <p className="text-sm text-gray-700">{book.summary}</p>
+                      <p className="text-sm text-foreground">{book.summary}</p>
                     </div>
                   )}
 
@@ -277,7 +277,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                       <h3 className="font-medium mb-2">Key Themes</h3>
                       <div className="flex flex-wrap gap-2">
                         {book.key_themes.map((theme, idx) => (
-                          <Badge key={idx} variant="outline" className="bg-orange-50">
+                          <Badge key={idx} variant="outline" className="bg-orange-50 dark:bg-orange-950/40">
                             {theme}
                           </Badge>
                         ))}
@@ -320,8 +320,8 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
               </div>
 
               {bookContent && markdownPages.length > 1 && (
-                <div className="bg-blue-50 border-b px-4 py-2">
-                  <div className="flex items-center justify-between text-sm text-blue-700">
+                <div className="bg-blue-50 border-b px-4 py-2 dark:bg-blue-950/40">
+                  <div className="flex items-center justify-between text-sm text-blue-700 dark:text-blue-300">
                     <span>Large Document Mode - Page {currentPage + 1} of {markdownPages.length}</span>
                     <span className="text-xs">Use ← → keys or buttons to navigate</span>
                   </div>
@@ -330,7 +330,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
 
               <div
                 ref={markdownContainerRef}
-                className="h-full w-full bg-gray-50 overflow-y-auto"
+                className="h-full w-full bg-muted overflow-y-auto"
               >
                 {loadingContent ? (
                   <div className="flex items-center justify-center h-64">
@@ -340,8 +340,8 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                 ) : contentError ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center p-8">
                     <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Content Not Available</h3>
-                    <p className="text-gray-600 mb-4">{contentError}</p>
+                    <h3 className="text-lg font-medium text-foreground mb-2">Content Not Available</h3>
+                    <p className="text-muted-foreground mb-4">{contentError}</p>
                     {(processingStatus === 'pending' || processingStatus === 'queued') && (
                       <div className="flex items-center text-sm text-blue-600">
                         <PlayCircle className="w-4 h-4 mr-1" />
@@ -362,7 +362,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                   </div>
                 ) : markdownPages.length > 0 ? (
                   <div className="p-6 max-w-4xl mx-auto">
-                    <div className="bg-white rounded-lg shadow-sm p-6">
+                    <div className="bg-background rounded-lg shadow-sm p-6">
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold">{book.title}</h2>
                         <Button onClick={onDownloadMarkdown} variant="outline" size="sm">
@@ -383,15 +383,15 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                         {isChangingPage && (
                           <div className="flex items-center justify-center py-8">
                             <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-                            <span className="ml-2 text-gray-600">Loading page...</span>
+                            <span className="ml-2 text-muted-foreground">Loading page...</span>
                           </div>
                         )}
                       </div>
 
                       {/* Page Navigation */}
                       {markdownPages.length > 1 && (
-                        <div className="mt-8 pt-6 border-t border-gray-200">
-                          <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                        <div className="mt-8 pt-6 border-t border-border">
+                          <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                             <span>
                               Page {currentPage + 1} of {markdownPages.length}
                             </span>
@@ -401,7 +401,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                           </div>
 
                           {/* Page progress bar */}
-                          <div className="bg-gray-200 rounded-full h-2 mb-6">
+                          <div className="bg-muted rounded-full h-2 mb-6">
                             <div
                               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{
@@ -439,7 +439,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                                       className={`w-8 h-8 rounded-full text-xs font-medium transition-colors ${
                                         index === currentPage
                                           ? 'bg-blue-600 text-white'
-                                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                          : 'bg-muted text-muted-foreground hover:bg-gray-300'
                                       }`}
                                     >
                                       {index + 1}
@@ -466,7 +466,7 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                                         key={index}
                                         onClick={() => goToPage(index)}
                                         disabled={isChangingPage}
-                                        className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 hover:bg-gray-300 text-xs font-medium transition-colors"
+                                        className="w-8 h-8 rounded-full bg-muted text-muted-foreground hover:bg-gray-300 text-xs font-medium transition-colors"
                                       >
                                         {index + 1}
                                       </button>
@@ -530,9 +530,9 @@ const BookContentViewer: React.FC<BookContentViewerProps> = ({
                 <CardContent>
                   <div className="space-y-2">
                     {book.table_of_contents.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                      <div key={idx} className="flex justify-between items-center py-2 border-b border-border last:border-b-0">
                         <span className="font-medium">{item.chapter}</span>
-                        <span className="text-sm text-gray-500">Page {item.page}</span>
+                        <span className="text-sm text-muted-foreground">Page {item.page}</span>
                       </div>
                     ))}
                   </div>

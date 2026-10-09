@@ -227,7 +227,7 @@ const FacetedBooksDashboard: React.FC = () => {
         {/* Mobile Overlay Background */}
         {showFilters && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden dark:bg-opacity-950/40"
             onClick={() => setShowFilters(false)}
             aria-hidden="true"
           />

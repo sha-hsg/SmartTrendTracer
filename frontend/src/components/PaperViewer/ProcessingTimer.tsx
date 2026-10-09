@@ -73,7 +73,7 @@ export const ProcessingTimer: React.FC<ProcessingTimerProps> = ({
     return (
       <div className="flex items-center gap-2 text-green-600">
         <span className="text-sm font-medium">✓ Processing Complete!</span>
-        <span className="text-xs text-gray-500">({formatTime(elapsedSeconds)})</span>
+        <span className="text-xs text-muted-foreground">({formatTime(elapsedSeconds)})</span>
       </div>
     )
   }
@@ -84,15 +84,15 @@ export const ProcessingTimer: React.FC<ProcessingTimerProps> = ({
         <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
         <div className="flex-1">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Processing with Marker Service</span>
-            <span className="text-sm font-mono text-gray-500">{formatTime(elapsedSeconds)}</span>
+            <span className="text-sm font-medium text-foreground">Processing with Marker Service</span>
+            <span className="text-sm font-mono text-muted-foreground">{formatTime(elapsedSeconds)}</span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">{getEstimateMessage()}</p>
+          <p className="text-xs text-muted-foreground mt-1">{getEstimateMessage()}</p>
         </div>
       </div>
       
       {/* Progress bar */}
-      <div className="w-full bg-gray-200 rounded-full h-1.5">
+      <div className="w-full bg-muted rounded-full h-1.5">
         <div 
           className="bg-blue-500 h-1.5 rounded-full transition-all duration-1000"
           style={{ 
@@ -109,13 +109,13 @@ export const ProcessingTimer: React.FC<ProcessingTimerProps> = ({
       
       {/* Cancel button after 5 minutes */}
       {showCancelButton && onCancel && (
-        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md dark:bg-yellow-950/40 dark:border-yellow-800">
           <div className="flex items-start gap-2">
             <div className="flex-1">
-              <p className="text-xs font-medium text-yellow-800">
+              <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300">
                 Processing is taking longer than expected
               </p>
-              <p className="text-xs text-yellow-700 mt-1">
+              <p className="text-xs text-yellow-700 mt-1 dark:text-yellow-300">
                 {elapsedSeconds >= 1800 
                   ? 'This has been running for over 30 minutes. The Marker service might be stuck.'
                   : 'If the Marker service is not responding, you can cancel and try again later.'}

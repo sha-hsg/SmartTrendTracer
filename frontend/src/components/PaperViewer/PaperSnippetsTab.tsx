@@ -44,7 +44,7 @@ const PaperSnippetsTab: React.FC<PaperSnippetsTabProps> = ({
   handleCreateSnippet,
 }) => {
   return (
-    <div className="h-full bg-white rounded-lg border">
+    <div className="h-full bg-background rounded-lg border">
       <ScrollArea className="h-full p-6">
         {/* Snippet creation form */}
         {selectedText && (
@@ -56,15 +56,15 @@ const PaperSnippetsTab: React.FC<PaperSnippetsTabProps> = ({
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <label className="text-xs text-gray-500">
+                <label className="text-xs text-muted-foreground">
                   Selected Text
                 </label>
-                <div className="mt-1 p-2 bg-gray-50 rounded text-sm">
+                <div className="mt-1 p-2 bg-muted rounded text-sm">
                   {selectedText}
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-500">
+                <label className="text-xs text-muted-foreground">
                   Annotation
                 </label>
                 <Textarea
@@ -78,7 +78,7 @@ const PaperSnippetsTab: React.FC<PaperSnippetsTabProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">
+                <label className="text-xs text-muted-foreground">
                   Category
                 </label>
                 <Input
@@ -123,12 +123,12 @@ const PaperSnippetsTab: React.FC<PaperSnippetsTabProps> = ({
               <Card key={snippet.id}>
                 <CardContent className="pt-4">
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-foreground">
                       {snippet.content}
                     </p>
                     {snippet.annotation && (
-                      <div className="pl-3 border-l-2 border-blue-200">
-                        <p className="text-sm text-gray-600">
+                      <div className="pl-3 border-l-2 border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-muted-foreground">
                           {snippet.annotation}
                         </p>
                       </div>
@@ -143,7 +143,7 @@ const PaperSnippetsTab: React.FC<PaperSnippetsTabProps> = ({
                         </Badge>
                       )}
                       {snippet.page_number && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           Page {snippet.page_number}
                         </span>
                       )}
@@ -162,7 +162,7 @@ const PaperSnippetsTab: React.FC<PaperSnippetsTabProps> = ({
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No snippets yet</p>
+              <p className="text-muted-foreground">No snippets yet</p>
               <p className="text-sm text-gray-400 mt-2">
                 Select text from the PDF to create snippets
               </p>

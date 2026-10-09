@@ -124,7 +124,7 @@ export const AnalysisGenerationControls: React.FC<AnalysisGenerationControlsProp
 
           {batchProgress.total > 0 && (
             <div className="min-w-[250px] space-y-1">
-              <div className="flex items-center justify-between text-xs text-gray-600">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
                   {batchProgress.completed} of {batchProgress.total} completed
                   {batchProgress.skipped > 0 && ` (${batchProgress.skipped} skipped)`}
@@ -163,7 +163,7 @@ export const AnalysisGenerationControls: React.FC<AnalysisGenerationControlsProp
 
             {batchProgress.total > 0 && (
               <div className="min-w-[250px] space-y-1">
-                <div className="flex items-center justify-between text-xs text-gray-600">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
                     {batchProgress.completed} of {batchProgress.total} completed
                     {batchProgress.skipped > 0 && ` (${batchProgress.skipped} skipped)`}

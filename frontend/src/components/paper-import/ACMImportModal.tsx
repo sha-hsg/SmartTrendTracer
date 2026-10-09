@@ -162,7 +162,7 @@ export const ACMImportModal: React.FC<ACMImportModalProps> = ({
                 Valid DOI detected: {validatedDOI}
               </p>
             )}
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Accepts both DOI URLs (e.g., /doi/10.1145/...) and PDF URLs (e.g., /doi/pdf/10.1145/...)
             </p>
           </div>
@@ -178,18 +178,18 @@ export const ACMImportModal: React.FC<ACMImportModalProps> = ({
               disabled={importing}
               rows={2}
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Comma-separated tags to apply to the imported paper
             </p>
           </div>
 
           {/* Example URLs */}
-          <div className="bg-gray-50 p-3 rounded-md space-y-1">
-            <p className="text-xs font-medium text-gray-700">Example URLs:</p>
-            <p className="text-xs text-gray-600 font-mono">
+          <div className="bg-muted p-3 rounded-md space-y-1">
+            <p className="text-xs font-medium text-foreground">Example URLs:</p>
+            <p className="text-xs text-muted-foreground font-mono">
               https://dl.acm.org/doi/10.1145/3677389.3702588
             </p>
-            <p className="text-xs text-gray-600 font-mono">
+            <p className="text-xs text-muted-foreground font-mono">
               https://dl.acm.org/doi/pdf/10.1145/3677389.3702588
             </p>
           </div>
@@ -204,9 +204,9 @@ export const ACMImportModal: React.FC<ACMImportModalProps> = ({
 
           {/* Success Alert */}
           {success && (
-            <Alert className="border-green-500 bg-green-50">
+            <Alert className="border-green-500 bg-green-50 dark:bg-green-950/40">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+              <AlertDescription className="text-green-800 dark:text-green-300">
                 {success}
               </AlertDescription>
             </Alert>

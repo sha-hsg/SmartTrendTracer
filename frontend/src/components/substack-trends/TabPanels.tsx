@@ -35,10 +35,10 @@ export function TopicsTabPanel({ trends }: TabPanelProps) {
             <ScrollArea className="h-[400px]">
               <div className="space-y-2">
                 {(trends?.topic_trends?.trending_up || []).map((topic, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg border hover:bg-gray-50">
+                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted">
                     <span className="font-medium">{topic.term}</span>
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-green-100 text-green-700 border-green-200">
+                      <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950/40 dark:border-green-800 dark:text-green-300">
                         +{topic.growth} articles
                       </Badge>
                       <ArrowUp className="h-4 w-4 text-green-500" />
@@ -119,19 +119,19 @@ export function AuthorsTabPanel({ trends }: TabPanelProps) {
 
                 <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
                   <div>
-                    <span className="text-gray-500">Articles:</span>
+                    <span className="text-muted-foreground">Articles:</span>
                     <span className="ml-2 font-medium">{author.articles}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Avg words:</span>
+                    <span className="text-muted-foreground">Avg words:</span>
                     <span className="ml-2 font-medium">{author.avg_words?.toLocaleString() || 0}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Reading time:</span>
+                    <span className="text-muted-foreground">Reading time:</span>
                     <span className="ml-2 font-medium">{author.avg_reading_time?.toFixed(1) || 0} min</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">Snippets:</span>
+                    <span className="text-muted-foreground">Snippets:</span>
                     <span className="ml-2 font-medium">{author.total_snippets}</span>
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export function VelocityTabPanel({ trends }: TabPanelProps) {
                 <span className="font-medium">{item.topic}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   {item.first_period} → {item.second_period}
                 </span>
                 <Badge
@@ -227,7 +227,7 @@ export function ClustersTabPanel({ trends }: TabPanelProps) {
               <CardContent>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Keywords</p>
+                    <p className="text-xs text-muted-foreground mb-1">Keywords</p>
                     <div className="flex flex-wrap gap-1">
                       {cluster.keywords.map((keyword, kidx) => (
                         <Badge key={kidx} variant="outline" className="text-xs">
@@ -239,12 +239,12 @@ export function ClustersTabPanel({ trends }: TabPanelProps) {
 
                   {cluster.articles.length > 0 && (
                     <div>
-                      <p className="text-xs text-gray-500 mb-1">Sample Articles</p>
+                      <p className="text-xs text-muted-foreground mb-1">Sample Articles</p>
                       <div className="space-y-1">
                         {cluster.articles.slice(0, 2).map((article, aidx) => (
                           <div key={aidx} className="text-xs">
                             <span className="font-medium">{article.title}</span>
-                            <span className="text-gray-500 ml-1">by {article.author}</span>
+                            <span className="text-muted-foreground ml-1">by {article.author}</span>
                           </div>
                         ))}
                       </div>

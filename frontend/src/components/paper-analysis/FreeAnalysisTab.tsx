@@ -54,7 +54,7 @@ export function FreeAnalysisTab({
           value={currentPrompt}
           onChange={(e) => onSetCurrentPrompt(e.target.value)}
           placeholder="Ask a question about this paper..."
-          className="flex-1 h-20 p-3 border border-purple-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 bg-purple-50"
+          className="flex-1 h-20 p-3 border border-purple-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 bg-purple-50 dark:bg-purple-950/40"
           disabled={loadingFreeAnalysis}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && e.metaKey && !loadingFreeAnalysis && currentPrompt.trim()) {
@@ -80,7 +80,7 @@ export function FreeAnalysisTab({
       <div className="flex-1 overflow-auto" style={{maxHeight: 'calc(70vh - 250px)'}}>
         <div className="space-y-3">
           {freeAnalyses.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <MessageSquare className="h-12 w-12 mx-auto mb-3 text-gray-300" />
               <p>No analyses yet.</p>
               <p className="text-sm mt-1">Ask a question above to get started!</p>
@@ -117,9 +117,9 @@ export function FreeAnalysisTab({
                               <ChevronRight className="h-4 w-4 text-purple-600" />
                             )}
                             <span className="text-xs font-medium text-purple-600 uppercase">Question</span>
-                            <span className="text-xs text-gray-500">{timeAgo}</span>
+                            <span className="text-xs text-muted-foreground">{timeAgo}</span>
                           </div>
-                          <p className="text-sm font-medium text-gray-900 mt-1 ml-6">
+                          <p className="text-sm font-medium text-foreground mt-1 ml-6">
                             {analysis.prompt}
                           </p>
                         </div>
@@ -168,7 +168,7 @@ export function FreeAnalysisTab({
                       <CardContent className="pt-0 pb-4">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-xs font-medium text-green-600 uppercase">Answer</span>
-                          <span className="text-xs text-gray-500">{analysis.model || 'Gemini 2.5 Pro'}</span>
+                          <span className="text-xs text-muted-foreground">{analysis.model || 'Gemini 2.5 Pro'}</span>
                         </div>
                         {isEditing ? (
                           <div className="space-y-2">
@@ -205,7 +205,7 @@ export function FreeAnalysisTab({
                             </div>
                           </div>
                         ) : (
-                          <div className="prose prose-sm max-w-none text-gray-700">
+                          <div className="prose prose-sm max-w-none text-foreground">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {extractTextContent(analysis.content)}
                             </ReactMarkdown>

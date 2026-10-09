@@ -153,7 +153,7 @@ export default function TopicDetailPanel({ loading, correlationData }: TopicDeta
                   className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-semibold text-sm">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-semibold text-sm dark:bg-purple-950/40 dark:text-purple-300">
                       {idx + 1}
                     </div>
                     <div>

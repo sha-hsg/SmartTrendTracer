@@ -131,7 +131,7 @@ export function PaperDialogs({
       {showMarkdownContextMenu &&
         ReactDOM.createPortal(
           <div
-            className="fixed z-[9999] bg-white rounded-lg shadow-2xl border border-gray-200 py-1 min-w-[180px]"
+            className="fixed z-[9999] bg-background rounded-lg shadow-2xl border border-border py-1 min-w-[180px]"
             style={{
               left: `${markdownContextMenuPosition.x}px`,
               top: `${markdownContextMenuPosition.y}px`,
@@ -146,7 +146,7 @@ export function PaperDialogs({
               <span>Copy Text</span>
             </button>
 
-            <div className="border-t border-gray-100 my-1" />
+            <div className="border-t border-border my-1" />
 
             <button
               className="w-full px-4 py-2 text-left text-sm hover:bg-green-50 flex items-center gap-2 transition-colors"
@@ -187,7 +187,7 @@ export function PaperDialogs({
             <div>
               <label
                 htmlFor="markdownTagText"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="block text-sm font-medium text-foreground mb-2"
               >
                 Tag Text
               </label>
@@ -263,7 +263,7 @@ export function PaperDialogs({
       {/* Entity Annotation Modal */}
       {showEntityModal && paper && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
+          <div className="bg-background rounded-lg w-full max-w-4xl max-h-[90vh] overflow-auto">
             <div className="p-4 border-b flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 Entity Annotation Review

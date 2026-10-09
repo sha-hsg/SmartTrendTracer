@@ -406,7 +406,7 @@ export default function ConceptGraph() {
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Quality Score</p>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
+                      <div className="flex-1 bg-muted rounded-full h-2">
                         <div 
                           className="bg-blue-500 h-2 rounded-full"
                           style={{ width: `${selectedNode.quality_score * 100}%` }}

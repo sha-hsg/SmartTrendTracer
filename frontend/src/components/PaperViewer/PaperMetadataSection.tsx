@@ -101,7 +101,7 @@ const renderAuthors = (paper: Paper) => {
           <div key={idx} className="flex items-start gap-1">
             <span className="font-medium text-gray-800 dark:text-gray-200">{authorName}</span>
             {affiliation && (
-              <span className="text-xs text-gray-500 italic">• {affiliation}</span>
+              <span className="text-xs text-muted-foreground italic">• {affiliation}</span>
             )}
           </div>
         );
@@ -341,7 +341,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
       <div className="space-y-3 text-sm">
         {paper.publication_date && (
           <div className="flex items-center gap-2">
-            <Calendar className="h-3 w-3 text-gray-500 flex-shrink-0" />
+            <Calendar className="h-3 w-3 text-muted-foreground flex-shrink-0" />
             <span className="text-sm text-gray-700 dark:text-gray-300">
               {new Date(paper.publication_date).toLocaleDateString("en-US", {
                 year: "numeric",
@@ -353,7 +353,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
         )}
         {(paper.conference || paper.journal) && (
           <div className="flex items-start gap-2">
-            <Building2 className="h-3 w-3 text-gray-500 flex-shrink-0 mt-0.5" />
+            <Building2 className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
             <span className="text-sm text-gray-700 dark:text-gray-300 break-words">
               {paper.conference || paper.journal}
             </span>
@@ -361,7 +361,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
         )}
         {paper.page_count > 0 && (
           <div className="flex items-center gap-2">
-            <BookOpen className="h-3 w-3 text-gray-500 flex-shrink-0" />
+            <BookOpen className="h-3 w-3 text-muted-foreground flex-shrink-0" />
             <span className="text-gray-700 dark:text-gray-300">{paper.page_count} pages</span>
           </div>
         )}
@@ -369,7 +369,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
           <div className="pt-1 space-y-1">
             {paper.arxiv_id && (
               <div className="flex items-center gap-2">
-                <ExternalLink className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                 <a
                   href={`https://arxiv.org/abs/${paper.arxiv_id}`}
                   target="_blank"
@@ -382,7 +382,7 @@ const PaperMetadataSection: React.FC<PaperMetadataSectionProps> = ({
             )}
             {paper.doi && (
               <div className="flex items-center gap-2">
-                <ExternalLink className="h-3 w-3 text-gray-500 flex-shrink-0" />
+                <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
                 <a
                   href={`https://doi.org/${paper.doi}`}
                   target="_blank"

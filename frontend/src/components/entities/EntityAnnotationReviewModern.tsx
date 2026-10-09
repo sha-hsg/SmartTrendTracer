@@ -412,8 +412,8 @@ function EntityAnnotationReviewModern({ articleId, tweetId, onComplete }: Entity
         {extracting && (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-purple-600 mb-4" />
-            <h3 className="text-lg font-semibold text-purple-700 mb-2">Processing with AI...</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-lg font-semibold text-purple-700 mb-2 dark:text-purple-300">Processing with AI...</h3>
+            <p className="text-sm text-muted-foreground">
               Extracting entities from {articleId ? 'article' : 'tweet'}
             </p>
           </div>

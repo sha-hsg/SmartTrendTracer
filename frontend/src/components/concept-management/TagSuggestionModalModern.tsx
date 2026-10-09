@@ -275,7 +275,7 @@ export default function TagSuggestionModalModern({
                 <div className="text-center space-y-3">
                   <Loader2 className="h-10 w-10 animate-spin mx-auto text-purple-600" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-foreground">
                       Analyzing {contentLabel} with {selectedModel}...
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -285,7 +285,7 @@ export default function TagSuggestionModalModern({
                       Please wait while we generate concept suggestions
                     </p>
                   </div>
-                  <div className="w-64 mx-auto bg-gray-200 rounded-full h-1.5">
+                  <div className="w-64 mx-auto bg-muted rounded-full h-1.5">
                     <div className="bg-purple-600 h-1.5 rounded-full animate-pulse" style={{width: '60%'}}></div>
                   </div>
                   <Button
@@ -310,26 +310,26 @@ export default function TagSuggestionModalModern({
           ) : suggestions ? (
             <div className="space-y-4 p-4">
               {/* Content Preview */}
-              <Card className="mb-4 p-4 bg-gray-50">
+              <Card className="mb-4 p-4 bg-muted">
                 {contentTitle ? (
                   <div className="flex items-start gap-2">
                     <FileText className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm">{contentTitle}</h3>
                       {contentPreview && (
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">{contentPreview}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{contentPreview}</p>
                       )}
                     </div>
                   </div>
                 ) : contentPreview ? (
-                  <p className="text-sm text-gray-700 line-clamp-3">{contentPreview}</p>
+                  <p className="text-sm text-foreground line-clamp-3">{contentPreview}</p>
                 ) : null}
               </Card>
 
               {/* Already Tagged - Show prominently */}
               {suggestions.already_tagged && suggestions.already_tagged.length > 0 && (
-                <div className="mb-6 p-3 bg-green-50 rounded-lg border border-green-200">
-                  <h3 className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+                <div className="mb-6 p-3 bg-green-50 rounded-lg border border-green-200 dark:bg-green-950/40 dark:border-green-800">
+                  <h3 className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2 dark:text-green-300">
                     <Check className="h-4 w-4 text-green-600" />
                     Already Applied Concepts ({suggestions.already_tagged.length})
                   </h3>
@@ -356,7 +356,7 @@ export default function TagSuggestionModalModern({
               {/* Existing Concept Suggestions */}
               {suggestions.existing_suggestions && suggestions.existing_suggestions.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Tag className="h-4 w-4 text-green-600" />
                     Existing Concepts (Similar to content)
                   </h3>
@@ -395,7 +395,7 @@ export default function TagSuggestionModalModern({
               {/* New AI Suggestions */}
               {suggestions.new_suggestions && suggestions.new_suggestions.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                     <Brain className="h-4 w-4 text-purple-600" />
                     New AI Suggestions
                     <Badge variant="outline" className="text-xs">
@@ -433,7 +433,7 @@ export default function TagSuggestionModalModern({
               {/* No Suggestions */}
               {(!suggestions.existing_suggestions || suggestions.existing_suggestions.length === 0) && 
                (!suggestions.new_suggestions || suggestions.new_suggestions.length === 0) && (
-                <div className="py-8 text-center text-gray-500">
+                <div className="py-8 text-center text-muted-foreground">
                   <Sparkles className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <p>No suggestions available for this {contentLabel}</p>
                 </div>

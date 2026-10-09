@@ -123,9 +123,9 @@ export function SummaryCard({
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw]}
               components={{
-                h1: ({children}) => <h1 className="text-xl font-bold mt-4 mb-3 text-gray-900">{children}</h1>,
-                h2: ({children}) => <h2 className="text-lg font-semibold mt-3 mb-2 text-gray-800">{children}</h2>,
-                h3: ({children}) => <h3 className="text-base font-semibold mt-2 mb-2 text-gray-800">{children}</h3>,
+                h1: ({children}) => <h1 className="text-xl font-bold mt-4 mb-3 text-foreground">{children}</h1>,
+                h2: ({children}) => <h2 className="text-lg font-semibold mt-3 mb-2 text-foreground">{children}</h2>,
+                h3: ({children}) => <h3 className="text-base font-semibold mt-2 mb-2 text-foreground">{children}</h3>,
                 p: ({ children, ...props }) => {
                   const hasCodeBlock = React.Children.toArray(children).some(
                     child => React.isValidElement(child) && (
@@ -133,34 +133,34 @@ export function SummaryCard({
                     )
                   )
                   if (hasCodeBlock) return <div className="mb-3" {...props}>{children}</div>
-                  return <p className="mb-3 text-gray-700 leading-relaxed" {...props}>{children}</p>
+                  return <p className="mb-3 text-foreground leading-relaxed" {...props}>{children}</p>
                 },
                 ul: ({children}) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
                 ol: ({children}) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
-                li: ({children}) => <li className="text-gray-700">{children}</li>,
-                strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                em: ({children}) => <em className="italic text-gray-700">{children}</em>,
+                li: ({children}) => <li className="text-foreground">{children}</li>,
+                strong: ({children}) => <strong className="font-semibold text-foreground">{children}</strong>,
+                em: ({children}) => <em className="italic text-foreground">{children}</em>,
                 blockquote: ({children}) => (
-                  <blockquote className="border-l-4 border-blue-500 pl-3 py-1 my-3 italic bg-blue-50 rounded-r">{children}</blockquote>
+                  <blockquote className="border-l-4 border-blue-500 pl-3 py-1 my-3 italic bg-blue-50 rounded-r dark:bg-blue-950/40">{children}</blockquote>
                 ),
                 code: ({children, className}) => {
                   const isInline = !className?.includes('language-')
-                  if (isInline) return <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">{children}</code>
+                  if (isInline) return <code className="bg-muted px-1 py-0.5 rounded text-sm font-mono text-foreground">{children}</code>
                   return (
                     <pre className="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto mb-3">
                       <code className="text-sm font-mono">{children}</code>
                     </pre>
                   )
                 },
-                hr: () => <hr className="my-3 border-gray-300" />,
+                hr: () => <hr className="my-3 border-border" />,
                 a: ({href, children}) => (
                   <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">{children}</a>
                 ),
                 table: ({children}) => (
-                  <div className="overflow-x-auto mb-3"><table className="min-w-full border border-gray-300 text-sm">{children}</table></div>
+                  <div className="overflow-x-auto mb-3"><table className="min-w-full border border-border text-sm">{children}</table></div>
                 ),
-                th: ({children}) => <th className="border border-gray-300 px-3 py-1.5 bg-gray-100 font-semibold text-left">{children}</th>,
-                td: ({children}) => <td className="border border-gray-300 px-3 py-1.5">{children}</td>,
+                th: ({children}) => <th className="border border-border px-3 py-1.5 bg-muted font-semibold text-left">{children}</th>,
+                td: ({children}) => <td className="border border-border px-3 py-1.5">{children}</td>,
               }}
             >
               {article.summary?.replace(/<think>/gi, '').replace(/<\/think>/gi, '').replace(/<think[^>]*>/gi, '')}

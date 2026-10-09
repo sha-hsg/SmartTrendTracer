@@ -126,7 +126,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
                 {analysis.category}
               </Badge>
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {analysis.description}
             </p>
           </div>
@@ -232,7 +232,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
         </div>
 
         {isGenerated && result?.generated_at && (
-          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
             <span>Generated: {new Date(result.generated_at).toLocaleString()}</span>
             {result.model_used && (
               <span>Model: {result.model_used}</span>
@@ -256,7 +256,7 @@ export const AnalysisCard: React.FC<AnalysisCardProps> = ({
                   className="min-h-[400px] font-mono text-sm"
                   placeholder="Enter markdown content..."
                 />
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Tip: You can use Markdown formatting</span>
                 </div>
               </div>

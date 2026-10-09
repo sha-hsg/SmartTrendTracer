@@ -43,7 +43,7 @@ export default function PaperQA() {
         <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
           <BookOpenCheck className="w-7 h-7" /> Paper Q&amp;A
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Ask questions across a set of papers — answers cite the exact sections they come from.
           For a single paper, use the "Ask" tab in the paper viewer.
         </p>

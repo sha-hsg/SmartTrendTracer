@@ -362,7 +362,7 @@ function AuthorsTab({ stats }: { stats: SystemStats }) {
               {stats.authors.twitter.map((author, i) => (
                 <div key={`twitter-${author.username}`} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm dark:bg-blue-950/40">
                       {i + 1}
                     </div>
                     <div>
@@ -389,7 +389,7 @@ function AuthorsTab({ stats }: { stats: SystemStats }) {
               {stats.authors.articles.map((author, i) => (
                 <div key={`article-${author.name}`} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 font-semibold text-sm">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-600 font-semibold text-sm dark:bg-green-950/40">
                       {i + 1}
                     </div>
                     <div>
@@ -423,7 +423,7 @@ function TrendsTab({ stats }: { stats: SystemStats }) {
                   <div className="flex items-center gap-2">
                     {topic.trend === 'up' && <TrendingUp className="h-4 w-4 text-green-500" />}
                     {topic.trend === 'down' && <TrendingUp className="h-4 w-4 text-red-500 rotate-180" />}
-                    {topic.trend === 'stable' && <Activity className="h-4 w-4 text-gray-500" />}
+                    {topic.trend === 'stable' && <Activity className="h-4 w-4 text-muted-foreground" />}
                     <span className="font-medium">{topic.topic}</span>
                   </div>
                   <Badge variant={topic.trend === 'up' ? 'default' : topic.trend === 'down' ? 'destructive' : 'secondary'}>

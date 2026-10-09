@@ -35,7 +35,7 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{statistics.total_references.toLocaleString()}</div>
-          <p className="text-xs text-gray-500">{statistics.unique_titles} unique titles</p>
+          <p className="text-xs text-muted-foreground">{statistics.unique_titles} unique titles</p>
         </CardContent>
       </Card>
 
@@ -45,7 +45,7 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{statistics.references_with_doi}</div>
-          <p className="text-xs text-gray-500">DOI available</p>
+          <p className="text-xs text-muted-foreground">DOI available</p>
         </CardContent>
       </Card>
 
@@ -55,7 +55,7 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{statistics.references_in_system}</div>
-          <p className="text-xs text-gray-500">Already imported</p>
+          <p className="text-xs text-muted-foreground">Already imported</p>
         </CardContent>
       </Card>
 
@@ -65,7 +65,7 @@ export function StatisticsCards({ statistics }: StatisticsCardsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{statistics.importable_references}</div>
-          <p className="text-xs text-gray-500">Ready to import</p>
+          <p className="text-xs text-muted-foreground">Ready to import</p>
         </CardContent>
       </Card>
     </div>

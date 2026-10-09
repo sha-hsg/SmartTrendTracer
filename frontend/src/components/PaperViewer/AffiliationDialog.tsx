@@ -55,7 +55,7 @@ export function AffiliationDialog({
                       {suggestion.author_name}
                     </div>
                     {suggestion.current_affiliation && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-muted-foreground mt-1">
                         Current: {suggestion.current_affiliation}
                       </div>
                     )}
@@ -81,7 +81,7 @@ export function AffiliationDialog({
           </div>
         </ScrollArea>
         <div className="flex justify-between items-center mt-4 pt-4 border-t">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             {selectedAffiliations.size} of {affiliationSuggestions.length} selected
           </div>
           <div className="flex gap-2">

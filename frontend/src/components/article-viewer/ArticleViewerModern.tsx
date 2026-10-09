@@ -452,13 +452,13 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated, initialMode
               {/* Summary Error Message */}
               {viewer.summaryError && (
                 <div className="px-6 pb-4">
-                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg dark:bg-red-950/40 dark:border-red-800">
                     <svg className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className="flex-1">
-                      <p className="text-sm text-red-800 font-medium">Summary Generation Failed</p>
-                      <p className="text-sm text-red-700 mt-1">{viewer.summaryError}</p>
+                      <p className="text-sm text-red-800 font-medium dark:text-red-300">Summary Generation Failed</p>
+                      <p className="text-sm text-red-700 mt-1 dark:text-red-300">{viewer.summaryError}</p>
                     </div>
                     <button onClick={() => viewer.setSummaryError('')} className="text-red-600 hover:text-red-800" title="Dismiss">
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -475,7 +475,7 @@ function ArticleViewerModern({ articleId, onClose, onArticleUpdated, initialMode
                   <div className="flex flex-wrap gap-2">
                     {article.tags.map(tag => (
                       <Badge key={tag.id} variant="outline"
-                        className="cursor-pointer bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800 group">
+                        className="cursor-pointer bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800 group dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-300">
                         <Tags className="h-3 w-3 mr-1" />{tag.tag}
                         {editMode && (
                           <button onClick={() => viewer.removeTag(tag.id, tag.tag)}

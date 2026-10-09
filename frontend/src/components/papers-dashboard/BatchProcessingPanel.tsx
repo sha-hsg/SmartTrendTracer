@@ -72,9 +72,9 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
 
       {/* Analysis Batch Processing Progress Banner */}
       {analysisBatchProgress && (
-        <Alert className="mb-4 relative border-purple-200 bg-purple-50 dark:bg-purple-950">
+        <Alert className="mb-4 relative border-purple-200 bg-purple-50 dark:bg-purple-950 dark:border-purple-800">
           <BarChart3 className="h-4 w-4 text-purple-600" />
-          <AlertTitle className="text-purple-800">
+          <AlertTitle className="text-purple-800 dark:text-purple-300">
             {analysisBatchProgress.isProcessing ? 'Generating Analyses for Selected Papers...' : 'Batch Analysis Complete'}
           </AlertTitle>
           <AlertDescription>
@@ -85,7 +85,7 @@ const BatchProcessingPanel: React.FC<BatchProcessingPanelProps> = ({
                   : 0}
                 className="flex-1"
               />
-              <span className="text-sm whitespace-nowrap text-purple-700">
+              <span className="text-sm whitespace-nowrap text-purple-700 dark:text-purple-300">
                 Paper {analysisBatchProgress.completedPapers}/{analysisBatchProgress.totalPapers} &#8226;
                 Analysis {analysisBatchProgress.completedAnalyses}/{analysisBatchProgress.totalAnalyses}
                 {analysisBatchProgress.failed > 0 && <span className="text-red-600 ml-1">({analysisBatchProgress.failed} failed)</span>}
