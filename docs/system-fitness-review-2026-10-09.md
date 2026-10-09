@@ -59,7 +59,7 @@ Speichern, Verarbeiten, Scheduler, RAG, Tests) ist besser als bei persönlichen 
 | 9 | Zeitstempel im UI | API liefert Zeiten ohne Zone, Browser liest sie als Lokalzeit | Alle Tweet- und Medienzeiten 2 h zu früh (CEST) | UTC mit Zone ausliefern | ✅ H |
 | 10 | Statistik-Seite | Zählt leere/nicht existierende Felder; Frontend liest Felder, die die API nicht liefert | Tweets „178 getaggt“ statt 31 627, Abdeckung 0,56 % statt ~100 %, viele Kacheln 0, „Manual collection only“ falsch | Über `tag_instances` zählen, Felder angleichen | ✅ H |
 
-### P2 — bald (falsche Aussagen, Doppelungen, abgerissene Ketten)
+### P2 — bald (falsche Aussagen, Doppelungen, abgerissene Ketten) — ✔ umgesetzt am 2026-10-09 (offen: Gmail-Login durch Nutzer, GROBID-Server extern down)
 
 | # | Element | Problem | Auswirkung | Massnahme | Status |
 |---|---|---|---|---|---|
@@ -96,7 +96,7 @@ Speichern, Verarbeiten, Scheduler, RAG, Tests) ist besser als bei persönlichen 
 | 36 | Dark Mode | Viele Komponenten mit festen `bg-white`/`text-gray-*` (Twitter, Account Manager, Media, Paper Viewer, Autoren-Modal, Trend-Overview, Summarization) | Theme-Tokens | ✅ Code, 🟡 Darstellung |
 | 37 | Repo-Hygiene | 1,68 GB Daten-PDFs in git, `.git` 1,1 GB, 487 Debug-Läufe, 10 Syncthing-Konflikt-Dateien, 410 Start-Logs, ~30 alte Berichte im Wurzelverzeichnis | `.gitignore`, `git rm --cached`, Archiv | ✅ |
 | 38 | MongoDB | Doppelte Indizes (DOI, arXiv, tag_instances); `llm_usage` 64 MB ohne TTL; leere Altsammlungen | Bereinigen, TTL | ✅ |
-| 39 | `--reload` im Normalbetrieb | Jede `.py`-Änderung startet das Backend neu, laufende Annotationen gehen verloren | Aus `start_stt.sh` entfernen | ✅ |
+| 39 | ✔ `--reload` im Normalbetrieb | Jede `.py`-Änderung startet das Backend neu, laufende Annotationen gehen verloren | Aus `start_stt.sh` entfernen | ✅ |
 | 40 | Kleinkram | `validate-url` immer 404 (Routenreihenfolge); falsche 500 bei ungültigem Jahr/Datum; stille Annahme falscher Parameter; tote Highlight-Aktion im Paper Viewer; `rag/stats` zeigt `total_concepts: 0`; RAG-„Rebuild“ (~30 min, Kosten) ohne Rückfrage; Reddit-Prozessprüfung in `start_stt.sh` kann nie greifen | Einzeln beheben | ✅ |
 | 41 | Doku | CLAUDE.md: 114 Tests (real 134), ~266 Routen (277), ~360 Paper (446), ~25k Konzepte (28,7k) | Aktualisieren | ✅ |
 

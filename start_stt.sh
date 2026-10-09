@@ -336,7 +336,9 @@ if check_service $BACKEND_PORT "Backend API"; then
     # backend.log is written (and rotated) by the app itself; stdout/stderr go to a
     # separate file, appended — ">" into backend.log wiped its history on every start
     rotate_log "$SCRIPT_DIR/logs/backend_stdout.log"
-    nohup $PYTHON_BIN -m uvicorn app.main:app --reload --host 127.0.0.1 --port $BACKEND_PORT >> "$SCRIPT_DIR/logs/backend_stdout.log" 2>&1 &
+    # no --reload in normal operation: every .py edit restarted the backend and lost in-memory
+    # state (running batch annotations); restart via ./start_stt.sh after code changes
+    nohup $PYTHON_BIN -m uvicorn app.main:app --host 127.0.0.1 --port $BACKEND_PORT >> "$SCRIPT_DIR/logs/backend_stdout.log" 2>&1 &
     BACKEND_PID=$!
     echo $BACKEND_PID > "$SCRIPT_DIR/pids/backend.pid"
     log "   Backend process started with PID: $BACKEND_PID"
