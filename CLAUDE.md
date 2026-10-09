@@ -79,15 +79,15 @@ with automatic trend-query detection.
 
 | Collection | Approx. size | Content |
 |---|---|---|
-| `tweets` | ~27k | Tweet documents; **`_id` is the Twitter ID string**, not ObjectId |
-| `papers` | ~360 | Papers incl. content, analyses, review fields (`paper_type`) |
-| `articles` | ~560 | Substack/imported articles |
+| `tweets` | ~32k | Tweet documents; **`_id` is the Twitter ID string**, not ObjectId |
+| `papers` | ~440 | Papers incl. content, analyses, review fields (`paper_type`) |
+| `articles` | ~640 | Substack/imported articles |
 | `books` | few | PDF/EPUB books |
 | `reddit_posts` | varies | Reddit posts |
-| `tag_concepts_v2` | ~25k | Concept ontology (poly-hierarchy); `_id` is ObjectId |
-| `tag_instances` | ~129k | Tag usage (content_type/content_id/concept_id) |
-| `tag_aliases_v2` | ~330 | Concept aliases/synonyms |
-| `substack_authors` | ~14 | Newsletter authors |
+| `tag_concepts_v2` | ~28k | Concept ontology (poly-hierarchy, built from `parents` — `children` is stale; ~2k placed, rest loose); `_id` is ObjectId; `entity_type` topic/person/organisation/location/event/product |
+| `tag_instances` | ~150k | Tag usage (content_type/content_id/concept_id) |
+| `tag_aliases_v2` | ~1.2k | Concept aliases/synonyms |
+| `substack_authors` | ~32 | Newsletter authors |
 | `references` | ~2.4k | Normalized paper references |
 | `book_processing_jobs` | queue | Consumed by book_processing_worker.py |
 | `collection_state` | 1-few | Tweet collector state |
@@ -325,7 +325,7 @@ on — `tag_content` (every 6 h: concept tags for untagged tweets, articles and 
 `app/services/concept_tagging.py`, LLM task `tag_suggestion`, prompt `concept_suggestion` — the same
 path as "Annotate all" and the tweet/article tag suggestions; trend views count only tagged days), `paper_feed` (daily),
 `rag_update` (daily, via `POST /api/rag/update`), `topic_map` (weekly, after the RAG update),
-`newsletters` (daily, Gmail), `paper_hygiene` (daily: ISO publication dates, arXiv/Crossref
+`newsletters` (Gmail, **paused**), `paper_hygiene` (daily: ISO publication dates, arXiv/Crossref
 backfill, arXiv id form, abstracts from processed text, PDF md5, GROBID for 40 papers),
 `weekly_digest` (weekly; uses feed and topic map), `backup` (weekly `mongodump` gzip archive to
 `STT_BACKUP_DIR`, default `~/Backups/SmartTrendTracer`, newest 8 kept; restore:
@@ -380,7 +380,7 @@ mongodump --db smarttrendtracer --out backup_$(date +%Y%m%d)   # backup
 
 ## 5. API Surface (overview)
 
-Router registration lives in `backend/app/main.py` (~266 routes). One line per prefix:
+Router registration lives in `backend/app/main.py` (~251 API routes). One line per prefix:
 
 | Prefix | Module | Content |
 |---|---|---|
@@ -406,7 +406,6 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/ontology` | `tag_ontology/` | concept ontology CRUD, tree, graph data |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
 | `/api/concepts/organization` | `concept_organization` | organizing unorganized concepts |
-| `/api/tags/reorganize` | `tag_reorganization/` | async ontology reorganization (SSE + apply) |
 | `/api/entities` | `entity_extraction` | entity extraction & review |
 | `/api/llm` | `llm_preferences` | model preferences, status, deprecated-model migration |
 | `/api/user-settings` | `user_settings` | per-user key-value settings (TweetDeck columns etc.) |
@@ -463,7 +462,7 @@ DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are res
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **Test suite is thin** (H-Q1): `backend/tests/` has 114 pytest tests (regression tests
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 167 pytest tests (regression tests
    for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
    frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
@@ -474,8 +473,8 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    PDF upload.
 4. **Author merge/analytics UI missing** — `/api/authors` endpoints exist and are kept
    deliberately; UI design in `AUTHOR_UI_DESIGN.md`.
-5. **Reddit UI gaps** — frontend only uses `faceted-search` + `facets`; the collect
-   trigger and stats endpoints are kept but have no UI.
+5. **Reddit has no data** — no collector credentials, 0 posts; UI removed from navigation,
+   backend router and `start_stt.sh` block kept (they start only with credentials).
 6. **Navigation consolidated (2026-10-09)**: duplicate and old trend views (Unified Trends, Compare
    Sources, Topic Clustering, Trending Topics, Visualizations, Article Analytics, article clustering),
    "Coming soon" placeholders and Reddit (no collector credentials) removed from menu and home.
@@ -483,7 +482,7 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
    an embedding-based search would reuse the existing FAISS stack.
 8. **No inline MongoDB queries in `app/api/`** (arch audit 2026-09, AST guard at 0; 12 API
    modules still wire a `get_database()` handle into services — ratcheted): routers
-   call `app/repositories/`. 163 functions in `*_queries.py` are still verbatim
+   call `app/repositories/`. 141 functions in `*_queries.py` are still verbatim
    extractions named `<coll>_<op>__<route>` (ratcheted in the guard, was 239); duplicates
    were consolidated into intent-named functions in the domain modules (`papers`,
    `articles`, `tweets`, `ontology`). Id lookups: `papers.find_paper_by_any_id`,
@@ -493,7 +492,7 @@ Open work items (state after the 2026-07-24 inventory + fix pass, see
 9. **Nondeterministic top-N lists** in `/api/papers/facets` (authors, concepts,
    institutions) and `/api/papers/stats/overview` (top_concepts, top_conferences):
    truncated without a stable tie-break, so repeated calls return different sets.
-10. Pre-existing frontend `tsc` error count: 18 (non-blocking, build is green).
+10. Frontend `tsc`: 0 errors (`npx tsc --noEmit -p tsconfig.json`), build green.
 
 ---
 
@@ -522,6 +521,15 @@ Details live in `git log` and `docs/`; do not re-expand here.
   concepts left out, associations by NPMI with two sources. Tabs: Overview, Heatmap, Bubble,
   Associations (Correlation + Network merged), Timeline, Episodes; Lifecycle removed
   (Episodes covers birth/end); concept clicks open the Topic Explorer with the concept.
+  System fitness review (`docs/system-fitness-review-2026-10-09.md`, 41 findings, P1–P3 done):
+  automatic tagging job, concept/paper/author dedup and hygiene, local GROBID, backups, smoke
+  check with freshness checks, Gmail newsletters paused (allow-list `newsletter_sources.json`).
+  P3: redundant indexes dropped centrally; one definition of "organized"
+  (`repositories.ontology.organization_stats`), Organize list by usage; Tag Reorganizer retired
+  (one 570k-token call) in favour of Organize; ontology tree/graph built from `parents`, payloads
+  cut 8–10× (tree `q` search on the server); tagging keeps the LLM's `entity_type`
+  (`retype_concepts.py` retyped the top 1500); dark-mode sweep with theme tokens; enum
+  validation for paper params.
 - **2026-09 — Architecture audit + fixes** (commits d8b3ab7…495d4cf): dead code and the
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed
@@ -585,4 +593,4 @@ Details live in `git log` and `docs/`; do not re-expand here.
 
 ---
 
-Last updated: October 8, 2026
+Last updated: October 10, 2026
