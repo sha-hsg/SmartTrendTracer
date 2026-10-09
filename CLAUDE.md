@@ -28,9 +28,9 @@ opens a browser; when the Gmail token (`backend/databases/token.pickle`) is
 revoked it fails with the login command: `cd backend && venv/bin/python -m
 app.collectors.gmail_substack_collector --setup`. Only senders listed in `backend/newsletter_sources.json`
 are kept (sender/publication → person; unknown senders are skipped and reported in the job result as
-`skipped_senders`); posts already imported another way (same title ±3 days) are skipped. Most articles
-come from URL import and the
-Playwright collector. Every article gets `primary_author_id` via `AuthorService.attribute()` (all
+`skipped_senders`); posts already imported another way (same title ±3 days) are skipped. The 29
+Gmail-imported articles were deleted on 2026-10-10 (copy in `~/Backups/SmartTrendTracer/gmail_articles_*`);
+all articles now come from URL import and the Playwright collector. Every article gets `primary_author_id` via `AuthorService.attribute()` (all
 writers); author counts use only that field. ~23 authors.
 
 **Reddit** — AI/ML subreddits configured in `backend/reddit_config.json`:
@@ -81,7 +81,7 @@ with automatic trend-query detection.
 |---|---|---|
 | `tweets` | ~32k | Tweet documents; **`_id` is the Twitter ID string**, not ObjectId |
 | `papers` | ~440 | Papers incl. content, analyses, review fields (`paper_type`) |
-| `articles` | ~640 | Substack/imported articles |
+| `articles` | ~610 | Substack/imported articles |
 | `books` | few | PDF/EPUB books |
 | `reddit_posts` | varies | Reddit posts |
 | `tag_concepts_v2` | ~28k | Concept ontology (poly-hierarchy, built from `parents` — `children` is stale; ~2k placed, rest loose); `_id` is ObjectId; `entity_type` topic/person/organisation/location/event/product |
@@ -286,6 +286,12 @@ mise if present.
   live in `src/components/<feature>/` — the guard fails on direct axios imports or new
   flat files in `components/`.
 - **`tag_concepts_v2._id` is ObjectId** — wrap incoming string IDs with `ObjectId()`.
+- **Concept hierarchy comes from `parents` only** — `children` lists are stale (21 of 28k
+  carry them). "Organized" has one definition: `repositories.ontology.organization_stats` /
+  `unorganized_concepts` (has a parent, is a parent, or `is_organized`); usage counts via
+  `ontology.usage_counts()` (all stored id forms summed).
+- **Entity types**: pass the tagger's `entity_type` to `ConceptOnlyTagService.add_tag`
+  (vocabulary via `repositories.concepts.normalize_entity_type`); never hardcode `'topic'`.
 - **MongoDB filters: use `{'$nin': [None, '']}`**, never `{'$ne': None, '$ne': ''}` —
   Python dict deduplication silently drops the first key.
 - **`tag_instances.created_at` is a native BSON datetime** — never insert
@@ -366,6 +372,9 @@ python rebuild_rag_index.py           # rebuild concept RAG FAISS index
 python clean_substack_footers.py --clean    # (or --test)
 python fix_previews.py                # fix article previews
 python summarize_articles.py          # batch article summaries
+python merge_duplicate_concepts.py    # mechanical-key concept duplicates (dry run; --apply)
+python merge_duplicate_papers.py      # same arXiv id/DOI + same title (dry run; --apply)
+python retype_concepts.py --top 1500  # LLM entity types for topic/concept-typed concepts (--apply)
 ```
 
 ### MongoDB Quick Checks
@@ -386,7 +395,7 @@ Router registration lives in `backend/app/main.py` (~251 API routes). One line p
 |---|---|---|
 | `/api/tweets` | `api/tweets/` | browse, `faceted-search`, hierarchy-facets, per-tweet concepts, batch-annotate(+`-all`, status, cancel) |
 | `/api/papers` | `api/papers/` | CRUD/upload/facets, Marker/MinerU processing + progress/health callbacks, analyses, entities, concepts/tags, snippets, sections, references, TEI/PDF/images, GROBID, affiliations, `POST /qa` (questions to papers/a concept collection, [n] section citations; chunk cache `paper_chunks`) + `/qa/scope` |
-| `/api/papers` (also) | `direct_url_import` | `POST /import-url`, `POST /import-doi` (DOI/doi.org/SSRN/publisher/arXiv link → Crossref metadata + open PDF via OpenAlex; metadata-only + `pdf_missing` when no open PDF), `GET /validate-url` |
+| `/api/papers` (also) | `direct_url_import` | `POST /import-url`, `POST /import-doi` (DOI/doi.org/SSRN/publisher/arXiv link → Crossref metadata + open PDF via OpenAlex; metadata-only + `pdf_missing` when no open PDF) |
 | `/api/papers/dblp`, `/api/dblp` | `dblp_mongodb` | DBLP search/BibTeX/metadata |
 | `/api/books` | `api/books/` | CRUD/upload/facets, concepts, content, `process` (queue → worker) / `process-direct` |
 | `/api/articles` | `api/articles/` | browse/faceted-search, concepts/snippets, **author management** (`/authors/...`), extract-metadata, tags/suggest, summarize, recollect. (Old `/api/substack/articles` paths are gone.) |
@@ -403,9 +412,9 @@ Router registration lives in `backend/app/main.py` (~251 API routes). One line p
 | `/api/paper-feed` | `paper_feed` | arXiv feed: subscriptions (query + optional concept) CRUD, candidates (new/imported/dismissed, ranked by similarity to the concept's papers via FAISS vectors), `run`, import/dismiss |
 | `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_core.overview` + topic-map episode news + LLM prompt `weekly_digest`) |
 | `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, `update` (incremental: new/changed/deleted content only), `rebuild` (full), sample-questions |
-| `/api/ontology` | `tag_ontology/` | concept ontology CRUD, tree, graph data |
+| `/api/ontology` | `tag_ontology/` | concept ontology CRUD, stats; `tree` (hierarchy + 500 most used loose concepts, `q` searches all concepts/aliases), `graph` (same nodes, links from `parents`, `limit`) |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
-| `/api/concepts/organization` | `concept_organization` | organizing unorganized concepts |
+| `/api/concepts/organization` | `concept_organization` | Organize: `unorganized` (most used first, `offset`/`total`), `stats`, LLM suggestion + apply, `organize-batch` |
 | `/api/entities` | `entity_extraction` | entity extraction & review |
 | `/api/llm` | `llm_preferences` | model preferences, status, deprecated-model migration |
 | `/api/user-settings` | `user_settings` | per-user key-value settings (TweetDeck columns etc.) |
@@ -445,6 +454,7 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 | `backend/litellm_config.yaml` | LiteLLM router model list. No explicit `api_key:` lines — keys are auto-detected from env. Gemini 3 preview models pinned to temperature 1.0 (infinite-loop bug below 1.0). |
 | `backend/reddit_config.json` | Monitored subreddits, priorities, score thresholds. |
 | `backend/forwarded_authors.json` | Forwarded-newsletter author matching (name/email/search patterns). |
+| `backend/newsletter_sources.json` | Gmail allow-list: sender display name → person (job paused). |
 | `backend/accounts.json` | Export of `twitter_accounts` for reference only — not read by code. |
 | `frontend/.env` | `VITE_API_URL=http://localhost:8088`. |
 | `frontend/src/config/models.ts` | Model choices shown in the UI — keep in sync with litellm_config (no deprecated models). |
