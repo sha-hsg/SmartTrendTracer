@@ -22,7 +22,6 @@ import {
   Trash2,
   Save,
 } from 'lucide-react'
-import TagReorganizerPersistent from '../tag-reorganizer/TagReorganizerPersistent'
 import type { Concept } from './types'
 import type { ConceptTreeNode } from './ConceptTreePanel'
 
@@ -43,9 +42,6 @@ interface ConceptDialogsProps {
   handleDeleteConcept: () => void
   selectedConcept: ConceptTreeNode | null
 
-  // Reorganizer dialog
-  reorganizerDialogOpen: boolean
-  setReorganizerDialogOpen: (open: boolean) => void
 
   // Form state
   formData: Partial<Concept>
@@ -87,8 +83,6 @@ export default function ConceptDialogs({
   setDeleteDialogOpen,
   handleDeleteConcept,
   selectedConcept,
-  reorganizerDialogOpen,
-  setReorganizerDialogOpen,
   formData,
   setFormData,
 }: ConceptDialogsProps) {
@@ -211,15 +205,6 @@ export default function ConceptDialogs({
               Delete
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Advanced AI Reorganization Dialog */}
-      <Dialog open={reorganizerDialogOpen} onOpenChange={setReorganizerDialogOpen}>
-        <DialogContent className="max-w-7xl h-[85vh] p-0">
-          <div className="h-full overflow-hidden">
-            <TagReorganizerPersistent />
-          </div>
         </DialogContent>
       </Dialog>
     </>

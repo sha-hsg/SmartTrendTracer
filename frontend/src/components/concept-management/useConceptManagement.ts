@@ -28,7 +28,6 @@ export default function useConceptManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [_importDialogOpen, setImportDialogOpen] = useState(false)
-  const [reorganizerDialogOpen, setReorganizerDialogOpen] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState<Partial<Concept>>({})
@@ -286,8 +285,6 @@ export default function useConceptManagement() {
     deleteDialogOpen,
     setDeleteDialogOpen,
     setImportDialogOpen,
-    reorganizerDialogOpen,
-    setReorganizerDialogOpen,
 
     // Form state
     formData,

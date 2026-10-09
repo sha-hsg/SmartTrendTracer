@@ -101,7 +101,6 @@ export default function ConceptManagementCenter() {
             fetchOrganizationSuggestion={cm.fetchOrganizationSuggestion}
             handleApplyOrganization={cm.handleApplyOrganization}
             handleBatchReorganize={cm.handleBatchReorganize}
-            setReorganizerDialogOpen={cm.setReorganizerDialogOpen}
           />
         </TabsContent>
 
@@ -141,8 +140,6 @@ export default function ConceptManagementCenter() {
         setDeleteDialogOpen={cm.setDeleteDialogOpen}
         handleDeleteConcept={cm.handleDeleteConcept}
         selectedConcept={cm.selectedConcept}
-        reorganizerDialogOpen={cm.reorganizerDialogOpen}
-        setReorganizerDialogOpen={cm.setReorganizerDialogOpen}
         formData={cm.formData}
         setFormData={cm.setFormData}
       />

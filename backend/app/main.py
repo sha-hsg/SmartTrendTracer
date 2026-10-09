@@ -95,7 +95,6 @@ from app.api import concept_organization  # Concept organization for unorganized
 from app.api import article_import  # MongoDB Article URL import (package)
 from app.api import article_preview  # Article preview regeneration
 from app.api import pdf_export  # PDF export for articles - MongoDB migrated
-from app.api import tag_reorganization  # Tag reorganization package (async SSE + apply + comprehensive)
 from app.api import dblp_mongodb  # DBLP API - MongoDB version without SQLite dependencies
 from app.api import system_stats  # Comprehensive system statistics (package)
 from app.api import references  # Normalized references collection API
@@ -204,7 +203,6 @@ app.include_router(jair_import.router, prefix="/api/jair", tags=["jair"])  # JAI
 app.include_router(article_import.router, prefix="/api/v2/articles", tags=["article-import"])
 app.include_router(article_preview.router, prefix="/api/article-preview", tags=["article-preview"])
 app.include_router(pdf_export.router, prefix="/api/pdf", tags=["pdf-export"])  # MongoDB migrated
-app.include_router(tag_reorganization.router, prefix="/api/tags/reorganize", tags=["tag-reorganization"])
 app.include_router(dblp_mongodb.router, tags=["dblp"])  # MongoDB-compatible DBLP API at /api/dblp
 app.include_router(dblp_mongodb.papers_router, tags=["dblp"])  # Also available at /api/papers/dblp
 

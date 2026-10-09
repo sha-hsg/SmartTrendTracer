@@ -10,7 +10,6 @@ import {
   CheckCircle,
   Sparkles,
   Loader2,
-  Brain,
 } from 'lucide-react'
 import type { UnorganizedConcept, OrganizationSuggestion } from './types'
 
@@ -25,7 +24,6 @@ interface OrganizeTabProps {
   fetchOrganizationSuggestion: (conceptId: string) => void
   handleApplyOrganization: () => void
   handleBatchReorganize: (limit: number, autoApply: boolean) => void
-  setReorganizerDialogOpen: (open: boolean) => void
 }
 
 function OrganizationStatsCards({ stats }: { stats: any }) {
@@ -82,7 +80,6 @@ export default function OrganizeTab({
   fetchOrganizationSuggestion,
   handleApplyOrganization,
   handleBatchReorganize,
-  setReorganizerDialogOpen,
 }: OrganizeTabProps) {
   return (
     <div className="space-y-4">
@@ -98,15 +95,6 @@ export default function OrganizeTab({
                 Use AI to automatically organize multiple concepts at once
               </CardDescription>
             </div>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setReorganizerDialogOpen(true)}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              <Brain className="h-4 w-4 mr-2" />
-              Advanced AI Reorganization
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -143,7 +131,7 @@ export default function OrganizeTab({
             <Button
               variant="destructive"
               onClick={() => {
-                if (!confirm('This will process ALL unorganized concepts. This may take a while. Continue?')) return
+                if (!confirm('This will apply AI suggestions to the 50 most used unorganized concepts. Continue?')) return
                 handleBatchReorganize(50, true)
               }}
               disabled={loading}

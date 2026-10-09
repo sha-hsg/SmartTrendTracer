@@ -29,7 +29,7 @@ FRONTEND_SRC = BACKEND.parent / 'frontend' / 'src'
 
 # Ratchets — only ever lower these.
 API_DB_CALL_SITES_MAX = 0
-REPO_GENERATED_QUERY_FNS_MAX = 163  # verbatim-moved `<coll>_<op>__<route>` functions
+REPO_GENERATED_QUERY_FNS_MAX = 142  # verbatim-moved `<coll>_<op>__<route>` functions
 API_DB_HANDLE_MODULES_MAX = 12      # api modules wiring get_database() into services
 FRONTEND_AXIOS_IMPORT_FILES_MAX = 0
 FRONTEND_RAW_FETCH_SITES_MAX = 52   # legacy fetch() calls bypassing services/http.ts
