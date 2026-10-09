@@ -110,17 +110,6 @@ export interface CooccurrencePair {
   new?: boolean;  // not seen together in the previous window
 }
 
-export interface CooccurrenceData {
-  concepts: string[];  // Display names for matrix axes
-  concept_ids: string[];
-  matrix: number[][];  // Symmetric matrix of NPMI values
-  counts?: Record<string, number>;  // documents per concept
-  pairs: CooccurrencePair[];  // Top pairs (NPMI weighted by support)
-  total_pairs?: number;
-  total_documents: number;
-  data_through?: string;
-  excluded_hubs?: string[];
-}
 
 // Network graph data
 export interface NetworkNode {
@@ -157,6 +146,9 @@ export interface NetworkGraphData {
     density: number;
     significant_pairs?: number;
   };
+  pairs?: CooccurrencePair[];  // strongest pairs (NPMI weighted by support)
+  total_documents?: number;
+  excluded_hubs?: string[];
   data_through?: string;
 }
 
@@ -176,17 +168,6 @@ export interface TimelineFrame {
   rankings: TimelineRanking[];
 }
 
-// Concept lifecycle tracking
-export interface ConceptLifecycle {
-  concept_id: string;
-  display_name: string;
-  firstFrame: number;
-  lastFrame: number;
-  firstDate: string;
-  lastDate: string;
-  totalFrames: number;
-  color: string;
-}
 
 export interface AnimatedTimelineData {
   frames: TimelineFrame[];
@@ -217,7 +198,7 @@ export interface TrendQueryParams {
 
 // Dashboard state
 export interface TrendDashboardState {
-  activeTab: 'overview' | 'heatmap' | 'bubble' | 'correlation' | 'network' | 'timeline';
+  activeTab: 'overview' | 'heatmap' | 'bubble' | 'network' | 'timeline' | 'episodes';
   timeRange: number;  // hours
   contentTypes: ContentType[];
   loading: boolean;

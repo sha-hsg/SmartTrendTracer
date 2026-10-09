@@ -122,7 +122,7 @@ export default function DashboardHome({ onNavigate }: DashboardHomeProps) {
                 <span className="font-semibold">Trend Dashboard</span>
               </div>
               <span className="text-xs text-muted-foreground text-left">
-                Real-time trend detection with 7 visualizations
+                Trends, associations and topic episodes of your bubble
               </span>
             </Button>
 

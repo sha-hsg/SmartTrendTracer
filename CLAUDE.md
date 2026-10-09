@@ -373,10 +373,10 @@ Router registration lives in `backend/app/main.py` (~266 routes). One line per p
 | `/api/authors` | `authors_management` | author merge/analytics endpoints — **UI not built yet** (see AUTHOR_UI_DESIGN.md) |
 | `/api/statistics`, `/api/system` | `statistics/`, `system_stats/` | statistics dashboards |
 | `/api/trends`, `/api/trends/analysis`, `/api/user-trends` | trends modules | trend queries and analysis |
-| `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data: at-a-glance, heatmap, bubble-chart, network, cooccurrence, animated-timeline; AI summarization (`/summarize`); `episodes` (bubble topic map from `services/topic_episodes`: families, episodes, lineage; `/episodes/{id}`, `POST /episodes/rebuild` + `/rebuild/status`) |
+| `/api/analytics/trends` | `analytics_trends/` | Trend Dashboard data — all concept views from `services/trend_core` (one cached concept-activity cube): at-a-glance, heatmap, bubble-chart, network (NPMI associations + pair list), animated-timeline (rolling 7-day race); AI summarization (`/summarize`); `episodes` (bubble topic map from `services/topic_episodes`: families, episodes, lineage; `/episodes/{id}`, `POST /episodes/rebuild` + `/rebuild/status`) |
 | `/api/topics` | `topic_explorer` | frequency / correlation / popular topics |
 | `/api/paper-feed` | `paper_feed` | arXiv feed: subscriptions (query + optional concept) CRUD, candidates (new/imported/dismissed, ranked by similarity to the concept's papers via FAISS vectors), `run`, import/dismiss |
-| `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_overview_service` + topic-map episode news + LLM prompt `weekly_digest`) |
+| `/api/digest` | `digest` | weekly briefing: list, latest, `{id}`, `POST generate` (facts from `trend_core.overview` + topic-map episode news + LLM prompt `weekly_digest`) |
 | `/api/rag` | `rag_concepts` | `ask` (auto trend detection), stats, `update` (incremental: new/changed/deleted content only), `rebuild` (full), sample-questions |
 | `/api/ontology`, `/api/ontology-graph` | `tag_ontology/`, `ontology_graph` | concept ontology CRUD + visualization |
 | `/api/concepts/suggestions` | `concepts_suggestions_mongodb` | concept suggestions for content |
@@ -490,6 +490,12 @@ Details live in `git log` and `docs/`; do not re-expand here.
   `episode_naming`), lineage (birth/split/merge/end); weekly job `topic_map`, Trend
   Dashboard tab "Episodes", digest section "Topics in motion". Standalone HTML view:
   `experiments/topic_families.py`.
+  Trend Dashboard rebuilt on `app/services/trend_core.py` after a full audit: papers dated by
+  publication date, `data_through` = last mostly-tagged day (tagging is manual and lags),
+  change judged against each concept's own baseline (Poisson z, minimum counts), generic hub
+  concepts left out, associations by NPMI with two sources. Tabs: Overview, Heatmap, Bubble,
+  Associations (Correlation + Network merged), Timeline, Episodes; Lifecycle removed
+  (Episodes covers birth/end); concept clicks open the Topic Explorer with the concept.
 - **2026-09 — Architecture audit + fixes** (commits d8b3ab7…495d4cf): dead code and the
   repositories stub removed, package-boundary and cycle fixes; central pydantic Settings
   (env only in app/config.py) + pdf_service_client; `llm_service` parallel stack removed

@@ -28,7 +28,7 @@ interface AnimatedTimelineProps {
 }
 
 const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T12:00:00`);  // local noon: no off-by-one across time zones
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
@@ -98,13 +98,12 @@ const AnimatedTimeline: React.FC<AnimatedTimelineProps> = ({
   const frames = useMemo(() => data?.frames || [], [data]);
   const currentFrame = frames[currentFrameIndex];
 
-  const maxValue = useMemo(() => {
-    if (!frames.length) return 0;
-    return Math.max(
-      ...frames.flatMap(f => f.rankings.map(r => r.value)),
-      1
-    );
-  }, [frames]);
+  // bars scale to the leader of the current frame (a global maximum left
+  // the early frames at the minimum width)
+  const maxValue = useMemo(
+    () => Math.max(1, ...(currentFrame?.rankings || []).map(r => r.value)),
+    [currentFrame]
+  );
 
   // Reset frame index when data changes
   useEffect(() => {
@@ -213,7 +212,8 @@ const AnimatedTimeline: React.FC<AnimatedTimelineProps> = ({
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Watch concepts rise and fall in popularity over the selected time period.
+          Each frame ranks concepts by their items in the {data.window_days ?? 7} days up to that day
+          — topics enter, climb and drop out. Generic concepts are left out{data.data_through ? `; data through ${data.data_through}` : ''}.
         </p>
       </CardHeader>
       <CardContent>
@@ -292,7 +292,7 @@ const AnimatedTimeline: React.FC<AnimatedTimelineProps> = ({
 
         {/* Legend */}
         <div className="mt-4 pt-4 border-t">
-          <p className="text-xs text-muted-foreground mb-2">Top performers over entire period:</p>
+          <p className="text-xs text-muted-foreground mb-2">Concepts in the race (items in the period):</p>
           <div className="flex flex-wrap gap-2">
             {data.concepts.slice(0, 10).map((concept) => (
               <Badge

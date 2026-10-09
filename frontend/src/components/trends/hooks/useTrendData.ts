@@ -8,10 +8,8 @@ import {
   AtAGlanceData,
   HeatmapData,
   BubbleChartData,
-  CooccurrenceData,
   NetworkGraphData,
   AnimatedTimelineData,
-  TrendQueryParams,
 } from '@/types/trends';
 
 const API_BASE = '/api/analytics/trends';
@@ -125,20 +123,6 @@ export function useBubbleChartData(
   }, enabled);
 }
 
-// Co-occurrence data hook
-export function useCooccurrenceData(
-  days: number = 30,
-  topN: number = 25,
-  minCooccurrence: number = 2,
-  enabled: boolean = true
-): UseTrendDataReturn<CooccurrenceData> {
-  return useFetch<CooccurrenceData>('/cooccurrence', {
-    days,
-    top_n: topN,
-    min_cooccurrence: minCooccurrence,
-  }, enabled);
-}
-
 // Network graph data hook
 export function useNetworkGraphData(
   days: number = 30,
@@ -164,56 +148,3 @@ export function useAnimatedTimelineData(
     top_n: topN,
   }, enabled);
 }
-
-// Combined dashboard data hook
-export function useTrendDashboard(params: TrendQueryParams) {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const atAGlance = useAtAGlanceData(params.hours || 48, params.anomaly_threshold || 2.5, params.top_n || 10);
-  const heatmap = useHeatmapData(params.days || 14, params.top_n || 20);
-  const bubbleChart = useBubbleChartData(params.days || 30, params.top_n || 50);
-  const cooccurrence = useCooccurrenceData(params.days || 30, params.top_n || 25, 2);
-  const network = useNetworkGraphData(params.days || 30, 2, params.top_n || 40);
-  const timeline = useAnimatedTimelineData(params.days || 30, params.top_n || 15);
-
-  useEffect(() => {
-    const isLoading = atAGlance.loading || heatmap.loading || bubbleChart.loading ||
-                      cooccurrence.loading || network.loading || timeline.loading;
-    setLoading(isLoading);
-
-    const errors = [atAGlance.error, heatmap.error, bubbleChart.error,
-                   cooccurrence.error, network.error, timeline.error].filter(Boolean);
-    setError(errors.length > 0 ? errors[0] : null);
-  }, [
-    atAGlance.loading, heatmap.loading, bubbleChart.loading,
-    cooccurrence.loading, network.loading, timeline.loading,
-    atAGlance.error, heatmap.error, bubbleChart.error,
-    cooccurrence.error, network.error, timeline.error
-  ]);
-
-  const refetchAll = useCallback(async () => {
-    await Promise.all([
-      atAGlance.refetch(),
-      heatmap.refetch(),
-      bubbleChart.refetch(),
-      cooccurrence.refetch(),
-      network.refetch(),
-      timeline.refetch(),
-    ]);
-  }, [atAGlance, heatmap, bubbleChart, cooccurrence, network, timeline]);
-
-  return {
-    atAGlance,
-    heatmap,
-    bubbleChart,
-    cooccurrence,
-    network,
-    timeline,
-    loading,
-    error,
-    refetchAll,
-  };
-}
-
-export default useTrendDashboard;

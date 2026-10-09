@@ -395,7 +395,8 @@ def network(days: int = 30, top_n: int = 40) -> Dict[str, Any]:
                            'significant_pairs': assoc['total_pairs'],
                            'avg_connections': round(2 * n_edges / n_nodes, 2) if n_nodes else 0,
                            'density': round(nx.density(g), 3) if n_nodes > 1 else 0},
-            'data_through': assoc['data_through']}
+            'pairs': assoc['pairs'][:40], 'total_documents': assoc['total_documents'],
+            'excluded_hubs': assoc['excluded_hubs'], 'data_through': assoc['data_through']}
 
 
 def timeline(days: int = 30, top_n: int = 15, window: int = 7) -> Dict[str, Any]:

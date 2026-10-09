@@ -17,28 +17,23 @@ import {
   Flame,
   Grid3X3,
   TrendingUp,
-  Layers,
   Network,
   BarChart3,
   Settings,
   Clock,
-  History,
   GitBranch,
 } from 'lucide-react';
 
 import TrendAtAGlance from './TrendAtAGlance';
 import TopicHeatmap from './TopicHeatmap';
 import BubbleChart from './BubbleChart';
-import CorrelationMatrix from './CorrelationMatrix';
-import TrendNetworkGraph from './TrendNetworkGraph';
+import ConceptAssociations from './ConceptAssociations';
 import AnimatedTimeline from './AnimatedTimeline';
-import TimeWindowAnalysis from './TimeWindowAnalysis';
 import EpisodeMap from './EpisodeMap';
 import {
   useAtAGlanceData,
   useHeatmapData,
   useBubbleChartData,
-  useCooccurrenceData,
   useNetworkGraphData,
   useAnimatedTimelineData,
 } from './hooks/useTrendData';
@@ -47,7 +42,7 @@ interface TrendDashboardMainProps {
   onConceptClick?: (conceptId: string) => void;
 }
 
-type TabValue = 'overview' | 'heatmap' | 'bubble' | 'correlation' | 'network' | 'timeline' | 'lifecycle' | 'episodes';
+type TabValue = 'overview' | 'heatmap' | 'bubble' | 'network' | 'timeline' | 'episodes';
 
 const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick }) => {
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
@@ -61,39 +56,34 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
   const atAGlance = useAtAGlanceData(timeRange, 2.5, 10);
   const heatmap = useHeatmapData(days, topN, activeTab === 'heatmap');
   const bubbleChart = useBubbleChartData(days, Math.max(topN, 30), activeTab === 'bubble');
-  const cooccurrence = useCooccurrenceData(days, topN, 2, activeTab === 'correlation');
-  const network = useNetworkGraphData(days, 2, topN, activeTab === 'network');
+  const network = useNetworkGraphData(days, 2, Math.max(topN, 40), activeTab === 'network');
   const timeline = useAnimatedTimelineData(days, Math.min(topN, 20), activeTab === 'timeline');
 
   const handleRefresh = useCallback(() => {
     atAGlance.refetch();
     if (activeTab === 'heatmap') heatmap.refetch();
     if (activeTab === 'bubble') bubbleChart.refetch();
-    if (activeTab === 'correlation') cooccurrence.refetch();
     if (activeTab === 'network') network.refetch();
     if (activeTab === 'timeline') timeline.refetch();
-    // Lifecycle tab manages its own data refresh
-  }, [activeTab, atAGlance, heatmap, bubbleChart, cooccurrence, network, timeline]);
+  }, [activeTab, atAGlance, heatmap, bubbleChart, network, timeline]);
 
   const handleRefreshAll = useCallback(async () => {
     await Promise.all([
       atAGlance.refetch(),
       heatmap.refetch(),
       bubbleChart.refetch(),
-      cooccurrence.refetch(),
       network.refetch(),
       timeline.refetch(),
     ]);
-  }, [atAGlance, heatmap, bubbleChart, cooccurrence, network, timeline]);
+  }, [atAGlance, heatmap, bubbleChart, network, timeline]);
 
   const isLoading = atAGlance.loading || heatmap.loading || bubbleChart.loading ||
-                    cooccurrence.loading || network.loading || timeline.loading;
+                    network.loading || timeline.loading;
 
   const errors = [
     atAGlance.error,
     heatmap.error,
     bubbleChart.error,
-    cooccurrence.error,
     network.error,
     timeline.error,
   ].filter(Boolean);
@@ -226,7 +216,7 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
 
       {/* Main Content with Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-        <TabsList className="grid grid-cols-8 w-full max-w-5xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-4xl">
           <TabsTrigger value="overview" className="flex items-center gap-1">
             <Flame className="w-4 h-4" />
             <span className="hidden sm:inline">Overview</span>
@@ -239,21 +229,13 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
             <TrendingUp className="w-4 h-4" />
             <span className="hidden sm:inline">Bubble</span>
           </TabsTrigger>
-          <TabsTrigger value="correlation" className="flex items-center gap-1">
-            <Layers className="w-4 h-4" />
-            <span className="hidden sm:inline">Correlation</span>
-          </TabsTrigger>
           <TabsTrigger value="network" className="flex items-center gap-1">
             <Network className="w-4 h-4" />
-            <span className="hidden sm:inline">Network</span>
+            <span className="hidden sm:inline">Associations</span>
           </TabsTrigger>
           <TabsTrigger value="timeline" className="flex items-center gap-1">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Timeline</span>
-          </TabsTrigger>
-          <TabsTrigger value="lifecycle" className="flex items-center gap-1">
-            <History className="w-4 h-4" />
-            <span className="hidden sm:inline">Lifecycle</span>
           </TabsTrigger>
           <TabsTrigger value="episodes" className="flex items-center gap-1">
             <GitBranch className="w-4 h-4" />
@@ -326,25 +308,9 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
           />
         </TabsContent>
 
-        {/* Correlation Tab */}
-        <TabsContent value="correlation" className="mt-4">
-          <CorrelationMatrix
-            data={cooccurrence.data}
-            loading={cooccurrence.loading}
-            onPairClick={(aId, bId) => {
-              console.log('Correlation pair clicked:', aId, bId);
-              // Could filter to show content with both concepts
-            }}
-          />
-        </TabsContent>
-
-        {/* Network Tab */}
+        {/* Associations Tab (co-occurrence matrix and network merged) */}
         <TabsContent value="network" className="mt-4">
-          <TrendNetworkGraph
-            data={network.data}
-            loading={network.loading}
-            onNodeClick={onConceptClick}
-          />
+          <ConceptAssociations data={network.data} loading={network.loading} onConceptClick={onConceptClick} />
         </TabsContent>
 
         {/* Timeline Tab */}
@@ -352,13 +318,6 @@ const TrendDashboardMain: React.FC<TrendDashboardMainProps> = ({ onConceptClick 
           <AnimatedTimeline
             data={timeline.data}
             loading={timeline.loading}
-            onConceptClick={onConceptClick}
-          />
-        </TabsContent>
-
-        {/* Lifecycle Tab */}
-        <TabsContent value="lifecycle" className="mt-4">
-          <TimeWindowAnalysis
             onConceptClick={onConceptClick}
           />
         </TabsContent>
