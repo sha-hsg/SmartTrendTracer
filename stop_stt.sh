@@ -158,7 +158,7 @@ echo "2. Stopping Reddit Collector Service..."
 if [ -f "pids/reddit_collector.pid" ]; then
     stop_service_by_pid "pids/reddit_collector.pid" "Reddit Collector"
 else
-    stop_service_by_name "reddit_collector.py" "Reddit Collector"
+    stop_service_by_name "app.collectors.reddit_collector" "Reddit Collector"
 fi
 
 # Stop Tweet Collector Service
@@ -370,7 +370,7 @@ else
     echo -e "Tweet Collector:  ${GREEN}✓ Stopped${NC}"
 fi
 
-if pgrep -f "reddit_collector.py" > /dev/null; then
+if pgrep -f "app.collectors.reddit_collector" > /dev/null; then
     echo -e "Reddit Collector: ${RED}✗ Still running${NC}"
     all_stopped=false
 else

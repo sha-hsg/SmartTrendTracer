@@ -506,8 +506,8 @@ if [ -n "$REDDIT_CLIENT_ID" ] && [ -n "$REDDIT_CLIENT_SECRET" ]; then
     log "   ✓ Reddit credentials found in environment"
     cd "$BACKEND_DIR"
     log "   Checking for reddit_collector.py process..."
-    if pgrep -f "reddit_collector.py" > /dev/null; then
-        REDDIT_PID=$(pgrep -f "reddit_collector.py")
+    if pgrep -f "app.collectors.reddit_collector" > /dev/null; then
+        REDDIT_PID=$(pgrep -f "app.collectors.reddit_collector")
         log_plain "   ⚠️  Reddit Collector is already running (PID: $REDDIT_PID)"
     else
         log "   Reddit Collector not running, starting..."
@@ -534,7 +534,7 @@ if [ -n "$REDDIT_CLIENT_ID" ] && [ -n "$REDDIT_CLIENT_SECRET" ]; then
         log "   Using Python: $REDDIT_PYTHON"
 
         sleep 2
-        if pgrep -f "reddit_collector.py" > /dev/null; then
+        if pgrep -f "app.collectors.reddit_collector" > /dev/null; then
             log_plain "   ✓ Reddit Collector started successfully"
         else
             log_plain "   ⚠️  Reddit Collector not started (check logs/reddit_collector.log)"
@@ -733,8 +733,8 @@ else
 fi
 
 # Reddit Collector
-if pgrep -f "reddit_collector.py" > /dev/null; then
-    REDDIT_PID=$(pgrep -f "reddit_collector.py")
+if pgrep -f "app.collectors.reddit_collector" > /dev/null; then
+    REDDIT_PID=$(pgrep -f "app.collectors.reddit_collector")
     log_plain "Reddit Collector: ✓ Running in background (PID: $REDDIT_PID)"
 elif [ -n "$REDDIT_CLIENT_ID" ]; then
     log_plain "Reddit Collector: ✗ Not running (credentials found but not started)"
