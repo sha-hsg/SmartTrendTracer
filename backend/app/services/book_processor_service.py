@@ -119,16 +119,9 @@ class BookProcessorService:
         """Process book with Marker service (extended timeout and book config)"""
 
         try:
-            # Book-specific Marker configuration
-            data = {
-                "extract_images": "true",
-                "book_mode": "true",  # Enable book-specific processing
-                "detect_chapters": str(self.enable_chapter_detection).lower(),
-                "extract_toc": str(self.enable_toc_extraction).lower(),
-                "extract_glossary": str(self.enable_glossary_extraction).lower(),
-                "max_pages": "2000",  # Allow processing of large books
-                "book_id": book_id
-            }
+            # Only fields Marker's /convert accepts (book_mode/extract_toc/... were silently
+            # ignored); TOC and glossary are extracted from the markdown below.
+            data = {"timeout": str(int(self.marker_timeout))}
 
             logger.info(f"Sending book PDF to Marker service (6-hour timeout): {Path(pdf_path).name}")
             with open(pdf_path, "rb") as pdf_file:

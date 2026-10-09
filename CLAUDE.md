@@ -15,8 +15,9 @@ it via `app.repositories.twitter_accounts_crud.followed_accounts`). Current set:
 @kaggle, @rasbt, @JayAlammar, @hwchase17, @Sebastienbubeck, @Shayneredford, @Langchainai,
 @Colm_Conf, @GH_Wiegand, @ABosselut, @LorenaRaichle, @_akhaliq, @zurichnlp, @AiBreakfast,
 @karpathy, @percyliang, @Idiap_ch.
-Collection runs in Basic Account Mode by default (10k tweets/month budget, tiered
-priorities, 15-minute intervals).
+Collection runs in Basic Account Mode by default (10k tweets/month budget, 15-minute cycles;
+tiered polling by `twitter_accounts.tier`: 1 every 30 min, 2 every 2 h, 3 every 6 h). Long posts are
+stored with their full text (`note_tweet`).
 
 **Substack newsletters** — collected from Gmail (direct subscriptions, e.g. Ethan Mollick
 "One Useful Thing") and forwarded university mail. Forwarded authors are configured in

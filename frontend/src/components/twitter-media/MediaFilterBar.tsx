@@ -122,7 +122,7 @@ export default function MediaFilterBar({
             <SelectContent>
               <SelectItem value="date_desc">Newest first</SelectItem>
               <SelectItem value="date_asc">Oldest first</SelectItem>
-              <SelectItem value="likes_desc">Most liked</SelectItem>
+              <SelectItem value="likes_desc">Most liked (at collection)</SelectItem>
               <SelectItem value="retweets_desc">Most retweeted</SelectItem>
             </SelectContent>
           </Select>

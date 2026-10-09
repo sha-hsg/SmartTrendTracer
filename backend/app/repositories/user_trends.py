@@ -63,10 +63,16 @@ def get_per_user_trends(hours):
 
         user_data[username]['tweets'].append(tweet)
 
-        # Add engagement metrics
-        metrics = tweet.get('metrics', {})
-        user_data[username]['total_likes'] += metrics.get('like_count', 0)
-        user_data[username]['total_retweets'] += metrics.get('retweet_count', 0)
+        # Engagement of the account's own posts only: a retweet carries the
+        # original's metrics (huggingface was credited 1 856 of 1 902 retweets
+        # that belonged to other accounts). Metrics are as of collection time.
+        is_retweet = any(r.get('type') == 'retweeted' for r in tweet.get('referenced_tweets') or [])
+        user_data[username].setdefault('own_posts', 0)
+        if not is_retweet:
+            metrics = tweet.get('metrics', {})
+            user_data[username]['own_posts'] += 1
+            user_data[username]['total_likes'] += metrics.get('like_count', 0)
+            user_data[username]['total_retweets'] += metrics.get('retweet_count', 0)
 
         # Track timeline
         hour_key = tweet['created_at'].strftime('%Y-%m-%d %H:00')
@@ -116,7 +122,7 @@ def get_per_user_trends(hours):
         # Calculate activity pattern
         activity_by_user[username] = {
             'total_tweets': len(data['tweets']),
-            'engagement_rate': round((data['total_likes'] + data['total_retweets']) / max(len(data['tweets']), 1), 1),
+            'engagement_rate': round((data['total_likes'] + data['total_retweets']) / max(data.get('own_posts', 0), 1), 1),
             'unique_concepts': len(data['concepts'])
         }
         
@@ -127,6 +133,7 @@ def get_per_user_trends(hours):
             'total_likes': data['total_likes'],
             'total_retweets': data['total_retweets'],
             'engagement_rate': activity_by_user[username]['engagement_rate'],
+            'own_posts': data.get('own_posts', 0),
             'top_concepts': top_concepts[:3]
         })
     

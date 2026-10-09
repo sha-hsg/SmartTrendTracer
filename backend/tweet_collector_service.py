@@ -623,7 +623,9 @@ def collect_account_tweets_with_retry(client: tweepy.Client, account_id: str,
                     'id': account_id,
                     'max_results': PER_PAGE_MAX_RESULTS,
                     'pagination_token': pagination_token,
-                    'tweet_fields': ['created_at', 'public_metrics', 'referenced_tweets', 'entities', 'attachments'],
+                    # note_tweet: the full text of posts longer than 280 characters
+                    'tweet_fields': ['created_at', 'public_metrics', 'referenced_tweets', 'entities', 'attachments',
+                                     'note_tweet'],
                     'media_fields': ['url', 'preview_image_url', 'alt_text', 'width', 'height', 'type', 'duration_ms'],
                     'expansions': ['attachments.media_keys', 'author_id', 'referenced_tweets.id', 'referenced_tweets.id.attachments.media_keys']
                 }
@@ -663,6 +665,10 @@ def collect_account_tweets_with_retry(client: tweepy.Client, account_id: str,
                 for tweet in tweets_response.data:
                     tweet_dict = tweet.data
                     tweet_dict['author'] = {'username': username}
+                    # long posts: 'text' is cut at 280 characters, the full text is in note_tweet
+                    note_text = (tweet_dict.get('note_tweet') or {}).get('text')
+                    if note_text:
+                        tweet_dict['text'] = note_text
 
                     # Handle retweets - replace truncated text with full text from original tweet
                     if 'referenced_tweets' in tweet_dict and tweet_dict['referenced_tweets']:
@@ -670,7 +676,8 @@ def collect_account_tweets_with_retry(client: tweepy.Client, account_id: str,
                             if ref['type'] == 'retweeted' and str(ref['id']) in referenced_tweets_dict:
                                 original_tweet = referenced_tweets_dict[str(ref['id'])]
                                 # Get full text from original tweet
-                                original_text = original_tweet.data.get('text', '')
+                                original_text = ((original_tweet.data.get('note_tweet') or {}).get('text')
+                                                 or original_tweet.data.get('text', ''))
 
                                 # Keep RT prefix but use full text from original
                                 if tweet_dict['text'].startswith('RT @'):
@@ -814,6 +821,22 @@ def collect_account_tweets_with_retry(client: tweepy.Client, account_id: str,
     
     return total_saved, newest_tweet_id
 
+TIER_INTERVALS = {1: TIER_1_INTERVAL, 2: TIER_2_INTERVAL, 3: TIER_3_INTERVAL}
+_last_polled: Dict[str, float] = {}       # username -> time.time() of the last poll (this process)
+
+
+def accounts_due(accounts: List[Dict[str, Any]], now: Optional[float] = None) -> List[Dict[str, Any]]:
+    """Accounts whose tier interval has passed since their last poll (a minute
+    of slack absorbs cycle jitter); never-polled accounts are always due."""
+    now = now or time.time()
+    due = []
+    for acc in accounts:
+        interval = TIER_INTERVALS.get(acc.get('tier') or 2, TIER_2_INTERVAL)
+        if now - _last_polled.get(acc.get('username'), 0) >= interval - 60:
+            due.append(acc)
+    return due
+
+
 def run_collection_cycle():
     """
     Run one complete collection cycle for all accounts with intelligent batching.
@@ -943,8 +966,12 @@ def run_collection_cycle():
             logger.error(f"❌ Authentication failed: {auth_error}")
             return
     
+    # Tiered polling (twitter_accounts.tier): 1 = every 30 min, 2 = every 2 h,
+    # 3 = every 6 h. Polling all accounts every cycle overran the 15-requests-
+    # per-15-minutes limit and stretched each cycle to ~32 minutes.
+    accounts = accounts_due(accounts_to_follow) if USE_TIERED_PRIORITY else accounts_to_follow.copy()
+    logger.info(f"🎯 {len(accounts)} of {len(accounts_to_follow)} accounts due this cycle (tiered polling)")
     # Randomize account order to avoid always hitting the same accounts first
-    accounts = accounts_to_follow.copy()
     random.shuffle(accounts)
     
     # Process accounts in batches
@@ -990,6 +1017,7 @@ def run_collection_cycle():
                 break
 
             try:
+                _last_polled[username] = time.time()
                 saved, newest_id = collect_account_tweets_with_retry(client, account_id, username)
                 total_tweets += saved
                 accounts_processed += 1

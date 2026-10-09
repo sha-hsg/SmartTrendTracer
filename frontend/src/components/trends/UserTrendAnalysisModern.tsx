@@ -230,7 +230,7 @@ export default function UserTrendAnalysisModern() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Highest Engagement</p>
+                  <p className="text-sm text-gray-500" title="likes + retweets per own post (retweets of others excluded), as of collection time">Highest Engagement</p>
                   <p className="text-lg font-bold">@{userTrends.user_statistics.highest_engagement.username}</p>
                   <p className="text-sm text-gray-600">{userTrends.user_statistics.highest_engagement.engagement_rate} avg</p>
                 </div>
@@ -477,7 +477,7 @@ export default function UserTrendAnalysisModern() {
                             </Card>
                             <Card>
                               <CardContent className="p-2 text-center">
-                                <p className="text-xs text-gray-500">Engagement Rate</p>
+                                <p className="text-xs text-gray-500" title="likes + retweets per own post (retweets of others excluded), as of collection time">Engagement per own post</p>
                                 <p className="text-lg font-bold">{userTrends.activity_by_user[selectedUser].engagement_rate}</p>
                               </CardContent>
                             </Card>
