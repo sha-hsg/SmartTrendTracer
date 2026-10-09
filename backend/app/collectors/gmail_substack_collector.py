@@ -25,10 +25,9 @@ class GmailSubstackCollector:
         self.parser = SubstackParser()
         self.db = get_database()
 
-    def authenticate(self, credentials_file: str = 'credentials.json', token_file: str = 'token.pickle'):
-        """Authenticate with Gmail API"""
-        self.service = authenticate_gmail(credentials_file, token_file)
-        return True
+    def authenticate(self, credentials_file=None, token_file=None, interactive: bool = True):
+        """Gmail service (paths default to app.paths GMAIL_CREDENTIALS / GMAIL_TOKEN)."""
+        self.service = authenticate_gmail(credentials_file, token_file, interactive=interactive)
 
     def search_substack_emails(self, query: str = 'from:substack.com OR "from Marcus on AI" OR "from One Useful Thing"', max_results: int = 100) -> List[str]:
         """Search for Substack emails in Gmail"""

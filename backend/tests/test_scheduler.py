@@ -52,7 +52,7 @@ def test_tagging_runs_every_six_hours():
 
 
 def test_tagging_runs_first(monkeypatch):
-    assert list(sch.JOBS)[:1] == ['tag_content']
+    assert list(sch.JOBS)[:2] == ['newsletters', 'tag_content']
     assert list(sch.JOBS).index('rag_update') < list(sch.JOBS).index('topic_map') < list(sch.JOBS).index('weekly_digest')
 
 
@@ -79,3 +79,10 @@ def test_partial_feed_failure_is_not_reported_as_success(monkeypatch):
     import pytest
     with pytest.raises(RuntimeError, match='2 of 5 feeds failed'):
         sch.job_paper_feed()
+
+
+def test_gmail_never_opens_a_browser_in_the_scheduler(tmp_path):
+    import pytest
+    from app.collectors.gmail_auth import GmailLoginRequired, authenticate_gmail
+    with pytest.raises(GmailLoginRequired, match='--setup'):
+        authenticate_gmail(tmp_path / 'credentials.json', tmp_path / 'missing.pickle', interactive=False)

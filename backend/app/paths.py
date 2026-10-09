@@ -53,6 +53,10 @@ FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 # Data root directory (all data files stored here)
 DATA_ROOT = BACKEND_ROOT / "data"
 
+# Gmail newsletter collector (OAuth client + token; not in git)
+GMAIL_CREDENTIALS = BACKEND_ROOT / "credentials.json"
+GMAIL_TOKEN = BACKEND_ROOT / "databases" / "token.pickle"
+
 # Ensure data directory exists
 DATA_ROOT.mkdir(parents=True, exist_ok=True)
 

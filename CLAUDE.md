@@ -22,7 +22,12 @@ stored with their full text (`note_tweet`).
 **Substack newsletters** — collected from Gmail (direct subscriptions, e.g. Ethan Mollick
 "One Useful Thing") and forwarded university mail. Forwarded authors are configured in
 `backend/forwarded_authors.json`: Gary Marcus (Marcus on AI), Nathan Lambert
-(Interconnects), Sebastian Raschka (Ahead of AI). ~14 authors in the database.
+(Interconnects), Sebastian Raschka (Ahead of AI). Scheduler job `newsletters` runs the collector
+daily without ever opening a browser; when the Gmail token (`backend/databases/token.pickle`) is
+revoked it fails with the login command: `cd backend && venv/bin/python -m
+app.collectors.gmail_substack_collector --setup`. Most articles come from URL import and the
+Playwright collector. Every article gets `primary_author_id` via `AuthorService.attribute()` (all
+writers); author counts use only that field. ~23 authors.
 
 **Reddit** — AI/ML subreddits configured in `backend/reddit_config.json`:
 r/LLM, r/LLMDevs, r/LocalLLM, r/MachineLearning, r/artificial, r/OpenAI, r/ChatGPT,
@@ -59,8 +64,9 @@ with automatic trend-query detection.
   Only Marker has the real-time progress pipeline (PTY output capture, TQDM parsing,
   psutil CPU/RAM health, progress callbacks to the backend). MinerU does **not** —
   the pipeline was documented but never implemented.
-- **LLM access**: central `llm_manager` / LiteLLM router driven by `backend/llm.json`,
-  `backend/prompts_config.json` and `backend/litellm_config.yaml`. Providers: Anthropic,
+- **LLM access**: central `llm_manager` / LiteLLM router driven by `backend/litellm_config.yaml`
+  (routes = task types) and `backend/prompts_config.json` (`backend/llm.json` holds only the RAG
+  embedding model). Providers: Anthropic,
   OpenAI, Google (Gemini), xAI. Keys come from `~/.env`.
 
 ### MongoDB Collections (database `smarttrendtracer`, localhost:27017)
@@ -226,9 +232,9 @@ mise if present.
 
 ### 3.8 Configuration Rules
 
-- **NEVER hardcode prompts or LLM model access.** Models/temperatures come from
-  `backend/llm.json` (per task type), prompts from `backend/prompts_config.json`,
-  the LiteLLM router from `backend/litellm_config.yaml`. All LLM calls go through the
+- **NEVER hardcode prompts or LLM model access.** Models per task come from the LiteLLM
+  router `backend/litellm_config.yaml` (model_name = task type), prompts from
+  `backend/prompts_config.json` (via `llm.get_prompt`, never by opening the file). All LLM calls go through the
   central `llm_manager` (the former parallel `llm_service` stack was removed 2026-09):
   `llm.get_prompt(key)` for prompts, `llm.complete_text(task_type, ...)` for single-turn
   calls, and `llm.resolve_model_override(ui_value)` to map a UI model choice to a
@@ -312,6 +318,8 @@ on — `tag_content` (every 6 h: concept tags for untagged tweets, articles and 
 `app/services/concept_tagging.py`, LLM task `tag_suggestion`, prompt `concept_suggestion` — the same
 path as "Annotate all" and the tweet/article tag suggestions; trend views count only tagged days), `paper_feed` (daily),
 `rag_update` (daily, via `POST /api/rag/update`), `topic_map` (weekly, after the RAG update),
+`newsletters` (daily, Gmail), `paper_hygiene` (daily: ISO publication dates, arXiv/Crossref
+backfill, arXiv id form, abstracts from processed text, PDF md5, GROBID for 10 papers),
 `weekly_digest` (weekly; uses feed and topic map), `backup` (weekly `mongodump` gzip archive to
 `STT_BACKUP_DIR`, default `~/Backups/SmartTrendTracer`, newest 8 kept; restore:
 `mongorestore --gzip --archive=<file> --nsInclude='smarttrendtracer.*' --drop`). A failed job
@@ -426,7 +434,7 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
 
 | File | Purpose |
 |---|---|
-| `backend/llm.json` | Model per task type (tag_suggestion, summarization, trend_analysis, paper_section_extraction, …). Includes **`models.rag_embedding`**: primary `models/gemini-embedding-001` (Google, truncated to 768d, L2-normalized), fallback `text-embedding-3-small` (OpenAI, 1536d). **Queries must use the model the index was built with — changing model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, ~30 min, ~0.50 $; index at `data/rag_index_concepts`, local only, not in git). Day-to-day use `POST /api/rag/update`, the "Update Index" button or `rebuild_rag_index.py --incremental`: embeds only new/changed content (tag_instances.created_at, papers.processed_at/updated_at, articles.updated_at since the last run) and marks superseded entries `stale`; refuses to run on an index of another embedding model. Last full rebuild 2026-10-03. |
+| `backend/llm.json` | Only **`models.rag_embedding`** (every chat task is routed by `litellm_config.yaml`, model_name = task type; per-user overrides in MongoDB `llm_preferences`): primary `models/gemini-embedding-001` (Google, truncated to 768d, L2-normalized), fallback `text-embedding-3-small` (OpenAI, 1536d). **Queries must use the model the index was built with — changing model/dimension requires rebuilding the FAISS index** (`rebuild_rag_index.py`, ~30 min, ~0.50 $; index at `data/rag_index_concepts`, local only, not in git). Day-to-day use `POST /api/rag/update`, the "Update Index" button or `rebuild_rag_index.py --incremental`: embeds only new/changed content (tag_instances.created_at, papers.processed_at/updated_at, articles.updated_at since the last run) and marks superseded entries `stale`; refuses to run on an index of another embedding model. Last full rebuild 2026-10-03. |
 | `backend/prompts_config.json` | All LLM prompts/templates (incl. paper analyses catalog, rag_trend_analysis). Never inline prompts in code. |
 | `backend/litellm_config.yaml` | LiteLLM router model list. No explicit `api_key:` lines — keys are auto-detected from env. Gemini 3 preview models pinned to temperature 1.0 (infinite-loop bug below 1.0). |
 | `backend/reddit_config.json` | Monitored subreddits, priorities, score thresholds. |

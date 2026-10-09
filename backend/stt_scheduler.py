@@ -77,6 +77,16 @@ def job_paper_hygiene():
     return paper_hygiene.run()
 
 
+def job_newsletters():
+    """Substack newsletters from Gmail (direct subscriptions and forwarded
+    authors, backend/forwarded_authors.json). Never opens a browser: a
+    missing/revoked token fails with the command for a one-time login."""
+    from app.collectors.gmail_substack_collector import GmailSubstackCollector
+    collector = GmailSubstackCollector()
+    collector.authenticate(interactive=False)
+    return {'new_articles': collector.collect_newsletters(max_results=50)}
+
+
 def job_paper_feed():
     """Check all paper feed subscriptions for new arXiv papers."""
     from app.services.paper_feed_service import run_feed
@@ -110,6 +120,7 @@ def job_weekly_digest():
 # trend views count only tagged days), the topic map uses the freshly updated
 # RAG index, the digest uses the feed and the topic map.
 JOBS: Dict[str, Dict] = {
+    'newsletters': {'run': job_newsletters, 'due': due_daily},
     'tag_content': {'run': job_tag_content, 'due': due_tagging},
     'paper_hygiene': {'run': job_paper_hygiene, 'due': due_daily},
     'paper_feed': {'run': job_paper_feed, 'due': due_daily},

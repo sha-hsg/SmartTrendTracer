@@ -12,7 +12,9 @@ line with the probable cause and the log file to look at.
 Background: on 2026-10-01 the backend died at startup (LiteLLM router), on
 2026-09-24 Marker lost its packages, and on 2026-10-03 the RAG search failed
 because its embedding model had been retired — all three went unnoticed
-because start_stt.sh only checked ports.
+because start_stt.sh only checked ports. Since 2026-10-09 it also checks that
+every scheduler job succeeded recently (not just "last run ok"), tweet
+freshness and the workers, the backup age and disk space, and GROBID.
 """
 import argparse
 import json
@@ -177,21 +179,90 @@ def check_rag(client):
 
 
 def check_scheduler():
+    """Running, and every job recently successful (2x its interval)."""
     import subprocess
+    from datetime import datetime, timedelta, timezone
     running = subprocess.run(['pgrep', '-f', 'stt_scheduler.py'], capture_output=True).returncode == 0
     try:
+        import stt_scheduler as sch
         from app.repositories.scheduled_jobs import list_job_states
-        failed = [j['_id'] for j in list_job_states() if j.get('last_ok') is False]
+        states = {j['_id']: j for j in list_job_states()}
     except Exception as e:
         report(False, 'Scheduler', f'job state unreadable ({type(e).__name__})')
         return
     if not running:
         report(False, 'Scheduler', 'not running', hint='start it with ./start_stt.sh — see logs/scheduler.log')
-    elif failed:
-        report(False, 'Scheduler', f'last run failed: {", ".join(failed)}',
+        return
+    interval = {sch.due_tagging: sch.TAGGING_EVERY, sch.due_daily: timedelta(days=1), sch.due_weekly: timedelta(days=7)}
+    now = datetime.now(timezone.utc)
+    problems = []
+    for name, job in sch.JOBS.items():
+        st = states.get(name) or {}
+        last_ok = st.get('last_success')
+        if last_ok is not None and last_ok.tzinfo is None:
+            last_ok = last_ok.replace(tzinfo=timezone.utc)
+        if st.get('last_ok') is False:
+            problems.append(f"{name}: {' '.join((st.get('last_error') or 'failed').split())[:200]}")
+        elif last_ok is None or now - last_ok > 2 * interval.get(job['due'], timedelta(days=1)):
+            problems.append(f'{name}: no success for {"ever" if last_ok is None else str(now - last_ok).split(".")[0]}')
+    if problems:
+        report(False, 'Scheduler', '; '.join(problems)[:300],
                hint='see logs/scheduler.log; rerun: venv/bin/python stt_scheduler.py --run NAME')
     else:
-        report(True, 'Scheduler', 'running, last runs ok')
+        report(True, 'Scheduler', f'running, {len(sch.JOBS)} jobs ok and current')
+
+
+def check_collection():
+    """Fresh tweets (the collector can stall: X API credits, rate limits) and
+    the background workers."""
+    import subprocess
+    from datetime import datetime, timedelta, timezone
+    from app.database.mongodb import get_database
+    newest = get_database().tweets.find_one({}, {'created_at': 1}, sort=[('created_at', -1)])
+    age = None
+    if newest and newest.get('created_at'):
+        ts = newest['created_at']
+        ts = ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
+        age = datetime.now(timezone.utc) - ts
+    collector = subprocess.run(['pgrep', '-f', 'tweet_collector_service.py'], capture_output=True).returncode == 0
+    worker = subprocess.run(['pgrep', '-f', 'book_processing_worker.py'], capture_output=True).returncode == 0
+    problems = []
+    if not collector:
+        problems.append('tweet collector not running')
+    if age is None or age > timedelta(days=1):
+        problems.append(f'newest tweet {"missing" if age is None else str(age).split(".")[0] + " old"}')
+    if not worker:
+        problems.append('book worker not running')
+    report(not problems, 'Collection', '; '.join(problems) if problems else
+           f'collector + book worker running, newest tweet {int(age.total_seconds() // 60)} min old',
+           hint='see logs/tweet_collector.log (X API 402 = credits) and logs/book_worker.log')
+
+
+def check_backup_and_disk():
+    import shutil
+    from datetime import datetime
+    folder = Path(settings.backup_dir).expanduser()
+    archives = sorted(folder.glob('smarttrendtracer_*.archive.gz')) if folder.exists() else []
+    free_gb = shutil.disk_usage(str(PROJECT_DIR)).free / 1e9
+    problems = []
+    if not archives:
+        problems.append(f'no backup in {folder}')
+    else:
+        age_days = (datetime.now().timestamp() - archives[-1].stat().st_mtime) / 86400
+        if age_days > 8:
+            problems.append(f'newest backup {age_days:.0f} days old')
+    if free_gb < 10:
+        problems.append(f'only {free_gb:.0f} GB disk free')
+    report(not problems, 'Backup + disk', '; '.join(problems) if problems else
+           f'backup {archives[-1].name[17:32]}, {free_gb:.0f} GB free',
+           hint='scheduler job "backup" (weekly); STT_BACKUP_DIR for another disk')
+
+
+def check_grobid():
+    from app.services.grobid_service import GROBIDService
+    alive = GROBIDService().is_alive()
+    report(alive, 'GROBID', 'reachable' if alive else f'{settings.grobid_service_url} unavailable — references are not extracted',
+           hint='external huggingface space; set GROBID_SERVICE_URL to a local GROBID (docker) to make it reliable')
 
 
 def check_frontend(client):
@@ -220,6 +291,9 @@ def main():
             check_rag(client)
         check_frontend(client)
     check_scheduler()
+    check_collection()
+    check_backup_and_disk()
+    check_grobid()
 
     failed = results.count(False)
     if failed:
