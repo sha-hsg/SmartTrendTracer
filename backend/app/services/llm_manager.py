@@ -407,8 +407,9 @@ class LLMManager:
         # Check for user preference or use task_type for routing
         model_name = self.get_user_preference(task_type, user_id) or task_type
 
-        # Resolve actual model name for logging (e.g., "claude-sonnet-5-5")
-        actual_model_name = self._resolve_actual_model(task_type)
+        # Resolve actual model name for logging (e.g., "claude-sonnet-5-5"); a saved
+        # user preference routes to another model_name, so resolve that one
+        actual_model_name = self._resolve_actual_model(model_name)
 
         # Merge parameters
         params = {
@@ -425,6 +426,9 @@ class LLMManager:
 
         if override_params:
             params.update(override_params)
+            if override_params.get('model'):          # a UI model choice: log what really runs
+                actual_model_name = self._resolve_actual_model(override_params['model'])
+                params['metadata']['actual_model'] = actual_model_name
 
         try:
             logger.info(f"🤖 Calling LLM for task '{task_type}' with model '{actual_model_name}'")
@@ -478,8 +482,9 @@ class LLMManager:
         # Check for user preference
         model_name = self.get_user_preference(task_type, user_id) or task_type
 
-        # Resolve actual model name for logging (e.g., "claude-sonnet-5-5")
-        actual_model_name = self._resolve_actual_model(task_type)
+        # Resolve actual model name for logging (e.g., "claude-sonnet-5-5"); a saved
+        # user preference routes to another model_name, so resolve that one
+        actual_model_name = self._resolve_actual_model(model_name)
 
         # Merge parameters
         params = {
@@ -496,6 +501,9 @@ class LLMManager:
 
         if override_params:
             params.update(override_params)
+            if override_params.get('model'):          # a UI model choice: log what really runs
+                actual_model_name = self._resolve_actual_model(override_params['model'])
+                params['metadata']['actual_model'] = actual_model_name
 
         try:
             logger.info(f"🤖 Calling LLM (sync) for task '{task_type}' with model '{actual_model_name}'")
