@@ -19,12 +19,17 @@ from .utils import (
     calculate_content_statistics,
     collect_key_topics,
     prepare_content_sample,
+    fit_to_token_budget,
     build_summarization_prompt,
     build_fallback_summary,
 )
 from app.repositories import analytics_trends_analysis_queries as queries
 
 router = APIRouter()
+
+AUTO_MAX_TWEETS = 20000          # fetch ceiling without Data Limits (the model budget trims further)
+AUTO_MAX_DOCS = 1000
+PROMPT_CONTEXT_SHARE = 0.5       # rest stays free for instructions, output and reasoning tokens
 
 
 @router.post("/summarize")
@@ -36,17 +41,27 @@ def generate_summary(
     include_tweets: bool = Query(True, description="Include tweets in summary"),
     include_articles: bool = Query(True, description="Include articles in summary"),
     include_papers: bool = Query(True, description="Include papers in summary"),
-    max_tweets: int = Query(1000, ge=10, le=5000, description="Maximum tweets to include"),
-    max_articles: int = Query(50, ge=5, le=200, description="Maximum articles to include"),
-    max_papers: int = Query(50, ge=5, le=200, description="Maximum papers to include"),
+    max_tweets: Optional[int] = Query(None, ge=10, le=AUTO_MAX_TWEETS, description="Cap on tweets; omit = all that fit the model"),
+    max_articles: Optional[int] = Query(None, ge=5, le=AUTO_MAX_DOCS, description="Cap on articles; omit = all that fit the model"),
+    max_papers: Optional[int] = Query(None, ge=5, le=AUTO_MAX_DOCS, description="Cap on papers; omit = all that fit the model"),
     paper_date_type: str = Query("created", description="Date type for papers: 'created' (import date) or 'published' (publication date)"),
-    detail_level: str = Query("standard", description="Detail level: brief, standard, detailed, executive"),
-    full_content: bool = Query(False, description="If true, include ALL loaded content in the prompt (no per-detail-level slicing). The fetch is still capped by max_tweets/articles/papers.")
+    detail_level: str = Query("standard", description="Detail level: brief, standard, detailed, executive (depth and length of the answer)"),
 ):
     """
-    Generate an AI-powered summary of content based on filters
+    Generate an AI-powered summary of content based on filters.
+
+    Everything in the period goes into the prompt as long as it fits the input
+    context of the model that will answer (PROMPT_CONTEXT_SHARE of it); beyond
+    that an evenly spaced tweet sample keeps the whole period covered. Was: a
+    fixed 1000/50/50 fetch cap and only 10-40 items in the prompt.
     """
     from app.services.llm_manager import get_llm_manager
+    llm_manager = get_llm_manager()
+    context = llm_manager.context_window('articleSummarization', model)
+    token_budget = int(context['max_input_tokens'] * PROMPT_CONTEXT_SHARE)
+    fetch_tweets = max_tweets or AUTO_MAX_TWEETS
+    fetch_articles = max_articles or AUTO_MAX_DOCS
+    fetch_papers = max_papers or AUTO_MAX_DOCS
 
     # Parse period and get date range
     days = parse_period_to_days(period)
@@ -118,9 +133,9 @@ def generate_summary(
         author=author_filter_for_tweets,
         article_author=author_filter_for_articles,
         concept_ids=concept_ids,
-        max_tweets=max_tweets,
-        max_articles=max_articles,
-        max_papers=max_papers,
+        max_tweets=fetch_tweets,
+        max_articles=fetch_articles,
+        max_papers=fetch_papers,
         paper_date_type=paper_date_type
     )
 
@@ -128,12 +143,6 @@ def generate_summary(
     articles = content['articles']
     papers = content['papers']
 
-    # Check if data was truncated
-    data_truncated = (
-        total_tweets_available > max_tweets or
-        total_articles_available > max_articles or
-        total_papers_available > max_papers
-    )
 
     # Calculate statistics
     stats = calculate_content_statistics(tweets, articles, papers)
@@ -143,10 +152,11 @@ def generate_summary(
         detail_level = 'standard'
 
     # Collect key topics
-    key_topics = collect_key_topics(db, tweets, sample_size=20, detail_level=detail_level, full_content=full_content)
+    key_topics = collect_key_topics(db, tweets, detail_level=detail_level, full_content=True)
 
-    # Prepare content sample for LLM
-    content_sample = prepare_content_sample(tweets, articles, papers, detail_level=detail_level, full_content=full_content)
+    # Prompt content: everything that fits the model's context budget
+    prompt_tweets = fit_to_token_budget(tweets, articles, papers, token_budget)
+    content_sample = prepare_content_sample(prompt_tweets, articles, papers, detail_level=detail_level, full_content=True)
 
     # Auto-fallback: if the selected window has no content, probe outside the
     # window and re-fetch over all time when matching data exists elsewhere.
@@ -192,9 +202,9 @@ def generate_summary(
                 author=author_filter_for_tweets,
                 article_author=author_filter_for_articles,
                 concept_ids=concept_ids,
-                max_tweets=max_tweets,
-                max_articles=max_articles,
-                max_papers=max_papers,
+                max_tweets=fetch_tweets,
+                max_articles=fetch_articles,
+                max_papers=fetch_papers,
                 paper_date_type=paper_date_type
             )
             tweets = content['tweets']
@@ -202,8 +212,9 @@ def generate_summary(
             papers = content['papers']
 
             stats = calculate_content_statistics(tweets, articles, papers)
-            key_topics = collect_key_topics(db, tweets, sample_size=20, detail_level=detail_level, full_content=full_content)
-            content_sample = prepare_content_sample(tweets, articles, papers, detail_level=detail_level, full_content=full_content)
+            key_topics = collect_key_topics(db, tweets, detail_level=detail_level, full_content=True)
+            prompt_tweets = fit_to_token_budget(tweets, articles, papers, token_budget)
+            content_sample = prepare_content_sample(prompt_tweets, articles, papers, detail_level=detail_level, full_content=True)
 
             # Reflect the extended range and totals in the response
             start_date = extended_start
@@ -257,13 +268,12 @@ def generate_summary(
 
     if content_sample:
         try:
-            llm_manager = get_llm_manager()
             date_range_str = f"from {start_date.strftime('%B %d, %Y')} to {end_date.strftime('%B %d, %Y')}"
             prompt = build_summarization_prompt(
                 content_sample, key_topics, stats, date_range_str, days,
                 prompt=llm_manager.get_prompt('trend_summarization'),
                 detail_level=detail_level,
-                full_content=full_content,
+                full_content=True,
                 # Only frame as single-author when the filter was actually applied
                 # (i.e. only tweets selected and author given).
                 author=author_filter_for_tweets,
@@ -304,13 +314,23 @@ def generate_summary(
                 'message': summary_text,
             }
 
-    # Build truncation warning
+    # Truncation: a fetch cap below what the period holds, or the model context
+    capped = [f"{n} {kind}" for n, cap, total, kind in (
+        (fetch_tweets, fetch_tweets, total_tweets_available, 'tweets'),
+        (fetch_articles, fetch_articles, total_articles_available, 'articles'),
+        (fetch_papers, fetch_papers, total_papers_available, 'papers')) if total > cap]
+    sampled = len(prompt_tweets) < len(tweets)
+    data_truncated = bool(capped) or sampled
     truncation_warning = None
-    if data_truncated:
-        truncation_warning = (
-            f"Note: Data was limited to {max_tweets} tweets, {max_articles} articles, {max_papers} papers. "
-            f"Total available in this period: {total_tweets_available} tweets, {total_articles_available} articles, {total_papers_available} papers."
-        )
+    if capped:
+        truncation_warning = (f"Loaded at most {', '.join(capped)} (your Data Limits). Available in this period: "
+                              f"{total_tweets_available} tweets, {total_articles_available} articles, "
+                              f"{total_papers_available} papers.")
+    if sampled:
+        truncation_warning = ((truncation_warning + ' ') if truncation_warning else '') + (
+            f"{len(tweets)} tweets exceed the context of {context['model']} "
+            f"({context['max_input_tokens'] // 1000}k tokens); an evenly spaced sample of "
+            f"{len(prompt_tweets)} tweets covering the whole period went into the prompt.")
 
     return {
         "summary": summary_text,
@@ -342,9 +362,12 @@ def generate_summary(
         "data_truncated": data_truncated,
         "truncation_warning": truncation_warning,
         "limits_used": {
-            "max_tweets": max_tweets,
+            "max_tweets": max_tweets,          # None = automatic (fits the model)
             "max_articles": max_articles,
-            "max_papers": max_papers
+            "max_papers": max_papers,
+            "context_model": context['model'],
+            "context_tokens": context['max_input_tokens'],
+            "tweets_in_prompt": len(prompt_tweets),
         },
         "detail_level": detail_level,
         "diagnostic": diagnostic

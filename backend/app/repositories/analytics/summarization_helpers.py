@@ -56,19 +56,37 @@ def collect_key_topics(
     )
 
     key_topics = Counter()
-
-    for tweet in tweets[:effective_sample]:
-        instances = db.tag_instances.find({
-            'content_type': 'tweet',
-            'content_id': str(tweet['_id'])
-        })
-        for instance in instances:
-            if instance.get('concept_id'):
-                concept = db.tag_concepts_v2.find_one({'_id': instance['concept_id']})
-                if concept:
-                    key_topics[concept.get('display_name')] += 1
+    ids = [str(t['_id']) for t in tweets[:effective_sample]]
+    if not ids:
+        return key_topics
+    per_concept = {row['_id']: row['n'] for row in db.tag_instances.aggregate([      # one query, not two per tag
+        {'$match': {'content_type': 'tweet', 'content_id': {'$in': ids}, 'concept_id': {'$nin': [None, '']}}},
+        {'$group': {'_id': '$concept_id', 'n': {'$sum': 1}}}])}
+    for concept in db.tag_concepts_v2.find({'_id': {'$in': list(per_concept)}}, {'display_name': 1}):
+        key_topics[concept.get('display_name')] += per_concept[concept['_id']]
 
     return key_topics
+
+
+CHARS_PER_TOKEN = 3.5          # conservative for English tweets/abstracts
+
+
+def fit_to_token_budget(tweets: List[Dict], articles: List[Dict], papers: List[Dict],
+                        token_budget: int) -> List[Dict]:
+    """Tweets that fit the prompt next to all articles and papers (full-content
+    entries as prepare_content_sample(full_content=True) writes them). When not
+    all fit, an evenly spaced sample keeps the whole period covered."""
+    budget = int(token_budget * CHARS_PER_TOKEN)
+    budget -= sum(len(a.get('title') or '') + 320 for a in articles)
+    budget -= sum(len(p.get('title') or '') + 420 for p in papers)
+    sizes = [min(len(t.get('text') or ''), 500) + 40 for t in tweets]   # + date/author prefix
+    if sum(sizes) <= budget:
+        return tweets
+    if budget <= 0 or not tweets:
+        return []
+    keep = max(1, int(len(tweets) * budget / sum(sizes)))
+    step = len(tweets) / keep
+    return [tweets[int(i * step)] for i in range(keep)]
 
 
 def prepare_content_sample(

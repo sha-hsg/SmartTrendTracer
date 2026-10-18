@@ -11,6 +11,7 @@ import json
 from typing import Optional, Dict, List, Any, Union
 from pathlib import Path
 from datetime import datetime, timezone
+import litellm
 from litellm import Router, completion
 from litellm.caching import Cache
 from app.database.mongodb import get_database
@@ -686,6 +687,22 @@ class LLMManager:
                 return cand
         logger.warning(f"Model override '{model}' is not routable; using task default")
         return None
+
+    DEFAULT_CONTEXT_TOKENS = 128_000
+
+    def context_window(self, task_type: str, model_override: Optional[str] = None,
+                       user_id: str = "default") -> Dict[str, Any]:
+        """Input context of the model a call would really use (override, else the
+        saved preference, else the task route): {'model', 'max_input_tokens'}.
+        From LiteLLM's model registry; DEFAULT_CONTEXT_TOKENS when unknown."""
+        route = self.resolve_model_override(model_override) or self.get_user_preference(task_type, user_id) or task_type
+        litellm_model = next((m.get('litellm_params', {}).get('model') for m in self._config.get('model_list', [])
+                              if m.get('model_name') == route), None) or route
+        try:
+            tokens = litellm.get_model_info(litellm_model).get('max_input_tokens')
+        except Exception:
+            tokens = None
+        return {'model': litellm_model.split('/', 1)[-1], 'max_input_tokens': tokens or self.DEFAULT_CONTEXT_TOKENS}
 
     def get_prompt(self, prompt_key: str) -> Dict[str, str]:
         """Load a prompt definition (system/user_template) from prompts_config.json."""

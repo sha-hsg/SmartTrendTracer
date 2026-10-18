@@ -37,6 +37,7 @@ from app.services.analytics import (
     aggregate_concept_usage,
     collect_key_topics,
     prepare_content_sample,
+    fit_to_token_budget,
     build_summarization_prompt,
     build_fallback_summary,
 )

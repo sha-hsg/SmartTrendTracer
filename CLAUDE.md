@@ -438,6 +438,11 @@ Static mounts: `/papers` (PDF dir), `/books` (book repository).
   (404 after backend restart is handled frontend-side), concurrency 1-8, cancel support.
 - **Suggest Concept Tags / Entity Extraction** on papers require processed content
   (HTTP 400 otherwise; frontend disables the buttons).
+- **AI Summarization** (`POST /api/analytics/trends/summarize`): no fixed data cap — every item of
+  the period goes into the prompt while it fits half the input context of the model that answers
+  (`llm_manager.context_window`, from LiteLLM's registry; Sonnet 5.5: 1M); beyond that an evenly
+  spaced tweet sample (`fit_to_token_budget`). `max_tweets/articles/papers` are optional caps
+  (UI "Data Limits", empty = auto); `detail_level` sets only the depth of the answer.
 - **Analyses saves are atomic** (`$push`/`$pull`, never `$set` of the whole array) to
   survive concurrent generation.
 - Global exception handlers sanitize 500s; request timing middleware adds

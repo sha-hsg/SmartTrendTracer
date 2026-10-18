@@ -49,12 +49,12 @@ interface SummarizationControlsProps {
   addTag: (tag: string) => void
   removeTag: (tag: string) => void
   getFilteredTagSuggestions: () => string[]
-  maxTweets: number
-  setMaxTweets: (v: number) => void
-  maxArticles: number
-  setMaxArticles: (v: number) => void
-  maxPapers: number
-  setMaxPapers: (v: number) => void
+  maxTweets: number | null          // null = automatic (fits the model's context)
+  setMaxTweets: (v: number | null) => void
+  maxArticles: number | null
+  setMaxArticles: (v: number | null) => void
+  maxPapers: number | null
+  setMaxPapers: (v: number | null) => void
   showSettings: boolean
   setShowSettings: (v: boolean) => void
   selectedModel: string | null
@@ -420,7 +420,9 @@ export default function SummarizationControls({
               <Settings className="h-4 w-4" />
               Data Limits
               <Badge variant="outline" className="text-xs font-normal">
-                {maxTweets} tweets · {maxArticles} articles · {maxPapers} papers
+                {maxTweets || maxArticles || maxPapers
+                  ? `${maxTweets ?? 'auto'} tweets · ${maxArticles ?? 'auto'} articles · ${maxPapers ?? 'auto'} papers`
+                  : 'Auto — all content that fits the model'}
               </Badge>
             </div>
             {showSettings ? (
@@ -432,43 +434,33 @@ export default function SummarizationControls({
 
           {showSettings && (
             <div className="p-4 border-t bg-gray-50 dark:bg-gray-900 space-y-4">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Configure maximum items to include in the summary. Higher limits provide more context but increase processing time.
+              <p className="text-xs text-muted-foreground">
+                Leave empty for automatic: every item of the period goes into the prompt as long as it fits
+                the selected model's context (half of it; Claude Sonnet 5.5: 1M tokens). Beyond that, an evenly
+                spaced sample of tweets covers the whole period. Set a number only to cap cost or time.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Max Tweets (10-1000)</Label>
-                  <Input
-                    type="number"
-                    min={10}
-                    max={1000}
-                    value={maxTweets}
-                    onChange={(e) => setMaxTweets(Math.max(10, Math.min(1000, parseInt(e.target.value) || 100)))}
-                    className="h-9"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Max Articles (5-200)</Label>
-                  <Input
-                    type="number"
-                    min={5}
-                    max={200}
-                    value={maxArticles}
-                    onChange={(e) => setMaxArticles(Math.max(5, Math.min(200, parseInt(e.target.value) || 50)))}
-                    className="h-9"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Max Papers (5-200)</Label>
-                  <Input
-                    type="number"
-                    min={5}
-                    max={200}
-                    value={maxPapers}
-                    onChange={(e) => setMaxPapers(Math.max(5, Math.min(200, parseInt(e.target.value) || 50)))}
-                    className="h-9"
-                  />
-                </div>
+                {([
+                  ['Max Tweets', maxTweets, setMaxTweets, 10, 20000],
+                  ['Max Articles', maxArticles, setMaxArticles, 5, 1000],
+                  ['Max Papers', maxPapers, setMaxPapers, 5, 1000],
+                ] as const).map(([label, value, setValue, min, max]) => (
+                  <div key={label} className="space-y-2">
+                    <Label className="text-xs">{label} (empty = auto)</Label>
+                    <Input
+                      type="number"
+                      min={min}
+                      max={max}
+                      placeholder="Auto"
+                      value={value ?? ''}
+                      onChange={(e) => {
+                        const n = parseInt(e.target.value)
+                        setValue(Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : null)
+                      }}
+                      className="h-9"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           )}

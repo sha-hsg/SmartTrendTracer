@@ -57,19 +57,17 @@ export default function SummarizationModern() {
   // Paper date type selection (for time period filtering)
   const [paperDateType, setPaperDateType] = useState<'created' | 'published'>('created')
 
-  // Configurable limits with localStorage persistence
-  const [maxTweets, setMaxTweets] = useState<number>(() => {
-    const saved = localStorage.getItem('summarization_max_tweets')
-    return saved ? parseInt(saved, 10) : 1000
-  })
-  const [maxArticles, setMaxArticles] = useState<number>(() => {
-    const saved = localStorage.getItem('summarization_max_articles')
-    return saved ? parseInt(saved, 10) : 50
-  })
-  const [maxPapers, setMaxPapers] = useState<number>(() => {
-    const saved = localStorage.getItem('summarization_max_papers')
-    return saved ? parseInt(saved, 10) : 50
-  })
+  // Optional caps (null = automatic: everything that fits the selected model's context).
+  // v2 keys: the old keys held the former fixed defaults 1000/50/50 for everyone.
+  const loadLimit = (key: string): number | null => {
+    try {
+      const saved = localStorage.getItem(key)
+      return saved ? parseInt(saved, 10) || null : null
+    } catch { return null }
+  }
+  const [maxTweets, setMaxTweets] = useState<number | null>(() => loadLimit('summarization_limit_tweets_v2'))
+  const [maxArticles, setMaxArticles] = useState<number | null>(() => loadLimit('summarization_limit_articles_v2'))
+  const [maxPapers, setMaxPapers] = useState<number | null>(() => loadLimit('summarization_limit_papers_v2'))
   const [showSettings, setShowSettings] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -94,9 +92,14 @@ export default function SummarizationModern() {
 
   // Save limits and detail level to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('summarization_max_tweets', maxTweets.toString())
-    localStorage.setItem('summarization_max_articles', maxArticles.toString())
-    localStorage.setItem('summarization_max_papers', maxPapers.toString())
+    try {
+      const save = (key: string, v: number | null) => v ? localStorage.setItem(key, String(v)) : localStorage.removeItem(key)
+      save('summarization_limit_tweets_v2', maxTweets)
+      save('summarization_limit_articles_v2', maxArticles)
+      save('summarization_limit_papers_v2', maxPapers)
+      ;['summarization_max_tweets', 'summarization_max_articles', 'summarization_max_papers']
+        .forEach(k => localStorage.removeItem(k))
+    } catch { /* storage unavailable: limits just are not remembered */ }
   }, [maxTweets, maxArticles, maxPapers])
 
   useEffect(() => {
@@ -215,9 +218,10 @@ export default function SummarizationModern() {
       }
 
       // Add configurable limits
-      params.append('max_tweets', maxTweets.toString())
-      params.append('max_articles', maxArticles.toString())
-      params.append('max_papers', maxPapers.toString())
+      // only explicit caps; without them the backend fits the model's context
+      if (maxTweets) params.append('max_tweets', maxTweets.toString())
+      if (maxArticles) params.append('max_articles', maxArticles.toString())
+      if (maxPapers) params.append('max_papers', maxPapers.toString())
 
       // Add detail level
       params.append('detail_level', detailLevel)

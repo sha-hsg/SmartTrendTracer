@@ -40,6 +40,7 @@ from app.repositories.analytics.timeline_helpers import (
 from app.repositories.analytics.summarization_helpers import (
     collect_key_topics,
     prepare_content_sample,
+    fit_to_token_budget,
     build_summarization_prompt,
     build_fallback_summary,
 )
@@ -73,6 +74,7 @@ __all__ = [
     # summarization_helpers
     'collect_key_topics',
     'prepare_content_sample',
+    'fit_to_token_budget',
     'build_summarization_prompt',
     'build_fallback_summary',
 ]
