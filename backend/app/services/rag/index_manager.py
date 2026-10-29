@@ -14,6 +14,8 @@ import numpy as np
 import google.generativeai as genai
 from openai import OpenAI
 
+from app.services.provider_errors import is_rate_limit
+
 logger = logging.getLogger(__name__)
 
 # backend/ directory (config files live there) - resolved from this file, not cwd
@@ -59,8 +61,8 @@ def _with_rate_limit_retry(call, attempts: int = 6, first_wait: float = 2.0):
         try:
             return call()
         except Exception as e:
-            if '429' not in str(e) or attempt == attempts - 1:
-                raise
+            if not is_rate_limit(e) or attempt == attempts - 1:
+                raise                     # billing errors (credits used up) fail at once
             logger.warning(f"Embedding rate limited, retrying in {wait:.0f}s")
             time.sleep(wait)
             wait *= 2

@@ -174,8 +174,11 @@ def check_rag(client):
                if ok else f'embedding dimension {vec.shape[-1]} does not match the index',
                hint='rebuild the index: venv/bin/python rebuild_rag_index.py')
     except Exception as e:
+        from app.services.provider_errors import is_billing_error
         report(False, 'RAG search', f'test embedding failed: {e}'[:200],
-               hint='model retired or API key missing — check llm.json models.rag_embedding and ~/.env')
+               hint=('provider credits used up — top up the account (Gemini: https://ai.studio/projects); '
+                     'search, RAG update and Gemini-routed tasks fail until then') if is_billing_error(e)
+               else 'model retired or API key missing — check llm.json models.rag_embedding and ~/.env')
 
 
 def check_scheduler():

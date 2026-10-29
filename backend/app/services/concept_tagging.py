@@ -137,16 +137,37 @@ def untagged_ids(content_type: str, limit: Optional[int] = None) -> List[str]:
     return repo.untagged_ids(content_type, limit)
 
 
+MAX_CONSECUTIVE_ERRORS = 5
+
+
+class TaggingFailed(RuntimeError):
+    """The tagging model is unreachable (credits, key, outage)."""
+
+
 def tag_untagged(content_type: str, limit: Optional[int] = None, llm=None) -> Dict[str, Any]:
-    """Tag every untagged item of one type (scheduler job tag_content)."""
+    """Tag every untagged item of one type (scheduler job tag_content).
+
+    Raises TaggingFailed when the model cannot be reached (MAX_CONSECUTIVE_ERRORS
+    failures in a row, or nothing tagged at all), so the scheduler records the job
+    as failed: with empty Gemini credits the job had reported success for a week
+    while tagging nothing (2026-10-23..29)."""
     ids = repo.untagged_ids(content_type, limit)
     stats = {'items': len(ids), 'tagged': 0, 'new_tags': 0, 'errors': 0}
+    streak, last_error = 0, None
     for cid in ids:
         result = tag_item(content_type, cid, llm=llm)
         if 'error' in result:
             stats['errors'] += 1
+            if result['error'] != 'not_found':
+                streak, last_error = streak + 1, result['error']
+                if streak >= MAX_CONSECUTIVE_ERRORS:
+                    raise TaggingFailed(f"{content_type}: {streak} LLM failures in a row, stopped "
+                                        f"({stats['tagged']} tagged): {last_error}"[:400])
             continue
+        streak = 0
         stats['tagged'] += 1
         stats['new_tags'] += len(result['new'])
+    if last_error and stats['tagged'] == 0:
+        raise TaggingFailed(f"{content_type}: nothing tagged, {stats['errors']} errors: {last_error}"[:400])
     logger.info(f"Tagging {content_type}: {stats}")
     return stats

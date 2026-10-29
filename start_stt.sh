@@ -7,6 +7,17 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR"
 
+# Run in a session of our own: the services are started with nohup, which only
+# ignores SIGHUP. When the program that launched this script ends (a terminal
+# tab, an agent session, a timeout), it can send SIGTERM to its whole process
+# group — on 2026-10-29 that stopped every service 2 minutes after start.
+# Output still goes to the calling terminal.
+if [ -z "$STT_OWN_SESSION" ] && command -v perl >/dev/null 2>&1; then
+    export STT_OWN_SESSION=1
+    exec perl -MPOSIX -e 'my $pid = fork(); if (!$pid) { POSIX::setsid(); exec @ARGV or exit 127 }
+                          waitpid($pid, 0); exit($? >> 8)' -- "$0" "$@"
+fi
+
 # Service ports (8000 conflicts with Honcho Docker; 8088 is free)
 export BACKEND_PORT=8088
 
@@ -594,6 +605,12 @@ cd "$SCRIPT_DIR"
 # policy keeps it up, this only makes sure it is started (and created once).
 log_plain ""
 log "7a. Checking GROBID (docker container stt-grobid, port 8070)..."
+# Docker Desktop is not started at login: start it and wait up to 90 s for the daemon
+if command -v docker >/dev/null 2>&1 && ! docker info >/dev/null 2>&1 && [ -d /Applications/Docker.app ]; then
+    log "   Docker daemon not running — starting Docker Desktop..."
+    open -a Docker
+    for _ in $(seq 1 45); do docker info >/dev/null 2>&1 && break; sleep 2; done
+fi
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     if docker ps --format '{{.Names}}' | grep -q '^stt-grobid$'; then
         log_plain "   ✓ GROBID container already running"

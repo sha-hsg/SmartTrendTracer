@@ -320,6 +320,17 @@ mise if present.
 ./stop_stt.sh -n        # keep MongoDB running (--mongo-no)
 ```
 
+`start_stt.sh` re-runs itself in a session of its own (`STT_OWN_SESSION`, perl `setsid`): when the
+program that launched it ends, the services keep running (on 2026-10-29 a closing caller sent
+SIGTERM to the process group and stopped everything). It starts Docker Desktop for GROBID when
+the daemon is down.
+
+**Empty provider credits** (`app/services/provider_errors.is_billing_error`, e.g. Gemini "prepayment
+credits are depleted") are not retried like rate limits; the tagging job stops after 5 LLM failures
+in a row and is recorded as failed (`TaggingFailed`), and the smoke check names the cause.
+Gemini runs the RAG embeddings and the `tag_suggestion`/`rag_answer`/`article_summarizer`
+preferences — empty credits stop search updates and tagging.
+
 `start_stt.sh` ends with `backend/smoke_check.py`: functional checks (backend+DB, LLM
 routing/keys, Marker, MinerU, RAG model + test embedding, frontend, scheduler) with one
 red line per failure. Run it any time: `cd backend && venv/bin/python smoke_check.py [--deep]`
@@ -477,7 +488,7 @@ DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are res
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **Test suite is thin** (H-Q1): `backend/tests/` has 167 pytest tests (regression tests
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 176 pytest tests (regression tests
    for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
    frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil
@@ -608,4 +619,4 @@ Details live in `git log` and `docs/`; do not re-expand here.
 
 ---
 
-Last updated: October 10, 2026
+Last updated: October 29, 2026
