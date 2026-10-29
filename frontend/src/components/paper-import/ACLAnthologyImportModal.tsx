@@ -39,8 +39,10 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
       return
     }
 
-    if (!url.includes('aclanthology.org')) {
-      setError('URL must be from aclanthology.org')
+    // page or PDF link (any version), with or without https://, or the bare Anthology ID;
+    // the backend (normalize_acl_url) has the exact rules
+    if (!url.includes('aclanthology.org') && !/^\s*(\d{4}\.[\w-]+\.\d+|[A-Z]\d{2}-\d{4})\s*$/.test(url)) {
+      setError('Enter an aclanthology.org link (page or PDF) or an Anthology ID such as 2026.eacl-short.34')
       return
     }
 
@@ -134,10 +136,10 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
             </label>
             <div className="flex gap-2">
               <input
-                type="url"
+                type="text"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://aclanthology.org/2025.acl-long.5/"
+                placeholder="https://aclanthology.org/2026.eacl-short.34.pdf"
                 className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={isValidating || isImporting}
               />
@@ -160,7 +162,7 @@ export default function ACLAnthologyImportModal({ isOpen, onClose, onImportSucce
               </button>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Enter a URL from aclanthology.org (e.g., https://aclanthology.org/2025.acl-long.5/)
+              Paper page or PDF link from aclanthology.org (…/2026.eacl-short.34/ or …/2026.eacl-short.34.pdf), or just the Anthology ID
             </p>
           </div>
 

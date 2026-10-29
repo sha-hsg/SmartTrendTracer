@@ -429,7 +429,7 @@ Router registration lives in `backend/app/main.py` (~251 API routes). One line p
 | `/api/entities` | `entity_extraction` | entity extraction & review |
 | `/api/llm` | `llm_preferences` | model preferences, status, deprecated-model migration |
 | `/api/user-settings` | `user_settings` | per-user key-value settings (TweetDeck columns etc.) |
-| `/api/arxiv`, `/api/acl-anthology`, `/api/acm`, `/api/openreview`, `/api/jair` | importers | paper imports |
+| `/api/arxiv`, `/api/acl-anthology`, `/api/acm`, `/api/openreview`, `/api/jair` | importers | paper imports (ACL: page or PDF link, any version, or bare Anthology ID → `normalize_acl_url`) |
 | `/api/references` | `references` | normalized references, top-cited, import (arXiv id or DOI via `doi_import_service`) |
 | `/api/pdf` | `pdf_export` | article PDF export |
 | `/api/media-gallery` | `media_gallery_mongodb` | Twitter media gallery |
@@ -488,7 +488,7 @@ DEF-008 rate limiting [use collector service]. DEF-001, -002, -004, -006 are res
 Open work items (state after the 2026-07-24 inventory + fix pass, see
 `docs/funktionsinventur.md`):
 
-1. **Test suite is thin** (H-Q1): `backend/tests/` has 176 pytest tests (regression tests
+1. **Test suite is thin** (H-Q1): `backend/tests/` has 190 pytest tests (regression tests
    for 2026-08/09 fixes + the architecture guard), no endpoint integration tests and no
    frontend tests yet. Next: httpx TestClient for the core endpoints.
 2. **MinerU progress pipeline not implemented** — only Marker has PTY/TQDM/psutil

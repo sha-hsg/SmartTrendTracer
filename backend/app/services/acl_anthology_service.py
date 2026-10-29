@@ -13,6 +13,29 @@ from urllib.parse import urljoin, urlparse
 
 logger = logging.getLogger(__name__)
 
+
+# Anthology IDs: new style "2026.eacl-short.34", old style "P19-1001" / "W18-5446"
+_ACL_ID = r'(\d{4}\.[a-z0-9]+(?:-[a-z0-9]+)*\.\d+|[A-Z]\d{2}-\d{4})'
+_ACL_URL = re.compile(r'^(?:https?://)?(?:www\.)?aclanthology\.org/' + _ACL_ID +
+                      r'(?:v\d+)?(?:\.pdf|\.bib|\.xml)?/?(?:[?#].*)?$', re.I)
+_ACL_BARE_ID = re.compile(r'^' + _ACL_ID + r'$')
+
+
+def normalize_acl_url(value: str) -> str:
+    """Canonical paper page URL for any form of an ACL Anthology link or ID:
+    the page (".../2026.eacl-short.34/"), the PDF (".34.pdf"), a version
+    ("v2.pdf"), the BibTeX (".bib"), without scheme or with www., or the bare
+    Anthology ID. Raises ValueError for anything else."""
+    text = (value or '').strip()
+    m = _ACL_URL.match(text) or _ACL_BARE_ID.match(text)
+    if not m:
+        raise ValueError(f"Not an ACL Anthology paper URL or ID: {text!r} "
+                         "(e.g. https://aclanthology.org/2026.eacl-short.34/ or .../2026.eacl-short.34.pdf)")
+    anthology_id = m.group(1)
+    if anthology_id[0].isdigit():
+        anthology_id = anthology_id.lower()       # new-style ids are lower case; old ones keep "P19-1001"
+    return f"https://aclanthology.org/{anthology_id}/"
+
 class ACLAnthologyService:
     """Service for importing papers from ACL Anthology"""
     
@@ -36,9 +59,7 @@ class ACLAnthologyService:
             Dictionary containing paper metadata
         """
         try:
-            # Validate URL
-            if not url.startswith(('http://aclanthology.org', 'https://aclanthology.org')):
-                raise ValueError(f"Invalid ACL Anthology URL: {url}")
+            url = normalize_acl_url(url)          # PDF/version/bib links and bare ids -> page URL
             
             # Fetch the page
             logger.info(f"Fetching ACL Anthology page: {url}")

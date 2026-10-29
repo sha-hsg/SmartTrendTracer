@@ -3,14 +3,14 @@ ACL Anthology import API endpoints
 """
 from app.paths import PAPERS_DIR_REL
 from fastapi import APIRouter, HTTPException, BackgroundTasks
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from pathlib import Path
 import logging
 from datetime import datetime, timezone
 from bson import ObjectId
 
-from app.services.acl_anthology_service import acl_anthology_service
+from app.services.acl_anthology_service import acl_anthology_service, normalize_acl_url
 from app.services.pdf_processor_service import get_pdf_processor_service
 from app.repositories import acl_anthology_queries as queries
 from app.repositories import papers as papers_repo
@@ -21,13 +21,13 @@ router = APIRouter()
 
 class ACLAnthologyImportRequest(BaseModel):
     """Request model for ACL Anthology import"""
-    url: HttpUrl
+    url: str  # page or PDF URL, with or without https://, or the bare Anthology ID
     process_pdf: bool = True  # Whether to process PDF after import
     add_tags: Optional[list[str]] = None  # Optional tags to add
 
 class ACLAnthologyParseRequest(BaseModel):
     """Request model for parsing ACL Anthology URL"""
-    url: HttpUrl
+    url: str
 
 @router.post("/parse")
 async def parse_acl_anthology_url(request: ACLAnthologyParseRequest) -> Dict[str, Any]:
@@ -37,14 +37,10 @@ async def parse_acl_anthology_url(request: ACLAnthologyParseRequest) -> Dict[str
     This endpoint is useful for previewing what will be imported
     """
     try:
-        url = str(request.url)
-        
-        # Validate it's an ACL Anthology URL
-        if 'aclanthology.org' not in url:
-            raise HTTPException(
-                status_code=400,
-                detail="URL must be from aclanthology.org"
-            )
+        try:
+            url = normalize_acl_url(request.url)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         
         # Parse the URL
         metadata = acl_anthology_service.parse_acl_url(url)
@@ -83,28 +79,22 @@ async def import_acl_anthology_paper(
     4. Optionally process the PDF for full text extraction
     """
     try:
-        url = str(request.url)
-        
-        # Validate URL
-        if 'aclanthology.org' not in url:
-            raise HTTPException(
-                status_code=400,
-                detail="URL must be from aclanthology.org"
-            )
+        try:
+            url = normalize_acl_url(request.url)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
         
         # Check if paper already exists (by import/source/pdf URL or ACL ID)
-        url_https = url.replace('http://', 'https://')
+        # url is the canonical page URL; earlier imports stored page or PDF, with or without slash
+        anthology_id = url.rstrip('/').rsplit('/', 1)[-1]
+        stored_forms = [url, url.rstrip('/'), url.rstrip('/') + '.pdf',
+                        url.replace('https://', 'http://'), url.replace('https://', 'http://').rstrip('/') + '.pdf']
         dup_conditions = [
-            {'pdf_url': {'$in': [url, url_https]}},
-            {'import_url': {'$in': [url, url_https]}},
-            {'source_url': {'$in': [url, url_https]}},
+            {'pdf_url': {'$in': stored_forms}},
+            {'import_url': {'$in': stored_forms}},
+            {'source_url': {'$in': stored_forms}},
+            {'acl_anthology_id': f"acl:{anthology_id}"},
         ]
-        # Derive the ACL Anthology ID from the URL path (e.g. "2024.acl-long.1")
-        acl_id_candidate = url_https.rstrip('/').rsplit('/', 1)[-1]
-        if acl_id_candidate.endswith('.pdf'):
-            acl_id_candidate = acl_id_candidate[:-4]
-        if acl_id_candidate:
-            dup_conditions.append({'acl_anthology_id': f"acl:{acl_id_candidate}"})
 
         existing = queries.papers_find_one__import_acl_anthology_paper(dup_conditions)
 
